@@ -27,6 +27,8 @@ import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import { WealthlineProvider } from '@/lib/wealthline';
+import { colors } from '@/lib/wealthline-theme';
 
 /**
  * Custom ErrorBoundary that reports React render errors to the parent window (Bilt preview iframe)
@@ -145,10 +147,19 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ title: 'Habits', headerShown: false }} />
-        </Stack>
-        <InstallPrompt />
+        <WealthlineProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ title: 'Wealthline' }} />
+            <Stack.Screen name="person/[slug]" options={{ title: 'Profile' }} />
+            <Stack.Screen name="admin" options={{ title: 'Admin' }} />
+          </Stack>
+          <InstallPrompt />
+        </WealthlineProvider>
       </HeroUINativeProvider>
     </GestureHandlerRootView>
   );

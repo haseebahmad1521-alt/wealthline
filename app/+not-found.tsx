@@ -1,17 +1,16 @@
-import { Link, Stack } from 'expo-router';
-import { View, Text } from 'react-native';
-
+import { router, Stack } from 'expo-router';
+import { Page, Empty } from '@/components/wealthline-ui';
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <View>
-        <Text>This screen doesn&apos;t exist.</Text>
-
-        <Link href="/">
-          <Text>Go to home screen!</Text>
-        </Link>
-      </View>
+      <Stack.Screen options={{ title: 'Not found' }} />
+      <Page>
+        <Empty
+          title="This page could not be found."
+          label="Back to rankings"
+          action={() => router.replace('/')}
+        />
+      </Page>
     </>
   );
 }
