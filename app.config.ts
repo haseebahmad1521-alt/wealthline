@@ -10,12 +10,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: 'Your App Name',
-    slug: 'your-app-slug',
+    name: 'Wealthline',
+    slug: 'wealthline',
     version: process.env.BILT_APP_VERSION ?? '1.0.0',
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
-    scheme: 'yourapp',
+    scheme: 'wealthline',
     runtimeVersion: {
       policy: 'appVersion',
     },
@@ -26,10 +26,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ITSAppUsesNonExemptEncryption: false,
       },
       supportsTablet: true,
-      bundleIdentifier: process.env.BILT_IOS_BUNDLE_ID ?? 'com.yourcompany.yourapp',
+      bundleIdentifier: process.env.BILT_IOS_BUNDLE_ID ?? 'me.bilt.wealthline',
     },
     android: {
-      package: process.env.BILT_ANDROID_PACKAGE ?? 'com.yourcompany.yourapp',
+      package: process.env.BILT_ANDROID_PACKAGE ?? 'me.bilt.wealthline',
     },
     web: {
       bundler: 'metro',
