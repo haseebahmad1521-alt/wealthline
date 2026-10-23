@@ -57,10 +57,11 @@ const [people, snapshots, holdings, projects, events] = await Promise.all([
 ]);
 const credit = portraits();
 
-const personRows = people.map((p) => ({
+const placeholders = people.filter((p) => !p.name);
+const personRows = people.filter((p) => p.name).map((p) => ({
   id: p.id,
   slug: p.slug,
-  name: p.name ?? p.slug,
+  name: p.name,
   age: p.age,
   residence: p.residence,
   citizenship: p.citizenship,
@@ -70,21 +71,17 @@ const personRows = people.map((p) => ({
   ...credit[p.slug],
 }));
 
-// The old schema never said where a snapshot came from. Midnight-UTC rows are dated estimates;
-// intraday rows came from the market updater. Ambiguity defaults to 'estimate' (never projected).
-const valueRows = snapshots.map((s) => {
-  const d = new Date(s.timestamp);
-  const midnight = d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0;
-  return {
-    id: s.id,
-    person_id: s.billionaire_id,
-    as_of: d.toISOString(),
-    net_worth_usd: Number(s.net_worth_usd),
-    kind: midnight ? 'estimate' : 'computed',
-    source_label: midnight ? 'Owner-supplied estimate (imported from Bilt)' : 'Holdings × market quotes (Bilt updater, imported)',
-    source_url: null,
-  };
-});
+// Every Bilt snapshot is a dated owner estimate (monthly, at US market close); the old
+// updater never wrote rows. 'estimate' also means the app never projects them as live.
+const valueRows = snapshots.map((s) => ({
+  id: s.id,
+  person_id: s.billionaire_id,
+  as_of: new Date(s.timestamp).toISOString(),
+  net_worth_usd: Number(s.net_worth_usd),
+  kind: 'estimate',
+  source_label: 'Owner-supplied estimate (imported from Bilt)',
+  source_url: null,
+}));
 const withPerson = (r) => ({ ...r, person_id: r.billionaire_id });
 
 const sql = [
@@ -100,8 +97,9 @@ const sql = [
 
 const out = new URL('./bilt-import.sql', import.meta.url);
 writeFileSync(out, sql);
-const est = valueRows.filter((v) => v.kind === 'estimate').length;
-console.log(`people ${people.length} (portrait credits matched: ${personRows.filter((p) => p.portrait_url).length})`);
-console.log(`values ${valueRows.length}: ${est} estimate, ${valueRows.length - est} computed — confirm this split is right`);
+console.log(`people ${personRows.length} (skipped ${placeholders.length} nameless placeholders; portrait credits matched: ${personRows.filter((p) => p.portrait_url).length})`);
+const full = personRows.filter((p) => valueRows.some((v) => v.person_id === p.id && Number(p.other_assets_usd) >= v.net_worth_usd));
+if (full.length) console.log(`WARNING: ${full.length} people have other_assets_usd >= their net worth; calibrate before enabling the market updater (double-counting).`);
+console.log(`values ${valueRows.length} (all dated estimates)`);
 console.log(`holdings ${holdings.length}, projects ${projects.length}, events ${events.length}`);
 console.log(`wrote ${out.pathname}\nReview it, then run it in the Supabase SQL editor (after both migrations).`);
