@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Wealthline",
+    "slug": "wealthline",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "wealthline",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.haseebahmad.wealthline",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.haseebahmad.wealthline",
+      "adaptiveIcon": {
+        "backgroundColor": "#FBFBFD",
+        "foregroundImage": "./assets/images/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./public/icons/icon-192.png",
+      "name": "Wealthline",
+      "shortName": "Wealthline",
+      "themeColor": "#FBFBFD",
+      "backgroundColor": "#FBFBFD"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FBFBFD",
+          "image": "./assets/images/icon.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-sqlite",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

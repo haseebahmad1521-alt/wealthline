@@ -1,60 +1,45 @@
 <!doctype html>
-<!--
-  Web HTML template (used by `expo export -p web` and the dev server because
-  web.output is 'single' — app/+html.tsx only applies to 'static' output).
-  The lang attribute and title below are substituted from app.config.ts at
-  build time; only their FIRST occurrence in this file is replaced, so don't
-  repeat those placeholder tokens anywhere above them.
-
-  Carries the PWA install contract: the manifest link for Android/Chrome and the
-  apple-* tags iOS Safari needs (iOS ignores most of the manifest). Keep the app
-  identity in public/manifest.json in sync with the name in app.config.ts.
--->
 <html lang="%LANG_ISO_CODE%">
   <head>
     <meta charset="utf-8" />
-    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
-    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
     <title>%WEB_TITLE%</title>
-
-    <!-- Web app manifest — the install contract for Android/Chrome -->
+    <!-- Root-relative URLs below work in dev (base ""); scripts/build-pages.mjs prefixes them with EXPO_BASE_URL. -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#FBFBFD" />
-
-    <!-- iOS home-screen support. No apple-mobile-web-app-title: iOS falls back to
-         <title>, which is substituted from app.config.ts and stays in sync. -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/icons/wealthline.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
-    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <meta name="apple-mobile-web-app-title" content="Wealthline" />
+    <!-- GitHub Pages 404.html bounces unknown nested paths to /app/?__route=<path>; restore it before the router boots. -->
+    <script>
+      (function () {
+        var r = new URLSearchParams(location.search).get('__route');
+        if (r && r.charAt(0) === '/' && r.charAt(1) !== '/' && r.charAt(1) !== '\\') history.replaceState(null, '', r);
+      })();
+    </script>
+    <!--SW-->
     <style id="expo-reset">
-      /* These styles make the body full-height */
       html,
       body {
         height: 100%;
       }
-      /* These styles disable body scrolling if you are using <ScrollView> */
       body {
         overflow: hidden;
       }
-      /* These styles make the root element full-height */
       #root {
         display: flex;
         height: 100%;
         flex: 1;
       }
+      /* Browser surfaces carry the design: themed focus ring and selection. */
+      :focus-visible { outline: 2px solid #0071E3 !important; outline-offset: 2px; }
+      ::selection { background: rgba(0, 113, 227, 0.18); }
     </style>
   </head>
 
   <body>
-    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <!-- The root element for your Expo app. -->
+    <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="root"></div>
   </body>
 </html>

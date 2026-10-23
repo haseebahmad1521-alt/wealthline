@@ -1,100 +1,47 @@
 # Wealthline — build plan
 
-Plan of record for taking Wealthline over from Bilt into Claude Code. Requirements live in `CLAUDE.md` and `HANDOFF.md`; this file sequences them and records state. Each phase lists its lead model (see “Working conventions” in `CLAUDE.md`).
+Plan of record for the from-scratch rebuild (branch `rebuild`) of the former Bilt project. Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. The original Bilt code stays on `main` for reference.
 
-Repository: <https://github.com/haseebahmad1521-alt/wealthline> (private, default branch `main`). Working branch: `feat/wealthline-takeover`.
+Decisions (owner, Oct 24, 2026): build from scratch; new Supabase backend; same repo, new branch; export the existing records from Bilt once; email + strong password sign-up with a verification link, emailed code as second step on new devices, Google/Apple later; platform conventions per OS; native preview through Expo Go on the owner's phone (no Xcode: disk space).
 
-## Phase 0 — Takeover setup ✅ (Oct 23, 2026)
+## Done
 
-- [x] Local folder attached to the GitHub repo; local `CLAUDE.md`/`HANDOFF.md` verified identical to `main`.
-- [x] `npm ci` on Node 24.21 / npm 11.19 (lockfile declares npm 10.9; install succeeded).
-- [x] Impeccable installed project-scoped (skill, 4 agents, design-check hooks in `settings.local.json`).
-- [x] Ponytail plugin installed project-scoped (`.claude/settings.json`).
-- [x] `.claude/` and `dist/` excluded from oxlint/oxfmt; `HANDOFF.md` excluded from oxfmt to keep the owner doc verbatim.
-- [x] `.env.example` for the two public Bilt client values; `.env`/`.env.local` git-ignored.
-- [x] Baseline export fix: `web.favicon` pointed at `icon-192.png` (Expo’s favicon generator rejects the SVG — `export:web` failed on untouched code).
+- [x] Expo SDK 58 scaffold (React 19.3, RN 0.88, Expo Router, React Compiler), brand icons kept.
+- [x] Supabase schema with provenance on every value (`estimate` / `computed`, source), RLS: public read, admin-only writes, private watchlists.
+- [x] Device-verified auth: `sign-in` / `verify-device` Edge Functions; database only trusts sessions they issued (`session_verified()`), so a bare password or bare OTP session cannot touch private data. Branded email templates.
+- [x] Honest live logic (`src/lib/live.ts`): observed / projected (≤15 min, from recent observed trend) / stale / none; no randomness. Unit-tested.
+- [x] Screens: Rankings, People, Projects, Watchlist, Profile (slim frosted identity band over the portrait hero, live value + provenance chip, pan/zoom chart 30 s → all time), Account, Admin, Not found.
+- [x] Native tabs on iOS/Android; web top nav on desktop, bottom tabs on phones.
+- [x] GitHub Pages pipeline: subpath export, PWA, 404 route recovery, iPhone-frame shell with QR + commit id, Actions workflow with secret scan.
+- [x] Bilt export script (`npm run import:bilt`), portrait credits recovered from the old source.
+- [x] Impeccable: PRODUCT.md, surface brief with direction contract (`.impeccable/surfaces/src-app.md`).
 
-### Baseline check results (untouched app code)
+## Verified so far
 
 | Check | Result |
 | --- | --- |
-| `npm run lint` | Pass (2 warnings: unnecessary `!` assertions in `lib/bilt.ts`) |
-| `npm run lint:css` | Pass |
-| `npx tsc --noEmit` | Pass |
-| `npm run format:check` | Pass (after ignore changes) |
-| `npm run expo-check` | **Fail**: `expo` 57.0.30 → ~57.0.31, `expo-router` 57.0.28 → ~57.0.29 |
-| `npm run export:web` | **Failed** on SVG favicon → passes after fix |
-| App against backend | **Not run**: no `EXPO_PUBLIC_BILT_*` values available |
-| iOS simulator | **Unavailable**: full Xcode not installed (only Command Line Tools) |
-| Android emulator | **Unavailable**: no Android SDK |
+| `npm run typecheck` | Pass |
+| `npm test` | 9/9 pass |
+| Web dev server, desktop + 375px | Renders; nav works; "backend not configured" state shown honestly |
+| `build:pages` + local Pages server | Shell, app, manifest, sw.js 200; nested route refresh + query/hash restored |
+| Real data, auth flows, RLS isolation | **Not yet** — needs the Supabase project |
+| Expo Go on a phone | **Not yet** |
+| Service worker / install / offline | **Not yet** (built-in browser blocks SW; check in Safari/Chrome) |
+| Android | **Not yet** (no emulator; Expo Go on an Android phone works the same way) |
 
-### Audit findings so far
+## Next (in order)
 
-- All data, auth (email OTP), watchlists, admin, and the `update-net-worth` function live on the Bilt-hosted backend via `@biltme/backend` (Supabase-style client). Nothing in the repo runs without the public URL + anon key.
-- Bilt-preview leftovers: `lib/posthog.ts` (only activates inside an iframe with `__ph_*` query params) and `lib/reportPreviewError.ts` (postMessage to a parent frame). Harmless; the phone-preview iframe will trigger the error reporter — decide whether to keep.
-- Export emits root-relative URLs (`/_expo/...`, `/manifest.json`, `/icons/...`, `/sw.js`, Workbox `navigateFallback: '/index.html'`, manifest `start_url`/`scope: '/'`). All must move under the Pages subpath.
-- Native identities default to `me.bilt.wealthline` (env-overridable). Leave unchanged until reviewed with the owner.
-- `package.json` name is still `bilt-starter`; README is the Bilt template.
+1. **Owner:** create the Supabase project, fill `.env`; run both migrations; deploy Edge Functions; set auth settings per `supabase/README.md`.
+2. **Owner:** fill `BILT_URL` / `BILT_ANON_KEY`; `npm run import:bilt`; confirm the estimate/computed split; run the SQL.
+3. Exercise every screen with real data; two identities for watchlist/admin isolation; designate the admin.
+4. Impeccable finish: screenshots per platform, `impeccable-finish-reviewer`, fixes, then `impeccable-documenter` writes DESIGN.md (required by the direction contract's FINISH line).
+5. Expo Go on the owner's iPhone: gestures, safe areas, Dynamic Type, VoiceOver, reduced motion.
+6. Owner: GitHub Pages enablement (paid plan or public repo) + repository variables; then verify the live URLs and a second deploy's cache update.
+7. Market updater (Edge Function + secure scheduler, ~15 min market hours), only after verified holdings and other-asset calibration.
+8. Ranks 11–20 only from sourced estimates. Google/Apple sign-in and store identities (`com.haseebahmad.wealthline` is a placeholder for owner review) before publishing.
 
-## Phase 1 — Backend access and functional audit (Opus)
+## Known gaps / decisions open
 
-Blocked on owner input: `EXPO_PUBLIC_BILT_URL` and `EXPO_PUBLIC_BILT_ANON_KEY` from the Bilt project.
-
-1. Put values in `.env.local`; `npx expo start --web`.
-2. Exercise rankings, people, projects, profiles (all 10 portraits), charts (1D/1M/YTD/All + 3-hour intraday), sign-in, watchlist, admin.
-3. Verify watchlist isolation and admin restriction with two separate email identities.
-4. Confirm the backend accepts requests from a new origin (CORS) and that the Bilt project will stay alive independently. If not, write up the failure and a migration proposal — no backend changes without owner approval.
-5. Record discrepancies with reproduction steps in this file.
-
-## Phase 2 — Design context (Opus + Impeccable)
-
-1. `/impeccable init` → `PRODUCT.md` (audience, purpose, data-honesty constraints from `CLAUDE.md`).
-2. `/impeccable document` → `DESIGN.md` from the existing theme (`lib/wealthline-theme.ts`, `global.css`, `wealthline-ui.tsx`). Record owner overrides: Inter, `#FBFBFD`/`#1D1D1F`/`#6E6E73`/`#0071E3`, gain/loss colors with direction glyphs, 20–28px radii, period-ended headings.
-3. `/impeccable audit` + `critique` on the current app as the before-state.
-
-## Phase 3 — Slim top-of-hero profile header (Opus designs, Sonnet implements)
-
-Files: `app/person/[slug].tsx`, `components/ProfileHero.tsx`.
-
-1. `/impeccable shape` the header: name + essential identity in a slim band over the top edge of the portrait, beneath existing navigation and safe-area insets.
-2. Tinted `expo-blur` frosted glass (already a dependency) with a solid/translucent fallback for web/reduced transparency.
-3. Order: hero + header → net worth & change → chart → supporting info/projects. Keep attribution/license access.
-4. Verify contrast against all 10 portraits, a long identity label, 320px, large phone, desktop; dynamic type.
-
-## Phase 4 — Native completion (Opus audit, Sonnet fixes)
-
-Blocked on tooling: install Xcode (iOS) and/or Android Studio, or use a physical device with a development build.
-
-- Audit navigation/back, safe areas, chart gestures (`IntradayFortune`, `WealthChart`), keyboard on sign-in/admin, screen-reader labels, 44pt targets, font scaling, reduced motion, loading/empty/error states.
-- Check Expo Go compatibility vs. a dev build (`expo-dev-client` is added only when `EXPO_PLATFORM=native`).
-- Bump `expo`/`expo-router` patch versions per `expo-check` and re-verify.
-- Report browser, simulator, and device results separately.
-
-## Phase 5 — GitHub Pages under a subpath (Opus)
-
-Layout: `/wealthline/` = phone-preview shell, `/wealthline/app/` = Expo app.
-
-1. Use the installed Expo Router’s documented base-path setting (`experiments.baseUrl`, confirm against SDK 57 docs) driven by one env var.
-2. SPA recovery: root `404.html` that captures path/query/hash for `/wealthline/app/*` and restores it before routing; no loops; asset 404s stay 404s.
-3. PWA: relative manifest URLs, `start_url`/`scope` = app subpath, SW registered at `<base>/sw.js` with app-only scope, Workbox `navigateFallback` + `modifyURLPrefix` for the subpath.
-4. Serve the exact artifact locally under `/wealthline/` and test deep links, refresh, query/hash, unknown routes.
-
-## Phase 6 — QR script and phone-preview shell (Sonnet, Opus review)
-
-1. `scripts/preview-qr.mjs` using the `qrcode` package: validates http(s) URL, writes SVG/PNG to `preview-artifacts/`, prints URL + path, optional `--open`, warns on localhost. npm script `preview:qr`.
-2. Static shell (`preview/`): ~390×844 iPhone-style frame with iframe of `/app/`, QR, “Open app”, commit SHA. Full-width app on narrow screens; accessible iframe title; no recursive embedding.
-3. Run `/impeccable audit` on the shell.
-
-## Phase 7 — GitHub Actions deploy (Sonnet, Opus review)
-
-`.github/workflows/pages.yml`: push to the deploy branch + `workflow_dispatch`; `npm ci`, lint, lint:css, tsc, export with base path, `build:pwa`, assemble shell, generate QR, inject SHA, `upload-pages-artifact`, `deploy-pages`. Least-privilege permissions, concurrency group, public client values from repo **variables**. Scan output for secrets.
-
-Owner tasks: enable Pages (source: GitHub Actions). **Pages on a private repo requires a paid GitHub plan**; otherwise the repo must be made public. Add the two `EXPO_PUBLIC_BILT_*` values as Actions variables.
-
-## Phase 8 — Data activation (owner operations; Opus assists)
-
-Admin designation, verified holdings/other-asset calibration, market updater logs, secure market-hours scheduler (~15 min), ranks 11–20 only from supplied/verified sources. Never fabricate.
-
-## Phase 9 — Docs and handover (Sonnet, Opus review)
-
-Rewrite README (local web, native, QR, deploy, remaining setup); rename `package.json` from `bilt-starter`; final report with preview + direct URLs and separated browser/native/device results.
+- Dark mode: owner palette is light-only.
+- Production email needs a custom SMTP sender.
+- Chart loads full history per person (`shortcut:` comment) — page by window when rows grow.

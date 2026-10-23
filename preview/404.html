@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wealthline preview</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #FBFBFD; color: #1D1D1F; font: 16px/1.5 -apple-system, "Inter", system-ui, sans-serif; text-align: center; padding: 16px; }
+  a { color: #0071E3; }
+  h1 { letter-spacing: -0.03em; }
+</style>
+</head>
+<body>
+<main hidden id="nf">
+  <h1>Page not found.</h1>
+  <p><a href="{{SHELL_URL}}">Back to the Wealthline preview</a></p>
+</main>
+<script>
+  // GitHub Pages has no SPA rewrites: this 404 page (sent with HTTP 404) bounces extension-less paths under the
+  // app to the app root, which restores the original path via ?__route= before the router starts.
+  (function () {
+    var prefix = "{{APP_PREFIX}}", p = location.pathname;
+    var last = p.split("/").pop();
+    if (p.indexOf(prefix) === 0 && p !== prefix && last.indexOf(".") === -1) {
+      location.replace(prefix + "?__route=" + encodeURIComponent(p + location.search + location.hash));
+    } else {
+      document.getElementById("nf").hidden = false;
+    }
+  })();
+</script>
+<noscript><p><a href="{{SHELL_URL}}">Back to the Wealthline preview</a></p></noscript>
+</body>
+</html>

@@ -1,158 +1,59 @@
-# Welcome to your Bilt project
+# Wealthline
 
-[![Built with Bilt](https://img.shields.io/endpoint?url=https%3A%2F%2Fapp.bilt.me%2Fapi%2Fbadge)](https://bilt.me)
+The world's biggest fortunes. In motion. One Expo app for iOS, Android, and the web (Expo SDK 58, Expo Router, Supabase).
 
-## Project info
+Requirements: `CLAUDE.md` (owner), `HANDOFF.md`, `PRODUCT.md`. Plan and status: `PLAN.md`.
 
-**Project URL**: https://app.bilt.me/agent/29e8d295-69bd-4704-831f-3b3deb03a09b
+## Setup
 
-**Project ID**: `29e8d295-69bd-4704-831f-3b3deb03a09b`
-
-## How can I edit this app?
-
-There are several ways of editing your application.
-
-**Use Bilt**
-
-Simply visit your [Bilt Project](https://app.bilt.me/agent/29e8d295-69bd-4704-831f-3b3deb03a09b) and start sending messages. Describe what you want to change, add, or fix in natural language.
-
-Changes made via Bilt are instant - just send a message and your app updates.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can export the source code from Bilt and make changes directly.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Export and clone your Bilt project.
-# (Download source from Bilt or connect to your git repo)
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm install
-
-# Step 4: Start the Expo development server.
-npx expo start
+```bash
+npm ci
 ```
 
-Scan the QR code with Expo Go on your phone to see your app running locally.
+Fill in `.env` (git-ignored) with the Supabase project URL and publishable key. Both are public client values; never put a secret key there. Backend setup (migrations, Edge Functions, email templates, admin) is in `supabase/README.md`.
 
-**Edit a file directly in GitHub**
+## Run
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- React Native
-- Expo
-- TypeScript
-- AsyncStorage (local data persistence)
-- Expo Router (navigation)
-
-All generated automatically by Bilt from your natural language instructions.
-
-## How can I test this project?
-
-**Option 1: Preview in Bilt (Recommended)**
-
-Open your [Bilt Project](https://app.bilt.me/agent/29e8d295-69bd-4704-831f-3b3deb03a09b) and use the built-in preview.
-
-Open **Deploy & Share** to create a revocable preview link or build the app on your iPhone.
-
-**Option 2: Run Locally**
-
-```sh
-npm install
-npx expo start
+```bash
+npm run web
 ```
 
-Then scan the QR code with Expo Go.
+Native on your own phone, no Xcode needed: install **Expo Go**, run `npx expo start`, and scan the QR it prints. That is the **Expo development QR**: it opens the real native app in Expo Go and needs your phone on the same network as this Mac.
 
-## How can I deploy this project?
+## Checks
 
-Open your [Bilt Project](https://app.bilt.me/agent/29e8d295-69bd-4704-831f-3b3deb03a09b), select **Deploy & Share**, then choose **Publish to web**, **Release on App Store**, or **Release on Play Store**.
-
-### Deploy with Bilt
-
-Publishing to web creates a public, installable web app at its own URL. Bilt also guides you through preparing native releases for the App Store and Play Store.
-
-## How can I make changes to my app?
-
-**Via Bilt (Easiest)**
-
-Visit your [Bilt Project](https://app.bilt.me/agent/29e8d295-69bd-4704-831f-3b3deb03a09b) and send a message describing what you want:
-
-- "Add a dark mode toggle"
-- "Change the button color to blue"
-- "Add a new screen for user settings"
-- "Fix the navigation bar spacing"
-
-Bilt understands natural language and updates your app automatically.
-
-**Via Code**
-
-Export the source, make changes in your IDE, and test locally with `npx expo start`.
-
-## Can I use this with the MCP protocol?
-
-Yes! Bilt is available as a remote MCP server at `https://mcp.bilt.me/mcp`.
-
-Connect any MCP-compatible AI agent (Claude Desktop, OpenClaw, etc.) to programmatically build and modify mobile apps.
-
-**Example MCP integration:**
-
-```json
-{
-  "mcpServers": {
-    "bilt": {
-      "transport": {
-        "type": "sse",
-        "url": "https://mcp.bilt.me/mcp/sse",
-        "headers": {
-          "Authorization": "Bearer YOUR_API_KEY"
-        }
-      }
-    }
-  }
-}
+```bash
+npm run typecheck
+npm test
 ```
 
-Read more:
+## Web preview (GitHub Pages)
 
-- [Bilt MCP Documentation](https://bilt.me/docs)
-- [MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.buildingapplications%2Fmcp/versions/latest)
+```bash
+npm run build:pages
+npm run preview:pages
+```
 
-## Need help?
+`build:pages` exports the app under `/wealthline/app/`, adds the PWA service worker, and assembles the iPhone-frame presentation shell at `/wealthline/` with a QR and the commit id. `preview:pages` serves that exact artifact locally with Pages-like 404 behaviour.
 
-- 📚 [Bilt Documentation](https://bilt.me/docs)
-- 💬 [Discord Community](https://discord.gg/3FqNgmSYdZ)
-- 🐦 [Twitter Updates](https://twitter.com/biltmeanapp)
-- 📧 Email: support@bilt.me
+A **web preview QR** (opens a browser, not Expo Go):
 
----
+```bash
+npm run preview:qr -- --url https://haseebahmad1521-alt.github.io/wealthline/
+```
 
-<div align="center">
+Images go to `preview-artifacts/`. A QR for `localhost` won't work from a phone; use your LAN IP or a tunnel.
 
-**Built by AI. No code required.** ✨
+Deployment is automatic on push to `main` or `rebuild` (`.github/workflows/pages.yml`). One-time repository setup: Settings → Pages → Source: GitHub Actions, and repository variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Pages on a private repository needs a paid GitHub plan.
 
-[Try Bilt](https://bilt.me) • [View Docs](https://bilt.me/docs) • [Docs MCP Server](https://bilt.me/docs/mcp)
+Nested routes on Pages are recovered by `404.html` (the first response is an HTTP 404; GitHub Pages has no server rewrites).
 
-</div>
+## Importing the old Bilt data
+
+Fill `BILT_URL` and `BILT_ANON_KEY` in `.env`, then:
+
+```bash
+npm run import:bilt
+```
+
+It writes `supabase/import/bilt-import.sql` (git-ignored until reviewed) and prints counts, including the estimate/computed split to confirm.

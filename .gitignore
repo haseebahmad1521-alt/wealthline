@@ -54,6 +54,7 @@ _project_metadata.jsonl
 # local env (public client config lives in .env.local; see .env.example)
 .env
 .env.local
+.env.*.local
 
 # Claude Code: per-machine settings and the Impeccable engine binary
 # (re-downloaded on first run; reinstall with `npx impeccable install`)
@@ -62,3 +63,6 @@ _project_metadata.jsonl
 
 # generated preview artifacts
 preview-artifacts/
+.kotlin/
+pages-dist/
+supabase/import/bilt-import.sql
