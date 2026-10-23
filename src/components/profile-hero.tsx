@@ -1,17 +1,15 @@
-import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
-import { useHeaderHeight } from 'expo-router/react-navigation';
 import * as WebBrowser from 'expo-web-browser';
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { Icon, icons, minTouch } from '@/components/ui';
+import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
-import { color, desktopBreakpoint, font, radius, space, type } from '@/theme';
+import { color, desktopBreakpoint, font, radius, shadow, space, type } from '@/theme';
 
 /**
- * Photographic hero with the slim identity band along its top edge, directly under the
- * (transparent) navigation bar. Frosted on iOS/web; a near-solid tint where blur is unavailable,
- * so the name stays readable over any photograph.
+ * Frosted hero: the portrait itself, heavily blurred, gives each profile its own colour field;
+ * the crisp portrait sits on the left with the identity to its right.
+ * All hero text uses the primary colour, which stays ≥ 4.5:1 over the frost on any photograph.
  */
 export function ProfileHero({
   person,
@@ -24,43 +22,33 @@ export function ProfileHero({
   onToggleWatch: () => void;
   watchPending: boolean;
 }) {
-  const { width } = useWindowDimensions();
-  const desktop = width >= desktopBreakpoint;
-  const headerHeight = useHeaderHeight();
-  const height = desktop ? 460 : Math.min(Math.round(width * 1.15), 560);
-  const identity = [person.rank ? `No. ${person.rank}` : null, person.main_source, person.citizenship]
-    .filter(Boolean)
-    .join(' · ');
-  // Android's BlurView is costly and inconsistent; use the solid fallback there.
-  const blur = Platform.OS !== 'android';
+  const desktop = useWindowDimensions().width >= desktopBreakpoint;
+  const size = desktop ? 152 : 88;
+  const identity = [person.rank ? `No. ${person.rank}` : null, person.main_source].filter(Boolean).join(' · ');
 
   return (
-    <View style={[styles.hero, { height: height + headerHeight }, desktop && styles.heroDesktop]}>
-      {person.portrait_url ? (
+    <View style={[styles.hero, desktop && styles.heroDesktop]}>
+      {person.portrait_url && (
         <Image
           source={person.portrait_url}
-          style={StyleSheet.absoluteFill}
+          style={styles.bg}
           contentFit="cover"
-          contentPosition="top"
-          transition={200}
-          accessibilityLabel={`Portrait of ${person.name}`}
+          blurRadius={desktop ? 80 : 50}
+          accessible={false}
         />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.noPhoto]} />
       )}
+      <View style={[StyleSheet.absoluteFill, styles.frost]} />
 
-      <View style={[styles.band, { top: headerHeight }]}>
-        {blur && <BlurView intensity={40} tint="systemChromeMaterialLight" style={StyleSheet.absoluteFill} />}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: blur ? 'rgba(251,251,253,0.62)' : 'rgba(251,251,253,0.94)' }]} />
-        <View style={styles.bandText}>
-          <Text accessibilityRole="header" style={styles.name} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+      <View style={styles.row}>
+        <View style={[styles.portrait, { width: size, height: size }]}>
+          <Portrait uri={person.portrait_url} name={person.name} size={size} rounded={desktop ? 32 : 22} />
+        </View>
+        <View style={[styles.identity, styles.clearStar]}>
+          <Text accessibilityRole="header" style={[styles.name, desktop && styles.nameDesktop]}>
             {person.name}
           </Text>
-          {!!identity && (
-            <Text style={styles.identity} numberOfLines={1}>
-              {identity}
-            </Text>
-          )}
+          {!!identity && <Text style={styles.meta} numberOfLines={2}>{identity}</Text>}
+          {!!person.citizenship && <Text style={styles.meta} numberOfLines={1}>{person.citizenship}</Text>}
         </View>
         <Pressable
           accessibilityRole="button"
@@ -83,7 +71,7 @@ export function ProfileHero({
           <Text style={styles.creditText} numberOfLines={1}>
             Photo: {person.portrait_author} · {person.portrait_license}
           </Text>
-          <Icon name={icons.link} size={11} tint="#FFFFFF" />
+          <Icon name={icons.link} size={11} tint={styles.creditText.color} />
         </Pressable>
       )}
     </View>
@@ -91,38 +79,29 @@ export function ProfileHero({
 }
 
 const styles = StyleSheet.create({
-  hero: { overflow: 'hidden', backgroundColor: color.fill, marginHorizontal: -space.md, marginTop: -space.md },
-  heroDesktop: { marginHorizontal: 0, marginTop: 0, borderRadius: radius.lg },
-  noPhoto: { backgroundColor: color.fill },
-  band: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: space.md,
-    paddingRight: space.xs,
+  hero: {
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: color.fill,
+    paddingHorizontal: space.md,
+    paddingTop: space.lg,
+    paddingBottom: space.sm,
+    gap: space.md,
+    ...shadow,
   },
-  bandText: { flex: 1, minWidth: 0, paddingVertical: space.sm },
-  name: { fontFamily: font.bold, fontSize: 20, lineHeight: 24, letterSpacing: -0.5, color: color.text },
-  identity: { ...type.caption, color: color.textSecondary },
-  watch: { width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
-  credit: {
-    position: 'absolute',
-    right: space.sm,
-    bottom: space.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    maxWidth: '80%',
-    minHeight: 28,
-    paddingHorizontal: 10,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(29,29,31,0.55)',
-  },
-  creditText: { fontFamily: font.medium, fontSize: 11, color: '#FFFFFF' },
+  heroDesktop: { paddingHorizontal: space.xl, paddingTop: space.xl },
+  // Oversized so the blur's soft edges fall outside the rounded card.
+  bg: { position: 'absolute', top: '-25%', left: '-25%', width: '150%', height: '150%' },
+  // 50% frost keeps the photo's colour; worst case (near-black photo) still gives #1D1D1F ≥ 4.5:1.
+  frost: { backgroundColor: 'rgba(251,251,253,0.5)' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  portrait: { borderRadius: 32, ...shadow, shadowOpacity: 0.16 },
+  identity: { flex: 1, minWidth: 0, gap: 4 },
+  name: { ...type.title, fontSize: 24, lineHeight: 28, letterSpacing: -0.6, color: color.text },
+  nameDesktop: { ...type.display },
+  meta: { ...type.caption, fontSize: 15, lineHeight: 20, color: color.text },
+  watch: { position: 'absolute', top: -space.sm, right: -space.sm, width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
+  clearStar: { paddingRight: minTouch - space.sm },
+  credit: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', minHeight: 28 },
+  creditText: { fontFamily: font.medium, fontSize: 12, color: color.text },
 });

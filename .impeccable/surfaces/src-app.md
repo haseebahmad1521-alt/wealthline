@@ -15,11 +15,11 @@ Audience/job: casual-first followers check who is where and how they are moving;
 
 THESIS: Every number tells you where it came from. Refuses the category default of an anonymous spreadsheet of totals and a decorative "live" ticker.
 
-OWN-WORLD: Owner-pinned minimal Apple foundation: #FBFBFD ground, white 20–28px surfaces with soft offset shadows, Inter tightly tracked, #1D1D1F / #6E6E73 text, single action blue #0071E3, gain #1E7B45 / loss #B42318 always with a drawn direction icon. Profiles go photographic and bolder: full-bleed portrait hero.
+OWN-WORLD: Owner-pinned minimal Apple foundation: #FBFBFD ground, white 20–28px surfaces with soft offset shadows, Inter tightly tracked, #1D1D1F / #6E6E73 text, single action blue #0071E3, gain #1E7B45 / loss #B42318 always with a drawn direction icon. Profiles go photographic and bolder: hero coloured by the blurred portrait itself.
 
 STORY: The visitor sees the ranking, opens a person, reads one honest headline value with its provenance chip (Observed · Projected · Estimate as of date), scrubs the chart, and saves the person to a private watchlist.
 
-FIRST VIEWPORT: Rankings: large title "Rankings." then ranked rows (rank, portrait, name, source, value, change). Profile: portrait hero with a slim frosted identity band along its top edge under the nav bar; below, the headline value with provenance chip, then the interactive chart with 3H default and observed/projected styling.
+FIRST VIEWPORT: Rankings: large title "Rankings." then ranked rows (rank, portrait, name, source, value, change). Profile: rounded hero card on the blurred, frosted portrait (each profile's own colour field), crisp portrait tile left, name and identity right, star top-right; below, the headline value with provenance chip, then the interactive chart with 3H default and observed/projected styling.
 
 FORM: Native shells per OS (iOS tab bar + stack; Android Material nav bar; web top nav on desktop, bottom tabs on mobile). Signature move: the provenance chip plus dashed, labeled projection segment. seed: none (unavailable)
 

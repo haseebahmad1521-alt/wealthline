@@ -41,6 +41,8 @@ Use the public Impeccable guidance for accessibility, visual hierarchy, native i
 
 ### Required profile-header change
 
+> **Superseded (owner, Oct 24, 2026):** Profile hero (owner revision, Oct 24, 2026): a rounded hero card whose background is the portrait itself, heavily blurred and lightly frosted so each profile takes its photo's colours; the crisp portrait sits on the left with name and identity to its right; no banner over a full-bleed photo. Then net worth and change, chart, supporting info and projects. Full-bleed Wikimedia photos read poorly as heroes; the blur turns any photo into a clean colour field. The original request below is kept for history.
+
 The owner requests the identity header at the **very top of the profile**, with the name and essential identity information in a **slim header over the hero picture**. This is planned, not yet implemented in this handoff.
 
 A lightly tinted frosted-glass treatment may improve readability. Keep the portrait visible, provide a readable translucent/solid fallback, and check contrast against every photograph. Avoid an oversized floating identity card.

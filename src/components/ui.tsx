@@ -156,18 +156,19 @@ export function Button({
   );
 }
 
-export function Portrait({ uri, name, size }: { uri: string | null; name: string; size: number }) {
+export function Portrait({ uri, name, size, rounded }: { uri: string | null; name: string; size: number; rounded?: number }) {
+  const r = rounded ?? size / 2;
   const initials = name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('');
   return uri ? (
     <Image
       source={uri}
-      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color.fill }}
+      style={{ width: size, height: size, borderRadius: r, backgroundColor: color.fill }}
       contentFit="cover"
       contentPosition="top"
       accessibilityLabel={`Portrait of ${name}`}
     />
   ) : (
-    <View style={[styles.initials, { width: size, height: size, borderRadius: size / 2 }]}>
+    <View style={[styles.initials, { width: size, height: size, borderRadius: r }]}>
       <Text style={[type.headline, { color: color.textSecondary, fontSize: size * 0.36 }]}>{initials}</Text>
     </View>
   );

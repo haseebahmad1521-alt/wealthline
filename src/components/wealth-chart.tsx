@@ -181,7 +181,7 @@ export function WealthChart({ points, live, now }: Props) {
         style={styles.plot}>
         {width > 0 && (
           <Svg width={width} height={HEIGHT}>
-            {[0.25, 0.5, 0.75].map((f) => (
+            {(inWindow.length > 0 || proj) && [0.25, 0.5, 0.75].map((f) => (
               <Line
                 key={f}
                 x1={PAD.left}

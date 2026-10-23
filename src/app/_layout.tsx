@@ -39,7 +39,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="person/[slug]"
-          options={{ headerTransparent: true, title: '', headerLeft: (p) =>
+          options={{ title: '', headerLeft: (p) =>
             // Native keeps the system back button (and edge swipe); web has none, so it gets ours.
             Platform.OS === 'web' || !p.canGoBack ? <HeaderLink label={p.canGoBack ? 'Back' : 'Rankings'} /> : undefined,
         }}
