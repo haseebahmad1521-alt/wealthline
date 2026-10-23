@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // Wealthline design tokens (owner spec in CLAUDE.md "Visual direction").
 export const color = {
   bg: '#FBFBFD',
@@ -12,12 +14,14 @@ export const color = {
   projected: '#6E6E73',
 } as const;
 
+// Web gets a sans fallback so text never flashes in the browser's default serif while Inter loads.
+const face = (name: string) => (Platform.OS === 'web' ? `${name}, -apple-system, system-ui, sans-serif` : name);
 export const font = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semibold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
-} as const;
+  regular: face('Inter_400Regular'),
+  medium: face('Inter_500Medium'),
+  semibold: face('Inter_600SemiBold'),
+  bold: face('Inter_700Bold'),
+};
 
 export const space = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 } as const;
 export const radius = { sm: 12, md: 20, lg: 28, pill: 999 } as const;

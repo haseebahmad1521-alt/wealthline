@@ -5,33 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Wealthline preview</title>
 <meta name="description" content="Browser preview of the Wealthline app. React Native Web, not a native iOS render." />
-<meta name="theme-color" content="#FBFBFD" />
+<meta name="color-scheme" content="dark light" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)" />
 <link rel="icon" type="image/svg+xml" href="app/icons/wealthline.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  :root { --bg: #FBFBFD; --text: #1D1D1F; --muted: #6E6E73; --blue: #0071E3; }
+  /* Dark by default; follows the system when it asks for light. */
+  :root { --bg: #000; --surface: #1C1C1E; --text: #F5F5F7; --muted: #A1A1A6; --blue: #2997FF; --btn: #0071E3; --rim: #48484A; --glow: rgba(0,0,0,.6); }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #FBFBFD; --surface: #FFFFFF; --text: #1D1D1F; --muted: #6E6E73; --blue: #0071E3; --rim: #3A3A3C; --glow: rgba(0,0,0,.18); }
+  }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 16px/1.5 Inter, -apple-system, system-ui, sans-serif; }
+  ::selection { background: rgba(41,151,255,.3); }
   main { max-width: 1120px; margin: 0 auto; padding: 48px 24px; display: flex; flex-wrap: wrap; gap: 64px; align-items: center; justify-content: center; }
   h1 { font-size: 48px; line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 16px; }
   .info { flex: 1 1 320px; max-width: 420px; }
   p { color: var(--muted); margin: 0 0 16px; }
-  .btn { display: inline-block; background: var(--blue); color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 980px; }
+  .btn { display: inline-block; background: var(--btn); color: #fff; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 980px; }
   .btn:hover { background: #0077ED; }
   a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
-  .qr { display: flex; gap: 16px; align-items: center; margin: 32px 0; padding: 16px; background: #fff; border-radius: 24px; box-shadow: 0 2px 16px rgba(0,0,0,.06); }
-  .qr img { width: 112px; height: 112px; flex: none; }
+  .qr { display: flex; gap: 16px; align-items: center; margin: 32px 0; padding: 16px; background: var(--surface); border-radius: 24px; box-shadow: 0 2px 16px rgba(0,0,0,.06); }
+  /* QR stays dark-on-white in every theme so cameras can read it. */
+  .qr img { width: 112px; height: 112px; flex: none; padding: 6px; background: #fff; border-radius: 12px; }
   .qr p { margin: 0; font-size: 14px; }
+  .qr strong { color: var(--text); }
   .meta { font-size: 14px; }
   .meta a { color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  /* Presentation-only phone: 390x844 screen inside a bezel. */
-  .phone { position: relative; flex: none; padding: 44px 14px 28px; border-radius: 64px; background: #1D1D1F; box-shadow: 0 0 0 2px #3a3a3c inset, 0 24px 64px rgba(0,0,0,.18); }
-  .screen { width: 390px; height: 844px; border-radius: 36px; overflow: hidden; background: var(--bg); }
-  .screen iframe { display: block; width: 100%; height: 100%; border: 0; }
-  /* Dynamic Island: decorative, sits in the top bezel, above the screen, never receives pointer events. */
-  .island { position: absolute; top: 8px; left: 50%; width: 110px; height: 28px; margin-left: -55px; border-radius: 20px; background: #000; pointer-events: none; }
+
+  /* Presentation-only iPhone: thin even bezel; the island and status bar live on the screen.
+     The app iframe fills the space between the status bar and the home indicator, like a real safe area. */
+  .phone { flex: none; padding: 12px; border-radius: 68px; background: #0A0A0B; box-shadow: 0 0 0 2px var(--rim), 0 0 0 1px rgba(255,255,255,.06) inset, 0 32px 80px var(--glow); }
+  .screen { position: relative; width: 390px; height: 844px; border-radius: 56px; overflow: hidden; background: #FBFBFD; display: flex; flex-direction: column; }
+  .status { flex: none; height: 54px; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 44px; color: #1D1D1F; font: 600 17px/1 Inter, -apple-system, system-ui, sans-serif; letter-spacing: -0.02em; }
+  .status svg { display: block; }
+  .status .sys { display: flex; gap: 6px; align-items: center; }
+  .island { position: absolute; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: #000; }
+  .screen iframe { flex: 1; display: block; width: 100%; border: 0; }
+  .home { flex: none; height: 34px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
+  .home span { width: 134px; height: 5px; border-radius: 3px; background: #1D1D1F; }
+  .status, .home { pointer-events: none; user-select: none; }
   @media (max-width: 699px) {
     main { padding: 32px 16px; gap: 24px; }
     h1 { font-size: 36px; }
@@ -54,8 +70,19 @@
     <p class="meta">Deployed from commit <a href="{{COMMIT_URL}}">{{COMMIT}}</a></p>
   </section>
   <div class="phone">
-    <div class="screen"><iframe id="app" title="Wealthline app preview" data-src="./app/" allow="clipboard-write"></iframe></div>
-    <div class="island" aria-hidden="true"></div>
+    <div class="screen">
+      <div class="status" aria-hidden="true">
+        <span>9:41</span>
+        <div class="island"></div>
+        <div class="sys">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="#1D1D1F"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="#1D1D1F"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .4 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2Zm0 3.6c1.4 0 2.7.5 3.7 1.5L13 6a7 7 0 0 0-10 0l1.3 1.3c1-1 2.3-1.5 3.7-1.5Zm0 3.6c-.5 0-1 .2-1.3.5L8 11.2l1.3-1.3c-.3-.3-.8-.5-1.3-.5Z"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#1D1D1F" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#1D1D1F"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill="#1D1D1F" opacity=".4"/></svg>
+        </div>
+      </div>
+      <iframe id="app" title="Wealthline app preview" data-src="./app/" allow="clipboard-write"></iframe>
+      <div class="home" aria-hidden="true"><span></span></div>
+    </div>
   </div>
 </main>
 <script>
