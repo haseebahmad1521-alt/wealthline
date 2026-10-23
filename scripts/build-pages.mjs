@@ -18,6 +18,11 @@ run('npx', ['expo', 'export', '-p', 'web'], { EXPO_BASE_URL: appBase });
 // Prefix the template's root-relative URLs with the app base and register the service worker (production only).
 const sw = `<script>
       if ('serviceWorker' in navigator) {
+        // A new deploy's worker takes over (skipWaiting/clientsClaim); reload once so nobody keeps the old build.
+        var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (hadController && !reloaded) { reloaded = true; location.reload(); }
+        });
         addEventListener('load', function () {
           navigator.serviceWorker.register('${appBase}/sw.js', { scope: '${appBase}/' }).catch(function () {});
         });

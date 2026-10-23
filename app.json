@@ -17,7 +17,7 @@
     "android": {
       "package": "com.haseebahmad.wealthline",
       "adaptiveIcon": {
-        "backgroundColor": "#FBFBFD",
+        "backgroundColor": "#0071E3",
         "foregroundImage": "./assets/images/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false

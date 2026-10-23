@@ -76,8 +76,8 @@ export function Body({ children, secondary, style }: { children: ReactNode; seco
   return <Text style={[type.body, { color: secondary ? color.textSecondary : color.text }, style]}>{children}</Text>;
 }
 
-export function Caption({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[type.caption, { color: color.textSecondary }, style]}>{children}</Text>;
+export function Caption({ children, style, numberOfLines }: { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number }) {
+  return <Text numberOfLines={numberOfLines} style={[type.caption, { color: color.textSecondary }, style]}>{children}</Text>;
 }
 
 export function Surface({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -85,7 +85,8 @@ export function Surface({ children, style }: { children: ReactNode; style?: Styl
 }
 
 /** Change with a drawn direction icon and a spoken direction; color is never the only signal. */
-export function Change({ delta, base, size = 15 }: { delta: number; base: number; size?: number }) {
+/** `compact` shows only the percentage (narrow lists); the spoken label always carries both. */
+export function Change({ delta, base, size = 15, compact }: { delta: number; base: number; size?: number; compact?: boolean }) {
   const d = direction(delta);
   const tint = delta > 0 ? color.gain : delta < 0 ? color.loss : color.textSecondary;
   return (
@@ -95,7 +96,7 @@ export function Change({ delta, base, size = 15 }: { delta: number; base: number
       accessibilityLabel={`${d.word} ${usd(Math.abs(delta))}, ${percent(delta, base)}`}>
       <Icon name={delta > 0 ? icons.up : delta < 0 ? icons.down : icons.flat} size={size + 3} tint={tint} />
       <Text style={[type.number, { color: tint, fontSize: size }]}>
-        {usd(Math.abs(delta))} · {percent(delta, base)}
+        {compact ? percent(delta, base) : `${usd(Math.abs(delta))} · ${percent(delta, base)}`}
       </Text>
     </View>
   );
