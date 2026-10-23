@@ -25,7 +25,10 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
         accessibilityRole="link"
         accessibilityLabel={label}
         accessibilityHint="Opens profile"
-        style={({ pressed, hovered }: PressableStateCallbackType & { hovered?: boolean }) => [styles.row, (pressed || hovered) && styles.active]}>
+        style={styles.pressable}>
+        {/* Pressed/hover styling lives on an inner view: Link asChild (Slot) drops function styles. */}
+        {({ pressed, hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
+        <View style={[styles.row, (pressed || hovered) && styles.active]}>
         {showRank && (
           <Text style={[type.number, styles.rank]}>{person.rank ?? '—'}</Text>
         )}
@@ -51,6 +54,8 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
           )}
         </View>
         <Icon name={icons.chevron} size={13} tint={color.hairline} />
+        </View>
+        )}
       </Pressable>
     </Link>
   );
@@ -72,6 +77,7 @@ export function PersonList({ people, showRank = true }: { people: Person[]; show
 const styles = StyleSheet.create({
   list: { overflow: 'hidden', paddingVertical: 4 },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline },
+  pressable: { display: 'flex' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

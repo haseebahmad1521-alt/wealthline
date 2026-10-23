@@ -120,7 +120,8 @@ export default function Profile() {
                     <Text style={[type.headline, { color: color.text }]}>{h.company}</Text>
                     <Caption>{[h.ticker, h.role, h.is_private ? 'Private' : null].filter(Boolean).join(' · ')}</Caption>
                   </View>
-                  <Text style={[type.number, { color: color.text }]}>{h.stake_percent}%</Text>
+                  {/* 0 means "not recorded" in the source data, not a 0% stake. */}
+                  {h.stake_percent > 0 && <Text style={[type.number, { color: color.text }]}>{h.stake_percent}%</Text>}
                 </View>
               ))}
             </Surface>

@@ -9,7 +9,7 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Platform, Pressable, Text } from 'react-native';
 
 import { DataProvider } from '@/lib/data';
 import { color, font } from '@/theme';
@@ -39,7 +39,10 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="person/[slug]"
-          options={{ headerTransparent: true, title: '', headerLeft: (p) => (p.canGoBack ? undefined : <HeaderLink label="Rankings" />) }}
+          options={{ headerTransparent: true, title: '', headerLeft: (p) =>
+            // Native keeps the system back button (and edge swipe); web has none, so it gets ours.
+            Platform.OS === 'web' || !p.canGoBack ? <HeaderLink label={p.canGoBack ? 'Back' : 'Rankings'} /> : undefined,
+        }}
         />
         <Stack.Screen
           name="account"

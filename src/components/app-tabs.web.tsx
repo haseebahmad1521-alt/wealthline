@@ -80,13 +80,19 @@ function TabButton({
         {...props}
         accessibilityRole="tab"
         accessibilityState={{ selected: isFocused }}
-        style={({ hovered, pressed }: PressableStateCallbackType & { hovered?: boolean }) => [
-          desktop ? styles.topTab : styles.bottomTab,
-          desktop && isFocused && styles.topTabActive,
-          (hovered || pressed) && !isFocused && styles.hover,
-        ]}>
-        {!desktop && <Icon name={icon} size={24} tint={tint} />}
-        <Text style={[desktop ? styles.topLabel : styles.bottomLabel, { color: tint }]}>{label}</Text>
+        style={desktop ? styles.topTabOuter : styles.bottomTabOuter}>
+        {/* Inner view carries state styling: TabTrigger asChild (Slot) drops function styles. */}
+        {({ hovered, pressed }: PressableStateCallbackType & { hovered?: boolean }) => (
+          <View
+            style={[
+              desktop ? styles.topTab : styles.bottomTab,
+              desktop && isFocused && styles.topTabActive,
+              (hovered || pressed) && !isFocused && styles.hover,
+            ]}>
+            {!desktop && <Icon name={icon} size={24} tint={tint} />}
+            <Text style={[desktop ? styles.topLabel : styles.bottomLabel, { color: tint }]}>{label}</Text>
+          </View>
+        )}
       </Pressable>
     );
   }
@@ -116,6 +122,8 @@ const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginRight: 'auto' },
   logo: { width: 28, height: 28 },
   brandText: { fontFamily: font.bold, fontSize: 17, letterSpacing: -0.4, color: color.text },
+  topTabOuter: {},
+  bottomTabOuter: { flex: 1 },
   topTab: { paddingHorizontal: 14, height: 36, justifyContent: 'center', borderRadius: 18 },
   topTabActive: { backgroundColor: color.fill },
   topLabel: { fontFamily: font.medium, fontSize: 14 },

@@ -144,7 +144,7 @@ export function WealthChart({ points, live, now }: Props) {
       : `${inWindow.length} recorded value${inWindow.length > 1 ? 's' : ''} from ${describe(left)} to ${describe(right)}, ` +
         `${usd(inWindow[0].v)} to ${usd(latest!.v)}${proj ? `, then projected to ${usd(proj.to.v)}` : ''}.`;
 
-  const activePreset = end == null ? presets.find((p) => Math.min(p.span, fullSpan * 1.05) === effSpan)?.label : undefined;
+  const activePreset = end == null ? presets.find((p) => p.span === span)?.label : undefined;
 
   return (
     <View style={styles.wrap}>
