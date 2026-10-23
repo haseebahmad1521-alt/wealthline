@@ -1,66 +1,121 @@
-import { View, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { View } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { colors, money } from '@/lib/wealthline-theme';
-export type ChartPoint = { timestamp: string; net_worth_usd: number };
+import { chartBounds, chartTime, visiblePoints, type ChartProps } from '@/lib/intraday';
+export type { ChartPoint } from '@/lib/intraday';
+
+const { Pinch: createPinch, Pan: createPan } = Gesture;
+const simultaneous = Gesture.Simultaneous.bind(Gesture);
+function path(rows: { x: number; y: number }[]) {
+  return rows.map((d, i) => `${i ? 'L' : 'M'}${d.x},${d.y}`).join(' ');
+}
+
 export default function WealthChart({
   points,
   height = 245,
-}: {
-  points: ChartPoint[];
-  height?: number;
-}) {
-  const { width } = useWindowDimensions();
-  const w = Math.min(width - 72, 1030),
-    h = height - 35;
-  const values = points.map((p) => p.net_worth_usd);
-  const min = Math.min(...values) - 1e10,
-    max = Math.max(...values) + 1e10;
-  const dots = points.map((p, i) => ({
-    timestamp: p.timestamp,
-    x: points.length === 1 ? w / 2 : 10 + (i * (w - 80)) / (points.length - 1),
-    y: 15 + (1 - (p.net_worth_usd - min) / (max - min)) * (h - 25),
+  domain,
+  projectedAfter,
+  onZoom,
+  onPan,
+}: ChartProps) {
+  const [width, setWidth] = useState(300);
+  const plotWidth = Math.max(100, width - (domain ? 96 : 82));
+  const plotHeight = height - 50;
+  const visible = visiblePoints(points, domain);
+  const { min, max } = chartBounds(visible);
+  const from = domain?.[0] ?? Date.parse(points[0]?.timestamp ?? new Date().toISOString());
+  const to = domain?.[1] ?? Date.parse(points.at(-1)?.timestamp ?? new Date().toISOString());
+  const span = Math.max(1, to - from);
+  const dots = visible.map((p) => ({
+    time: Date.parse(p.timestamp),
+    x: 4 + ((Date.parse(p.timestamp) - from) / span) * plotWidth,
+    y: 14 + ((max - p.net_worth_usd) / (max - min)) * plotHeight,
   }));
-  return (
-    <View style={{ height }}>
+  const observed = dots.filter((d) => projectedAfter == null || d.time <= projectedAfter);
+  const projected = dots.filter((d) => projectedAfter != null && d.time >= projectedAfter);
+  const pinch = createPinch()
+    .enabled(!!onZoom)
+    .runOnJS(true)
+    .onChange((event) => onZoom?.(1 / event.scaleChange));
+  const pan = createPan()
+    .enabled(!!onPan)
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-18, 18])
+    .runOnJS(true)
+    .onChange((event) => onPan?.(event.changeX / plotWidth));
+  const chart = (
+    <View style={{ height }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <Svg
         width="100%"
         height={height}
-        viewBox={`0 0 ${w} ${height}`}
-        accessibilityLabel="Recorded net worth history"
+        viewBox={`0 0 ${width} ${height}`}
+        accessibilityLabel={
+          domain
+            ? 'Intraday estimate chart. Pinch to zoom, drag sideways to explore history.'
+            : 'Recorded net worth history'
+        }
       >
         {[0, 1, 2, 3].map((i) => (
           <Line
             key={i}
             x1={0}
-            x2={w - 55}
-            y1={15 + (i * (h - 25)) / 3}
-            y2={15 + (i * (h - 25)) / 3}
+            x2={plotWidth + 4}
+            y1={14 + (i * plotHeight) / 3}
+            y2={14 + (i * plotHeight) / 3}
             stroke={colors.border}
             strokeDasharray="3 5"
           />
         ))}
-        <Path
-          d={dots.map((d, i) => `${i ? 'L' : 'M'}${d.x},${d.y}`).join(' ')}
-          stroke={colors.blue}
-          strokeWidth={2.6}
-          fill="none"
-        />
-        {dots.length < 3 &&
-          dots.map((d) => <Circle key={d.timestamp} cx={d.x} cy={d.y} r={4} fill={colors.blue} />)}
+        <Path d={path(observed)} stroke={colors.blue} strokeWidth={2.6} fill="none" />
+        {!!projected.length && (
+          <Path
+            d={path(projected)}
+            stroke={colors.projection}
+            strokeWidth={2.4}
+            strokeDasharray="5 4"
+            fill="none"
+          />
+        )}
+        {observed.length < 3 &&
+          observed.map((d) => <Circle key={d.time} cx={d.x} cy={d.y} r={3} fill={colors.blue} />)}
         {[0, 1, 2, 3].map((i) => (
-          <SvgText key={i} x={w - 48} y={20 + (i * (h - 25)) / 3} fontSize={11} fill={colors.muted}>
-            {money(max - ((max - min) * i) / 3)}
+          <SvgText
+            key={i}
+            x={plotWidth + 12}
+            y={19 + (i * plotHeight) / 3}
+            fontSize={11}
+            fill={colors.muted}
+          >
+            {domain
+              ? `$${((max - ((max - min) * i) / 3) / 1e9).toFixed(span <= 60_000 ? 6 : 3)}B`
+              : money(max - ((max - min) * i) / 3)}
           </SvgText>
         ))}
-        {points.length > 0 && (
-          <SvgText x={5} y={height - 5} fontSize={11} fill={colors.muted}>
-            {new Date(points[0].timestamp).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            })}
+        {[0, 1, 2].map((i) => (
+          <SvgText
+            key={i}
+            x={4 + (i * plotWidth) / 2}
+            y={height - 5}
+            textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}
+            fontSize={11}
+            fill={colors.muted}
+          >
+            {domain
+              ? chartTime(from + (span * i) / 2, span)
+              : new Date(from + (span * i) / 2).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
           </SvgText>
-        )}
+        ))}
       </Svg>
     </View>
+  );
+  return domain ? (
+    <GestureDetector gesture={simultaneous(pinch, pan)}>{chart}</GestureDetector>
+  ) : (
+    chart
   );
 }

@@ -11,6 +11,11 @@ export const colors = {
   amber: '#805900',
   amberSoft: '#FFF5D6',
   greenSoft: '#EDF7F0',
+  hero: '#DCE9FF',
+  heroInk: '#153767',
+  heroMuted: '#365785',
+  heroPhoto: '#C2D6F2',
+  projection: '#805900',
 };
 export const fonts = {
   regular: 'Inter_400Regular',

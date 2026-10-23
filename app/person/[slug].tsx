@@ -6,17 +6,16 @@ import { usePeople, useProjects, type Person } from '@/lib/wealthline';
 import {
   Page,
   Type,
-  Avatar,
-  FortuneCard,
   SectionTitle,
   Panel,
   Empty,
   DataState,
   ProjectCard,
-  FollowButton,
   Stamp,
 } from '@/components/wealthline-ui';
 import { colors, money } from '@/lib/wealthline-theme';
+import ProfileHero from '@/components/ProfileHero';
+import IntradayFortune from '@/components/IntradayFortune';
 export default function Profile() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const people = usePeople();
@@ -80,51 +79,8 @@ function ProfileContent({ person }: { person: Person }) {
           <Type style={{ color: colors.blue, fontSize: 12 }}>All people</Type>
         </Link>
       </View>
-      <View style={{ paddingTop: 30, paddingBottom: 35, gap: 25 }}>
-        <View
-          style={{
-            flexDirection: width >= 600 ? 'row' : 'column',
-            gap: 20,
-            alignItems: width >= 600 ? 'center' : 'flex-start',
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: width >= 800 ? 20 : 14,
-              alignItems: 'center',
-              width: width >= 600 ? undefined : '100%',
-              flex: width >= 600 ? 1 : undefined,
-            }}
-          >
-            <Avatar name={person.name!} size={width >= 800 ? 76 : 52} />
-            <View style={{ flex: 1 }}>
-              <Type
-                weight="bold"
-                style={{
-                  fontSize: width >= 800 ? 56 : 34,
-                  lineHeight: width >= 800 ? 66 : 42,
-                  letterSpacing: -1.5,
-                }}
-              >
-                {person.name}
-              </Type>
-              <Type style={{ color: colors.muted, fontSize: 13 }}>
-                Rank #{person.rank} · {person.main_source}
-              </Type>
-              <Stamp at={person.updated_at} />
-            </View>
-          </View>
-          <FollowButton person={person} />
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 22 }}>
-          {person.age != null && <Type style={{ color: colors.muted }}>Age {person.age}</Type>}
-          {!!person.residence && <Type style={{ color: colors.muted }}>{person.residence}</Type>}
-          {!!person.citizenship && (
-            <Type style={{ color: colors.muted }}>{person.citizenship}</Type>
-          )}
-        </View>
-        {!!person.bio && <Type style={{ maxWidth: 740, lineHeight: 25 }}>{person.bio}</Type>}
+      <ProfileHero key={person.slug} person={person} />
+      <View style={{ paddingBottom: 22 }}>
         <Type
           style={{
             fontSize: 11,
@@ -145,7 +101,7 @@ function ProfileContent({ person }: { person: Person }) {
             : 'Rank history begins October 1, 2026.'}
         </Type>
       </View>
-      <FortuneCard person={person} profile />
+      <IntradayFortune key={person.id} person={person} />
       <SectionTitle>Why it moved.</SectionTitle>
       <Panel style={{ padding: 28, gap: 10 }}>
         <Type weight="semibold" style={{ fontSize: 20 }}>

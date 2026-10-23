@@ -135,9 +135,10 @@ export function useWatchlist() {
   return { ...query, toggle, pending, actionError: error };
 }
 export type ChartRange = '1D' | '1M' | 'YTD' | 'All';
-export function useHistory(person: Person, range: ChartRange) {
+export function useHistory(person: Person, range: ChartRange, enabled = true) {
   return useQuery({
     queryKey: ['history', person.id, range, person.asOf],
+    enabled,
     queryFn: async () => {
       const end = new Date(person.asOf ?? person.updated_at);
       const start = new Date(end);
