@@ -62,3 +62,17 @@ export type Project = {
 };
 
 export type LifeEvent = { id: string; person_id: string; date: string; text: string };
+
+export type BriefItem = {
+  id: string;
+  brief_id: string;
+  person_id: string | null;
+  position: number;
+  title: string;
+  note: string;
+  source_name: string;
+  source_url: string;
+  published_at: string | null;
+};
+
+export type Brief = { id: string; brief_date: string; headline: string; model: string; brief_items: BriefItem[] };

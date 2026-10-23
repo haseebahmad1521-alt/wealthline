@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { db, supabase } from './supabase';
-import type { Holding, LifeEvent, NetWorthValue, PersonRow, Project, Summary } from './types';
+import type { Brief, BriefItem, Holding, LifeEvent, NetWorthValue, PersonRow, Project, Summary } from './types';
 
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -180,3 +180,38 @@ export function useWatchlist() {
 
   return { ...query, ids: query.data ?? [], toggle, pending, actionError: error, signedIn: !!userId };
 }
+
+// Latest daily brief (optional Claude feature): null when none has been generated.
+export const useLatestBrief = () =>
+  useQuery({
+    queryKey: ['brief', 'latest'],
+    queryFn: async () => {
+      const r = await db()
+        .from('briefs')
+        .select('*, brief_items(*)')
+        .order('brief_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (r.error) throw r.error;
+      const brief = r.data as Brief | null;
+      brief?.brief_items.sort((a, b) => a.position - b.position);
+      return brief;
+    },
+  });
+
+// A person's news history across every daily brief, newest first.
+export const usePersonNews = (personId?: string) =>
+  useQuery({
+    queryKey: ['news', personId],
+    enabled: !!personId,
+    queryFn: async () => {
+      const r = await db()
+        .from('brief_items')
+        .select('*')
+        .eq('person_id', personId!)
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .limit(20);
+      if (r.error) throw r.error;
+      return r.data as BriefItem[];
+    },
+  });

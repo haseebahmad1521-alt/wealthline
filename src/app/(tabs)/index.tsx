@@ -1,11 +1,13 @@
 import { View } from 'react-native';
 
+import { BriefCard } from '@/components/news';
 import { PersonList as List } from '@/components/person-row';
 import { Body, Heading, Screen, StateView } from '@/components/ui';
-import { usePeople } from '@/lib/data';
+import { useLatestBrief, usePeople } from '@/lib/data';
 
 export default function Rankings() {
   const people = usePeople();
+  const brief = useLatestBrief();
   const ranked = people.data?.filter((p) => p.rank != null) ?? [];
   const pending = people.data?.filter((p) => p.rank == null) ?? [];
 
@@ -22,6 +24,7 @@ export default function Rankings() {
       ) : (
         <>
           {ranked.length > 0 && <List people={ranked} />}
+          <BriefCard brief={brief.data} people={people.data ?? []} />
           {pending.length > 0 && (
             <>
               <Heading level={2}>Awaiting estimates.</Heading>

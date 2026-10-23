@@ -3,10 +3,11 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { NewsList, newsDisclosure } from '@/components/news';
 import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { WealthChart } from '@/components/wealth-chart';
-import { useEvents, useHoldings, usePerson, useProjects, useValues, useWatchlist } from '@/lib/data';
+import { useEvents, useHoldings, usePerson, usePersonNews, useProjects, useValues, useWatchlist } from '@/lib/data';
 import { formatDate, usd } from '@/lib/format';
 import { live as computeLive } from '@/lib/live';
 import { color, desktopBreakpoint, space, type } from '@/theme';
@@ -19,6 +20,7 @@ export default function Profile() {
   const holdings = useHoldings(p?.id);
   const events = useEvents(p?.id);
   const projects = useProjects();
+  const news = usePersonNews(p?.id);
   const watch = useWatchlist();
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
 
@@ -153,6 +155,14 @@ export default function Profile() {
               </Pressable>
             ))}
           </Surface>
+        </>
+      )}
+
+      {!!news.data?.length && (
+        <>
+          <Heading level={2}>In the news.</Heading>
+          <Caption>{newsDisclosure}</Caption>
+          <NewsList items={news.data} />
         </>
       )}
 
