@@ -19,7 +19,7 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 - **Honest live movement.** Values move with markets, and the app always says whether a number is observed, interpolated, projected, or stale. Smooth animation is never presented as market data.
 - **Editorial profiles.** Photographic, modern, slightly playful profiles rather than spreadsheet rows.
 - **Projects feed.** Sourced announcements of what these people are building.
-- **Personal watchlist.** Private favorites and saved filters tied to a user account.
+- **Personal watchlist.** Private favorites and saved views tied to a user account.
 
 ## Operating Context
 
@@ -30,6 +30,9 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 ## Capabilities and Constraints
 
 - Rankings, people directory, profiles, history chart with a default three-hour intraday window and smooth zoom/pan from seconds to all-time, projects feed, watchlist, protected admin.
+- Saved views: a signed-in user can save a list view (filter + sort, e.g. "Tech founders, sorted by 1-day change" or "Projects: upcoming only") to their account, private like the watchlist, one tap away.
+- Currency: values are stored and sourced in USD (the default). Users may switch display currency; conversion uses a keyless public reference-rate API (e.g. Frankfurter / ECB daily rates), and a converted figure shows its rate and rate date. Daily rates never make a value look fresher than its source.
+- Language: English only for now.
 - Accounts: email + strong password sign-up with a verification/activation link in a professionally styled email; email one-time code as a second step when signing in on a new device. Google and Apple sign-in are planned for store publication, not now.
 - Backend: Supabase (Postgres + row-level security). Public data world-readable; writes admin-only; watchlists private per user.
 - Target is 20 people; only ten owner-supplied October 1, 2026 estimates exist. Ranks 11–20 stay empty until sourced.
@@ -58,4 +61,4 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 
 ## Accessibility & Inclusion
 
-Direction never conveyed by color alone; screen-reader labels on values and changes; 44pt/48dp touch targets; dynamic type and font scaling; reduced motion; layouts from 320px phones to desktop.
+Standard: WCAG 2.2 AA on web, plus VoiceOver and TalkBack support on native. Direction never conveyed by color alone; screen-reader labels on values and changes; 44pt/48dp touch targets; dynamic type and font scaling; reduced motion; layouts from 320px phones to desktop.
