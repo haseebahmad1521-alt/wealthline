@@ -7,6 +7,13 @@ Apply `migrations/` in order (`npx supabase db push`). `20261024000100_device_au
 `public.verified_sessions`, which only the Edge Functions (service role) can write. A bare password or
 email-OTP session from the public API therefore cannot read or write private data.
 
+## Auth settings as code
+
+`supabase/config.toml` holds the auth settings (site URL, redirect allowlist, email confirmation, 12-char password
+with all character classes, 6-digit codes valid 10 minutes). Push with
+`npx supabase config push --project-ref <ref>` (preview with `config diff`). Branded templates are commented out:
+the free tier rejects template changes until a custom SMTP sender is configured.
+
 ## Dashboard settings (Authentication)
 
 - **Providers > Email**: Confirm email ON. Minimum password length 12; required characters: lowercase, uppercase,
