@@ -63,7 +63,8 @@
     ".expo",
     "node_modules",
     "android/app/build",
-    "uniwind-types.d.ts"
+    "uniwind-types.d.ts",
+    ".claude"
   ],
   "overrides": [
     {

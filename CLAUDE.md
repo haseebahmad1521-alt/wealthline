@@ -114,3 +114,12 @@ GitHub Pages needs explicit handling of repository subpaths, asset URLs, nested 
 ## Completion report
 
 Provide the published preview and direct app URLs, local/native/QR commands, checks actually performed, and remaining blockers. Separate completed code from operational tasks requiring account access, verified financial data, native devices, or deployment permissions.
+
+## Working conventions (Claude Code)
+
+Added at takeover, October 23, 2026. These apply for the life of the project.
+
+- **Model routing.** Opus 5.5 is the lead model: planning, architecture, design decisions, backend/security, data-integrity work, and final review. Delegate well-specified implementation to Sonnet 5.5 subagents and mechanical work (searches, renames, lint/format fixes, log reading) to Haiku 5.5 subagents. Opus reviews delegated output before it is committed.
+- **Impeccable** (`.claude/skills/impeccable`, <https://github.com/pbakaus/impeccable>) is used for all UI work: `/impeccable init` and `document` for context, `shape`/`craft` before building, `audit`/`critique`/`polish` before shipping. Where Impeccable defaults conflict with this file (e.g. it discourages Inter), this file wins.
+- **Ponytail** (plugin `ponytail@ponytail`, <https://github.com/DietrichGebert/ponytail>) is the coding discipline: smallest complete change, reuse existing components/deps first, never cut validation, security, accessibility, or data-loss protection. Use `/ponytail-review` on substantial changes.
+- **Plan of record:** `PLAN.md`. Update its status checkboxes as phases land.

@@ -51,3 +51,14 @@ bun.lockb
 
 _openrouter_comms.jsonl
 _project_metadata.jsonl
+# local env (public client config lives in .env.local; see .env.example)
+.env
+.env.local
+
+# Claude Code: per-machine settings and the Impeccable engine binary
+# (re-downloaded on first run; reinstall with `npx impeccable install`)
+.claude/settings.local.json
+.claude/skills/impeccable/scripts/bin/
+
+# generated preview artifacts
+preview-artifacts/
