@@ -10,6 +10,8 @@
     <link rel="icon" type="image/svg+xml" href="/icons/wealthline.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Wealthline" />
     <!-- GitHub Pages 404.html bounces unknown nested paths to /app/?__route=<path>; restore it before the router boots. -->
     <script>
@@ -32,6 +34,9 @@
         height: 100%;
         flex: 1;
       }
+      /* Feel like an app, not a page: no grey tap flash, no whole-page rubber band, no double-tap delay.
+         Pinch zoom stays enabled (accessibility). */
+      html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
       /* Browser surfaces carry the design: themed focus ring and selection. */
       :focus-visible { outline: 2px solid #0071E3 !important; outline-offset: 2px; }
       ::selection { background: rgba(0, 113, 227, 0.18); }

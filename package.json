@@ -54,7 +54,8 @@
     "build:pages": "node scripts/build-pages.mjs",
     "preview:qr": "node scripts/preview-qr.mjs",
     "preview:pages": "node scripts/serve-pages.mjs",
-    "import:bilt": "node --env-file=.env supabase/import/bilt.mjs"
+    "import:bilt": "node --env-file=.env supabase/import/bilt.mjs",
+    "preview:phone": "node scripts/preview-phone.mjs"
   },
   "private": true,
   "engines": {

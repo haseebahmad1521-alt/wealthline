@@ -1,10 +1,9 @@
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from '@expo-google-fonts/inter';
+// Per-weight imports: the package root would bundle all 18 Inter files (~6 MB).
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -12,6 +11,8 @@ import { useEffect } from 'react';
 import { Platform, Pressable, Text } from 'react-native';
 
 import { DataProvider } from '@/lib/data';
+// Web: capture the browser's install prompt at start-up, before the Account screen exists.
+import '@/lib/install';
 import { color, font } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();

@@ -18,7 +18,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
-        "preview:pages"
+        "preview:phone"
       ],
       "port": 4173
     }

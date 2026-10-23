@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { InstallCard } from '@/components/install-card';
 import { Body, Button, Caption, Heading, Screen, Surface, minTouch } from '@/components/ui';
 import { resetPassword, passwordRules, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
 import { useAuth } from '@/lib/data';
@@ -124,13 +125,16 @@ export default function Account() {
   let content;
   if (session) {
     content = (
-      <Surface style={styles.card}>
-        <Heading level={2}>Signed in.</Heading>
-        <Body>{session.user.email}</Body>
-        <Caption>Signed in on this device</Caption>
-        {isAdmin && <Button label="Open admin" variant="secondary" onPress={() => router.push('/admin')} />}
-        <Button label="Sign out" variant="secondary" onPress={() => void signOut()} />
-      </Surface>
+      <>
+        <Surface style={styles.card}>
+          <Heading level={2}>Signed in.</Heading>
+          <Body>{session.user.email}</Body>
+          <Caption>Signed in on this device</Caption>
+          {isAdmin && <Button label="Open admin" variant="secondary" onPress={() => router.push('/admin')} />}
+          <Button label="Sign out" variant="secondary" onPress={() => void signOut()} />
+        </Surface>
+        <InstallCard />
+      </>
     );
   } else if (step === 'inbox') {
     content = (
