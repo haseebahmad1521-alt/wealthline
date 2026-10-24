@@ -1,47 +1,35 @@
-# Wealthline — build plan
+# Wealthline — plan and status
 
-Plan of record for the from-scratch rebuild (branch `rebuild`) of the former Bilt project. Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. The original Bilt code stays on `main` for reference.
+From-scratch rebuild (branch `rebuild`) of the former Bilt project; the Bilt code stays on `main`.
+Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/README.md`.
 
-Decisions (owner, Oct 24, 2026): build from scratch; new Supabase backend; same repo, new branch; export the existing records from Bilt once; email + strong password sign-up with a verification link, emailed code as second step on new devices, Google/Apple later; platform conventions per OS; native preview through Expo Go on the owner's phone (no Xcode: disk space).
+**Live:** shell https://haseebahmad1521-alt.github.io/wealthline/ · app https://haseebahmad1521-alt.github.io/wealthline/app/
+(auto-deploys on every push to `rebuild`).
 
-## Done
+## Decisions (owner)
 
-- [x] Expo SDK 58 scaffold (React 19.3, RN 0.88, Expo Router, React Compiler), brand icons kept.
-- [x] Supabase schema with provenance on every value (`estimate` / `computed`, source), RLS: public read, admin-only writes, private watchlists.
-- [x] Device-verified auth: `sign-in` / `verify-device` Edge Functions; database only trusts sessions they issued (`session_verified()`), so a bare password or bare OTP session cannot touch private data. Branded email templates.
-- [x] Honest live logic (`src/lib/live.ts`): observed / projected (≤15 min, from recent observed trend) / stale / none; no randomness. Unit-tested.
-- [x] Screens: Rankings, People, Projects, Watchlist, Profile (slim frosted identity band over the portrait hero, live value + provenance chip, pan/zoom chart 30 s → all time), Account, Admin, Not found.
-- [x] Native tabs on iOS/Android; web top nav on desktop, bottom tabs on phones.
-- [x] GitHub Pages pipeline: subpath export, PWA, 404 route recovery, iPhone-frame shell with QR + commit id, Actions workflow with secret scan.
-- [x] Bilt export script (`npm run import:bilt`), portrait credits recovered from the old source.
-- [x] Impeccable: PRODUCT.md, surface brief with direction contract (`.impeccable/surfaces/src-app.md`).
+- Web-hosted React Native (Expo SDK 58) app for now; native iOS/Android builds later from the same code. No Expo Go.
+- Supabase backend (new project); records exported once from Bilt (10 people, 20 dated estimates, 11 holdings, 10 licensed portraits).
+- Accounts: email + strong password with activation link; emailed 6-digit code on new devices, enforced server-side. Google/Apple later.
+- Later domains: wealthline.com (landing), web.wealthline.com (web version), app.wealthline.com (web app). Hosting moves by changing `EXPO_BASE_URL` / `PAGES_URL`.
 
-## Verified so far
+## Built
 
-| Check | Result |
-| --- | --- |
-| `npm run typecheck` | Pass |
-| `npm test` | 9/9 pass |
-| Web dev server, desktop + 375px | Renders; nav works; "backend not configured" state shown honestly |
-| `build:pages` + local Pages server | Shell, app, manifest, sw.js 200; nested route refresh + query/hash restored |
-| Real data, auth flows, RLS isolation | **Not yet** — needs the Supabase project |
-| Expo Go on a phone | **Not yet** |
-| Service worker / install / offline | **Not yet** (built-in browser blocks SW; check in Safari/Chrome) |
-| Android | **Not yet** (no emulator; Expo Go on an Android phone works the same way) |
+- Rankings (search, Rank/Name/Change, saved views, Compare mode) · Projects · Watchlist · Profile · Compare (≤3, validated palette) · Account (currency, install) · Admin.
+- Honest values: estimate/computed provenance, observed/projected/stale/none, no randomness; chart pan/zoom 30 s → all time.
+- Optional daily brief (Claude Opus 5.5, server-side, from Google News RSS headlines; links copied from the feed).
+- Display currency (ECB rates via Frankfurter, rate + date shown). PWA install, offline cache with update reload.
+- RLS: public read, admin-only writes, private watchlists/saved views that require a device-verified session.
 
-## Next (in order)
+## Owner tasks (blocking)
 
-1. **Owner:** create the Supabase project, fill `.env`; run both migrations; deploy Edge Functions; set auth settings per `supabase/README.md`.
-2. **Owner:** fill `BILT_URL` / `BILT_ANON_KEY`; `npm run import:bilt`; confirm the estimate/computed split; run the SQL.
-3. Exercise every screen with real data; two identities for watchlist/admin isolation; designate the admin.
-4. Impeccable finish: screenshots per platform, `impeccable-finish-reviewer`, fixes, then `impeccable-documenter` writes DESIGN.md (required by the direction contract's FINISH line).
-5. Expo Go on the owner's iPhone: gestures, safe areas, Dynamic Type, VoiceOver, reduced motion.
-6. Owner: GitHub Pages enablement (paid plan or public repo) + repository variables; then verify the live URLs and a second deploy's cache update.
-7. Market updater (Edge Function + secure scheduler, ~15 min market hours), only after verified holdings and other-asset calibration.
-8. Ranks 11–20 only from sourced estimates. Google/Apple sign-in and store identities (`com.haseebahmad.wealthline` is a placeholder for owner review) before publishing.
+1. **SMTP sender** (Supabase → Authentication → SMTP Settings, e.g. Gmail app password). Until then sign-in on a new device cannot complete (the built-in sender can't include the code), so watchlist, saved views and admin can't be used. Then uncomment the templates in `supabase/config.toml` and `npx supabase config push`.
+2. **Admin account:** after signing up, `insert into public.admins (user_id) select id from auth.users where email = '…';`
+3. **Daily brief:** Anthropic API key + `CRON_SECRET` as Supabase secrets, and a daily Cron job (`supabase/README.md`).
+4. **Data:** fix `other_assets_usd` (currently equals each total net worth; would double-count once market data runs); add sourced estimates for ranks 11–20; add projects/events.
 
-## Known gaps / decisions open
+## Later
 
-- Dark mode: owner palette is light-only.
-- Production email needs a custom SMTP sender.
-- Chart loads full history per person (`shortcut:` comment) — page by window when rows grow.
+- Market-data updater + secure market-hours scheduler (needs verified holdings first).
+- Custom domains; native builds (EAS) with store identities (`com.haseebahmad.wealthline` is a placeholder).
+- Dark mode (owner palette is light-only today).

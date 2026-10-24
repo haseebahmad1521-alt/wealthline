@@ -1,6 +1,6 @@
 # Wealthline
 
-The world's biggest fortunes. In motion. One Expo app for iOS, Android, and the web (Expo SDK 58, Expo Router, Supabase).
+The world's biggest fortunes. In motion. A web-hosted React Native app (Expo SDK 58, Expo Router, React Native Web, Supabase); native iOS/Android builds come later from the same code.
 
 Requirements: `CLAUDE.md` (owner), `HANDOFF.md`, `PRODUCT.md`. Plan and status: `PLAN.md`.
 
@@ -18,7 +18,7 @@ Fill in `.env` (git-ignored) with the Supabase project URL and publishable key. 
 npm run web
 ```
 
-Native on your own phone, no Xcode needed: install **Expo Go**, run `npx expo start`, and scan the QR it prints. That is the **Expo development QR**: it opens the real native app in Expo Go and needs your phone on the same network as this Mac.
+On a phone on the same Wi-Fi: `npm run preview:phone` builds the production web app, serves it, and puts a QR pointing at this computer on the preview page.
 
 ## Checks
 
