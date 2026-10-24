@@ -14,7 +14,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { direction, formatDate, formatTime, percent, usd } from '@/lib/format';
+import { direction, formatDate, formatTime, percent } from '@/lib/format';
+import { useMoney } from '@/lib/currency';
 import type { LiveStatus } from '@/lib/live';
 import { color, contentWidth, radius, shadow, space, type } from '@/theme';
 
@@ -33,6 +34,7 @@ export const icons = {
   projects: { ios: 'sparkles', android: 'rocket_launch', web: 'rocket_launch' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
   minus: { ios: 'minus', android: 'remove', web: 'remove' },
+  check: { ios: 'checkmark', android: 'check', web: 'check' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
 } satisfies Record<string, IconName>;
 
@@ -88,15 +90,16 @@ export function Surface({ children, style }: { children: ReactNode; style?: Styl
 /** `compact` shows only the percentage (narrow lists); the spoken label always carries both. */
 export function Change({ delta, base, size = 15, compact }: { delta: number; base: number; size?: number; compact?: boolean }) {
   const d = direction(delta);
+  const { format } = useMoney();
   const tint = delta > 0 ? color.gain : delta < 0 ? color.loss : color.textSecondary;
   return (
     <View
       style={styles.row}
       accessible
-      accessibilityLabel={`${d.word} ${usd(Math.abs(delta))}, ${percent(delta, base)}`}>
+      accessibilityLabel={`${d.word} ${format(Math.abs(delta))}, ${percent(delta, base)}`}>
       <Icon name={delta > 0 ? icons.up : delta < 0 ? icons.down : icons.flat} size={size + 3} tint={tint} />
       <Text style={[type.number, { color: tint, fontSize: size }]}>
-        {compact ? percent(delta, base) : `${usd(Math.abs(delta))} · ${percent(delta, base)}`}
+        {compact ? percent(delta, base) : `${format(Math.abs(delta))} · ${percent(delta, base)}`}
       </Text>
     </View>
   );

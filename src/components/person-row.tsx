@@ -4,18 +4,20 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions, type PressableS
 
 import { Caption, Change, Icon, Portrait, Surface, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
-import { formatDate, usd } from '@/lib/format';
+import { useMoney } from '@/lib/currency';
+import { formatDate } from '@/lib/format';
 import { color, space, type } from '@/theme';
 
 /** One ranked person: portrait with rank badge, name and source, value, change. Taps through to the profile. */
 export function PersonRow({ person, showRank = true }: { person: Person; showRank?: boolean }) {
   const narrow = useWindowDimensions().width < 520;
+  const money = useMoney();
   const worth = person.net_worth_usd;
   const delta = worth != null && person.prev_net_worth_usd != null ? worth - person.prev_net_worth_usd : null;
   const label = [
     showRank && person.rank ? `Rank ${person.rank}` : null,
     person.name,
-    worth != null ? `${usd(worth)}` : 'no estimate yet',
+    worth != null ? money.format(worth) : 'no estimate yet',
   ]
     .filter(Boolean)
     .join(', ');
@@ -47,7 +49,7 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
         <View style={styles.value}>
           {worth != null ? (
             <>
-              <Text style={[type.number, styles.worth]}>{usd(worth)}</Text>
+              <Text style={[type.number, styles.worth]}>{money.format(worth)}</Text>
               {delta != null ? (
                 <Change delta={delta} base={person.prev_net_worth_usd!} size={13} compact={narrow} />
               ) : (

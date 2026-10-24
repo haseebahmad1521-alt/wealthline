@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, Pressable, Text } from 'react-native';
 
+import { CurrencyProvider } from '@/lib/currency';
 import { DataProvider } from '@/lib/data';
 // Web: capture the browser's install prompt at start-up, before the Account screen exists.
 import '@/lib/install';
@@ -27,6 +28,7 @@ export default function RootLayout() {
 
   return (
     <DataProvider>
+      <CurrencyProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -51,6 +53,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="admin" options={{ title: 'Admin' }} />
       </Stack>
+      </CurrencyProvider>
     </DataProvider>
   );
 }

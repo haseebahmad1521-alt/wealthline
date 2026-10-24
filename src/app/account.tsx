@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { InstallCard } from '@/components/install-card';
-import { Body, Button, Caption, Heading, Screen, Surface, minTouch } from '@/components/ui';
+import { Body, Button, Caption, Heading, Icon, Screen, Surface, icons, minTouch } from '@/components/ui';
 import { resetPassword, passwordRules, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
+import { useCurrencyChoice } from '@/lib/currency';
 import { useAuth } from '@/lib/data';
 import { color, font, radius, space, type } from '@/theme';
 
@@ -48,6 +49,44 @@ function Field(props: {
         )}
       </View>
     </View>
+  );
+}
+
+const COMMON = ['USD', 'EUR', 'GBP', 'NOK', 'SEK', 'JPY', 'CHF', 'CAD', 'AUD'];
+
+function CurrencyPicker() {
+  const { choice, setChoice, names, rates } = useCurrencyChoice();
+  const available = (c: string) => c === 'USD' || !rates || c in rates.rates;
+  const [all, setAll] = useState(false);
+  const rest = Object.keys(names ?? {}).filter((c) => !COMMON.includes(c)).sort();
+  // Common currencies (plus the current choice) by default; the full list on request.
+  const shown = all ? [...COMMON, ...rest] : [...COMMON, ...(COMMON.includes(choice) ? [] : [choice])];
+  const codes = shown.filter(available);
+  return (
+    <Surface style={styles.card}>
+      <Heading level={2}>Display currency.</Heading>
+      <Caption>Values are sourced in US dollars. Conversions use the European Central Bank's daily reference rate.</Caption>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Display currency">
+        {codes.map((c) => (
+          <Pressable
+            key={c}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: choice === c, selected: choice === c }}
+            accessibilityLabel={names?.[c] ? `${names[c]}, ${c}` : c}
+            onPress={() => setChoice(c)}
+            style={styles.currency}>
+            <Text style={[type.headline, { color: color.text, width: 52 }]}>{c}</Text>
+            <Text style={[type.body, { color: color.textSecondary, flex: 1 }]} numberOfLines={1}>{names?.[c] ?? ''}</Text>
+            {choice === c && <Icon name={icons.check} size={16} tint={color.action} />}
+          </Pressable>
+        ))}
+      </View>
+      {rest.length > 0 && (
+        <Pressable accessibilityRole="button" onPress={() => setAll(!all)} style={styles.currency}>
+          <Text style={[type.headline, { color: color.action }]}>{all ? 'Show fewer' : 'Show all currencies'}</Text>
+        </Pressable>
+      )}
+    </Surface>
   );
 }
 
@@ -232,6 +271,7 @@ export default function Account() {
         <Heading>Account.</Heading>
         <Body secondary>Sign in to keep a private watchlist.</Body>
         {content}
+        <CurrencyPicker />
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -239,6 +279,7 @@ export default function Account() {
 
 const styles = StyleSheet.create({
   card: { padding: space.lg, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  currency: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: minTouch + 4 },
   field: { gap: space.xs },
   inputRow: {
     flexDirection: 'row',

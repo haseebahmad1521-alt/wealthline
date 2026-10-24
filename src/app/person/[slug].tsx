@@ -8,13 +8,15 @@ import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { WealthChart } from '@/components/wealth-chart';
 import { useEvents, useHoldings, usePerson, usePersonNews, useProjects, useValues, useWatchlist } from '@/lib/data';
-import { formatDate, usd } from '@/lib/format';
+import { rateCaption, useMoney } from '@/lib/currency';
+import { formatDate } from '@/lib/format';
 import { live as computeLive } from '@/lib/live';
 import { color, desktopBreakpoint, space, type } from '@/theme';
 
 export default function Profile() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const person = usePerson(slug);
+  const money = useMoney();
   const p = person.data;
   const values = useValues(p?.id, null); // shortcut: loads all history; page by window once rows reach ~10k per person
   const holdings = useHoldings(p?.id);
@@ -56,6 +58,7 @@ export default function Profile() {
   }
 
   const prev = p.prev_net_worth_usd;
+  const caption = rateCaption(money);
   const shown = live.value ?? p.net_worth_usd;
   const theirProjects = (projects.data ?? []).filter((x) => x.person_id === p.id);
   const liveDigits = live.status === 'projected' ? 3 : 1;
@@ -73,9 +76,10 @@ export default function Profile() {
       <View style={styles.value}>
         <Text
           style={styles.worth}
-          accessibilityLabel={shown != null ? `Net worth ${usd(shown)}` : 'No net worth estimate yet'}>
-          {shown != null ? usd(shown, liveDigits) : '—'}
+          accessibilityLabel={shown != null ? `Net worth ${money.format(shown)}` : 'No net worth estimate yet'}>
+          {shown != null ? money.format(shown, liveDigits) : '—'}
         </Text>
+        {shown != null && caption && <Caption>{caption}</Caption>}
         {shown != null && prev != null && p.prev_as_of && (
           <View style={styles.changeRow}>
             <Change delta={(p.net_worth_usd ?? shown) - prev} base={prev} />

@@ -1,11 +1,13 @@
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SavedViews, useAppliedView } from '@/components/saved-views';
 import { Body, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { usePeople, useProjects } from '@/lib/data';
 import { formatDate } from '@/lib/format';
+import type { ProjectStatus } from '@/lib/view-params';
 import { color, radius, space, type } from '@/theme';
 
 const filters = [
@@ -13,12 +15,18 @@ const filters = [
   { key: 'new', label: 'New' },
   { key: 'upcoming', label: 'Upcoming' },
 ] as const;
-type Filter = (typeof filters)[number]['key'];
 
 export default function Projects() {
   const projects = useProjects();
   const people = usePeople();
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<ProjectStatus>('all');
+  const { view } = useLocalSearchParams<{ view?: string }>();
+  const applied = useAppliedView('projects', view);
+  const [seen, setSeen] = useState<string>();
+  if (applied && applied.target === 'projects' && seen !== applied.id) {
+    setSeen(applied.id);
+    setFilter(applied.params.status);
+  }
   const byId = new Map((people.data ?? []).map((p) => [p.id, p]));
   const shown = (projects.data ?? []).filter((p) => filter === 'all' || p.status === filter);
   const pending = projects.isPending || people.isPending;
@@ -46,6 +54,11 @@ export default function Projects() {
           );
         })}
       </View>
+      <SavedViews
+        target="projects"
+        params={{ status: filter }}
+        onApply={(v) => v.target === 'projects' && setFilter(v.params.status)}
+      />
       {pending || error ? (
         <StateView
           loading={pending}

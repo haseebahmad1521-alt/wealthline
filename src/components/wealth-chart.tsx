@@ -11,7 +11,8 @@ import {
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { Caption, Icon, icons, minTouch } from '@/components/ui';
-import { formatDate, formatTime, usd } from '@/lib/format';
+import { useMoney } from '@/lib/currency';
+import { formatDate, formatTime } from '@/lib/format';
 import type { Live, Point } from '@/lib/live';
 import { color, font, radius, space, type } from '@/theme';
 
@@ -42,6 +43,7 @@ type Props = {
  * dashed grey = projection from the latest observed trend. Nothing else is drawn.
  */
 export function WealthChart({ points, live, now }: Props) {
+  const money = useMoney();
   const first = points[0]?.t ?? now - presets[0].span;
   const fullSpan = Math.max(now - first, MIN_SPAN);
   const [span, setSpan] = useState<number>(presets[0].span);
@@ -142,7 +144,7 @@ export function WealthChart({ points, live, now }: Props) {
     inWindow.length === 0
       ? `No recorded values between ${describe(left)} and ${describe(right)}.`
       : `${inWindow.length} recorded value${inWindow.length > 1 ? 's' : ''} from ${describe(left)} to ${describe(right)}, ` +
-        `${usd(inWindow[0].v)} to ${usd(latest!.v)}${proj ? `, then projected to ${usd(proj.to.v)}` : ''}.`;
+        `${money.format(inWindow[0].v)} to ${money.format(latest!.v)}${proj ? `, then projected to ${money.format(proj.to.v)}` : ''}.`;
 
   const activePreset = end == null ? presets.find((p) => p.span === span)?.label : undefined;
 
@@ -239,7 +241,7 @@ export function WealthChart({ points, live, now }: Props) {
             <Text style={[type.headline, { color: color.text }]}>No recorded values in this window.</Text>
             <Caption>
               {points.length
-                ? `Latest value ${usd(points.at(-1)!.v)}, ${points.at(-1)!.estimate ? 'estimate' : 'observed'} ${describe(points.at(-1)!.t)}. Values are never filled in.`
+                ? `Latest value ${money.format(points.at(-1)!.v)}, ${points.at(-1)!.estimate ? 'estimate' : 'observed'} ${describe(points.at(-1)!.t)}. Values are never filled in.`
                 : 'No values have been recorded for this person yet.'}
             </Caption>
             {points.length > 0 && (
