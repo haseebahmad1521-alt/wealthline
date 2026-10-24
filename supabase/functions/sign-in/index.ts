@@ -16,8 +16,11 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'Invalid request.' }, 400);
   }
-  const { email, password, device_id, device_token } = body;
-  if (!isEmail(email) || !isStr(password, 256) || !isStr(device_id, 100) || (device_token != null && !isStr(device_token, 200))) {
+  const { email, password, device_id, device_token, redirect_to } = body;
+  if (
+    !isEmail(email) || !isStr(password, 256) || !isStr(device_id, 100) ||
+    (device_token != null && !isStr(device_token, 200)) || (redirect_to != null && !isStr(redirect_to, 500))
+  ) {
     return json({ error: 'Invalid request.' }, 400);
   }
 
@@ -69,8 +72,9 @@ Deno.serve(async (req) => {
     attempts,
   });
   if (attempts < 5) {
-    // Sends the Magic Link template, which carries the 6-digit {{ .Token }}.
-    await anon.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    // Sends the Magic Link template: the 6-digit {{ .Token }} once branded templates are on, and always the link
+    // (handled by `activate`). Auth only honours redirect_to if it is on the redirect allowlist.
+    await anon.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirect_to as string | undefined } });
   }
   return json({ mfa_required: true });
 });

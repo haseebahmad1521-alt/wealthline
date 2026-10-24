@@ -117,11 +117,11 @@ export default function Account() {
     }
   }
 
-  // Opened from the activation email: sign in with that session (first sign-in only, see the activate function),
+  // Opened from an email link: sign in with that session (activation or this device's sign-in, see the activate function),
   // then re-route without the URL fragment; the router would otherwise keep restoring the tokens into the address.
   useEffect(() => {
     void activate().then(
-      (r) => r && router.replace({ pathname: '/account', params: { activated: 'welcome' } }),
+      (r) => r && router.replace({ pathname: '/account', params: r === 'activated' ? { activated: 'welcome' } : {} }),
       () => router.replace({ pathname: '/account', params: { activated: 'failed' } }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,7 +149,7 @@ export default function Account() {
   const resend = () =>
     run(async () => {
       await signIn(cleanEmail, password);
-      setNotice('We sent a new code.');
+      setNotice('We sent a new email.');
     });
 
   const confirmCode = () =>
@@ -208,8 +208,11 @@ export default function Account() {
   } else if (step === 'code') {
     content = (
       <Surface style={styles.card}>
-        <Heading level={2}>Enter your code.</Heading>
-        <Body secondary>We sent a code to {cleanEmail} because this is a new device.</Body>
+        <Heading level={2}>Check your email.</Heading>
+        <Body secondary>
+          This is a new device, so we emailed {cleanEmail}. Open the sign-in link on this device, or enter the 6-digit
+          code if the email shows one.
+        </Body>
         <Field
           label="6-digit code"
           value={code}
@@ -220,7 +223,7 @@ export default function Account() {
         />
         {messages}
         <Button label="Verify" onPress={() => void confirmCode()} loading={busy} />
-        <Button label="Resend code" variant="secondary" onPress={() => void resend()} disabled={busy} />
+        <Button label="Resend email" variant="secondary" onPress={() => void resend()} disabled={busy} />
         <Button label="Use a different account" variant="secondary" onPress={() => { setStep('form'); setCode(''); setError(null); }} />
       </Surface>
     );
@@ -244,7 +247,7 @@ export default function Account() {
         {activated === '1' && mode === 'in' && <Body>Email confirmed. Sign in to continue.</Body>}
           {activated === 'failed' && mode === 'in' && (
             <Text accessibilityRole="alert" style={[type.body, { color: color.loss }]}>
-              That activation link was already used or has expired. Your email is confirmed, so sign in to continue.
+              That link was already used, has expired, or was opened on another device. Sign in to continue.
             </Text>
           )}
         <Field

@@ -11,7 +11,7 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 - Branch `rebuild` (default work branch; `main` = old Bilt code). Repo public; GitHub Pages deploys every push to `rebuild` (check with `gh run list --workflow pages.yml`).
 - Backend: Supabase project ref `qucpeyrbzyfqtmxhmezr`; public client values in `.env` (git-ignored). Supabase CLI is logged in: `npx supabase@latest db query --linked --project-ref qucpeyrbzyfqtmxhmezr "<sql>"`, `functions deploy <name> --project-ref … --use-api`, `config push --project-ref …` (auth settings live in `supabase/config.toml`).
 - Edge Functions deployed: `sign-in`, `verify-device`, `activate`, `daily-brief`. Migrations applied: init, device_auth, briefs, saved_views.
-- Auth reality: built-in Supabase email sender only (rate-limited, can't show the 6-digit code). Activation link signs you in and trusts the device (first sign-in, ≤15 min). Other devices need SMTP. Owner's test user may need deleting and re-signing up (0 verified sessions at last check).
+- Auth reality: built-in Supabase email sender only (rate-limited, ~2 emails/hour, can't show the 6-digit code). Owner signed up and activated on Oct 24 (1 verified session). Activation link signs you in and trusts the device (first sign-in, ≤15 min). New devices: the sign-in email's link, opened on that same device, verifies it (`activate` function, needs the live challenge + an email-link session); the code works once SMTP + templates are on.
 - Design: Impeccable finish review = ship; `DESIGN.md` + `.impeccable/design.json` record the system. Screenshot tooling: Playwright script lives in the session scratchpad (re-create if needed: capture live site at 1440/375/320).
 - Standards: Opus leads, Sonnet/Haiku subagents for well-specified work; Impeccable for UI; Ponytail discipline (see CLAUDE.md "Working conventions").
 - Latest work (done, deployed): Rankings has one control row (filter button | search | Compare; in narrow compare mode search hides for Confirm + X) and a filter panel with sort + saved views; tagline is "The world's biggest fortunes.". Verified on the live site at 320 and 1440. Nothing is in progress.
@@ -35,7 +35,7 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Owner tasks (blocking)
 
-1. **SMTP sender** (Supabase → Authentication → SMTP Settings, e.g. Gmail app password). Until then sign-in on a new device cannot complete (the built-in sender can't include the code), so watchlist, saved views and admin can't be used. Then uncomment the templates in `supabase/config.toml` and `npx supabase config push`.
+1. **SMTP sender** (optional now, needed before real users): the built-in sender is rate-limited and can't show the 6-digit code, so new-device sign-in uses the link only and must be opened on the same device/browser (an iPhone home-screen app and Safari count as different). Add SMTP (Supabase → Authentication → SMTP Settings), then uncomment the templates in `supabase/config.toml` and `npx supabase config push`.
 2. **Admin account:** after signing up, `insert into public.admins (user_id) select id from auth.users where email = '…';`
 3. **Daily brief:** Anthropic API key + `CRON_SECRET` as Supabase secrets, and a daily Cron job (`supabase/README.md`).
 4. **Data:** fix `other_assets_usd` (currently equals each total net worth; would double-count once market data runs); add sourced estimates for ranks 11–20; add projects/events.

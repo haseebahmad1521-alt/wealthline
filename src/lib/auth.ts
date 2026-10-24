@@ -67,6 +67,7 @@ export async function signIn(email: string, password: string): Promise<'signed-i
     password,
     device_id: await deviceId(),
     device_token: await tokenFor(email),
+    redirect_to: appUrl('/account'),
   });
   if (r.session) {
     await adopt(r.session);
@@ -92,17 +93,17 @@ function appUrl(path: string) {
   return `${window.location.origin}${process.env.EXPO_PUBLIC_BASE_URL ?? ''}${path}`;
 }
 
-/** Signs in with the session from an activation link, if this page was opened from one. */
-export async function activate(): Promise<'activated' | null> {
+/** Signs in with the session from an email link (activation or new device), if this page was opened from one. */
+export async function activate(): Promise<'activated' | 'signed-in' | null> {
   const session = takeActivation();
   if (!session) return null;
-  const r = await call<{ device_token: string; email: string }>('activate', {
+  const r = await call<{ device_token: string; email: string; activated: boolean }>('activate', {
     access_token: session.access_token,
     device_id: await deviceId(),
   });
   await saveToken(r.email, r.device_token);
   await adopt(session);
-  return 'activated';
+  return r.activated ? 'activated' : 'signed-in';
 }
 
 export async function signUp(email: string, password: string): Promise<void> {

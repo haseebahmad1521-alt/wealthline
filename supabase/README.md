@@ -50,7 +50,9 @@ not signed in yet); the default JWT check accepts the publishable/anon key the c
 
 Flow: `sign-in` checks the password; on a trusted device (token hash match, 90 days) it records the session
 as verified, otherwise it revokes the password session and emails a 6-digit code. `verify-device` allows 5
-attempts per 10-minute challenge, verifies the code, records the new session, and issues a device token.
+attempts per 10-minute challenge, verifies the code, records the new session, and issues a device token. The same email's link also works
+(the only option with the built-in sender, which can't show the code): opened on the device holding the live
+challenge, `activate` accepts the link session (amr `otp`/`magiclink`, ≤15 min), removes the challenge and trusts the device.
 
 ## Designating an admin
 
