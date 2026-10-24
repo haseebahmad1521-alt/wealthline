@@ -291,7 +291,7 @@ Run formatting checks according to repository conventions. A successful export a
 - [x] Deployment runs automatically on the selected branch and manually when requested.
 - [x] Repository-prefix assets, nested routes, refreshes, query/hash handling, and unknown routes work.
 - [x] PWA manifest/service-worker paths and scope are correct.
-- [ ] Cache/update behavior works across two deployments.
+- [x] Cache/update behavior works across two deployments.
 - [x] No server credentials appear in source, logs, or exported browser assets.
 
 ### Delivery
