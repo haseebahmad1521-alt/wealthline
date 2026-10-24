@@ -224,7 +224,7 @@ export default function Account() {
               onPress={() => { setMode(m); setError(null); setNotice(null); }}
               style={[styles.segmentItem, mode === m && styles.segmentOn]}>
               <Text numberOfLines={1} style={[type.headline, styles.segmentLabel, { color: mode === m ? color.text : color.textSecondary }]}>
-                {m === 'in' ? 'Sign in' : 'Create account'}
+                {m === 'in' ? 'Sign in' : 'Sign up'}
               </Text>
             </Pressable>
           ))}
@@ -292,7 +292,8 @@ const styles = StyleSheet.create({
     paddingRight: space.xs,
     minHeight: minTouch + 4,
   },
-  input: { flex: 1, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
+  // minWidth 0: web inputs otherwise keep an intrinsic width and push the trailing button out.
+  input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
   trailing: { minHeight: minTouch, minWidth: minTouch, paddingHorizontal: space.sm, flexShrink: 0, justifyContent: 'center', alignItems: 'center' },
   segment: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3 },
   segmentItem: { flex: 1, minHeight: minTouch, paddingHorizontal: space.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
