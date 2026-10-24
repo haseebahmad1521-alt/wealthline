@@ -21,7 +21,7 @@ STORY: The visitor sees the ranking, opens a person, reads one honest headline v
 
 FIRST VIEWPORT: Rankings: large title "Rankings." then ranked rows (rank, portrait, name, source, value, change). Profile: rounded hero card on the blurred, frosted portrait (each profile's own colour field), crisp portrait tile left, name and identity right, star top-right; below, the headline value with provenance chip, then the interactive chart with 3H default and observed/projected styling.
 
-FORM: Native shells per OS (iOS tab bar + stack; Android Material nav bar; web top nav on desktop, bottom tabs on mobile). Signature move: the provenance chip plus dashed, labeled projection segment. seed: none (unavailable)
+FORM: Native shells per OS (iOS tab bar + stack; Android Material nav bar; web top nav on desktop, bottom tabs on mobile). Signature move: the provenance chip plus dashed, labeled projection segment. seed:6dedcfe0f9260e8f (roll recorded; the owner-pinned world in CLAUDE.md overrides the dealt direction)
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 

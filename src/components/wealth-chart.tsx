@@ -238,8 +238,8 @@ export function WealthChart({ points, live, now }: Props) {
         )}
         {inWindow.length === 0 && !proj && (
           <View style={styles.emptyOverlay} pointerEvents="box-none">
-            <Text style={[type.headline, { color: color.text }]}>No recorded values in this window.</Text>
-            <Caption>
+            <Text style={[type.headline, { color: color.text, textAlign: 'center' }]}>No recorded values in this window.</Text>
+            <Caption style={{ textAlign: 'center' }}>
               {points.length
                 ? `Latest value ${money.format(points.at(-1)!.v)}, ${points.at(-1)!.estimate ? 'estimate' : 'observed'} ${describe(points.at(-1)!.t)}. Values are never filled in.`
                 : 'No values have been recorded for this person yet.'}

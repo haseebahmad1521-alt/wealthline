@@ -9,7 +9,8 @@ import { color, desktopBreakpoint, font, radius, shadow, space, type } from '@/t
 /**
  * Frosted hero: the portrait itself, heavily blurred, gives each profile its own colour field;
  * the crisp portrait sits on the left with the identity to its right.
- * All hero text uses the primary colour, which stays ≥ 4.5:1 over the frost on any photograph.
+ * All hero text uses the primary colour. Worst case (near-black blurred photo): 62% frost over black ≈ #9C9C9D,
+ * where #1D1D1F measures ≈ 6.1:1, above WCAG AA 4.5:1 for every text size used here.
  */
 export function ProfileHero({
   person,
@@ -23,7 +24,7 @@ export function ProfileHero({
   watchPending: boolean;
 }) {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
-  const size = desktop ? 152 : 88;
+  const size = desktop ? 200 : 88;
   const identity = [person.rank ? `No. ${person.rank}` : null, person.main_source].filter(Boolean).join(' · ');
 
   return (
@@ -41,7 +42,7 @@ export function ProfileHero({
 
       <View style={styles.row}>
         <View style={[styles.portrait, { width: size, height: size }]}>
-          <Portrait uri={person.portrait_url} name={person.name} size={size} rounded={desktop ? 32 : 22} />
+          <Portrait uri={person.portrait_url} name={person.name} size={size} rounded={desktop ? 40 : 22} />
         </View>
         <View style={[styles.identity, styles.clearStar]}>
           <Text accessibilityRole="header" style={[styles.name, desktop && styles.nameDesktop]}>
@@ -92,13 +93,12 @@ const styles = StyleSheet.create({
   heroDesktop: { paddingHorizontal: space.xl, paddingTop: space.xl },
   // Oversized so the blur's soft edges fall outside the rounded card.
   bg: { position: 'absolute', top: '-25%', left: '-25%', width: '150%', height: '150%' },
-  // 50% frost keeps the photo's colour; worst case (near-black photo) still gives #1D1D1F ≥ 4.5:1.
-  frost: { backgroundColor: 'rgba(251,251,253,0.5)' },
+  frost: { backgroundColor: 'rgba(251,251,253,0.62)' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   portrait: { borderRadius: 32, ...shadow, shadowOpacity: 0.16 },
   identity: { flex: 1, minWidth: 0, gap: 4 },
   name: { ...type.title, fontSize: 24, lineHeight: 28, letterSpacing: -0.6, color: color.text },
-  nameDesktop: { ...type.display },
+  nameDesktop: { ...type.display, fontSize: 56, lineHeight: 60, letterSpacing: -1.8 },
   meta: { ...type.caption, fontSize: 15, lineHeight: 20, color: color.text },
   watch: { position: 'absolute', top: -space.sm, right: -space.sm, width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
   clearStar: { paddingRight: minTouch - space.sm },

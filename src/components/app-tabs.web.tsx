@@ -137,7 +137,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.xs,
     width: '100%',
-    maxWidth: contentWidth,
+    // Padding sits outside the 1120 content width so brand and links align with page content.
+    maxWidth: contentWidth + 2 * space.md,
     alignSelf: 'center',
     paddingHorizontal: space.md,
     height: 56,

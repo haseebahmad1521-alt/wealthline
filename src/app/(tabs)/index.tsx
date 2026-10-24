@@ -97,7 +97,9 @@ export default function Rankings() {
             </Pressable>
           </>
         ) : (
-          <Button label="Compare" variant="secondary" onPress={() => setComparing(true)} />
+          <View style={styles.matchSegments}>
+            <Button label="Compare" variant="secondary" onPress={() => setComparing(true)} />
+          </View>
         )}
       </View>
       {comparing && (
@@ -124,6 +126,7 @@ export default function Rankings() {
       ) : (
         <>
           <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} />
+          <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
           <BriefCard brief={brief.data} people={people.data ?? []} />
         </>
       )}
@@ -148,6 +151,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentOn: { backgroundColor: color.surface },
+  // Same outer height as the sort control so their labels share a baseline.
+  matchSegments: { padding: 3 },
   cancel: {
     width: minTouch,
     height: minTouch,

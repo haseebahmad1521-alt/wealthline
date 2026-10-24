@@ -75,7 +75,7 @@ function HeaderLink({ label }: { label: string }) {
       accessibilityRole="button"
       hitSlop={10}
       onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}>
+      style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, marginHorizontal: 8 }}>
       <Text style={{ fontFamily: font.semibold, fontSize: 17, color: color.action }}>{label}</Text>
     </Pressable>
   );

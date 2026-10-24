@@ -19,7 +19,9 @@ export function PersonRow({
   /** Compare mode: the row toggles selection instead of opening the profile. */
   selection?: { selected: boolean; onToggle: () => void };
 }) {
-  const narrow = useWindowDimensions().width < 520;
+  const width = useWindowDimensions().width;
+  const narrow = width < 520;
+  const tiny = width < 360; // 320px phones: smaller portrait, no chevron, so names and sources fit
   const money = useMoney();
   const worth = person.net_worth_usd;
   const delta = worth != null && person.prev_net_worth_usd != null ? worth - person.prev_net_worth_usd : null;
@@ -34,7 +36,7 @@ export function PersonRow({
   const body = ({ pressed, hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
         <View style={[styles.row, (pressed || hovered) && styles.active, selection?.selected && styles.selected]}>
         <View>
-          <Portrait uri={person.portrait_url} name={person.name} size={narrow ? 44 : 48} />
+          <Portrait uri={person.portrait_url} name={person.name} size={tiny ? 36 : narrow ? 44 : 48} />
           {showRank && person.rank != null && (
             <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Text style={styles.badgeText}>{person.rank}</Text>
@@ -65,7 +67,7 @@ export function PersonRow({
           <View style={[styles.check, selection.selected && styles.checkOn]}>
             {selection.selected && <Icon name={icons.check} size={13} tint="#FFFFFF" />}
           </View>
-        ) : (
+        ) : tiny ? null : (
           <Icon name={icons.chevron} size={13} tint={color.hairline} />
         )}
         </View>

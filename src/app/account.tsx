@@ -223,7 +223,7 @@ export default function Account() {
               accessibilityState={{ selected: mode === m }}
               onPress={() => { setMode(m); setError(null); setNotice(null); }}
               style={[styles.segmentItem, mode === m && styles.segmentOn]}>
-              <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>
+              <Text numberOfLines={1} style={[type.headline, styles.segmentLabel, { color: mode === m ? color.text : color.textSecondary }]}>
                 {m === 'in' ? 'Sign in' : 'Create account'}
               </Text>
             </Pressable>
@@ -268,8 +268,10 @@ export default function Account() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
-        <Heading>Account.</Heading>
-        <Body secondary>Sign in to keep a private watchlist.</Body>
+        <View>
+          <Heading>Account.</Heading>
+          <Body secondary>Sign in to keep a private watchlist.</Body>
+        </View>
         {content}
         <CurrencyPicker />
       </Screen>
@@ -278,7 +280,7 @@ export default function Account() {
 }
 
 const styles = StyleSheet.create({
-  card: { padding: space.lg, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  card: { padding: space.lg, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'flex-start' },
   currency: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: minTouch + 4 },
   field: { gap: space.xs },
   inputRow: {
@@ -286,12 +288,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: radius.sm,
     backgroundColor: color.fill,
-    paddingHorizontal: space.md,
+    paddingLeft: space.md,
+    paddingRight: space.xs,
     minHeight: minTouch + 4,
   },
   input: { flex: 1, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
-  trailing: { minHeight: minTouch, minWidth: minTouch, justifyContent: 'center', alignItems: 'center' },
+  trailing: { minHeight: minTouch, minWidth: minTouch, paddingHorizontal: space.sm, flexShrink: 0, justifyContent: 'center', alignItems: 'center' },
   segment: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3 },
-  segmentItem: { flex: 1, minHeight: minTouch, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
+  segmentItem: { flex: 1, minHeight: minTouch, paddingHorizontal: space.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
+  segmentLabel: { fontSize: 15 },
   segmentOn: { backgroundColor: color.surface },
 });

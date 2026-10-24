@@ -1,4 +1,5 @@
 import { Link, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
@@ -52,7 +53,7 @@ export default function Compare() {
         {series.map((s) => (
           <Surface key={s.person.id} style={styles.card}>
             <View style={styles.cardHead}>
-              <View style={[styles.key, { backgroundColor: s.color }]} />
+              <View style={[styles.legendLine, { backgroundColor: s.color }]} />
               <Portrait uri={s.person.portrait_url} name={s.person.name} size={36} />
               <Link href={`/person/${s.person.slug}`} style={styles.cardName} numberOfLines={2}>
                 {s.person.name}
@@ -83,14 +84,6 @@ export default function Compare() {
           ))}
         </View>
         <CompareChart series={series} mode={mode} format={(v) => (mode === 'value' ? money.format(v) : pct(v))} />
-        <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {series.map((s) => (
-            <View key={s.person.id} style={styles.legendItem}>
-              <View style={[styles.legendLine, { backgroundColor: s.color }]} />
-              <Caption>{s.person.name}</Caption>
-            </View>
-          ))}
-        </View>
       </Surface>
 
       <Heading level={2}>Differences.</Heading>
@@ -128,9 +121,31 @@ export default function Compare() {
         ))}
       </View>
 
+      <Heading level={2}>Photos.</Heading>
+      <Surface style={styles.list}>
+        {series.map((s) => (
+          <PhotoCredit key={s.person.id} person={s.person} />
+        ))}
+      </Surface>
+
       <Heading level={2}>Data.</Heading>
       <DataTable series={series} format={money.format} />
     </Screen>
+  );
+}
+
+function PhotoCredit({ person }: { person: Person }) {
+  if (!person.portrait_page_url) return null;
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`${person.name}: photo by ${person.portrait_author ?? 'unknown'}, ${person.portrait_license ?? ''}. Opens the source and license.`}
+      onPress={() => void WebBrowser.openBrowserAsync(person.portrait_page_url!)}
+      style={styles.row}>
+      <Caption>
+        {person.name}: {person.portrait_author} · {person.portrait_license}
+      </Caption>
+    </Pressable>
   );
 }
 
@@ -139,7 +154,7 @@ function HoldingsCard({ series }: { series: Series }) {
   return (
     <Surface style={styles.card}>
       <View style={styles.cardHead}>
-        <View style={[styles.key, { backgroundColor: series.color }]} />
+        <View style={[styles.legendLine, { backgroundColor: series.color }]} />
         <Text style={[type.headline, { color: color.text, flex: 1 }]} numberOfLines={1}>{series.person.name}</Text>
       </View>
       {holdings.data?.length ? (
@@ -186,7 +201,7 @@ function DataTable({ series, format }: { series: Series[]; format: (v: number) =
 }
 
 const H = 240;
-const PAD = { top: 22, bottom: 24, left: 8, right: 92 };
+const PAD = { top: 16, bottom: 24, left: 60, right: 92 };
 
 /** One axis, 2px lines, recorded values marked, direct end labels, scrub readout snapped to recorded dates. */
 function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; format: (v: number) => string }) {
@@ -230,7 +245,7 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
             <View key={s.person.id} style={styles.readoutItem}>
               <View style={[styles.legendLine, { backgroundColor: s.color }]} />
               <Text style={[type.number, { color: color.text, fontSize: 15 }]}>{v == null ? '—' : format(v)}</Text>
-              <Caption>{s.person.name.split(' ')[0]}</Caption>
+              <Caption>{s.person.name.split(' ').at(-1)}</Caption>
             </View>
           );
         })}
@@ -251,8 +266,8 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
             {[yMax - pad, yMin + pad].map((v) => (
               <Fragment key={v}>
                 <Line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} stroke={color.hairline} strokeWidth={1} />
-                {/* Axis values sit above their gridline at the left; the right gutter belongs to the line labels. */}
-                <SvgText x={PAD.left} y={y(v) - 5} fontSize={11} fontFamily={font.regular} fill={color.textSecondary}>
+                {/* Axis values live in the left gutter; the right gutter belongs to the line labels. */}
+                <SvgText x={PAD.left - 8} y={y(v) + 4} textAnchor="end" fontSize={11} fontFamily={font.regular} fill={color.textSecondary}>
                   {format(v)}
                 </SvgText>
               </Fragment>
@@ -296,7 +311,6 @@ const styles = StyleSheet.create({
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   card: { flexGrow: 1, flexBasis: 220, padding: space.md, gap: space.xs },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xs },
-  key: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
   cardName: { ...type.headline, color: color.action, flex: 1 },
   cardValue: { fontSize: 24, letterSpacing: -0.5, color: color.text },
   chartCard: { padding: space.md, gap: space.md },
@@ -306,8 +320,6 @@ const styles = StyleSheet.create({
   modeLabel: { fontFamily: font.semibold, fontSize: 13, color: color.textSecondary },
   readout: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   readoutItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendLine: { width: 16, height: 2, borderRadius: 1 },
   list: { overflow: 'hidden', paddingVertical: space.xs },
   row: { paddingHorizontal: space.md, paddingVertical: space.sm + 2, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.hairline },
