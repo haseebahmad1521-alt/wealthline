@@ -4,7 +4,7 @@ import { Fragment, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
-import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
+import { Body, Caption, Change, Heading, Icon, Portrait, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { growth, indexed, MAX_COMPARE, pctDiff, recordedTimes, SERIES_COLORS, valueAt } from '@/lib/compare';
 import { useMoney } from '@/lib/currency';
 import { useHoldings, usePeople, useValuesFor, type Person } from '@/lib/data';
@@ -141,10 +141,11 @@ function PhotoCredit({ person }: { person: Person }) {
       accessibilityRole="link"
       accessibilityLabel={`${person.name}: photo by ${person.portrait_author ?? 'unknown'}, ${person.portrait_license ?? ''}. Opens the source and license.`}
       onPress={() => void WebBrowser.openBrowserAsync(person.portrait_page_url!)}
-      style={styles.row}>
-      <Caption>
+      style={[styles.row, styles.creditRow]}>
+      <Text style={[type.caption, { color: color.action, flex: 1 }]}>
         {person.name}: {person.portrait_author} · {person.portrait_license}
-      </Caption>
+      </Text>
+      <Icon name={icons.link} size={12} tint={color.action} />
     </Pressable>
   );
 }
@@ -201,12 +202,16 @@ function DataTable({ series, format }: { series: Series[]; format: (v: number) =
 }
 
 const H = 240;
-const PAD = { top: 16, bottom: 24, left: 60, right: 92 };
+const WIDE_PAD = { top: 16, bottom: 24, left: 60, right: 92 };
+const NARROW_PAD = { top: 16, bottom: 24, left: 44, right: 12 };
 
 /** One axis, 2px lines, recorded values marked, direct end labels, scrub readout snapped to recorded dates. */
 function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; format: (v: number) => string }) {
   const [width, setWidth] = useState(0);
   const [cursor, setCursor] = useState<number | null>(null);
+  const narrow = width > 0 && width < 420;
+  const PAD = narrow ? NARROW_PAD : WIDE_PAD;
+  const axis = (v: number) => (narrow && mode === 'value' ? format(v).replace(/\.\d(?=[BTM]$)/, '') : format(v));
   const plotted = series.map((s) => ({ ...s, pts: mode === 'growth' ? indexed(s.points) : s.points }));
   const all = plotted.flatMap((s) => s.pts);
   if (!all.length) return <StateView empty={{ title: 'No recorded values.', body: 'These people have no dated estimates yet.' }} />;
@@ -268,7 +273,7 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
                 <Line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} stroke={color.hairline} strokeWidth={1} />
                 {/* Axis values live in the left gutter; the right gutter belongs to the line labels. */}
                 <SvgText x={PAD.left - 8} y={y(v) + 4} textAnchor="end" fontSize={11} fontFamily={font.regular} fill={color.textSecondary}>
-                  {format(v)}
+                  {axis(v)}
                 </SvgText>
               </Fragment>
             ))}
@@ -289,7 +294,7 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
                 ))}
               </Fragment>
             ))}
-            {ends.map(({ s, y: ly }) => (
+            {!narrow && ends.map(({ s, y: ly }) => (
               <SvgText key={s.person.id} x={x(s.pts[s.pts.length - 1].t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={color.text}>
                 {s.person.name.split(' ').at(-1)}
               </SvgText>
@@ -323,6 +328,7 @@ const styles = StyleSheet.create({
   legendLine: { width: 16, height: 2, borderRadius: 1 },
   list: { overflow: 'hidden', paddingVertical: space.xs },
   row: { paddingHorizontal: space.md, paddingVertical: space.sm + 2, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.hairline },
+  creditRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: minTouch },
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.md, minHeight: 40, gap: space.sm },
   tableHead: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.hairline },
   dateCol: { width: 110 },
