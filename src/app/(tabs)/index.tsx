@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 import { BriefCard } from '@/components/news';
 import { PersonList } from '@/components/person-row';
@@ -19,6 +19,7 @@ export default function Rankings() {
   const [sort, setSort] = useState<PeopleSort>('rank');
   const [comparing, setComparing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const narrow = useWindowDimensions().width < 420;
   const [selected, setSelected] = useState<string[]>([]);
   const { view } = useLocalSearchParams<{ view?: string }>();
   const applied = useAppliedView('people', view);
@@ -65,6 +66,8 @@ export default function Rankings() {
           style={[styles.round, (filtersOpen || sort !== 'rank') && styles.roundOn]}>
           <Icon name={icons.filter} size={18} tint={filtersOpen || sort !== 'rank' ? color.action : color.text} />
         </Pressable>
+        {/* Narrow screens give compare mode the room: search returns when compare ends. */}
+        {!(comparing && narrow) && (
         <View style={styles.search}>
           <TextInput
             value={query}
@@ -83,9 +86,12 @@ export default function Rankings() {
             </Pressable>
           )}
         </View>
+        )}
         {comparing ? (
           <>
-            <Button label="Confirm" disabled={selected.length < 2} onPress={confirm} />
+            <View style={narrow ? styles.grow : undefined}>
+              <Button label="Confirm" disabled={selected.length < 2} onPress={confirm} />
+            </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Cancel compare" onPress={stop} style={styles.round}>
               <Icon name={icons.close} size={16} tint={color.text} />
             </Pressable>
@@ -146,6 +152,7 @@ export default function Rankings() {
 
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  grow: { flex: 1 },
   panel: { padding: space.md, gap: space.sm },
   round: { width: minTouch, height: minTouch, borderRadius: minTouch / 2, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   roundOn: { backgroundColor: color.actionTint },
