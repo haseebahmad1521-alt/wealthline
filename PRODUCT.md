@@ -42,7 +42,7 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 
 ## Brand Commitments
 
-- Name: Wealthline. Tagline in use: "The world's biggest fortunes. In motion."
+- Name: Wealthline. Tagline in use: "The world's biggest fortunes."
 - Owner-pinned visual constraints (CLAUDE.md "Visual direction"): Inter; background #FBFBFD, white surfaces, 20–28px radii; text #1D1D1F / #6E6E73; action #0071E3; gains #1E7B45 and losses #B42318 always with a direction glyph; soft shadows; tightly tracked display headings; ~1120px desktop width; section headings end in a period; minimal Apple-style foundation with a bolder photographic editorial profile.
 - Profile hero (owner revision, Oct 24, 2026): a rounded hero card whose background is the portrait itself, heavily blurred and lightly frosted so each profile takes its photo's colours; the crisp portrait sits on the left with name and identity to its right; no banner over a full-bleed photo. Then net worth and change, chart, supporting info and projects.
 - Logo (temporary): Lucide "trending-up" (ISC) in white on #0071E3, `public/icons/wealthline.svg`; provenance in `public/icons/NOTICE.md`. A bespoke mark is still to come.

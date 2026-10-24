@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Wealthline",
   "short_name": "Wealthline",
-  "description": "The world's biggest fortunes. In motion.",
+  "description": "The world's biggest fortunes.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

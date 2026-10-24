@@ -6,6 +6,17 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 **Live:** shell https://haseebahmad1521-alt.github.io/wealthline/ · app https://haseebahmad1521-alt.github.io/wealthline/app/
 (auto-deploys on every push to `rebuild`).
 
+## Current state (for a fresh session — read this first)
+
+- Branch `rebuild` (default work branch; `main` = old Bilt code). Repo public; GitHub Pages deploys every push to `rebuild` (check with `gh run list --workflow pages.yml`).
+- Backend: Supabase project ref `qucpeyrbzyfqtmxhmezr`; public client values in `.env` (git-ignored). Supabase CLI is logged in: `npx supabase@latest db query --linked --project-ref qucpeyrbzyfqtmxhmezr "<sql>"`, `functions deploy <name> --project-ref … --use-api`, `config push --project-ref …` (auth settings live in `supabase/config.toml`).
+- Edge Functions deployed: `sign-in`, `verify-device`, `activate`, `daily-brief`. Migrations applied: init, device_auth, briefs, saved_views.
+- Auth reality: built-in Supabase email sender only (rate-limited, can't show the 6-digit code). Activation link signs you in and trusts the device (first sign-in, ≤15 min). Other devices need SMTP. Owner's test user may need deleting and re-signing up (0 verified sessions at last check).
+- Design: Impeccable finish review = ship; `DESIGN.md` + `.impeccable/design.json` record the system. Screenshot tooling: Playwright script lives in the session scratchpad (re-create if needed: capture live site at 1440/375/320).
+- Standards: Opus leads, Sonnet/Haiku subagents for well-specified work; Impeccable for UI; Ponytail discipline (see CLAUDE.md "Working conventions").
+- In progress when the last session ended: Rankings controls moved into one row (filter button | search | Compare) with a filter panel for sort + saved views — verify at 320/375/1440, then commit; tagline is now "The world's biggest fortunes." (no "In motion").
+- Domain: wealthline.com is taken (registered 2001). wealthline.io and getwealthline.com looked unregistered (whois, Oct 24 2026). Until a domain is bought, github.io is the home.
+
 ## Decisions (owner)
 
 - Web-hosted React Native (Expo SDK 58) app for now; native iOS/Android builds later from the same code. No Expo Go.

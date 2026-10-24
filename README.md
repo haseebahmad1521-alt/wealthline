@@ -1,6 +1,6 @@
 # Wealthline
 
-The world's biggest fortunes. In motion. A web-hosted React Native app (Expo SDK 58, Expo Router, React Native Web, Supabase); native iOS/Android builds come later from the same code.
+The world's biggest fortunes. A web-hosted React Native app (Expo SDK 58, Expo Router, React Native Web, Supabase); native iOS/Android builds come later from the same code.
 
 Requirements: `CLAUDE.md` (owner), `HANDOFF.md`, `PRODUCT.md`. Plan and status: `PLAN.md`.
 

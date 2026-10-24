@@ -32,6 +32,7 @@ export const icons = {
   rankings: { ios: 'chart.bar.fill', android: 'leaderboard', web: 'leaderboard' },
   people: { ios: 'person.2.fill', android: 'group', web: 'group' },
   projects: { ios: 'sparkles', android: 'rocket_launch', web: 'rocket_launch' },
+  filter: { ios: 'line.3.horizontal.decrease', android: 'tune', web: 'tune' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
   minus: { ios: 'minus', android: 'remove', web: 'remove' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
