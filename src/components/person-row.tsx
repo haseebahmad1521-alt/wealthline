@@ -9,7 +9,16 @@ import { formatDate } from '@/lib/format';
 import { color, space, type } from '@/theme';
 
 /** One ranked person: portrait with rank badge, name and source, value, change. Taps through to the profile. */
-export function PersonRow({ person, showRank = true }: { person: Person; showRank?: boolean }) {
+export function PersonRow({
+  person,
+  showRank = true,
+  selection,
+}: {
+  person: Person;
+  showRank?: boolean;
+  /** Compare mode: the row toggles selection instead of opening the profile. */
+  selection?: { selected: boolean; onToggle: () => void };
+}) {
   const narrow = useWindowDimensions().width < 520;
   const money = useMoney();
   const worth = person.net_worth_usd;
@@ -22,16 +31,8 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
     .filter(Boolean)
     .join(', ');
 
-  return (
-    <Link href={`/person/${person.slug}`} asChild>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel={label}
-        accessibilityHint="Opens profile"
-        style={styles.pressable}>
-        {/* Pressed/hover styling lives on an inner view: Link asChild (Slot) drops function styles. */}
-        {({ pressed, hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
-        <View style={[styles.row, (pressed || hovered) && styles.active]}>
+  const body = ({ pressed, hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
+        <View style={[styles.row, (pressed || hovered) && styles.active, selection?.selected && styles.selected]}>
         <View>
           <Portrait uri={person.portrait_url} name={person.name} size={narrow ? 44 : 48} />
           {showRank && person.rank != null && (
@@ -41,7 +42,7 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
           )}
         </View>
         <View style={styles.identity}>
-          <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+          <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
             {person.name}
           </Text>
           <Caption numberOfLines={1}>{person.main_source ?? ' '}</Caption>
@@ -60,21 +61,65 @@ export function PersonRow({ person, showRank = true }: { person: Person; showRan
             <Caption>No estimate yet</Caption>
           )}
         </View>
-        <Icon name={icons.chevron} size={13} tint={color.hairline} />
-        </View>
+        {selection ? (
+          <View style={[styles.check, selection.selected && styles.checkOn]}>
+            {selection.selected && <Icon name={icons.check} size={13} tint="#FFFFFF" />}
+          </View>
+        ) : (
+          <Icon name={icons.chevron} size={13} tint={color.hairline} />
         )}
+        </View>
+  );
+
+  if (selection) {
+    return (
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: selection.selected }}
+        accessibilityLabel={label}
+        onPress={selection.onToggle}
+        style={styles.pressable}>
+        {body}
+      </Pressable>
+    );
+  }
+
+  return (
+    <Link href={`/person/${person.slug}`} asChild>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={label}
+        accessibilityHint="Opens profile"
+        style={styles.pressable}>
+        {/* Pressed/hover styling lives on an inner view: Link asChild (Slot) drops function styles. */}
+        {body}
       </Pressable>
     </Link>
   );
 }
 
-export function PersonList({ people, showRank = true }: { people: Person[]; showRank?: boolean }) {
+export function PersonList({
+  people,
+  showRank = true,
+  selectedIds,
+  onToggle,
+}: {
+  people: Person[];
+  showRank?: boolean;
+  /** Present only in compare mode. */
+  selectedIds?: string[];
+  onToggle?: (id: string) => void;
+}) {
   return (
     <Surface style={styles.list}>
       {people.map((p, i) => (
         <Fragment key={p.id}>
           {i > 0 && <View style={styles.separator} />}
-          <PersonRow person={p} showRank={showRank} />
+          <PersonRow
+            person={p}
+            showRank={showRank}
+            selection={selectedIds && onToggle ? { selected: selectedIds.includes(p.id), onToggle: () => onToggle(p.id) } : undefined}
+          />
         </Fragment>
       ))}
     </Surface>
@@ -94,6 +139,17 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm + 2,
   },
   active: { backgroundColor: color.fill },
+  selected: { backgroundColor: '#E8F1FC' },
+  check: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: color.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkOn: { backgroundColor: color.action, borderColor: color.action },
   // Rank sits on the portrait's top-left corner to save a column; ringed so it reads on any photo.
   badge: {
     position: 'absolute',

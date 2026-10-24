@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
@@ -118,6 +118,18 @@ export const useEvents = (personId?: string) =>
     queryFn: () => list<LifeEvent>('events', 'person_id', personId!, 'date'),
   });
 
+async function fetchValues(personId: string, sinceIso: string | null) {
+  const rows: NetWorthValue[] = [];
+  for (let page = 0; ; page++) {
+    let q = db().from('net_worth_values').select('*').eq('person_id', personId);
+    if (sinceIso) q = q.gte('as_of', sinceIso);
+    const r = await q.order('as_of').range(page * 1000, page * 1000 + 999);
+    if (r.error) throw r.error;
+    rows.push(...(r.data as NetWorthValue[]));
+    if (r.data.length < 1000) return rows;
+  }
+}
+
 // All values since `since` (or ever), oldest first. Paged because PostgREST caps rows per request.
 export function useValues(personId: string | undefined, since: Date | null) {
   const sinceIso = since?.toISOString() ?? null;
@@ -125,19 +137,15 @@ export function useValues(personId: string | undefined, since: Date | null) {
     queryKey: ['values', personId, sinceIso],
     enabled: !!personId,
     refetchInterval: 60_000,
-    queryFn: async () => {
-      const rows: NetWorthValue[] = [];
-      for (let page = 0; ; page++) {
-        let q = db().from('net_worth_values').select('*').eq('person_id', personId!);
-        if (sinceIso) q = q.gte('as_of', sinceIso);
-        const r = await q.order('as_of').range(page * 1000, page * 1000 + 999);
-        if (r.error) throw r.error;
-        rows.push(...(r.data as NetWorthValue[]));
-        if (r.data.length < 1000) return rows;
-      }
-    },
+    queryFn: () => fetchValues(personId!, sinceIso),
   });
 }
+
+/** Full history for several people at once (comparison), sharing the per-person cache. */
+export const useValuesFor = (personIds: string[]) =>
+  useQueries({
+    queries: personIds.map((id) => ({ queryKey: ['values', id, null], queryFn: () => fetchValues(id, null) })),
+  });
 
 export const useProjects = () =>
   useQuery({

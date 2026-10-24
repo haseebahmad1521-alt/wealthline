@@ -8,17 +8,22 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, Pressable, Text } from 'react-native';
+import { Platform, Pressable, Text, useWindowDimensions } from 'react-native';
+
+import { TopNav } from '@/components/app-tabs';
 
 import { CurrencyProvider } from '@/lib/currency';
 import { DataProvider } from '@/lib/data';
 // Web: capture the browser's install prompt at start-up, before the Account screen exists.
 import '@/lib/install';
-import { color, font } from '@/theme';
+import { color, desktopBreakpoint, font } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Desktop web: Stack screens above the tabs keep the site's top navigation instead of a back header.
+  const desktopWeb = Platform.OS === 'web' && useWindowDimensions().width >= desktopBreakpoint;
+  const topNav = desktopWeb ? { header: () => <TopNav /> } : null;
   const [loaded, error] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
   useEffect(() => {
     if (loaded || error) void SplashScreen.hideAsync();
@@ -45,13 +50,18 @@ export default function RootLayout() {
           options={{ title: '', headerLeft: (p) =>
             // Native keeps the system back button (and edge swipe); web has none, so it gets ours.
             Platform.OS === 'web' || !p.canGoBack ? <HeaderLink label={p.canGoBack ? 'Back' : 'Rankings'} /> : undefined,
+          ...topNav,
         }}
         />
         <Stack.Screen
           name="account"
-          options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" /> }}
+          options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" />, ...topNav }}
         />
-        <Stack.Screen name="admin" options={{ title: 'Admin' }} />
+        <Stack.Screen name="admin" options={{ title: 'Admin', ...topNav }} />
+        <Stack.Screen
+          name="compare"
+          options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" />, ...topNav }}
+        />
       </Stack>
       </CurrencyProvider>
     </DataProvider>

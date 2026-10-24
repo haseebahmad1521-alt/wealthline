@@ -2,6 +2,9 @@ import { NativeTabs } from 'expo-router/native-tabs';
 
 import { color, font } from '@/theme';
 
+/** Desktop top bar is web-only; native has no equivalent. */
+export const TopNav = (): null => null;
+
 // iOS: system tab bar (Liquid Glass); Android: Material navigation bar. SF Symbols / Material icons.
 export default function AppTabs() {
   return (
@@ -11,10 +14,6 @@ export default function AppTabs() {
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Rankings</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="leaderboard" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="people">
-        <NativeTabs.Trigger.Label>People</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.2.fill" md="group" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="projects">
         <NativeTabs.Trigger.Label>Projects</NativeTabs.Trigger.Label>

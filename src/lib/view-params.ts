@@ -1,6 +1,6 @@
 // Pure helpers for saved views: validate stored params and sort people. No React Native imports (unit-tested).
 export type ViewTarget = 'people' | 'projects';
-export const peopleSorts = ['name', 'rank', 'change'] as const;
+export const peopleSorts = ['rank', 'name', 'change'] as const;
 export type PeopleSort = (typeof peopleSorts)[number];
 export const projectStatuses = ['all', 'new', 'upcoming'] as const;
 export type ProjectStatus = (typeof projectStatuses)[number];
@@ -16,7 +16,7 @@ export function parsePeopleParams(raw: unknown): PeopleParams {
   const r = obj(raw);
   return {
     q: typeof r.q === 'string' ? r.q.slice(0, 100) : '',
-    sort: peopleSorts.find((s) => s === r.sort) ?? 'name',
+    sort: peopleSorts.find((s) => s === r.sort) ?? 'rank',
   };
 }
 

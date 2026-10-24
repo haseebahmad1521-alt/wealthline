@@ -10,7 +10,7 @@ import { color, space, type } from '@/theme';
 
 function describe(v: SavedView) {
   if (v.target === 'projects') return `Projects · ${v.params.status === 'all' ? 'all' : v.params.status}`;
-  return `People · ${v.params.q ? `“${v.params.q}”, ` : ''}by ${sortLabels[v.params.sort].toLowerCase()}`;
+  return `Rankings · ${v.params.q ? `“${v.params.q}”, ` : ''}by ${sortLabels[v.params.sort].toLowerCase()}`;
 }
 
 export default function Watchlist() {
@@ -60,15 +60,15 @@ export default function Watchlist() {
           ) : views.isPending ? (
             <Caption>Loading saved views…</Caption>
           ) : (views.data ?? []).length === 0 ? (
-            <Body secondary>Save a filter or sort from People or Projects and it appears here.</Body>
+            <Body secondary>Save a filter or sort from Rankings or Projects and it appears here.</Body>
           ) : (
             <Surface>
               {views.data!.map((v) => (
                 <Pressable
                   key={v.id}
                   accessibilityRole="link"
-                  accessibilityLabel={`${v.name}, ${describe(v)}, opens ${v.target}`}
-                  onPress={() => router.push(`/${v.target}?view=${v.id}`)}
+                  accessibilityLabel={`${v.name}, ${describe(v)}, opens ${v.target === 'people' ? 'rankings' : v.target}`}
+                  onPress={() => router.push(v.target === 'people' ? `/?view=${v.id}` : `/projects?view=${v.id}`)}
                   style={{ minHeight: minTouch, padding: space.md, gap: 2, flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={[type.headline, { color: color.text }]}>{v.name}</Text>

@@ -6,9 +6,9 @@ import { parsePeopleParams, parseProjectParams, sortPeople, suggestName } from '
 
 test('people params: unknown keys ignored, invalid values dropped', () => {
   assert.deepEqual(parsePeopleParams({ q: 'tech', sort: 'change', extra: 1 }), { q: 'tech', sort: 'change' });
-  assert.deepEqual(parsePeopleParams({ q: 5, sort: 'bogus' }), { q: '', sort: 'name' });
-  assert.deepEqual(parsePeopleParams(null), { q: '', sort: 'name' });
-  assert.deepEqual(parsePeopleParams([1]), { q: '', sort: 'name' });
+  assert.deepEqual(parsePeopleParams({ q: 5, sort: 'bogus' }), { q: '', sort: 'rank' });
+  assert.deepEqual(parsePeopleParams(null), { q: '', sort: 'rank' });
+  assert.deepEqual(parsePeopleParams([1]), { q: '', sort: 'rank' });
   assert.equal(parsePeopleParams({ q: 'x'.repeat(500) }).q.length, 100);
 });
 

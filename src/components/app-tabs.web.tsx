@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, usePathname } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { Image } from 'expo-image';
 import type { ComponentRef, Ref } from 'react';
@@ -17,47 +17,69 @@ import { Icon, icons, type IconName } from '@/components/ui';
 import { useAuth } from '@/lib/data';
 import { color, contentWidth, desktopBreakpoint, font, space, type } from '@/theme';
 
-const tabs: { name: string; href: '/' | '/people' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
+const tabs: { name: string; href: '/' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
   { name: 'index', href: '/', label: 'Rankings', icon: icons.rankings },
-  { name: 'people', href: '/people', label: 'People', icon: icons.people },
   { name: 'projects', href: '/projects', label: 'Projects', icon: icons.projects },
   { name: 'watchlist', href: '/watchlist', label: 'Watchlist', icon: icons.starFill },
 ];
+
+/** Desktop top bar. Link-based so it also works as the header of Stack screens above the tabs. */
+export function TopNav() {
+  const pathname = usePathname();
+  const { session } = useAuth();
+  return (
+    <View style={styles.top}>
+      <View accessibilityRole="tablist" style={styles.topInner}>
+        <View style={styles.brand}>
+          <Image source={require('../../public/icons/wealthline.svg')} style={styles.logo} accessibilityIgnoresInvertColors />
+          <Text style={styles.brandText}>Wealthline</Text>
+        </View>
+        {tabs.map((t) => {
+          const active = t.href === '/' ? pathname === '/' : pathname.startsWith(t.href);
+          return (
+            <Link key={t.name} href={t.href} asChild>
+              <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} style={styles.topTabOuter}>
+                {({ hovered, pressed }: PressableStateCallbackType & { hovered?: boolean }) => (
+                  <View style={[styles.topTab, active && styles.topTabActive, (hovered || pressed) && !active && styles.hover]}>
+                    <Text style={[styles.topLabel, { color: active ? color.text : color.textSecondary }]}>{t.label}</Text>
+                  </View>
+                )}
+              </Pressable>
+            </Link>
+          );
+        })}
+        <Link href="/account" style={styles.account}>
+          {session ? 'Account' : 'Sign in'}
+        </Link>
+      </View>
+    </View>
+  );
+}
 
 // Web: top navigation on desktop, bottom tab bar on phones.
 export default function AppTabs() {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const insets = useSafeAreaInsets();
-  const { session } = useAuth();
 
+  // On desktop the triggers stay mounted (Tabs needs them for routing) but hidden; TopNav is the visible bar.
   const list = (
     <TabList asChild>
       <View
         accessibilityRole="tablist"
-        style={desktop ? styles.topInner : StyleSheet.flatten([styles.bottom, { paddingBottom: Math.max(insets.bottom, 6) }])}>
-        {desktop && (
-          <View style={styles.brand}>
-            <Image source={require('../../public/icons/wealthline.svg')} style={styles.logo} accessibilityIgnoresInvertColors />
-            <Text style={styles.brandText}>Wealthline</Text>
-          </View>
-        )}
+        style={desktop ? styles.hidden : StyleSheet.flatten([styles.bottom, { paddingBottom: Math.max(insets.bottom, 6) }])}>
         {tabs.map((t) => (
           <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
-            <TabButton icon={t.icon} label={t.label} desktop={desktop} />
+            <TabButton icon={t.icon} label={t.label} desktop={false} />
           </TabTrigger>
         ))}
-        {desktop && (
-          <Link href="/account" style={styles.account}>
-            {session ? 'Account' : 'Sign in'}
-          </Link>
-        )}
       </View>
     </TabList>
   );
 
   return (
     <Tabs style={styles.root}>
-      {desktop && <View style={styles.top}>{list}</View>}
+      {desktop && <TopNav />}
+      {desktop && list}
       <TabSlot style={styles.slot} />
       {!desktop && list}
     </Tabs>
@@ -101,6 +123,7 @@ function TabButton({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.bg },
   slot: { flex: 1 },
+  hidden: { display: 'none' },
   top: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.hairline,
