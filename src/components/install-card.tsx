@@ -46,5 +46,5 @@ const styles = StyleSheet.create({
   card: { padding: space.lg, gap: space.md },
   steps: { gap: space.sm },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  stepIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#E8F1FC', alignItems: 'center', justifyContent: 'center' },
+  stepIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: color.actionTint, alignItems: 'center', justifyContent: 'center' },
 });

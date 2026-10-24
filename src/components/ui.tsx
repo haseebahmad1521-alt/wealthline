@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
   },
-  chipLive: { backgroundColor: '#E8F3EC' },
+  chipLive: { backgroundColor: color.gainTint },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: color.gain },
   button: {
     minHeight: minTouch,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   buttonPrimary: { backgroundColor: color.action },
-  buttonSecondary: { backgroundColor: '#E8F1FC' },
+  buttonSecondary: { backgroundColor: color.actionTint },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.75 },
   initials: { backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },

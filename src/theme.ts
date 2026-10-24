@@ -9,7 +9,9 @@ export const color = {
   hairline: '#E5E5EA',
   fill: '#F2F2F7',
   action: '#0071E3',
+  actionTint: '#E8F1FC',
   gain: '#1E7B45',
+  gainTint: '#E8F3EC',
   loss: '#B42318',
   projected: '#6E6E73',
 } as const;

@@ -1,0 +1,494 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T01:01:38.691Z",
+  "title": "Design System: Wealthline",
+  "extensions": {
+    "colorMeta": {
+      "action-blue": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "#0071E3",
+        "oklch": "oklch(56.3% 0.193 256)",
+        "tonalRamp": [
+          "#010050",
+          "#00107C",
+          "#003AA8",
+          "#0060D1",
+          "#2786FA",
+          "#52AEFF",
+          "#7ED3FF",
+          "#A1F1FF"
+        ]
+      },
+      "action-wash": {
+        "role": "primary",
+        "displayName": "Action Wash",
+        "canonical": "#E8F1FC",
+        "oklch": "oklch(95.5% 0.018 253)",
+        "tonalRamp": [
+          "#060C12",
+          "#20272F",
+          "#3F464F",
+          "#5F6770",
+          "#828A94",
+          "#A6AFB9",
+          "#C9D2DD",
+          "#E6EFFA"
+        ]
+      },
+      "gain": {
+        "role": "secondary",
+        "displayName": "Gain Green",
+        "canonical": "#1E7B45",
+        "oklch": "oklch(51.6% 0.120 152)",
+        "tonalRamp": [
+          "#001600",
+          "#003502",
+          "#005622",
+          "#1B7943",
+          "#479E65",
+          "#6EC489",
+          "#91E8AB",
+          "#AEFFC8"
+        ]
+      },
+      "gain-wash": {
+        "role": "secondary",
+        "displayName": "Gain Wash",
+        "canonical": "#E8F3EC",
+        "oklch": "oklch(95.4% 0.015 158)",
+        "tonalRamp": [
+          "#060D09",
+          "#212924",
+          "#3F4842",
+          "#5F6963",
+          "#828C86",
+          "#A7B1AA",
+          "#C9D4CD",
+          "#E7F2EB"
+        ]
+      },
+      "loss": {
+        "role": "secondary",
+        "displayName": "Loss Red",
+        "canonical": "#B42318",
+        "oklch": "oklch(50.0% 0.182 29)",
+        "tonalRamp": [
+          "#370000",
+          "#630000",
+          "#8E0000",
+          "#B7271C",
+          "#E25242",
+          "#FF7966",
+          "#FFA18C",
+          "#FFC2AD"
+        ]
+      },
+      "series-1": {
+        "role": "tertiary",
+        "displayName": "Compare Blue",
+        "canonical": "#1F5FBF",
+        "oklch": "oklch(50.2% 0.164 258)",
+        "tonalRamp": [
+          "#01004A",
+          "#001574",
+          "#003D9A",
+          "#2262C2",
+          "#4787EB",
+          "#6BADFF",
+          "#8DD1FF",
+          "#AFF0FF"
+        ]
+      },
+      "series-2": {
+        "role": "tertiary",
+        "displayName": "Compare Orange",
+        "canonical": "#EB6834",
+        "oklch": "oklch(67.1% 0.175 40)",
+        "tonalRamp": [
+          "#360000",
+          "#610000",
+          "#8A0000",
+          "#B33300",
+          "#DD5B25",
+          "#FF824F",
+          "#FFA776",
+          "#FFC899"
+        ]
+      },
+      "series-3": {
+        "role": "tertiary",
+        "displayName": "Compare Teal",
+        "canonical": "#0F9D8A",
+        "oklch": "oklch(62.5% 0.111 179)",
+        "tonalRamp": [
+          "#00160D",
+          "#003528",
+          "#005747",
+          "#007A68",
+          "#149F8C",
+          "#4DC5B0",
+          "#74E9D4",
+          "#94FFF1"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "canonical": "#FBFBFD",
+        "oklch": "oklch(98.9% 0.003 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262628",
+          "#454546",
+          "#666667",
+          "#89898B",
+          "#AEAEAF",
+          "#D1D1D3",
+          "#EEEEF0"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1D1D1F",
+        "oklch": "oklch(23.2% 0.004 286)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#262628",
+          "#454547",
+          "#666668",
+          "#89898B",
+          "#ADADB0",
+          "#D1D1D3",
+          "#EEEEF1"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#6E6E73",
+        "oklch": "oklch(54.0% 0.008 286)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#26262A",
+          "#444449",
+          "#65656A",
+          "#88888E",
+          "#ADADB3",
+          "#D0D0D6",
+          "#EEEEF4"
+        ]
+      },
+      "projected": {
+        "role": "neutral",
+        "displayName": "Projected",
+        "canonical": "#6E6E73",
+        "oklch": "oklch(54.0% 0.008 286)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#26262A",
+          "#444449",
+          "#65656A",
+          "#88888E",
+          "#ADADB3",
+          "#D0D0D6",
+          "#EEEEF4"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#E5E5EA",
+        "oklch": "oklch(92.3% 0.007 286)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#26262A",
+          "#454449",
+          "#66666A",
+          "#89898D",
+          "#ADADB2",
+          "#D0D0D5",
+          "#EEEEF3"
+        ]
+      },
+      "fill": {
+        "role": "neutral",
+        "displayName": "Fill",
+        "canonical": "#F2F2F7",
+        "oklch": "oklch(96.3% 0.007 286)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#26262A",
+          "#454548",
+          "#66666A",
+          "#89898D",
+          "#ADADB2",
+          "#D0D0D5",
+          "#EEEEF3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles ending in a period; desktop profile names at 56/60px, -1.8px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Large figures, sub-page titles, mobile profile names (24/28px)."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Level-2 headings."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Row names, button labels, state and news titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Sources, dates, provenance chip, legends."
+      },
+      "number": {
+        "displayName": "Number",
+        "purpose": "Every money and percent figure, tabular."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-lift",
+        "value": "0 6px 20px rgba(0,0,0,0.06)",
+        "purpose": "Every Surface card, list container, and the profile hero."
+      },
+      {
+        "name": "portrait-lift",
+        "value": "0 6px 20px rgba(0,0,0,0.16)",
+        "purpose": "Crisp portrait tile inside the profile hero."
+      },
+      {
+        "name": "segment-thumb",
+        "value": "0 1px 4px rgba(0,0,0,0.08)",
+        "purpose": "Selected option in segmented controls."
+      }
+    ],
+    "materials": [
+      {
+        "name": "nav-frost-top",
+        "value": "background: rgba(251,251,253,0.85); backdrop-filter: saturate(180%) blur(20px); border-bottom: 0.5px solid #E5E5EA",
+        "purpose": "Sticky desktop top bar."
+      },
+      {
+        "name": "nav-frost-bottom",
+        "value": "background: rgba(251,251,253,0.94); border-top: 0.5px solid #E5E5EA",
+        "purpose": "Phone bottom tab bar."
+      },
+      {
+        "name": "hero-frost",
+        "value": "portrait blurred 50px (mobile) / 80px (desktop), overlaid with rgba(251,251,253,0.62)",
+        "purpose": "Profile hero colour field; keeps Ink text near 6:1 over any photo."
+      }
+    ],
+    "focus": {
+      "value": "outline: 2px solid #0071E3; outline-offset: 2px",
+      "selection": "rgba(0,113,227,0.18)"
+    },
+    "motion": [
+      {
+        "name": "press-feedback",
+        "value": "opacity 0.75 (buttons), 0.6 (hero star)",
+        "purpose": "Pressed state; no scale or shadow change."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "respect OS setting",
+        "purpose": "Chart and live value motion honour reduced motion; animation never stands in for data."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tiny",
+        "value": "360px",
+        "purpose": "Below: 36px list portraits, no row chevron."
+      },
+      {
+        "name": "narrow",
+        "value": "520px",
+        "purpose": "Below: 44px portraits, percent-only change in rows."
+      },
+      {
+        "name": "desktop",
+        "value": "900px",
+        "purpose": "At/above: top nav, 200px hero portrait, 56px profile name."
+      }
+    ],
+    "layout": {
+      "contentWidth": "1120px",
+      "touchTarget": "44px (48px Android)"
+    },
+    "openDecisions": [
+      "Dark appearance undecided; palette is light-only.",
+      "Native iOS/Android builds later; tokens need a native audit then.",
+      "App icon is a temporary Lucide trending-up glyph (public/icons/NOTICE.md)."
+    ],
+    "ownerPins": [
+      "Inter",
+      "#FBFBFD ground",
+      "#FFFFFF surfaces",
+      "#1D1D1F ink",
+      "#6E6E73 secondary",
+      "#0071E3 action",
+      "#1E7B45 gain / #B42318 loss with drawn direction icon",
+      "20–28px radii",
+      "soft shadows",
+      "period-ended headings",
+      "~1120px content width"
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action; pill, Action Blue.",
+      "html": "<button class=\"ds-btn-primary\">Send code</button>",
+      "css": ".ds-btn-primary{font-family: Inter, -apple-system, system-ui, sans-serif;background:#0071E3;color:#fff;border:none;border-radius:999px;min-height:44px;padding:0 24px;font-size:17px;font-weight:600;letter-spacing:-0.2px;cursor:pointer;transition:opacity .15s}.ds-btn-primary:hover{opacity:.9}.ds-btn-primary:active{opacity:.75}.ds-btn-primary:focus-visible{outline:2px solid #0071E3;outline-offset:2px}.ds-btn-primary:disabled{opacity:.45}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Retry, Compare; Action Wash pill.",
+      "html": "<button class=\"ds-btn-secondary\">Compare</button>",
+      "css": ".ds-btn-secondary{font-family: Inter, -apple-system, system-ui, sans-serif;background:#E8F1FC;color:#0071E3;border:none;border-radius:999px;min-height:44px;padding:0 24px;font-size:17px;font-weight:600;letter-spacing:-0.2px;cursor:pointer;transition:opacity .15s}.ds-btn-secondary:active{opacity:.75}.ds-btn-secondary:focus-visible{outline:2px solid #0071E3;outline-offset:2px}"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Pill search trough on Fill.",
+      "html": "<input class=\"ds-input-search\" placeholder=\"Search name, source, or country\">",
+      "css": ".ds-input-search{font-family: Inter, -apple-system, system-ui, sans-serif;background:#F2F2F7;color:#1D1D1F;border:none;border-radius:999px;min-height:44px;padding:0 16px;font-size:16px;width:320px}.ds-input-search::placeholder{color:#6E6E73}.ds-input-search:focus-visible{outline:2px solid #0071E3;outline-offset:2px}"
+    },
+    {
+      "name": "Provenance Chip",
+      "kind": "chip",
+      "refersTo": "provenance-chip",
+      "description": "Signature: says where a headline value came from.",
+      "html": "<span class=\"ds-chip\">Estimate as of Oct 1, 2026</span> <span class=\"ds-chip ds-chip-live\"><i></i>Observed 3:42 PM</span>",
+      "css": ".ds-chip{font-family: Inter, -apple-system, system-ui, sans-serif;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#F2F2F7;color:#6E6E73;font-size:13px;font-weight:500;line-height:18px}.ds-chip-live{background:#E8F3EC;color:#1D1D1F}.ds-chip-live i{width:7px;height:7px;border-radius:4px;background:#1E7B45}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-control",
+      "description": "Sort, chart range, compare mode.",
+      "html": "<div class=\"ds-seg\"><button class=\"on\">3H</button><button>1D</button><button>1M</button><button>1Y</button><button>All</button></div>",
+      "css": ".ds-seg{font-family: Inter, -apple-system, system-ui, sans-serif;display:inline-flex;background:#F2F2F7;border-radius:999px;padding:3px}.ds-seg button{font-family: Inter, -apple-system, system-ui, sans-serif;border:none;background:none;min-height:36px;min-width:48px;padding:0 8px;border-radius:999px;font-size:13px;font-weight:600;color:#6E6E73;cursor:pointer}.ds-seg button.on{background:#fff;color:#1D1D1F;box-shadow:0 1px 4px rgba(0,0,0,.08)}.ds-seg button:focus-visible{outline:2px solid #0071E3;outline-offset:2px}"
+    },
+    {
+      "name": "Ranked List Card",
+      "kind": "card",
+      "refersTo": "person-row",
+      "description": "Surface card of person rows with rank badge on portrait and directional change.",
+      "html": "<div class=\"ds-list\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-pt\"><span class=\"ds-img\"></span><b>1</b></span><span class=\"ds-id\"><strong>Elon Musk</strong><small>SpaceX, Tesla</small></span><span class=\"ds-val\"><strong>$936.0B</strong><em class=\"up\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><path d=\"M6 3l4 6H2z\" fill=\"currentColor\"/></svg> 4.93%</em></span></a><hr><a class=\"ds-row\" href=\"#\"><span class=\"ds-pt\"><span class=\"ds-img\"></span><b>2</b></span><span class=\"ds-id\"><strong>Jeff Bezos</strong><small>Amazon</small></span><span class=\"ds-val\"><strong>$370.0B</strong><em class=\"down\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><path d=\"M6 9L2 3h8z\" fill=\"currentColor\"/></svg> 1.20%</em></span></a></div>",
+      "css": ".ds-list{font-family: Inter, -apple-system, system-ui, sans-serif;background:#fff;border-radius:28px;box-shadow:0 6px 20px rgba(0,0,0,.06);padding:4px 0;overflow:hidden;width:380px}.ds-list hr{border:none;height:.5px;background:#E5E5EA;margin:0 0 0 80px}.ds-row{display:flex;align-items:center;gap:16px;min-height:64px;padding:10px 16px;text-decoration:none;color:#1D1D1F}.ds-row:hover{background:#F2F2F7}.ds-row:focus-visible{outline:2px solid #0071E3;outline-offset:-2px}.ds-pt{position:relative}.ds-img{display:block;width:48px;height:48px;border-radius:50%;background:#F2F2F7}.ds-pt b{position:absolute;top:-4px;left:-4px;min-width:20px;height:20px;box-sizing:border-box;padding:0 5px;border-radius:10px;border:2px solid #fff;background:#1D1D1F;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}.ds-id{flex:1;display:flex;flex-direction:column;gap:2px}.ds-id strong{font-size:17px;font-weight:600;letter-spacing:-.2px}.ds-id small{font-size:13px;font-weight:500;color:#6E6E73}.ds-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-variant-numeric:tabular-nums}.ds-val strong{font-size:17px;font-weight:600;letter-spacing:-.3px}.ds-val em{font-style:normal;font-size:13px;font-weight:600;display:flex;align-items:center;gap:2px}.ds-val .up{color:#1E7B45}.ds-val .down{color:#B42318}"
+    },
+    {
+      "name": "Desktop Top Nav",
+      "kind": "nav",
+      "refersTo": "nav-top",
+      "description": "Sticky frosted bar at >=900px.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-brand\"><i></i>Wealthline</span><a class=\"on\" href=\"#\">Rankings</a><a href=\"#\">Projects</a><a href=\"#\">Watchlist</a><a class=\"ds-acct\" href=\"#\">Sign in</a></nav>",
+      "css": ".ds-nav{font-family: Inter, -apple-system, system-ui, sans-serif;display:flex;align-items:center;gap:4px;height:56px;padding:0 16px;background:rgba(251,251,253,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid #E5E5EA}.ds-brand{display:flex;align-items:center;gap:8px;margin-right:auto;font-weight:700;font-size:17px;letter-spacing:-.4px;color:#1D1D1F}.ds-brand i{width:28px;height:28px;border-radius:7px;background:#0071E3}.ds-nav a{font-size:14px;font-weight:500;color:#6E6E73;text-decoration:none;height:36px;padding:0 14px;border-radius:18px;display:flex;align-items:center}.ds-nav a:hover,.ds-nav a.on{background:#F2F2F7}.ds-nav a.on{color:#1D1D1F}.ds-nav a.ds-acct{color:#0071E3;margin-left:16px;padding:0 8px}.ds-nav a.ds-acct:hover{background:none}.ds-nav a:focus-visible{outline:2px solid #0071E3;outline-offset:2px}"
+    },
+    {
+      "name": "Profile Hero",
+      "kind": "custom",
+      "refersTo": "surface-card",
+      "description": "Signature: blurred-portrait colour field with frost, crisp tile, identity in Ink.",
+      "html": "<div class=\"ds-hero\"><div class=\"ds-hero-bg\"></div><div class=\"ds-hero-row\"><div class=\"ds-hero-pt\"></div><div><h2>Sergey Brin</h2><p>No. 5 · Google</p></div></div><small>Photo: The White House · Public domain</small></div>",
+      "css": ".ds-hero{font-family: Inter, -apple-system, system-ui, sans-serif;position:relative;overflow:hidden;border-radius:28px;padding:24px 16px 8px;box-shadow:0 6px 20px rgba(0,0,0,.06);width:420px;background:#F2F2F7}.ds-hero-bg{position:absolute;inset:-25%;background:radial-gradient(circle at 30% 40%,#c9b9a6,#8f8a94 60%,#d8cfc4);filter:blur(50px)}.ds-hero::after{content:\"\";position:absolute;inset:0;background:rgba(251,251,253,.62)}.ds-hero>*{position:relative;z-index:1}.ds-hero-row{display:flex;align-items:center;gap:16px}.ds-hero-pt{width:88px;height:88px;border-radius:22px;background:#b9aa98;box-shadow:0 6px 20px rgba(0,0,0,.16)}.ds-hero h2{margin:0;font-size:24px;line-height:28px;font-weight:700;letter-spacing:-.6px;color:#1D1D1F}.ds-hero p{margin:4px 0 0;font-size:15px;font-weight:500;color:#1D1D1F}.ds-hero small{display:block;text-align:right;margin-top:16px;font-size:12px;font-weight:500;color:#1D1D1F}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Labelled Ledger",
+    "overview": "A minimal Apple-style foundation, quiet ground, white rounded surfaces, Inter tightly tracked, one action blue, where every headline number carries a small chip saying whether it is observed, projected, or an estimate as of a date. The system is restrained everywhere except profiles, which turn photographic: each profile's hero card is coloured by its own portrait, blurred and frosted into a field.\n\nDensity is comfortable rather than sparse: ranked lists sit inside one white card with hairline separators, and generous 24px gaps separate page blocks. Movement is stated, never decorated: gains and losses always pair colour with a drawn triangle, and projections are drawn dashed and labelled in the chart itself.\n\nOpen decisions, not yet system rules: dark appearance is undecided (the palette is light-only); native iOS/Android builds come later and will need their own audit of these tokens; the app icon is a temporary Lucide \"trending-up\" glyph on action blue (provenance in `public/icons/NOTICE.md`).",
+    "keyCharacteristics": [
+      "Light-only ground (#FBFBFD) with white surfaces, soft diffuse shadows, 28px card corners (pinned).",
+      "Inter throughout, negative tracking on display sizes, tabular numerals for every money figure (pinned).",
+      "One action colour; gain/loss green and red only ever beside a direction icon (pinned).",
+      "Provenance chip and dashed, labelled projection segment as the signature move.",
+      "Photographic profile hero: blurred portrait as colour field, crisp portrait tile, identity beside it."
+    ],
+    "rules": [
+      {
+        "name": "The Never Colour Alone Rule",
+        "body": "Gain and loss colour always ride with a drawn triangle (or flat dash) and a spoken direction label. A green or red number without its icon is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Action Blue is the only interactive colour. Movement colours never style controls; series colours never leave the compare screen.",
+        "section": "colors"
+      },
+      {
+        "name": "The Period Rule",
+        "body": "Page and section headings are short statements ending in a period (pinned). Sentence case; no uppercase tracked labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Any figure that can change or be compared uses tabular numerals so columns and live updates don't jitter.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Lift Rule",
+        "body": "Surfaces get Ambient Lift and nothing heavier; no hard offsets, no stacked shadows, no shadow on hover.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Frosted Bar Rule",
+        "body": "Navigation chrome is translucent ground (85% top, 94% bottom) with backdrop blur and a hairline edge, never an opaque coloured bar.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** pair every gain/loss colour with a drawn triangle or dash and a spoken direction.",
+      "**Do** attach a provenance chip to every headline value and draw projections dashed and labelled.",
+      "**Do** put money and percentages in tabular Inter 600.",
+      "**Do** end page and section headings with a period.",
+      "**Do** keep controls as pills at 44px minimum (48px on Android) and cards at 28px corners with Ambient Lift.",
+      "**Do** derive a profile hero's colour from its own blurred portrait under the 62% frost, and keep the photo credit and licence link visible.",
+      "**Do** cap compare at the three validated series colours."
+    ],
+    "donts": [
+      "**Don't** use green or red as the only signal of direction.",
+      "**Don't** introduce a second interactive colour or use series colours outside compare.",
+      "**Don't** add heavier or hard-offset shadows, or shadows on hover.",
+      "**Don't** add uppercase tracked kickers or eyebrow labels above headings.",
+      "**Don't** animate or fill in values that were not recorded; smooth motion is not market data.",
+      "**Don't** place hero text in white over the photo or drop the frost; Ink on frost is the contrast guarantee."
+    ]
+  }
+}

@@ -100,6 +100,11 @@ export function PersonRow({
   );
 }
 
+function useDividerInset() {
+  const w = useWindowDimensions().width;
+  return 32 + (w < 360 ? 36 : w < 520 ? 44 : 48);
+}
+
 export function PersonList({
   people,
   showRank = true,
@@ -112,11 +117,12 @@ export function PersonList({
   selectedIds?: string[];
   onToggle?: (id: string) => void;
 }) {
+  const inset = useDividerInset();
   return (
     <Surface style={styles.list}>
       {people.map((p, i) => (
         <Fragment key={p.id}>
-          {i > 0 && <View style={styles.separator} />}
+          {i > 0 && <View style={[styles.separator, { marginLeft: inset }]} />}
           <PersonRow
             person={p}
             showRank={showRank}
@@ -130,7 +136,7 @@ export function PersonList({
 
 const styles = StyleSheet.create({
   list: { overflow: 'hidden', paddingVertical: 4 },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline, marginLeft: 80 },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline },
   pressable: { display: 'flex' },
   row: {
     flexDirection: 'row',
@@ -141,7 +147,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm + 2,
   },
   active: { backgroundColor: color.fill },
-  selected: { backgroundColor: '#E8F1FC' },
+  selected: { backgroundColor: color.actionTint },
   check: {
     width: 22,
     height: 22,
