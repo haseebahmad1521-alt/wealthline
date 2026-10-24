@@ -4,7 +4,7 @@
 
 ## Platform
 
-adaptive
+web
 
 ## Users
 
@@ -23,8 +23,8 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 
 ## Operating Context
 
-- One product on iOS, Android, and web (desktop + mobile web, installable PWA), each following its own platform conventions.
-- Web preview published to GitHub Pages inside an iPhone-style presentation shell; native preview via Expo Go on a physical phone.
+- Current target (owner, Oct 24, 2026): a web-hosted React Native (Expo) app — desktop and mobile web, installable PWA. Native iOS/Android builds come later from the same codebase; Expo Go is no longer used.
+- Hosting now: GitHub Pages (preview shell at /wealthline/, app at /wealthline/app/). Planned domains once acquired: wealthline.com = landing page, web.wealthline.com = web version, app.wealthline.com = web app. The base path is one build variable (EXPO_BASE_URL), so moving hosts needs no code change.
 - Admins (owner-designated accounts) maintain people, dated estimates, holdings, projects, and events.
 
 ## Capabilities and Constraints
@@ -58,7 +58,7 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 2. Glanceable first, deep on demand.
 3. Motion explains change; it never manufactures it.
 4. Private by default: a person's watchlist is theirs alone.
-5. Native on every platform rather than one look forced everywhere.
+5. Web first, built so native builds can follow without a rewrite.
 
 ## Accessibility & Inclusion
 
