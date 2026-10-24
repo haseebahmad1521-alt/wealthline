@@ -5,6 +5,8 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 const pagesBase = (process.env.PAGES_BASE ?? '/wealthline').replace(/\/$/, '');
 const appBase = `${pagesBase}/app`;
 const pagesUrl = process.env.PAGES_URL ?? 'https://haseebahmad1521-alt.github.io/wealthline/';
+// The QR opens the app itself, not this preview page.
+const appUrl = `${pagesUrl.replace(/\/$/, '')}/app/`;
 const repo = process.env.GITHUB_REPOSITORY ?? 'haseebahmad1521-alt/wealthline';
 const sha =
   process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -47,9 +49,9 @@ const sub = (file, vars) =>
   Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{{${k}}}`, v), readFileSync(file, 'utf8'));
 writeFileSync(
   'pages-dist/index.html',
-  sub('preview/index.html', { COMMIT: sha.slice(0, 7), COMMIT_URL: `https://github.com/${repo}/commit/${sha}`, PAGES_URL: pagesUrl }),
+  sub('preview/index.html', { COMMIT: sha.slice(0, 7), COMMIT_URL: `https://github.com/${repo}/commit/${sha}`, PAGES_URL: pagesUrl, APP_URL: appUrl }),
 );
 writeFileSync('pages-dist/404.html', sub('preview/404.html', { APP_PREFIX: `${appBase}/`, SHELL_URL: `${pagesBase}/` }));
 
-run('node', ['scripts/preview-qr.mjs', '--url', pagesUrl, '--out', 'pages-dist/qr']);
+run('node', ['scripts/preview-qr.mjs', '--url', appUrl, '--out', 'pages-dist/qr']);
 console.log(`\npages-dist ready (commit ${sha.slice(0, 7)}, app base ${appBase})`);
