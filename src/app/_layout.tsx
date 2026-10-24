@@ -16,6 +16,8 @@ import { CurrencyProvider } from '@/lib/currency';
 import { DataProvider } from '@/lib/data';
 // Web: capture the browser's install prompt at start-up, before the Account screen exists.
 import '@/lib/install';
+// Web: lift an activation session out of the URL fragment before anything else reads the address.
+import '@/lib/activation';
 import { color, desktopBreakpoint, font } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();

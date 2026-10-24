@@ -13,7 +13,7 @@ const run = (cmd, args, env = {}) => execFileSync(cmd, args, { stdio: 'inherit',
 rmSync('dist', { recursive: true, force: true });
 rmSync('pages-dist', { recursive: true, force: true });
 
-run('npx', ['expo', 'export', '-p', 'web'], { EXPO_BASE_URL: appBase });
+run('npx', ['expo', 'export', '-p', 'web'], { EXPO_BASE_URL: appBase, EXPO_PUBLIC_BASE_URL: appBase });
 
 // Prefix the template's root-relative URLs with the app base and register the service worker (production only).
 const sw = `<script>

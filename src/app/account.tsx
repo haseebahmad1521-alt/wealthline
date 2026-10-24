@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { InstallCard } from '@/components/install-card';
 import { Body, Button, Caption, Heading, Icon, Screen, Surface, icons, minTouch } from '@/components/ui';
-import { resetPassword, passwordRules, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
+import { activate, resetPassword, passwordRules, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
 import { useCurrencyChoice } from '@/lib/currency';
 import { useAuth } from '@/lib/data';
 import { color, font, radius, space, type } from '@/theme';
@@ -93,7 +93,7 @@ function CurrencyPicker() {
 export default function Account() {
   const { session, isAdmin } = useAuth();
   const router = useRouter();
-  const { verified } = useLocalSearchParams<{ verified?: string }>();
+  const { activated } = useLocalSearchParams<{ activated?: string }>();
   const [mode, setMode] = useState<Mode>('in');
   const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
@@ -116,6 +116,17 @@ export default function Account() {
       setBusy(false);
     }
   }
+
+  // Opened from the activation email: sign in with that session (first sign-in only, see the activate function),
+  // then re-route without the URL fragment; the router would otherwise keep restoring the tokens into the address.
+  useEffect(() => {
+    void activate().then(
+      (r) => r && router.replace({ pathname: '/account', params: { activated: 'welcome' } }),
+      () => router.replace({ pathname: '/account', params: { activated: 'failed' } }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const welcome = activated === 'welcome';
 
   const rules = passwordRules(password);
   const strong = rules.every((r) => r.met);
@@ -166,7 +177,8 @@ export default function Account() {
     content = (
       <>
         <Surface style={styles.card}>
-          <Heading level={2}>Signed in.</Heading>
+          <Heading level={2}>{welcome ? 'Account activated.' : 'Signed in.'}</Heading>
+          {welcome && <Body>Your email is confirmed and you’re signed in on this device.</Body>}
           <Body>{session.user.email}</Body>
           <Caption>Signed in on this device</Caption>
           {isAdmin && <Button label="Open admin" variant="secondary" onPress={() => router.push('/admin')} />}
@@ -229,7 +241,12 @@ export default function Account() {
             </Pressable>
           ))}
         </View>
-        {verified === '1' && mode === 'in' && <Body>Email confirmed. Sign in to continue.</Body>}
+        {activated === '1' && mode === 'in' && <Body>Email confirmed. Sign in to continue.</Body>}
+          {activated === 'failed' && mode === 'in' && (
+            <Text accessibilityRole="alert" style={[type.body, { color: color.loss }]}>
+              That activation link was already used or has expired. Your email is confirmed, so sign in to continue.
+            </Text>
+          )}
         <Field
           label="Email"
           value={email}

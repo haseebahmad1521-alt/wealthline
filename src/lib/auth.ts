@@ -1,6 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 
+import { takeActivation } from './activation';
 import { getItem, setItem } from './device-store';
 import { db } from './supabase';
 
@@ -83,18 +85,38 @@ export async function verifyDevice(email: string, code: string): Promise<void> {
   await adopt(r.session);
 }
 
+// Links in emails must include the app's base path (e.g. /wealthline/app on GitHub Pages);
+// expo-linking's web createURL drops it, which made Supabase fall back to the front page.
+function appUrl(path: string) {
+  if (Platform.OS !== 'web') return Linking.createURL(path);
+  return `${window.location.origin}${process.env.EXPO_PUBLIC_BASE_URL ?? ''}${path}`;
+}
+
+/** Signs in with the session from an activation link, if this page was opened from one. */
+export async function activate(): Promise<'activated' | null> {
+  const session = takeActivation();
+  if (!session) return null;
+  const r = await call<{ device_token: string; email: string }>('activate', {
+    access_token: session.access_token,
+    device_id: await deviceId(),
+  });
+  await saveToken(r.email, r.device_token);
+  await adopt(session);
+  return 'activated';
+}
+
 export async function signUp(email: string, password: string): Promise<void> {
   const r = await db().auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: Linking.createURL('/account?verified=1') },
+    options: { emailRedirectTo: appUrl('/account?activated=1') },
   });
   if (r.error) throw new Error(r.error.message);
 }
 
 export async function resetPassword(email: string): Promise<void> {
   // Same response whether or not the email exists.
-  await db().auth.resetPasswordForEmail(email, { redirectTo: Linking.createURL('/account') });
+  await db().auth.resetPasswordForEmail(email, { redirectTo: appUrl('/account') });
 }
 
 export async function signOut(): Promise<void> {
