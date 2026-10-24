@@ -60,6 +60,7 @@ export default function RootLayout() {
           options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" />, ...topNav }}
         />
         <Stack.Screen name="admin" options={{ title: 'Admin', ...topNav }} />
+        <Stack.Screen name="+not-found" options={{ title: 'Not found', ...topNav }} />
         <Stack.Screen
           name="compare"
           options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" />, ...topNav }}

@@ -281,18 +281,18 @@ Run formatting checks according to repository conventions. A successful export a
 - [ ] Web-only dependencies do not enter native bundles.
 - [ ] iOS/Android checks are recorded separately from browser checks.
 - [ ] Fresh-data projections and native gestures are tested, or clearly left as unresolved.
-- [ ] Private watchlists/admin access are tested using different identities.
+- [ ] Private watchlists/admin access are tested using different identities. (Oct 24: watchlist/saved-view isolation, unverified sessions, anon and non-admin writes verified with `supabase/tests/rls.sql`; the admin *allowed* path is untested until an admin exists.)
 
 ### Preview and hosting
 
 - [ ] Script-generated QR scans to a reachable, correct URL.
 - [ ] Shell shows the actual app, not a screenshot.
 - [ ] Shell and direct-app links do not recursively embed one another.
-- [ ] Deployment runs automatically on the selected branch and manually when requested.
-- [ ] Repository-prefix assets, nested routes, refreshes, query/hash handling, and unknown routes work.
-- [ ] PWA manifest/service-worker paths and scope are correct.
+- [x] Deployment runs automatically on the selected branch and manually when requested.
+- [x] Repository-prefix assets, nested routes, refreshes, query/hash handling, and unknown routes work.
+- [x] PWA manifest/service-worker paths and scope are correct.
 - [ ] Cache/update behavior works across two deployments.
-- [ ] No server credentials appear in source, logs, or exported browser assets.
+- [x] No server credentials appear in source, logs, or exported browser assets.
 
 ### Delivery
 
