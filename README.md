@@ -18,7 +18,7 @@ Fill in `.env` (git-ignored) with the Supabase project URL and publishable key. 
 npm run web
 ```
 
-On a phone on the same Wi-Fi: `npm run preview:phone` builds the production web app, serves it, and puts a QR pointing at this computer on the preview page.
+That's the development server. To try the real app on a phone, use the live preview below.
 
 ## Checks
 
@@ -29,22 +29,12 @@ npm test
 
 ## Web preview (GitHub Pages)
 
-```bash
-npm run build:pages
-npm run preview:pages
-```
+Live preview (iPhone frame, QR, commit id): https://haseebahmad1521-alt.github.io/wealthline/
+App: https://haseebahmad1521-alt.github.io/wealthline/app/
 
-`build:pages` exports the app under `/wealthline/app/`, adds the PWA service worker, and assembles the iPhone-frame presentation shell at `/wealthline/` with a QR and the commit id. `preview:pages` serves that exact artifact locally with Pages-like 404 behaviour.
+Every push to `rebuild` builds and deploys it (`.github/workflows/pages.yml` runs `npm run build:pages`, which exports the app under `/wealthline/app/`, adds the PWA service worker, and assembles the shell with a QR for the public URL and the commit id). Scan the QR on the preview page to open the app on a phone.
 
-A **web preview QR** (opens a browser, not Expo Go):
-
-```bash
-npm run preview:qr -- --url https://haseebahmad1521-alt.github.io/wealthline/
-```
-
-Images go to `preview-artifacts/`. A QR for `localhost` won't work from a phone; use your LAN IP or a tunnel.
-
-Deployment is automatic on push to `main` or `rebuild` (`.github/workflows/pages.yml`). One-time repository setup: Settings → Pages → Source: GitHub Actions, and repository variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Pages on a private repository needs a paid GitHub plan.
+One-time repository setup (done): Settings → Pages → Source: GitHub Actions; repository variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. A QR for another URL: `npm run preview:qr -- --url <https-url>` (written to `preview-artifacts/`).
 
 Nested routes on Pages are recovered by `404.html` (the first response is an HTTP 404; GitHub Pages has no server rewrites).
 

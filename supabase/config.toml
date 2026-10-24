@@ -7,7 +7,6 @@ site_url = "https://haseebahmad1521-alt.github.io/wealthline/app/"
 additional_redirect_urls = [
   "https://haseebahmad1521-alt.github.io/wealthline/**",
   "http://localhost:8081/**",
-  "http://localhost:4173/**",
   "wealthline://**",
   "exp://**",
 ]

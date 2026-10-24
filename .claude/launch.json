@@ -12,15 +12,6 @@
         "8081"
       ],
       "port": 8081
-    },
-    {
-      "name": "wealthline-pages",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "preview:phone"
-      ],
-      "port": 4173
     }
   ]
 }
