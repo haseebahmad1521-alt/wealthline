@@ -14,7 +14,8 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 - Auth reality: built-in Supabase email sender only (rate-limited, can't show the 6-digit code). Activation link signs you in and trusts the device (first sign-in, ≤15 min). Other devices need SMTP. Owner's test user may need deleting and re-signing up (0 verified sessions at last check).
 - Design: Impeccable finish review = ship; `DESIGN.md` + `.impeccable/design.json` record the system. Screenshot tooling: Playwright script lives in the session scratchpad (re-create if needed: capture live site at 1440/375/320).
 - Standards: Opus leads, Sonnet/Haiku subagents for well-specified work; Impeccable for UI; Ponytail discipline (see CLAUDE.md "Working conventions").
-- In progress when the last session ended: Rankings controls moved into one row (filter button | search | Compare) with a filter panel for sort + saved views — verify at 320/375/1440, then commit; tagline is now "The world's biggest fortunes." (no "In motion").
+- Latest work (done, deployed): Rankings has one control row (filter button | search | Compare; in narrow compare mode search hides for Confirm + X) and a filter panel with sort + saved views; tagline is "The world's biggest fortunes.". Verified on the live site at 320 and 1440. Nothing is in progress.
+- Local dev: `npm run web` (port 8081). If Metro shows a stale syntax error, restart it.
 - Domain: wealthline.com is taken (registered 2001). wealthline.io and getwealthline.com looked unregistered (whois, Oct 24 2026). Until a domain is bought, github.io is the home.
 
 ## Decisions (owner)
