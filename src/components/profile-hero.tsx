@@ -2,8 +2,10 @@ import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { SocialBubble } from '@/components/chat-bubble';
 import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
+import type { SocialPost } from '@/lib/types';
 import { color, desktopBreakpoint, font, radius, shadow, space, type } from '@/theme';
 
 /**
@@ -17,11 +19,15 @@ export function ProfileHero({
   watched,
   onToggleWatch,
   watchPending,
+  post,
+  postUpdating,
 }: {
   person: Person;
   watched: boolean;
   onToggleWatch: () => void;
   watchPending: boolean;
+  post?: SocialPost | null;
+  postUpdating: boolean;
 }) {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const size = desktop ? 200 : 88;
@@ -61,6 +67,12 @@ export function ProfileHero({
           <Icon name={watched ? icons.starFill : icons.star} size={22} tint={watched ? color.action : color.text} />
         </Pressable>
       </View>
+
+      {person.social && (
+        <View style={desktop && styles.bubbleDesktop}>
+          <SocialBubble person={person} post={post} updating={postUpdating} tailX={size / 2} />
+        </View>
+      )}
 
       {person.portrait_url && person.portrait_page_url && (
         <Pressable
@@ -102,6 +114,7 @@ const styles = StyleSheet.create({
   meta: { ...type.caption, fontSize: 15, lineHeight: 20, color: color.text },
   watch: { position: 'absolute', top: -space.sm, right: -space.sm, width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
   clearStar: { paddingRight: minTouch - space.sm },
+  bubbleDesktop: { maxWidth: 560 },
   credit: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', minHeight: 28 },
   creditText: { fontFamily: font.medium, fontSize: 12, color: color.text },
 });

@@ -1,13 +1,24 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { NewsList, newsDisclosure } from '@/components/news';
+import { NewsList } from '@/components/news';
 import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { WealthChart } from '@/components/wealth-chart';
-import { useEvents, useHoldings, usePerson, usePersonNews, useProjects, useValues, useWatchlist } from '@/lib/data';
+import {
+  useEvents,
+  useHoldings,
+  useLiveRefresh,
+  usePerson,
+  usePersonNews,
+  useProjects,
+  useRefreshState,
+  useSocialPost,
+  useValues,
+  useWatchlist,
+} from '@/lib/data';
 import { rateCaption, useMoney } from '@/lib/currency';
 import { formatDate } from '@/lib/format';
 import { live as computeLive } from '@/lib/live';
@@ -23,6 +34,9 @@ export default function Profile() {
   const events = useEvents(p?.id);
   const projects = useProjects();
   const news = usePersonNews(p?.id);
+  const post = useSocialPost(p?.id);
+  const refresh = useRefreshState(p?.id);
+  useLiveRefresh(p?.id);
   const watch = useWatchlist();
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
 
@@ -70,6 +84,8 @@ export default function Profile() {
         watched={watch.ids.includes(p.id)}
         watchPending={watch.pending === p.id}
         onToggleWatch={() => (watch.signedIn ? void watch.toggle(p.id) : router.push('/account'))}
+        post={post.data}
+        postUpdating={refresh.running('social')}
       />
       {watch.actionError && <Caption style={{ color: color.loss }}>{watch.actionError}</Caption>}
 
@@ -87,6 +103,7 @@ export default function Profile() {
           </View>
         )}
         <Provenance status={live.status} at={live.observedAt} />
+        {refresh.running('finance') && <Updating label="Updating from Forbes, newest first…" />}
         {live.status === 'projected' && (
           <Caption>
             Between market updates the value follows the latest observed trend for at most 15 minutes. It is an
@@ -162,11 +179,12 @@ export default function Profile() {
         </>
       )}
 
-      {!!news.data?.length && (
+      {(!!news.data?.length || refresh.running('news')) && (
         <>
           <Heading level={2}>In the news.</Heading>
-          <Caption>{newsDisclosure}</Caption>
-          <NewsList items={news.data} />
+          <Caption>Headlines from public news feeds, linked to the original articles. Not financial advice.</Caption>
+          {refresh.running('news') && <Updating label="Checking news sources…" />}
+          {!!news.data?.length && <NewsList items={news.data} />}
         </>
       )}
 
@@ -184,6 +202,15 @@ export default function Profile() {
         </>
       )}
     </Screen>
+  );
+}
+
+function Updating({ label }: { label: string }) {
+  return (
+    <View style={styles.updating} accessibilityLiveRegion="polite">
+      <ActivityIndicator size="small" color={color.textSecondary} />
+      <Caption>{label}</Caption>
+    </View>
   );
 }
 
@@ -217,6 +244,7 @@ function SourceLine({ values }: { values: { kind: string; as_of: string; source_
 
 const styles = StyleSheet.create({
   value: { gap: space.sm },
+  updating: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   worth: { ...type.display, fontSize: 44, lineHeight: 50, color: color.text, fontVariant: ['tabular-nums'] },
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   chartCard: { padding: space.md },

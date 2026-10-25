@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { db, supabase } from './supabase';
-import type { Brief, BriefItem, Holding, LifeEvent, NetWorthValue, PersonRow, Project, Summary } from './types';
+import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, RefreshState, SocialPost, Summary } from './types';
 
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -207,19 +207,83 @@ export const useLatestBrief = () =>
     },
   });
 
-// A person's news history across every daily brief, newest first.
+// A person's cached headlines (refreshed by the refresh function from keyless public feeds), newest first.
 export const usePersonNews = (personId?: string) =>
   useQuery({
     queryKey: ['news', personId],
     enabled: !!personId,
     queryFn: async () => {
       const r = await db()
-        .from('brief_items')
+        .from('person_news')
         .select('*')
         .eq('person_id', personId!)
         .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(20);
+        .limit(12);
       if (r.error) throw r.error;
-      return r.data as BriefItem[];
+      return r.data as PersonNews[];
     },
   });
+
+export const useSocialPost = (personId?: string) =>
+  useQuery({
+    queryKey: ['social', personId],
+    enabled: !!personId,
+    queryFn: async () => {
+      const r = await db().from('social_posts').select('*').eq('person_id', personId!).maybeSingle();
+      if (r.error) throw r.error;
+      return r.data as SocialPost | null;
+    },
+  });
+
+export function useRefreshState(personId?: string) {
+  const q = useQuery({
+    queryKey: ['refresh', personId],
+    enabled: !!personId,
+    queryFn: async () => {
+      const r = await db().from('refresh_state').select('*').eq('person_id', personId!);
+      if (r.error) throw r.error;
+      return r.data as RefreshState[];
+    },
+  });
+  // A run that never reports back (stuck >10 min) stops spinning; the server frees it too.
+  const running = (kind: RefreshState['kind']) =>
+    !!q.data?.some((x) => x.kind === kind && x.status === 'running' && Date.now() - Date.parse(x.started_at ?? '') < 10 * 60_000);
+  return { running };
+}
+
+/**
+ * Opening a profile asks the server to refresh stale data (it decides; fresh data is left alone) and watches the
+ * person's rows over Realtime, so values, headlines and posts appear as they are written.
+ */
+export function useLiveRefresh(personId?: string) {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!personId || !supabase) return;
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    // Batched: a backfill writes dozens of rows in a few seconds.
+    const soon = (key: unknown[]) => {
+      const id = JSON.stringify(key);
+      clearTimeout(timers.get(id));
+      timers.set(id, setTimeout(() => void qc.invalidateQueries({ queryKey: key }), 400));
+    };
+    const filter = `person_id=eq.${personId}`;
+    const channel = supabase
+      .channel(`person:${personId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'refresh_state', filter }, () => soon(['refresh', personId]))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'net_worth_values', filter }, () => {
+        soon(['values', personId]);
+        soon(['people']);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'person_news', filter }, () => soon(['news', personId]))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'social_posts', filter }, () => soon(['social', personId]))
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') return;
+        // Subscribed first, so nothing written by the refresh is missed.
+        void supabase!.functions.invoke('refresh', { body: { person_id: personId } }).then(() => soon(['refresh', personId]));
+      });
+    return () => {
+      timers.forEach(clearTimeout);
+      void supabase!.removeChannel(channel);
+    };
+  }, [personId, qc]);
+}

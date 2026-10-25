@@ -15,6 +15,10 @@ export type PersonRow = {
   portrait_license: string | null;
   portrait_license_url: string | null;
   updated_at: string;
+  forbes_uri: string | null;
+  forbes_rank: number | null;
+  /** Where they post most (one-time research); profile link always, latest post when the platform allows. */
+  social: { platform: string; handle: string; url: string } | null;
 };
 
 export type ValueKind = 'estimate' | 'computed';
@@ -76,3 +80,33 @@ export type BriefItem = {
 };
 
 export type Brief = { id: string; brief_date: string; headline: string; model: string; brief_items: BriefItem[] };
+
+export type PersonNews = {
+  id: string;
+  person_id: string;
+  title: string;
+  source_name: string;
+  source_url: string;
+  published_at: string | null;
+  note?: string | null;
+};
+
+export type SocialPost = {
+  person_id: string;
+  platform: string;
+  handle: string;
+  post_url: string | null;
+  text: string;
+  posted_at: string | null;
+  fetched_at: string;
+};
+
+export type RefreshState = {
+  person_id: string;
+  kind: 'finance' | 'news' | 'social';
+  status: 'idle' | 'running' | 'error';
+  started_at: string | null;
+  refreshed_at: string | null;
+  next_auto_at: string | null;
+  error: string | null;
+};

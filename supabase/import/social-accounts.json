@@ -1,0 +1,1405 @@
+[
+ {
+  "uri": "elon-musk",
+  "name": "Elon Musk",
+  "platform": "x",
+  "handle": "elonmusk",
+  "url": "https://x.com/elonmusk",
+  "verified_by": "https://www.wikidata.org/wiki/Q317521",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": null
+ },
+ {
+  "uri": "jeff-bezos",
+  "name": "Jeff Bezos",
+  "platform": "instagram",
+  "handle": "jeffbezos",
+  "url": "https://www.instagram.com/jeffbezos/",
+  "verified_by": "https://www.wikidata.org/wiki/Q312556",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "x",
+    "handle": "JeffBezos",
+    "url": "https://x.com/JeffBezos"
+   },
+   {
+    "platform": "threads",
+    "handle": "jeffbezos",
+    "url": "https://www.threads.net/@jeffbezos"
+   }
+  ],
+  "notes": "Platform choice from general knowledge; not verified live."
+ },
+ {
+  "uri": "larry-page",
+  "name": "Larry Page",
+  "platform": "instagram",
+  "handle": "larry_page",
+  "url": "https://www.instagram.com/larry_page/",
+  "verified_by": "https://www.wikidata.org/wiki/Q4934",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; account activity unverified."
+ },
+ {
+  "uri": "sergey-brin",
+  "name": "Sergey Brin",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q92764",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "michael-dell",
+  "name": "Michael Dell",
+  "platform": "x",
+  "handle": "MichaelDell",
+  "url": "https://x.com/MichaelDell",
+  "verified_by": "https://www.wikidata.org/wiki/Q218630",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "mdell",
+    "url": "https://www.linkedin.com/in/mdell/"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "mark-zuckerberg",
+  "name": "Mark Zuckerberg",
+  "platform": "instagram",
+  "handle": "zuck",
+  "url": "https://www.instagram.com/zuck/",
+  "verified_by": "https://www.wikidata.org/wiki/Q36215",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "facebook",
+    "handle": "zuck",
+    "url": "https://www.facebook.com/zuck"
+   },
+   {
+    "platform": "threads",
+    "handle": "zuck",
+    "url": "https://www.threads.net/@zuck"
+   },
+   {
+    "platform": "x",
+    "handle": "finkd",
+    "url": "https://x.com/finkd"
+   }
+  ],
+  "notes": "X @finkd is dormant."
+ },
+ {
+  "uri": "jensen-huang",
+  "name": "Jensen Huang",
+  "platform": "x",
+  "handle": "JensenHuang",
+  "url": "https://x.com/JensenHuang",
+  "verified_by": "https://www.wikidata.org/wiki/Q305177",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "jenhsunhuang",
+    "url": "https://www.linkedin.com/in/jenhsunhuang/"
+   }
+  ],
+  "notes": "Handle from Wikidata; personal posting believed infrequent, unverified."
+ },
+ {
+  "uri": "larry-ellison",
+  "name": "Larry Ellison",
+  "platform": "x",
+  "handle": "larryellison",
+  "url": "https://x.com/larryellison",
+  "verified_by": "https://www.wikidata.org/wiki/Q92759",
+  "activity": "dormant",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; believed inactive, unverified."
+ },
+ {
+  "uri": "steve-ballmer",
+  "name": "Steve Ballmer",
+  "platform": "x",
+  "handle": "Steven_Ballmer",
+  "url": "https://x.com/Steven_Ballmer",
+  "verified_by": "https://www.wikidata.org/wiki/Q181162",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; activity unverified."
+ },
+ {
+  "uri": "warren-buffett",
+  "name": "Warren Buffett",
+  "platform": "x",
+  "handle": "WarrenBuffett",
+  "url": "https://x.com/WarrenBuffett",
+  "verified_by": "https://www.wikidata.org/wiki/Q47213",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; account rarely posts, unverified."
+ },
+ {
+  "uri": "amancio-ortega",
+  "name": "Amancio Ortega",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q29279",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "rob-walton",
+  "name": "Rob Walton & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q736477",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "jim-walton",
+  "name": "Jim Walton & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q741784",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "alice-walton",
+  "name": "Alice Walton",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q289571",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "carlos-slim-helu",
+  "name": "Carlos Slim Helu & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q170419",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "bill-gates",
+  "name": "Bill Gates",
+  "platform": "instagram",
+  "handle": "thisisbillgates",
+  "url": "https://www.instagram.com/thisisbillgates/",
+  "verified_by": "https://www.wikidata.org/wiki/Q5284",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "x",
+    "handle": "BillGates",
+    "url": "https://x.com/BillGates"
+   },
+   {
+    "platform": "facebook",
+    "handle": "BillGates",
+    "url": "https://www.facebook.com/BillGates"
+   },
+   {
+    "platform": "linkedin",
+    "handle": "williamhgates",
+    "url": "https://www.linkedin.com/in/williamhgates/"
+   },
+   {
+    "platform": "threads",
+    "handle": "thisisbillgates",
+    "url": "https://www.threads.net/@thisisbillgates"
+   },
+   {
+    "platform": "bluesky",
+    "handle": "billgates.bsky.social",
+    "url": "https://bsky.app/profile/billgates.bsky.social"
+   },
+   {
+    "platform": "youtube",
+    "handle": "UCnEiGCE13SUI7ZvojTAVBKw",
+    "url": "https://www.youtube.com/channel/UCnEiGCE13SUI7ZvojTAVBKw"
+   }
+  ],
+  "notes": "Bluesky API: latest post seen 2025-10-29, so Bluesky is stale. Primary platform chosen from general knowledge."
+ },
+ {
+  "uri": "bernard-arnault",
+  "name": "Bernard Arnault & family",
+  "platform": "x",
+  "handle": "BernardArnault",
+  "url": "https://x.com/BernardArnault",
+  "verified_by": "https://www.wikidata.org/wiki/Q32055",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; unverified whether actively used."
+ },
+ {
+  "uri": "changpeng-zhao",
+  "name": "Changpeng Zhao",
+  "platform": "x",
+  "handle": "cz_binance",
+  "url": "https://x.com/cz_binance",
+  "verified_by": "https://www.wikidata.org/wiki/Q52714313",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "cpzhao",
+    "url": "https://www.linkedin.com/in/cpzhao/"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "francoise-bettencourt-meyers",
+  "name": "Francoise Bettencourt Meyers & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q516720",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "michael-bloomberg",
+  "name": "Michael Bloomberg",
+  "platform": "x",
+  "handle": "MikeBloomberg",
+  "url": "https://x.com/MikeBloomberg",
+  "verified_by": "https://www.wikidata.org/wiki/Q607",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "instagram",
+    "handle": "mikebloomberg",
+    "url": "https://www.instagram.com/mikebloomberg/"
+   },
+   {
+    "platform": "facebook",
+    "handle": "mikebloomberg",
+    "url": "https://www.facebook.com/mikebloomberg"
+   },
+   {
+    "platform": "threads",
+    "handle": "mikebloomberg",
+    "url": "https://www.threads.net/@mikebloomberg"
+   },
+   {
+    "platform": "linkedin",
+    "handle": "mikebloomberg",
+    "url": "https://www.linkedin.com/in/mikebloomberg/"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "thomas-peterffy",
+  "name": "Thomas Peterffy",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q7793127",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "giancarlo-devasini",
+  "name": "Giancarlo Devasini",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q132131992",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "julia-koch",
+  "name": "Julia Koch & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q75088207",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "julia-flesher-koch",
+    "url": "https://www.linkedin.com/in/julia-flesher-koch/"
+   }
+  ],
+  "notes": "Wikidata lists only a LinkedIn profile; no active personal posting found."
+ },
+ {
+  "uri": "zhang-yiming",
+  "name": "Zhang Yiming",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q115793323",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "mukesh-ambani",
+  "name": "Mukesh Ambani",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q298547",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "jeff-yass",
+  "name": "Jeff Yass",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q6175302",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "charles-koch",
+  "name": "Charles Koch & family",
+  "platform": "x",
+  "handle": "charlesgkoch",
+  "url": "https://x.com/charlesgkoch",
+  "verified_by": "https://www.wikidata.org/wiki/Q1066551",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "facebook",
+    "handle": "OfficialCharlesKoch",
+    "url": "https://www.facebook.com/OfficialCharlesKoch"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "gautam-adani-1",
+  "name": "Gautam Adani",
+  "platform": "x",
+  "handle": "gautam_adani",
+  "url": "https://x.com/gautam_adani",
+  "verified_by": "https://www.wikidata.org/wiki/Q5527865",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": null
+ },
+ {
+  "uri": "tadashi-yanai",
+  "name": "Tadashi Yanai & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q3276951",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Wikidata X @yanai_BOT is a bot account, not personal."
+ },
+ {
+  "uri": "german-larrea-mota-velasco",
+  "name": "Germán Larrea Mota Velasco & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1395411",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "zhong-shanshan",
+  "name": "Zhong Shanshan",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q99312028",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "dieter-schwarz",
+  "name": "Dieter Schwarz",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q78308",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "ken-griffin",
+  "name": "Ken Griffin",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q3195170",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "ken-griffin",
+    "url": "https://www.linkedin.com/in/ken-griffin/"
+   }
+  ],
+  "notes": "Only a LinkedIn profile listed on Wikidata."
+ },
+ {
+  "uri": "masayoshi-son",
+  "name": "Masayoshi Son",
+  "platform": "x",
+  "handle": "masason",
+  "url": "https://x.com/masason",
+  "verified_by": "https://www.wikidata.org/wiki/Q717038",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "facebook",
+    "handle": "masayosison",
+    "url": "https://www.facebook.com/masayosison"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "aliko-dangote",
+  "name": "Aliko Dangote",
+  "platform": "x",
+  "handle": "alikodangote",
+  "url": "https://x.com/alikodangote",
+  "verified_by": "https://www.wikidata.org/wiki/Q1394965",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "instagram",
+    "handle": "aliko_dangotegcon",
+    "url": "https://www.instagram.com/aliko_dangotegcon/"
+   }
+  ],
+  "notes": "Likely team-managed; unverified."
+ },
+ {
+  "uri": "jacqueline-mars",
+  "name": "Jacqueline Mars",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q463398",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "john-mars",
+  "name": "John Mars",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1278705",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "li-ka-shing",
+  "name": "Li Ka-shing",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q20151",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "lukas-walton",
+  "name": "Lukas Walton",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q21872814",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "giovanni-ferrero",
+  "name": "Giovanni Ferrero",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q3767222",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "liang-wenfeng",
+  "name": "Liang Wenfeng",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q131847088",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "gianluigi-aponte",
+  "name": "Gianluigi Aponte",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q553826",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "rafaela-aponte-diamant",
+  "name": "Rafaela Aponte-Diamant",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q123024465",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "mark-mateschitz",
+  "name": "Mark Mateschitz",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q114825741",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "ma-huateng",
+  "name": "Ma Huateng",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1739008",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "stephen-schwarzman",
+  "name": "Stephen Schwarzman",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q552465",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "abigail-johnson",
+  "name": "Abigail Johnson",
+  "platform": "linkedin",
+  "handle": "abbyjohnson",
+  "url": "https://www.linkedin.com/in/abbyjohnson/",
+  "verified_by": "https://www.wikidata.org/wiki/Q321125",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; activity unverified."
+ },
+ {
+  "uri": "iris-fontbona",
+  "name": "Iris Fontbona & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q19518169",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "andrea-pignataro",
+  "name": "Andrea Pignataro",
+  "platform": "linkedin",
+  "handle": "andrea-pignataro-a5391a7",
+  "url": "https://www.linkedin.com/in/andrea-pignataro-a5391a7/",
+  "verified_by": "https://www.wikidata.org/wiki/Q125338128",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; activity unverified."
+ },
+ {
+  "uri": "william-ding",
+  "name": "William Ding",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q5278137",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "robin-zeng",
+  "name": "Robin Zeng",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q18653686",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "alain-wertheimer",
+  "name": "Alain Wertheimer",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q557074",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "gerard-wertheimer-1",
+  "name": "Gerard Wertheimer",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q732167",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "thomas-frist-jr",
+  "name": "Thomas Frist Jr & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q7789440",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "jean-louis-van-der-velde",
+  "name": "Jean-Louis van der Velde",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q107378618",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "paolo-ardoino",
+  "name": "Paolo Ardoino",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q126537585",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Reported (Decrypt/Reuters) to post regularly on X, but the handle was not verified in this run; check X manually."
+ },
+ {
+  "uri": "peter-thiel",
+  "name": "Peter Thiel",
+  "platform": "x",
+  "handle": "peterthiel",
+  "url": "https://x.com/peterthiel",
+  "verified_by": "https://www.wikidata.org/wiki/Q705525",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "peterthiel",
+    "url": "https://www.linkedin.com/in/peterthiel/"
+   }
+  ],
+  "notes": "Handle from Wikidata; account believed to post rarely, unverified. Wikidata Facebook value is wrong, ignored."
+ },
+ {
+  "uri": "he-xiangjian",
+  "name": "He Xiangjian & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1515641",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "alexey-mordashov",
+  "name": "Alexey Mordashov & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1395387",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "pham-nhat-vuong",
+  "name": "Pham Nhat Vuong",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q10806972",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "marilyn-simons",
+  "name": "Marilyn Simons & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q117249182",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "savitri-jindal",
+  "name": "Savitri Jindal & family",
+  "platform": "x",
+  "handle": "SavitriJindal",
+  "url": "https://x.com/SavitriJindal",
+  "verified_by": "https://www.wikidata.org/wiki/Q541662",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; activity unverified."
+ },
+ {
+  "uri": "eric-schmidt",
+  "name": "Eric Schmidt",
+  "platform": "x",
+  "handle": "ericschmidt",
+  "url": "https://x.com/ericschmidt",
+  "verified_by": "https://www.wikidata.org/wiki/Q92747",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "linkedin",
+    "handle": "eric-schmidt-02158951",
+    "url": "https://www.linkedin.com/in/eric-schmidt-02158951/"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "eduardo-saverin",
+  "name": "Eduardo Saverin",
+  "platform": "facebook",
+  "handle": "saverin",
+  "url": "https://www.facebook.com/saverin",
+  "verified_by": "https://www.wikidata.org/wiki/Q312663",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; activity unverified."
+ },
+ {
+  "uri": "len-blavatnik",
+  "name": "Len Blavatnik",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q164997",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "andreas-von-bechtolsheim",
+  "name": "Andreas von Bechtolsheim & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q65344",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "eyal-ofer",
+  "name": "Eyal Ofer",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q16509254",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "melinda-french-gates",
+  "name": "Melinda French Gates",
+  "platform": "instagram",
+  "handle": "melindafrenchgates",
+  "url": "https://www.instagram.com/melindafrenchgates/",
+  "verified_by": "https://www.wikidata.org/wiki/Q463877",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "x",
+    "handle": "melindagates",
+    "url": "https://x.com/melindagates"
+   },
+   {
+    "platform": "facebook",
+    "handle": "melindagates",
+    "url": "https://www.facebook.com/melindagates"
+   },
+   {
+    "platform": "threads",
+    "handle": "melindafrenchgates",
+    "url": "https://www.threads.net/@melindafrenchgates"
+   },
+   {
+    "platform": "youtube",
+    "handle": "UCaxvJ1Zu4i0yEebQZHamQrg",
+    "url": "https://www.youtube.com/channel/UCaxvJ1Zu4i0yEebQZHamQrg"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "elaine-marshall",
+  "name": "Elaine Marshall & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1324820",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Wikidata match was a different Elaine Marshall (NC politician); ignored."
+ },
+ {
+  "uri": "shiv-nadar",
+  "name": "Shiv Nadar",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q3522726",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "henry-samueli",
+  "name": "Henry Samueli",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q944937",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "lyndal-stephens-greth",
+  "name": "Lyndal Stephens Greth & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q136480398",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "miriam-adelson",
+  "name": "Miriam Adelson & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q55950925",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "vladimir-potanin",
+  "name": "Vladimir Potanin",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q739315",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "robert-pera",
+  "name": "Robert Pera",
+  "platform": "x",
+  "handle": "RobertPera",
+  "url": "https://x.com/RobertPera",
+  "verified_by": "https://www.wikidata.org/wiki/Q7345956",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "instagram",
+    "handle": "__rjp__",
+    "url": "https://www.instagram.com/__rjp__/"
+   },
+   {
+    "platform": "facebook",
+    "handle": "robert.pera",
+    "url": "https://www.facebook.com/robert.pera"
+   },
+   {
+    "platform": "threads",
+    "handle": "__rjp__",
+    "url": "https://www.threads.net/@__rjp__"
+   }
+  ],
+  "notes": "Handles from Wikidata; activity unverified."
+ },
+ {
+  "uri": "vagit-alekperov",
+  "name": "Vagit Alekperov",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q451455",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "lakshmi-mittal",
+  "name": "Lakshmi Mittal",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q191311",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "idan-ofer",
+  "name": "Idan Ofer",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q15819866",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "david-tepper",
+  "name": "David Tepper",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q459538",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "leonid-mikhelson",
+  "name": "Leonid Mikhelson & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1819424",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "jay-y-lee",
+  "name": "Jay Y. Lee",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q624109",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "john-tu",
+  "name": "John Tu",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/w/index.php?search=John+Tu",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "david-sun",
+  "name": "David Sun",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/w/index.php?search=David+Sun",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "colin-huang",
+  "name": "Colin Huang",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q55846513",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "stanley-kroenke",
+  "name": "Stanley Kroenke",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q945207",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "reinhold-wuerth",
+  "name": "Reinhold Wuerth & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q78465",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "israel-englander",
+  "name": "Israel Englander",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q16120832",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "mackenzie-scott",
+  "name": "MacKenzie Scott",
+  "platform": "x",
+  "handle": "mackenziescott",
+  "url": "https://x.com/mackenziescott",
+  "verified_by": "https://www.wikidata.org/wiki/Q10322797",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; posts infrequently, unverified."
+ },
+ {
+  "uri": "steve-cohen",
+  "name": "Steve Cohen",
+  "platform": "x",
+  "handle": "StevenACohen2",
+  "url": "https://x.com/StevenACohen2",
+  "verified_by": "https://www.wikidata.org/wiki/Q590212",
+  "activity": "active",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; mostly Mets-related posting, unverified."
+ },
+ {
+  "uri": "cyrus-poonawalla",
+  "name": "Cyrus Poonawalla",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q5201141",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "vicky-safra",
+  "name": "Vicky Safra & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q105816537",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "suleiman-kerimov-family",
+  "name": "Suleiman Kerimov & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q447250",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Wikidata X @kerimov_news is not clearly a personal account; ignored."
+ },
+ {
+  "uri": "vladimir-lisin",
+  "name": "Vladimir Lisin",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q470975",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "greg-brockman",
+  "name": "Greg Brockman",
+  "platform": "x",
+  "handle": "gdb",
+  "url": "https://x.com/gdb",
+  "verified_by": "https://www.wikidata.org/wiki/Q100604534",
+  "activity": "very_active",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "instagram",
+    "handle": "greg.brockman",
+    "url": "https://www.instagram.com/greg.brockman/"
+   },
+   {
+    "platform": "threads",
+    "handle": "greg.brockman",
+    "url": "https://www.threads.net/@greg.brockman"
+   },
+   {
+    "platform": "linkedin",
+    "handle": "thegdb",
+    "url": "https://www.linkedin.com/in/thegdb/"
+   },
+   {
+    "platform": "facebook",
+    "handle": "gdbgdb",
+    "url": "https://www.facebook.com/gdbgdb"
+   }
+  ],
+  "notes": null
+ },
+ {
+  "uri": "phil-knight",
+  "name": "Phil Knight & family",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q557305",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "rupert-murdoch",
+  "name": "Rupert Murdoch & family",
+  "platform": "x",
+  "handle": "rupertmurdoch",
+  "url": "https://x.com/rupertmurdoch",
+  "verified_by": "https://www.wikidata.org/wiki/Q53944",
+  "activity": "dormant",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "Handle from Wikidata; believed inactive, unverified."
+ },
+ {
+  "uri": "jack-ma",
+  "name": "Jack Ma",
+  "platform": "instagram",
+  "handle": "jackmaofficial",
+  "url": "https://www.instagram.com/jackmaofficial/",
+  "verified_by": "https://www.wikidata.org/wiki/Q1137062",
+  "activity": "rare",
+  "last_post_seen": null,
+  "alternatives": [
+   {
+    "platform": "x",
+    "handle": "JackMa",
+    "url": "https://x.com/JackMa"
+   }
+  ],
+  "notes": "Handles from Wikidata; both low-activity, unverified."
+ },
+ {
+  "uri": "gina-rinehart",
+  "name": "Gina Rinehart",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q242982",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "chen-tianshi",
+  "name": "Chen Tianshi",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q134307934",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ },
+ {
+  "uri": "dilip-shanghvi",
+  "name": "Dilip Shanghvi",
+  "platform": null,
+  "handle": null,
+  "url": null,
+  "verified_by": "https://www.wikidata.org/wiki/Q1225503",
+  "activity": "none",
+  "last_post_seen": null,
+  "alternatives": [],
+  "notes": "No personal social account found on Wikidata or via search."
+ }
+]

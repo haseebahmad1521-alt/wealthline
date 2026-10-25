@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Body, Caption, Heading, Icon, Surface, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { formatDate, formatTime } from '@/lib/format';
-import type { Brief, BriefItem } from '@/lib/types';
+import type { Brief, BriefItem, PersonNews } from '@/lib/types';
 import { color, space, type } from '@/theme';
 
 const disclosure = 'Headlines from public news feeds. Selection and notes by Claude, from headlines only. Not financial advice.';
@@ -28,11 +28,11 @@ export function BriefCard({ brief, people }: { brief: Brief | null | undefined; 
 }
 
 /** A list of sourced headlines with Claude's note; the title opens the original article. */
-export function NewsList({ items, personOf }: { items: BriefItem[]; personOf?: (id: string | null) => Person | undefined }) {
+export function NewsList({ items, personOf }: { items: (BriefItem | PersonNews)[]; personOf?: (id: string | null) => Person | undefined }) {
   return (
     <Surface style={styles.list}>
       {items.map((item, i) => {
-        const person = personOf?.(item.person_id);
+        const person = personOf?.(item.person_id ?? null);
         return (
           <Fragment key={item.id}>
             {i > 0 && <View style={styles.separator} />}
@@ -50,7 +50,7 @@ export function NewsList({ items, personOf }: { items: BriefItem[]; personOf?: (
                 <Text style={[type.headline, styles.title]}>{item.title}</Text>
                 <Icon name={icons.link} size={13} tint={color.textSecondary} />
               </Pressable>
-              <Body secondary>{item.note}</Body>
+              {!!item.note && <Body secondary>{item.note}</Body>}
               <Caption>
                 {item.source_name}
                 {item.published_at ? ` · ${formatDate(item.published_at)}, ${formatTime(item.published_at)}` : ''}
