@@ -30,7 +30,16 @@ async function finance(db: SupabaseClient, p: Person) {
   const rows: { as_of: string; usd: number; label: string }[] = [];
   if (now?.finalWorth > 0 && now.timestamp) {
     await db.from('people').update({ forbes_rank: now.rank ?? null }).eq('id', p.id);
-    rows.push({ as_of: new Date(now.timestamp).toISOString(), usd: now.finalWorth * 1e6, label: 'Forbes Real-Time Billionaires' });
+    // Forbes re-stamps an unchanged value (weekends, closed markets); storing it again would read as "0.00% change".
+    const { data: last } = await db
+      .from('net_worth_values')
+      .select('net_worth_usd')
+      .eq('person_id', p.id)
+      .eq('source_label', 'Forbes Real-Time Billionaires')
+      .order('as_of', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (Number(last?.net_worth_usd) !== Math.round(now.finalWorth * 1e6)) rows.push({ as_of: new Date(now.timestamp).toISOString(), usd: now.finalWorth * 1e6, label: 'Forbes Real-Time Billionaires' });
   }
   const person = (await getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`))?.person;
   for (const l of person?.personLists ?? []) {
