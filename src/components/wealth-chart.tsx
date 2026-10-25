@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
   type GestureResponderEvent,
 } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
@@ -14,7 +15,7 @@ import { Caption, Icon, icons, minTouch } from '@/components/ui';
 import { useMoney } from '@/lib/currency';
 import { formatDate, formatTime } from '@/lib/format';
 import { interpolate, type Live, type Point } from '@/lib/live';
-import { color, font, radius, space, type } from '@/theme';
+import { color, desktopBreakpoint, font, radius, space, type } from '@/theme';
 
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
@@ -322,8 +323,10 @@ export function WealthChart({ points, live, now }: Props) {
 
 /** Range buttons (3H … All), shared by every chart. */
 export function RangePicker({ active, onPick }: { active?: string; onPick: (span: number) => void }) {
+  // Phones: the buttons share the full width; wider screens keep a compact pill.
+  const full = useWindowDimensions().width < desktopBreakpoint;
   return (
-    <View accessibilityRole="tablist" style={styles.presets}>
+    <View accessibilityRole="tablist" style={[styles.presets, full && styles.presetsFull]}>
       {presets.map((p) => {
         const selected = active === p.label;
         return (
@@ -333,7 +336,7 @@ export function RangePicker({ active, onPick }: { active?: string; onPick: (span
             accessibilityState={{ selected }}
             accessibilityLabel={p.span === Infinity ? 'All time' : `Last ${p.label}`}
             onPress={() => onPick(p.span)}
-            style={[styles.preset, selected && styles.presetOn]}>
+            style={[styles.preset, full && { flex: 1, minWidth: 0 }, selected && styles.presetOn]}>
             <Text style={[styles.presetLabel, selected && { color: color.text }]}>{p.label}</Text>
           </Pressable>
         );
@@ -383,6 +386,7 @@ function ZoomButton({ label, icon, onPress }: { label: string; icon: typeof icon
 const styles = StyleSheet.create({
   wrap: { gap: space.sm },
   presets: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3, alignSelf: 'flex-start' },
+  presetsFull: { alignSelf: 'stretch' },
   preset: { minHeight: minTouch - 8, minWidth: 42, paddingHorizontal: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   presetOn: { backgroundColor: color.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   presetLabel: { fontFamily: font.semibold, fontSize: 13, color: color.textSecondary },

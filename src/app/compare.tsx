@@ -1,7 +1,7 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { presets, RangePicker } from '@/components/wealth-chart';
@@ -23,6 +23,7 @@ export default function Compare() {
   const values = useValuesFor(ids);
   const money = useMoney();
   const [mode, setMode] = useState<Mode>('value');
+  const narrow = useWindowDimensions().width < 420;
 
   const chosen = ids.map((id) => people.data?.find((p) => p.id === id)).filter((p): p is Person => !!p);
   if (people.isPending || values.some((v) => v.isPending)) return <Screen><StateView loading /></Screen>;
@@ -50,26 +51,32 @@ export default function Compare() {
         <Body secondary>Dated estimates only. Lines join recorded values; nothing is filled in or projected.</Body>
       </View>
 
-      <View style={styles.cards}>
-        {series.map((s) => (
-          <Surface key={s.person.id} style={styles.card}>
-            <View style={styles.cardHead}>
-              <View style={[styles.legendLine, { backgroundColor: s.color }]} />
-              <Portrait uri={s.person.portrait_url} name={s.person.name} size={36} />
-              <Link href={`/person/${s.person.slug}`} style={styles.cardName} numberOfLines={2}>
+      <Surface style={styles.list}>
+        {series.map((s, i) => (
+          <View key={s.person.id} style={[styles.personRow, i > 0 && styles.divided]}>
+            <View accessibilityLabel={`${s.person.name}, selected for comparison`}>
+              <Portrait uri={s.person.portrait_url} name={s.person.name} size={44} />
+              <View style={styles.checkBadge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                <Icon name={icons.check} size={10} tint="#FFFFFF" />
+              </View>
+            </View>
+            <View style={styles.identity}>
+              <Link href={`/person/${s.person.slug}`} style={styles.cardName} numberOfLines={1}>
                 {s.person.name}
               </Link>
+              <Caption numberOfLines={1}>{s.person.as_of ? `Estimate as of ${formatDate(s.person.as_of)}` : 'No estimate yet'}</Caption>
             </View>
-            <Text style={[type.number, styles.cardValue]}>
-              {s.person.net_worth_usd != null ? money.format(s.person.net_worth_usd) : '—'}
-            </Text>
-            {s.person.net_worth_usd != null && s.person.prev_net_worth_usd != null && (
-              <Change delta={s.person.net_worth_usd - s.person.prev_net_worth_usd} base={s.person.prev_net_worth_usd} size={13} />
-            )}
-            <Caption>{s.person.as_of ? `Estimate as of ${formatDate(s.person.as_of)}` : 'No estimate yet'}</Caption>
-          </Surface>
+            <View style={styles.rowValue}>
+              <Text style={[type.number, styles.cardValue]}>
+                {s.person.net_worth_usd != null ? money.format(s.person.net_worth_usd) : '—'}
+              </Text>
+              {s.person.net_worth_usd != null && s.person.prev_net_worth_usd != null && (
+                <Change delta={s.person.net_worth_usd - s.person.prev_net_worth_usd} base={s.person.prev_net_worth_usd} size={13} compact={narrow} />
+              )}
+            </View>
+          </View>
         ))}
-      </View>
+      </Surface>
 
       <Surface style={styles.chartCard}>
         <View accessibilityRole="tablist" style={styles.modes}>
@@ -156,7 +163,6 @@ function HoldingsCard({ series }: { series: Series }) {
   return (
     <Surface style={styles.card}>
       <View style={styles.cardHead}>
-        <View style={[styles.legendLine, { backgroundColor: series.color }]} />
         <Text style={[type.headline, { color: color.text, flex: 1 }]} numberOfLines={1}>{series.person.name}</Text>
       </View>
       {holdings.data?.length ? (
@@ -347,8 +353,26 @@ const styles = StyleSheet.create({
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   card: { flexGrow: 1, flexBasis: 220, padding: space.md, gap: space.xs },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xs },
-  cardName: { ...type.headline, color: color.action, flex: 1 },
-  cardValue: { fontSize: 24, letterSpacing: -0.5, color: color.text },
+  cardName: { ...type.headline, color: color.action },
+  cardValue: { fontSize: 17, letterSpacing: -0.3, color: color.text },
+  personRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm + 4, paddingHorizontal: space.md, paddingVertical: space.sm + 2 },
+  divided: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
+  identity: { flex: 1, minWidth: 0, gap: 2 },
+  rowValue: { alignItems: 'flex-end', gap: 2 },
+  // Same spot and ring as the rank badge on Rankings, in the selection blue.
+  checkBadge: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: color.surface,
+    backgroundColor: color.action,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chartCard: { padding: space.md, gap: space.md },
   modes: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3, alignSelf: 'flex-start' },
   mode: { minHeight: minTouch - 8, paddingHorizontal: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
