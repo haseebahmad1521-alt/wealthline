@@ -75,3 +75,27 @@ dates are copied from the feed. Without `ANTHROPIC_API_KEY` the function does no
    method POST, header `x-cron-secret: <secret>`.
 
 Never put either secret in `.env` or the app; they live only in Supabase.
+
+## Live refresh (finance, news, social)
+
+`migrations/20261025000000_refresh.sql` + `20261025000100_refresh_cron.sql`, functions `refresh` and `refresh-due`
+(shared code in `functions/_shared/refresh.ts`). All sources are keyless and were checked to answer from Supabase's
+network on Oct 25, 2026:
+
+| Kind | Sources | Stale on visit / automatic (ranks 1–10) |
+| --- | --- | --- |
+| finance | Forbes real-time list (today) + Forbes person lists (dated history, back to the 1990s) | 6 h / 12 h |
+| news | Google News RSS (503 from Supabase at the moment), GDELT, Hacker News (Algolia), CNBC, MarketWatch, NYT, Guardian, BBC, FT, TechCrunch feeds filtered to items naming the person | 2 h / 8 h |
+| social | Bluesky public API; X only with `X_BEARER_TOKEN` (paid X API). Instagram, Facebook, LinkedIn, Threads: profile link only | 10 min / 2 h |
+
+Ranks 11–100 stretch both windows linearly to 2x at rank 100 (`refresh_window`). Each scheduled run gets a random
+±30 min offset. `claim_refresh` allows one run per person/kind at a time; `refresh` also caps visit runs at 8 at once.
+
+Scheduler: pg_cron calls `refresh-due` every 10 minutes with header `x-cron-secret`, read from Vault secret
+`cron_secret`; the function compares it with its `CRON_SECRET`. To rotate, set both to the same new value:
+`npx supabase secrets set CRON_SECRET=<v> --project-ref <ref>` and
+`select vault.update_secret((select id from vault.secrets where name = 'cron_secret'), '<v>');`.
+`refresh-due` is deployed with `--no-verify-jwt` (it has no user token; the secret protects it).
+
+Unofficial sources (Forbes JSON, Google News) can change or block without notice; values keep their source label
+and link, and a failed run shows as an error state rather than invented data.

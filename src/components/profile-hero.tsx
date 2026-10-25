@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
   watch: { position: 'absolute', top: -space.sm, right: -space.sm, width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
   clearStar: { paddingRight: minTouch - space.sm },
   bubbleDesktop: { maxWidth: 560 },
-  credit: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', minHeight: 28 },
-  creditText: { fontFamily: font.medium, fontSize: 12, color: color.text },
+  credit: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', maxWidth: '100%', minHeight: 28 },
+  creditText: { fontFamily: font.medium, fontSize: 12, color: color.text, flexShrink: 1 },
 });

@@ -35,7 +35,7 @@ async function finance(db: SupabaseClient, p: Person) {
   const person = (await getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`))?.person;
   for (const l of person?.personLists ?? []) {
     if (!(l.finalWorth > 0) || !l.date) continue;
-    rows.push({ as_of: new Date(l.date).toISOString(), usd: l.finalWorth * 1e6, label: `Forbes ${l.name ?? l.listUri} ${l.year ?? ''}`.trim() });
+    rows.push({ as_of: new Date(l.date).toISOString(), usd: l.finalWorth * 1e6, label: `${/^Forbes/.test(l.name ?? '') ? l.name : `Forbes ${l.name ?? l.listUri}`} ${l.year ?? ''}`.trim() });
   }
   if (!rows.length) throw new Error('Forbes has no value for this person.');
   rows.sort((a, b) => b.as_of.localeCompare(a.as_of));
