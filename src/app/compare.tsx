@@ -2,8 +2,9 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
-import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { presets, RangePicker } from '@/components/wealth-chart';
 import { Body, Caption, Change, Heading, Icon, Portrait, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { growth, indexed, MAX_COMPARE, pctDiff, recordedTimes, SERIES_COLORS, valueAt } from '@/lib/compare';
 import { useMoney } from '@/lib/currency';
@@ -209,6 +210,7 @@ const NARROW_PAD = { top: 16, bottom: 24, left: 44, right: 12 };
 function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; format: (v: number) => string }) {
   const [width, setWidth] = useState(0);
   const [cursor, setCursor] = useState<number | null>(null);
+  const [span, setSpan] = useState<number>(Infinity);
   const narrow = width > 0 && width < 420;
   const PAD = narrow ? NARROW_PAD : WIDE_PAD;
   const axis = (v: number) => (narrow && mode === 'value' ? format(v).replace(/\.\d(?=[BTM]$)/, '') : format(v));
@@ -216,10 +218,20 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
   const all = plotted.flatMap((s) => s.pts);
   if (!all.length) return <StateView empty={{ title: 'No recorded values.', body: 'These people have no dated estimates yet.' }} />;
 
-  const times = recordedTimes(plotted.map((s) => s.pts));
-  const t0 = times[0];
-  const t1 = times.length > 1 ? times[times.length - 1] : t0 + 1;
-  const vs = all.map((p) => p.v);
+  const allTimes = recordedTimes(plotted.map((s) => s.pts));
+  // All = first to last recorded value; a range ends now, so recent windows can be empty (values are never filled in).
+  const t1 = span === Infinity ? (allTimes.length > 1 ? allTimes[allTimes.length - 1] : allTimes[0] + 1) : Math.max(Date.now(), allTimes[allTimes.length - 1]);
+  const t0 = span === Infinity ? allTimes[0] : t1 - span;
+  const times = allTimes.filter((t) => t >= t0 && t <= t1);
+  // Each line keeps one neighbour outside the window so it runs to the edge (clipped).
+  const near = (pts: Point[]) => {
+    const a = pts.findIndex((p) => p.t >= t0);
+    const b = pts.findLastIndex((p) => p.t <= t1);
+    if (a === -1 || b === -1) return a === -1 ? [] : pts.slice(Math.max(0, a - 1), a + 1); // window after/before all values
+    return pts.slice(Math.max(0, a - 1), b + 2);
+  };
+  const shown = plotted.map((s) => ({ ...s, near: near(s.pts) }));
+  const vs = (times.length ? shown.flatMap((s) => s.near) : all).map((p) => p.v);
   const lo = Math.min(...vs, mode === 'growth' ? 0 : Infinity);
   const hi = Math.max(...vs, mode === 'growth' ? 0 : -Infinity);
   const pad = (hi - lo || Math.abs(hi) || 1) * 0.12;
@@ -231,17 +243,21 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
 
   // Direct labels at each line's end, nudged apart so they never collide.
   const ends = plotted
-    .filter((s) => s.pts.length)
+    .filter((s) => s.pts.length && s.pts[s.pts.length - 1].t >= t0 && s.pts[s.pts.length - 1].t <= t1)
     .map((s) => ({ s, y: y(s.pts[s.pts.length - 1].v) }))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 16);
 
   const snap = (px: number) => times.reduce((best, t) => (Math.abs(x(t) - px) < Math.abs(x(best) - px) ? t : best), times[0]);
-  const onMove = (e: GestureResponderEvent) => setCursor(snap(e.nativeEvent.locationX));
-  const at = cursor ?? times[times.length - 1];
+  const onMove = (e: GestureResponderEvent) => {
+    if (times.length) setCursor(snap(e.nativeEvent.locationX));
+  };
+  const at = cursor != null && cursor >= t0 && cursor <= t1 ? cursor : (times[times.length - 1] ?? allTimes[allTimes.length - 1]);
+  const activePreset = presets.find((p) => p.span === span)?.label;
 
   return (
     <View style={{ gap: space.sm }}>
+      <RangePicker active={activePreset} onPick={(p) => { setSpan(p); setCursor(null); }} />
       <View style={styles.readout} accessibilityLiveRegion="polite">
         <Caption>{formatDate(new Date(at))}</Caption>
         {plotted.map((s) => {
@@ -277,23 +293,30 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
                 </SvgText>
               </Fragment>
             ))}
-            {cursor != null && <Line x1={x(cursor)} x2={x(cursor)} y1={PAD.top} y2={H - PAD.bottom} stroke={color.textSecondary} strokeWidth={1} />}
-            {plotted.map((s) => (
+            <Defs>
+              <ClipPath id="plot">
+                <Rect x={PAD.left} y={0} width={plotW} height={H} />
+              </ClipPath>
+            </Defs>
+            {cursor != null && cursor >= t0 && cursor <= t1 && <Line x1={x(cursor)} x2={x(cursor)} y1={PAD.top} y2={H - PAD.bottom} stroke={color.textSecondary} strokeWidth={1} />}
+            <G clipPath="url(#plot)">
+            {shown.map((s) => (
               <Fragment key={s.person.id}>
-                {s.pts.length > 1 && (
+                {s.near.length > 1 && (
                   <Path
-                    d={s.pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join('')}
+                    d={s.near.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join('')}
                     stroke={s.color}
                     strokeWidth={2}
                     fill="none"
                     strokeLinejoin="round"
                   />
                 )}
-                {s.pts.map((p) => (
+                {s.near.map((p) => (
                   <Circle key={p.t} cx={x(p.t)} cy={y(p.v)} r={4} fill={s.color} stroke={color.surface} strokeWidth={2} />
                 ))}
               </Fragment>
             ))}
+            </G>
             {!narrow && ends.map(({ s, y: ly }) => (
               <SvgText key={s.person.id} x={x(s.pts[s.pts.length - 1].t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={color.text}>
                 {s.person.name.split(' ').at(-1)}
@@ -306,6 +329,14 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
               {formatDate(new Date(t1))}
             </SvgText>
           </Svg>
+        )}
+        {!times.length && (
+          <View style={styles.emptyOverlay} pointerEvents="box-none">
+            <Text style={[type.headline, { color: color.text, textAlign: 'center' }]}>No recorded values in this window.</Text>
+            <Pressable accessibilityRole="button" onPress={() => setSpan(Infinity)} style={styles.creditRow}>
+              <Text style={[type.headline, { color: color.action }]}>Show all time</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     </View>
@@ -323,6 +354,7 @@ const styles = StyleSheet.create({
   mode: { minHeight: minTouch - 8, paddingHorizontal: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   modeOn: { backgroundColor: color.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   modeLabel: { fontFamily: font.semibold, fontSize: 13, color: color.textSecondary },
+  emptyOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
   readout: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   readoutItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendLine: { width: 16, height: 2, borderRadius: 1 },

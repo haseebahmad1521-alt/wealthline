@@ -13,7 +13,7 @@ import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import { Caption, Icon, icons, minTouch } from '@/components/ui';
 import { useMoney } from '@/lib/currency';
 import { formatDate, formatTime } from '@/lib/format';
-import type { Live, Point } from '@/lib/live';
+import { interpolate, type Live, type Point } from '@/lib/live';
 import { color, font, radius, space, type } from '@/theme';
 
 const MIN = 60_000;
@@ -22,9 +22,10 @@ const MIN_SPAN = 30_000; // zoom in to seconds
 const HEIGHT = 200;
 const PAD = { top: 16, bottom: 22, left: 4, right: 4 };
 
-const presets = [
+export const presets = [
   { label: '3H', span: 3 * 60 * MIN },
-  { label: '1D', span: DAY },
+  { label: '24H', span: DAY },
+  { label: '7D', span: 7 * DAY },
   { label: '1M', span: 30 * DAY },
   { label: '1Y', span: 365 * DAY },
   { label: 'All', span: Infinity },
@@ -38,7 +39,8 @@ type Props = {
 };
 
 /**
- * Pan (drag) and zoom (pinch, wheel, or +/−) from 30 seconds to all-time.
+ * Scrub (hover, or one-finger drag on touch) reads the value at any moment. Pan (mouse drag, two fingers,
+ * horizontal wheel) and zoom (pinch, ctrl/⌘-wheel, or +/−) from 30 seconds to all-time.
  * Solid line = interpolation between real values (dots mark the values themselves when sparse);
  * dashed grey = projection from the latest observed trend. Nothing else is drawn.
  */
@@ -49,6 +51,7 @@ export function WealthChart({ points, live, now }: Props) {
   const [span, setSpan] = useState<number>(presets[0].span);
   const [end, setEnd] = useState<number | null>(null); // null = follow now
   const [width, setWidth] = useState(0);
+  const [cursor, setCursor] = useState<number | null>(null); // scrubbed time
   const effSpan = Math.min(span, fullSpan * 1.05);
   const right = end ?? now;
   const left = right - effSpan;
@@ -56,7 +59,14 @@ export function WealthChart({ points, live, now }: Props) {
   // Gesture state lives in refs so the responder doesn't need recreating.
   const view = useRef({ span: effSpan, right, now, width, fullSpan, first });
   view.current = { span: effSpan, right, now, width, fullSpan, first };
-  const start = useRef<{ right: number; span: number; dist: number | null }>({ right, span: effSpan, dist: null });
+  const start = useRef<{ right: number; span: number; dist: number | null; mid: number | null }>({ right, span: effSpan, dist: null, mid: null });
+  // Web: the last pointer type, so a mouse drag pans while a finger drag scrubs.
+  const pointer = useRef<string>(Platform.OS === 'web' ? 'mouse' : 'touch');
+  const timeAt = (px: number) => {
+    const v = view.current;
+    const plotW = Math.max(v.width - PAD.left - PAD.right, 1);
+    return v.right - v.span + (Math.min(Math.max(px - PAD.left, 0), plotW) / plotW) * v.span;
+  };
 
   function clampRight(r: number, s: number) {
     const v = view.current;
@@ -76,17 +86,28 @@ export function WealthChart({ points, live, now }: Props) {
         onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (e) => {
-          start.current = { right: view.current.right, span: view.current.span, dist: pinchDist(e) };
+          start.current = { right: view.current.right, span: view.current.span, dist: pinchDist(e), mid: pinchMid(e) };
         },
         onPanResponderMove: (e, g) => {
           const s = start.current;
           const d = pinchDist(e);
+          const w = view.current.width;
           if (d && s.dist) {
-            apply(s.right, (s.span * s.dist) / d);
-          } else if (view.current.width) {
-            apply(s.right - (g.dx / view.current.width) * s.span, s.span);
+            // Two fingers: pinch zooms, moving both pans.
+            const mid = pinchMid(e);
+            const shift = mid != null && s.mid != null && w ? ((mid - s.mid) / w) * s.span : 0;
+            setCursor(null);
+            apply(s.right - shift, (s.span * s.dist) / d);
+          } else if (pointer.current !== 'mouse' && e.nativeEvent.touches?.length !== 2) {
+            setCursor(timeAt(e.nativeEvent.locationX));
+          } else if (w) {
+            apply(s.right - (g.dx / w) * s.span, s.span);
           }
         },
+        onPanResponderRelease: () => {
+          if (pointer.current !== 'mouse') setCursor(null);
+        },
+        onPanResponderTerminate: () => setCursor(null),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -140,6 +161,22 @@ export function WealthChart({ points, live, now }: Props) {
   const trend = latest && inWindow[0] ? latest.v - inWindow[0].v : 0;
   const lineColor = trend > 0 ? color.gain : trend < 0 ? color.loss : color.text;
 
+  // Scrub readout: a recorded value when the cursor is on one, otherwise the drawn line's value there, labelled
+  // as interpolated or projected. Outside recorded values and projection there is no value to show.
+  let read: { t: number; v: number; kind: string } | null = null;
+  if (cursor != null && width) {
+    const near = inWindow.reduce<(typeof inWindow)[number] | null>(
+      (b, p) => (Math.abs(x(p.t) - x(cursor)) <= 8 && (!b || Math.abs(p.t - cursor) < Math.abs(b.t - cursor)) ? p : b),
+      null,
+    );
+    const iv = interpolate(points, cursor);
+    const pv = proj && cursor >= proj.from.t ? interpolate([proj.from, proj.to], cursor) : null;
+    if (near) read = { t: near.t, v: near.v, kind: near.estimate ? 'Estimate' : 'Recorded' };
+    else if (pv != null) read = { t: cursor, v: pv, kind: 'Projected' };
+    else if (iv != null) read = { t: cursor, v: iv, kind: 'Interpolated' };
+  }
+  const readColor = read?.kind === 'Projected' ? color.projected : lineColor;
+
   const summary =
     inWindow.length === 0
       ? `No recorded values between ${describe(left)} and ${describe(right)}.`
@@ -150,34 +187,32 @@ export function WealthChart({ points, live, now }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <View accessibilityRole="tablist" style={styles.presets}>
-        {presets.map((p) => {
-          const selected = activePreset === p.label;
-          return (
-            <Pressable
-              key={p.label}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              accessibilityLabel={p.span === Infinity ? 'All time' : `Last ${p.label}`}
-              onPress={() => {
-                setSpan(p.span);
-                setEnd(null);
-              }}
-              style={[styles.preset, selected && styles.presetOn]}>
-              <Text style={[styles.presetLabel, selected && { color: color.text }]}>{p.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <RangePicker
+        active={activePreset}
+        onPick={(p) => {
+          setSpan(p);
+          setEnd(null);
+        }}
+      />
 
       <View
         ref={box}
         {...responder.panHandlers}
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+        {...(Platform.OS === 'web'
+          ? ({
+              onPointerDown: (e: PointerEvent) => (pointer.current = e.pointerType),
+              onPointerMove: (e: PointerEvent & { nativeEvent: { offsetX: number } }) => {
+                pointer.current = e.pointerType;
+                if (e.pointerType === 'mouse') setCursor(timeAt(e.nativeEvent.offsetX));
+              },
+              onPointerLeave: (e: PointerEvent) => e.pointerType === 'mouse' && setCursor(null),
+            } as object)
+          : null)}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={`Net worth chart. ${summary}`}
-        accessibilityHint="Swipe up or down to zoom. Drag horizontally to move through time."
+        accessibilityHint="Swipe up or down to zoom. Drag to read values; use two fingers to move through time."
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(e) => apply(right, e.nativeEvent.actionName === 'increment' ? effSpan / 2 : effSpan * 2)}
         style={styles.plot}>
@@ -228,6 +263,12 @@ export function WealthChart({ points, live, now }: Props) {
                 </SvgText>
               </>
             )}
+            {read && (
+              <>
+                <Line x1={x(read.t)} x2={x(read.t)} y1={PAD.top - 8} y2={HEIGHT - PAD.bottom} stroke={color.textSecondary} strokeWidth={1} />
+                <Circle cx={x(read.t)} cy={y(read.v)} r={4.5} fill={readColor} stroke={color.surface} strokeWidth={2} />
+              </>
+            )}
             <SvgText x={PAD.left} y={HEIGHT - 6} fontSize={11} fontFamily={font.regular} fill={color.textSecondary}>
               {describe(left)}
             </SvgText>
@@ -235,6 +276,17 @@ export function WealthChart({ points, live, now }: Props) {
               {end == null ? 'Now' : describe(right)}
             </SvgText>
           </Svg>
+        )}
+        {read && (
+          <View
+            pointerEvents="none"
+            accessibilityLiveRegion="polite"
+            style={[styles.tip, x(read.t) > width / 2 ? { right: width - x(read.t) + 8 } : { left: x(read.t) + 8 }]}>
+            <Text style={[type.number, styles.tipValue]}>{money.format(read.v)}</Text>
+            <Text style={styles.tipMeta}>
+              {stamp(read.t, effSpan)} · <Text style={{ color: readColor }}>{read.kind}</Text>
+            </Text>
+          </View>
         )}
         {inWindow.length === 0 && !proj && (
           <View style={styles.emptyOverlay} pointerEvents="box-none">
@@ -268,9 +320,43 @@ export function WealthChart({ points, live, now }: Props) {
   );
 }
 
+/** Range buttons (3H … All), shared by every chart. */
+export function RangePicker({ active, onPick }: { active?: string; onPick: (span: number) => void }) {
+  return (
+    <View accessibilityRole="tablist" style={styles.presets}>
+      {presets.map((p) => {
+        const selected = active === p.label;
+        return (
+          <Pressable
+            key={p.label}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            accessibilityLabel={p.span === Infinity ? 'All time' : `Last ${p.label}`}
+            onPress={() => onPick(p.span)}
+            style={[styles.preset, selected && styles.presetOn]}>
+            <Text style={[styles.presetLabel, selected && { color: color.text }]}>{p.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function pinchDist(e: GestureResponderEvent) {
   const t = e.nativeEvent.touches;
   return t && t.length >= 2 ? Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY) : null;
+}
+
+function pinchMid(e: GestureResponderEvent) {
+  const t = e.nativeEvent.touches;
+  return t && t.length >= 2 ? (t[0].pageX + t[1].pageX) / 2 : null;
+}
+
+/** Scrub timestamp: time of day for short windows, date (plus time under a week) otherwise. */
+function stamp(t: number, span: number) {
+  const d = new Date(t);
+  if (span <= DAY) return formatTime(d);
+  return span <= 7 * DAY ? `${formatDate(d)}, ${formatTime(d)}` : formatDate(d);
 }
 
 function describe(t: number) {
@@ -297,10 +383,24 @@ function ZoomButton({ label, icon, onPress }: { label: string; icon: typeof icon
 const styles = StyleSheet.create({
   wrap: { gap: space.sm },
   presets: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3, alignSelf: 'flex-start' },
-  preset: { minHeight: minTouch - 8, minWidth: 48, paddingHorizontal: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  preset: { minHeight: minTouch - 8, minWidth: 42, paddingHorizontal: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   presetOn: { backgroundColor: color.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
   presetLabel: { fontFamily: font.semibold, fontSize: 13, color: color.textSecondary },
   plot: { height: HEIGHT, ...(Platform.OS === 'web' ? ({ cursor: 'grab', touchAction: 'pan-y' } as object) : null) },
+  tip: {
+    position: 'absolute',
+    top: 0,
+    paddingHorizontal: space.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    backgroundColor: color.surface,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  tipValue: { fontSize: 15, color: color.text },
+  tipMeta: { fontFamily: font.medium, fontSize: 11, color: color.textSecondary },
   emptyOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
   linkButton: { minHeight: minTouch, justifyContent: 'center' },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
