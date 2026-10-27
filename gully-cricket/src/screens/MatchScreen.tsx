@@ -73,7 +73,7 @@ export function MatchScreen({ config, onFinish, onQuit }: Props) {
     while (picks.length < 3) {
       const name = pool[Math.floor(Math.random() * pool.length)];
       if (picks.some((p) => p.name === name)) continue;
-      picks.push({ name, outfit: makeOutfit(randomOutfitKind(city.region)) });
+      picks.push({ name, outfit: makeOutfit(randomOutfitKind(city.region), Math.random, { region: city.region, build: 'teen' }) });
     }
     return picks;
   }, [city, config.batterName]);

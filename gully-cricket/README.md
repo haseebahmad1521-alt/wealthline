@@ -5,9 +5,16 @@ built with Expo + React Native so it runs on iOS, Android and the web from one
 codebase.
 
 You chase a target with a tape ball in a narrow street. Boys play in everyday
-clothes (shalwar kameez, pant shirt, kurta pajama, T-shirt), not team kits.
-Houses have balconies, shutters, bunting and kites, and there's a rickshaw
-parked on the side.
+clothes, not team kits: untucked pant shirts with rolled sleeves, tees with
+jeans or track pants, cheap fan jerseys, shalwar kameez, kurta pajama and
+baniyan with shorts, in chappals or sneakers.
+
+The gully is alive: kids on the stoop, an uncle with his newspaper on a
+charpai, men at the chai khokha (with steam off the kettle), a fruit rehri,
+a CD70 with a black cat washing itself on the seat, an orange cat that
+crosses the street, a sleeping cat, a goat tied by a door, pigeons circling
+and perched on the roofline, tangled wires, posters, drain pipes, dishes,
+a neem tree, bunting and kites, and dust hanging in the evening light.
 
 ## Gullies
 
@@ -43,7 +50,8 @@ npm run typecheck
 - `src/game/flight.ts`, `src/game/frame.ts`: ball paths and the per-frame animation state.
 - `src/three/`: the 3D world with React Three Fiber (`@react-three/fiber/native` + `expo-gl` on phones, WebGL on web).
   - `World.tsx`: procedurally built houses, balconies, bunting, kites, rickshaw, landmarks (merged into a few draw calls).
-  - `Chibi.tsx`: big-headed animated characters built from primitives, with poses for batting, bowling, fielding and cheering.
+  - `Chibi.tsx`: stylised characters (kids, teens, uncles) with jointed limbs, two-bone arm IK on the bat, and poses for batting, bowling, fielding, sitting, clapping and cheering. Each body part is merged into one mesh, about a dozen draw calls per person.
+  - `Life.tsx`: neighbours, animals and street furniture.
   - `GameScene.tsx`: wires the game state to the characters, ball, timing ring, dust and cameras.
 - `src/screens/`: Home (live 3D showcase), Match (HUD + controls), Result.
 

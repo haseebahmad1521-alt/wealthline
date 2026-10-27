@@ -21,7 +21,7 @@ interface Props {
 }
 
 const REGIONS: Region[] = ['pakistan', 'india', 'neutral'];
-const OUTFITS: OutfitKind[] = ['shalwar', 'pantshirt', 'kurta', 'tshirt'];
+const OUTFITS: OutfitKind[] = ['pantshirt', 'tshirt', 'jersey', 'shalwar', 'kurta', 'vest'];
 const OVERS = [1, 2, 3];
 
 const randomName = (region: Region) => {
@@ -44,9 +44,9 @@ export function HomeScreen({ initial, best, onPlay }: Props) {
   const [region, setRegion] = useState<Region>(initial?.city.region ?? 'pakistan');
   const [city, setCity] = useState<City>(initial?.city ?? CITIES[0]);
   const [name, setName] = useState(initial?.batterName ?? randomName(region));
-  const [outfit, setOutfit] = useState<Outfit>(initial?.batterOutfit ?? makeOutfit('shalwar'));
+  const [outfit, setOutfit] = useState<Outfit>(initial?.batterOutfit ?? makeOutfit('pantshirt', Math.random, { build: 'teen' }));
   const [overs, setOvers] = useState(initial?.overs ?? 2);
-  const bowlerPreview = useMemo(() => makeOutfit('shalwar'), []);
+  const bowlerPreview = useMemo(() => makeOutfit('shalwar', Math.random, { build: 'teen' }), []);
 
   const cities = CITIES.filter((c) => c.region === region);
 
@@ -135,7 +135,7 @@ export function HomeScreen({ initial, best, onPlay }: Props) {
             {OUTFITS.map((k) => (
               <Pressable
                 key={k}
-                onPress={() => setOutfit(makeOutfit(k))}
+                onPress={() => setOutfit(makeOutfit(k, Math.random, { region, build: 'teen' }))}
                 accessibilityRole="button"
                 accessibilityState={{ selected: outfit.kind === k }}
                 style={[styles.chip, outfit.kind === k && styles.chipOn]}

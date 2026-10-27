@@ -9,17 +9,21 @@ import { BATTER, BOWLER_RELEASE, BOWLER_START_Z, FIELDERS, M, STUMPS_Z, clamp01 
 import { Builder, hashSeed, seeded } from './builder';
 import {
   Chibi,
+  akimboPose,
   batPose,
   bowlPose,
   cheerPose,
+  clapPose,
   divePose,
   lerp3,
   readyPose,
   runPose,
+  sitPose,
   standPose,
   type BatKey,
   type Rig,
 } from './Chibi';
+import { Life, SPECTATORS, type Spectator } from './Life';
 import { useFrame, useThree } from './fiber';
 import { World } from './World';
 
@@ -31,20 +35,25 @@ const KEYS: Record<'stance' | 'backlift' | 'contact' | 'ground' | 'lofted', BatK
   backlift: { hands: [-0.12, 1.1, 0.16], dir: [-0.62, 0.72, -0.3] },
   contact: { hands: [0.12, 0.74, 0.3], dir: [0.2, -0.92, 0.4] },
   ground: { hands: [0.22, 0.98, 0.16], dir: [0.75, 0.55, 0.15] },
-  lofted: { hands: [0.06, 1.18, 0.06], dir: [0.35, 0.9, -0.35] },
+  lofted: { hands: [0.22, 1.32, 0.26], dir: [0.15, 0.9, -0.45] },
 };
 
 function mixKey(a: BatKey, b: BatKey, t: number): BatKey {
   return { hands: lerp3(a.hands, b.hands, t), dir: lerp3(a.dir, b.dir, t) };
 }
 
-function buildCrate(): THREE.BufferGeometry {
+function buildStumpsBase(): THREE.BufferGeometry {
   const b = new Builder();
-  const blue = '#1F5FA8';
-  const dark = '#123E70';
-  b.box(blue, [0.55, 0.6, 0.42], [0, 0.3, 0]);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) b.box(dark, [0.12, 0.12, 0.44], [-0.16 + c * 0.16, 0.14 + r * 0.17, 0]);
-  b.box('#2A75C9', [0.58, 0.05, 0.45], [0, 0.6, 0]);
+  b.box('#3A3A3A', [0.34, 0.05, 0.22], [0, 0.025, 0]);
+  b.box('#B8BEC4', [0.3, 0.02, 0.06], [0, 0.06, 0]);
+  return b.build();
+}
+
+function buildStump(): THREE.BufferGeometry {
+  const b = new Builder();
+  b.cylinder('#E9D2A6', 0.02, 0.7, [0, 0.35, 0]);
+  b.sphere('#E9D2A6', 0.02, [0, 0.7, 0]);
+  b.cylinder('#C1272D', 0.021, 0.05, [0, 0.62, 0]);
   return b.build();
 }
 
@@ -74,22 +83,18 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
   const history = useRef<THREE.Vector3[]>([]);
   const { camera } = useThree();
 
-  const crateGeo = useMemo(buildCrate, []);
-  const crateMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }), []);
+  const stumpsGeo = useMemo(() => ({ base: buildStumpsBase(), stump: buildStump() }), []);
+  const woodMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55 }), []);
+  const stumps = useRef<THREE.Group[]>([]);
+  const bails = useRef<THREE.Mesh[]>([]);
 
   const extras = useMemo(() => {
     const rng = seeded(hashSeed(city.id) ^ 0x5151);
-    const fielders = FIELDERS.map(() => makeOutfit(randomOutfitKind(city.region, rng), rng));
-    const fans = [0, 1, 2, 3].map(() => makeOutfit(randomOutfitKind(city.region, rng), rng));
+    const region = city.region;
+    const fielders = FIELDERS.map(() => makeOutfit(randomOutfitKind(region, rng), rng, { region, build: rng() < 0.3 ? 'kid' : 'teen' }));
+    const fans = SPECTATORS.map((sp) => makeOutfit(sp.kind ?? randomOutfitKind(region, rng), rng, { region, build: sp.build }));
     return { fielders, fans };
   }, [city]);
-
-  const fanSpots: [number, number, number][] = [
-    [-3.15, 0.18, -3.2],
-    [3.2, 0.18, -5.5],
-    [-3.2, 0.18, -12],
-    [3.1, 0.18, 0.4],
-  ];
 
   const spawnDust = (now: number, x: number, z: number) => {
     const list = dustState.current;
@@ -122,8 +127,15 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
         br.head.rotation.set(0.05, 0.75, 0);
       }
       if (fs?.outcome && fs.outcome.runs >= 4 && fs.outcomeMs > 700) {
-        cheerPose(br, t);
-        if (br.bat) br.bat.rotation.z += 0;
+        // Bat raised high, bouncing on his toes.
+        const j = Math.abs(Math.sin(t * 8));
+        batPose(br, { hands: [0.05, 1.62 + j * 0.05, 0.12], dir: [0.1, 1, 0.15] }, 0);
+        br.root.position.y = j * 0.12;
+        br.legL.rotation.set(0, 0, 0.1);
+        br.legR.rotation.set(0, 0, -0.1);
+        br.shinL.rotation.set(0.1, 0, 0);
+        br.shinR.rotation.set(0.1, 0, 0);
+        br.head.rotation.set(-0.3, 0.2, 0);
       }
     }
 
@@ -154,13 +166,21 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
         else readyPose(r, t);
       } else if (fs?.outcome?.wicket && fs.outcomeMs > 400) cheerPose(r, t + i);
       else if (L?.phase === 'runup' || L?.phase === 'flight') readyPose(r, t);
+      else if (i % 2) akimboPose(r, t + i * 2);
       else standPose(r, t + i * 2);
     });
     fanRigs.current.forEach((r, i) => {
       if (!r) return;
-      const big = fs?.outcome && (fs.outcome.runs >= 4 || fs.outcome.wicket) && fs.outcomeMs > 200;
-      if (big || !fs) cheerPose(r, t * (fs ? 1 : 0.4) + i);
-      else standPose(r, t + i);
+      const sp = SPECTATORS[i];
+      const big = !!fs?.outcome && (fs.outcome.runs >= 4 || !!fs.outcome.wicket) && fs.outcomeMs > 200;
+      spectatorPose(r, sp, t + i * 1.7, big && sp.pose !== 'sit' && sp.pose !== 'lean');
+      if (big && (sp.pose === 'sit' || sp.pose === 'lean')) {
+        // Seated neighbours throw their arms up without standing.
+        r.armL.rotation.set(0, 0, -2.5 + Math.sin(t * 10 + i) * 0.2);
+        r.armR.rotation.set(0, 0, 2.5 - Math.sin(t * 10 + i) * 0.2);
+        r.foreL.rotation.set(0, 0, 0);
+        r.foreR.rotation.set(0, 0, 0);
+      }
     });
 
     // --- Ball ---
@@ -213,12 +233,13 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
       }
     }
 
-    // --- Crate stumps ---
-    if (crate.current) {
-      const k = fs?.knock ?? 0;
-      crate.current.rotation.set(-k * 1.2, 0, k * 0.4);
-      crate.current.position.set(0.05, 0, -STUMPS_Z * M + k * 0.35);
-    }
+    // --- Stumps: cartwheel back and the bails fly when bowled ---
+    const k = fs?.knock ?? 0;
+    stumps.current.forEach((st, i) => st.rotation.set(-k * (0.9 + i * 0.25), 0, (i - 1) * k * 0.35));
+    bails.current.forEach((bl, i) => {
+      bl.position.set(-0.05 + i * 0.1 + (i ? 1 : -1) * k * 0.4, 0.72 + Math.sin(k * Math.PI) * 0.6, k * 0.9);
+      bl.rotation.set(k * 6 * (i ? 1 : -1), 0, Math.PI / 2 + k * 4);
+    });
 
     // --- Window smash flash ---
     if (flash.current) {
@@ -272,6 +293,7 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
   return (
     <group>
       <World city={city} />
+      <Life city={city} />
 
       <Chibi
         outfit={{ ...batterOutfit, headwear: batterOutfit.headwear === 'topi' ? 'none' : batterOutfit.headwear }}
@@ -303,11 +325,10 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
           />
         );
       })}
-      {fanSpots.map((p, i) => (
+      {SPECTATORS.map((sp, i) => (
         <Chibi
           key={i}
           outfit={extras.fans[i]}
-          scale={0.8}
           rig={{
             get current() {
               return fanRigs.current[i] ?? null;
@@ -316,13 +337,35 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
               fanRigs.current[i] = r;
             },
           }}
-          position={p}
-          rotationY={p[0] < 0 ? Math.PI / 2 - 0.3 : -Math.PI / 2 + 0.3}
+          position={sp.pos}
+          rotationY={sp.rotY}
         />
       ))}
 
-      <group ref={crate} visible={!!live}>
-        <mesh geometry={crateGeo} material={crateMat} castShadow />
+      <group ref={crate} visible={!!live} position={[0.05, 0, -STUMPS_Z * M]}>
+        <mesh geometry={stumpsGeo.base} material={woodMat} castShadow />
+        {[-0.1, 0, 0.1].map((x, i) => (
+          <group
+            key={x}
+            position={[x, 0.05, 0]}
+            ref={(el) => {
+              if (el) stumps.current[i] = el;
+            }}
+          >
+            <mesh geometry={stumpsGeo.stump} material={woodMat} castShadow />
+          </group>
+        ))}
+        {[0, 1].map((i) => (
+          <mesh
+            key={i}
+            ref={(el) => {
+              if (el) bails.current[i] = el;
+            }}
+          >
+            <cylinderGeometry args={[0.012, 0.012, 0.11, 8]} />
+            <meshStandardMaterial color="#E9D2A6" roughness={0.55} />
+          </mesh>
+        ))}
       </group>
 
       {/* Tape ball */}
@@ -349,9 +392,9 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
         </mesh>
       ))}
 
-      <mesh ref={ring} visible={false}>
+      <mesh ref={ring} visible={false} renderOrder={10}>
         <torusGeometry args={[0.28, 0.03, 8, 40]} />
-        <meshBasicMaterial color="#FFE066" transparent opacity={0.8} depthWrite={false} />
+        <meshBasicMaterial color="#FFE066" transparent opacity={0.8} depthWrite={false} depthTest={false} />
       </mesh>
 
       <mesh ref={flash} visible={false}>
@@ -373,4 +416,29 @@ export function GameScene({ city, batterOutfit, bowlerOutfit, live }: Props) {
       ))}
     </group>
   );
+}
+
+const BUILD_SCALE = { kid: 0.78, teen: 0.95, uncle: 1.02 } as const;
+
+function spectatorPose(r: Rig, sp: Spectator, t: number, excited: boolean) {
+  if (excited) return cheerPose(r, t);
+  switch (sp.pose) {
+    case 'sit':
+      // Seat height is in metres; the rig works in unscaled body units.
+      return sitPose(r, t, (sp.seat ?? 0.4) / BUILD_SCALE[sp.build] + 0.07);
+    case 'clap':
+      return clapPose(r, t * 0.35);
+    case 'akimbo':
+      return akimboPose(r, t);
+    case 'lean':
+      standPose(r, t, 0.4);
+      r.body.rotation.x = 0.3;
+      r.armL.rotation.set(-1.0, 0, -0.1);
+      r.armR.rotation.set(-1.0, 0, 0.1);
+      r.foreL.rotation.set(-0.9, 0, 0);
+      r.foreR.rotation.set(-0.9, 0, 0);
+      return;
+    default:
+      return standPose(r, t);
+  }
 }
