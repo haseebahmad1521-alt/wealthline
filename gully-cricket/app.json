@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Gully Cricket",
+    "slug": "gully-cricket",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFF4E0",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.gullycricket",
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "com.example.gullycricket"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}
