@@ -192,14 +192,14 @@ function CompanySection({ company: c }: { company: CompanyView }) {
   return (
     <View style={styles.company}>
       <View style={styles.companyHead}>
-        <View style={styles.flex}>
+        <View style={styles.companyName}>
           <Text style={[type.headline, { color: color.text }]}>{c.name}</Text>
           <Caption>{c.is_private ? 'Private company' : c.ticker}</Caption>
         </View>
         {q?.prev_close ? (
           <View style={styles.price}>
             <Change delta={q.price - q.prev_close} base={q.prev_close} size={15} compact />
-            <Caption>
+            <Caption style={styles.priceTime}>
               {isLive(q) ? 'Today, ' : 'Last price, '}
               {formatTime(q.as_of)} {isLive(q) ? '' : formatDate(q.as_of)}
             </Caption>
@@ -212,7 +212,7 @@ function CompanySection({ company: c }: { company: CompanyView }) {
           <Caption>Revenue by place, fiscal {c.regions[0].fiscal_year}</Caption>
           {c.regions.map((r) => (
             <View key={r.region} style={styles.share} accessible accessibilityLabel={`${r.region}: ${Math.round(r.share * 100)} percent of revenue`}>
-              <Text style={[type.body, styles.flex, { color: color.text }]} numberOfLines={1}>
+              <Text style={[type.body, styles.flex, { color: color.text }]} numberOfLines={2}>
                 {r.region}
               </Text>
               <View style={styles.barTrack}>
@@ -236,7 +236,7 @@ function CompanySection({ company: c }: { company: CompanyView }) {
               <Text style={{ fontFamily: type.headline.fontFamily }}>{KIND[kind][list.length === 1 ? 0 : 1]}: </Text>
               {list
                 .slice(0, 6)
-                .map((s) => (s.country && kind !== 'hq' ? `${s.name} (${country(s.country)})` : s.name))
+                .map((s) => (kind === 'hq' ? (s.city ?? s.name) : s.country ? `${s.name} (${country(s.country)})` : s.name))
                 .join(', ')}
               {list.length > 6 ? `, and ${list.length - 6} more` : ''}
             </Body>
@@ -293,10 +293,13 @@ const styles = StyleSheet.create({
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline },
   company: { gap: space.md },
   companyHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  price: { alignItems: 'flex-end', gap: 2 },
+  // The name keeps its room on narrow phones; the price time wraps instead.
+  companyName: { flexGrow: 1, flexShrink: 0, minWidth: 96, maxWidth: '50%' },
+  price: { flex: 1, minWidth: 0, alignItems: 'flex-end', gap: 2 },
+  priceTime: { textAlign: 'right' },
   block: { gap: space.sm },
   share: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  barTrack: { width: 72, height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden' },
+  barTrack: { width: 56, height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden' },
   bar: { height: 6, borderRadius: 3, backgroundColor: color.text },
   pct: { width: 44, textAlign: 'right', fontSize: 15 },
   source: { alignSelf: 'flex-start', minHeight: minTouch, justifyContent: 'center' },
