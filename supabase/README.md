@@ -97,5 +97,12 @@ Scheduler: pg_cron calls `refresh-due` every 10 minutes with header `x-cron-secr
 `select vault.update_secret((select id from vault.secrets where name = 'cron_secret'), '<v>');`.
 `refresh-due` is deployed with `--no-verify-jwt` (it has no user token; the secret protects it).
 
+Health and alerts (`20261101000000_refresh_health.sql`): every outside source records its last success and failure in
+`source_health` (`required = false` for best-effort sources such as Google News, which are shown but never alert).
+`refresh_health()` (public, read-only) reports a problem when the scheduler has not started a refresh for 30 minutes,
+a refresh is over an hour late, a refresh ended in an error, or a required source failed 3+ times in a row with no
+success for 6 hours. Admin shows it as "System health."; `.github/workflows/health.yml` checks it hourly and fails
+(GitHub emails the owner) while it reports a problem. Scheduled workflows run only from the default branch.
+
 Unofficial sources (Forbes JSON, Google News) can change or block without notice; values keep their source label
 and link, and a failed run shows as an error state rather than invented data.

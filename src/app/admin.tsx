@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Crud, RecordForm, type Field, type Row } from '@/components/admin/crud';
-import { Body, Button, Caption, Heading, icons, minTouch, Screen, StateView } from '@/components/ui';
+import { Body, Button, Caption, Heading, Icon, icons, minTouch, Screen, StateView, Surface } from '@/components/ui';
 import { useAuth, useEvents, useHoldings, usePeople, useProjects } from '@/lib/data';
 import { db } from '@/lib/supabase';
 import { usd } from '@/lib/format';
@@ -155,6 +155,56 @@ function PersonEditor({ person, onSaved }: { person: PersonItem | null; onSaved:
   );
 }
 
+type Health = { ok: boolean; checked_at: string; problems: string[] };
+type SourceRow = { source: string; required: boolean; last_ok_at: string | null; fails: number; last_error: string | null };
+
+const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : 'never');
+
+/** Live refresh health (refresh_health + source_health). The same check fails the hourly GitHub alert. */
+function SystemHealth() {
+  const health = useQuery({
+    queryKey: ['refresh-health'],
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const [h, s] = await Promise.all([
+        db().rpc('refresh_health'),
+        db().from('source_health').select('source, required, last_ok_at, fails, last_error').gt('fails', 0).order('source'),
+      ]);
+      if (h.error) throw h.error;
+      if (s.error) throw s.error;
+      return { ...(h.data as Health), failing: s.data as SourceRow[] };
+    },
+  });
+  return (
+    <View style={styles.sectionBlock}>
+      <Heading level={2}>System health.</Heading>
+      {health.isPending || health.error ? (
+        <StateView loading={health.isPending} error={health.error} onRetry={() => void health.refetch()} />
+      ) : (
+        <Surface style={styles.health}>
+          <View style={styles.healthRow} accessible accessibilityLabel={health.data.ok ? 'All updates running.' : 'Updates need attention.'}>
+            <Icon name={health.data.ok ? icons.check : icons.close} tint={health.data.ok ? color.gain : color.loss} />
+            <Text style={[type.headline, { color: health.data.ok ? color.gain : color.loss }]}>
+              {health.data.ok ? 'All updates running.' : 'Updates need attention.'}
+            </Text>
+          </View>
+          {health.data.problems.map((p) => (
+            <Body key={p}>✕ {p}</Body>
+          ))}
+          {health.data.failing.map((s) => (
+            <Caption key={s.source}>
+              {s.source}
+              {s.required ? '' : ' (optional)'}: {s.fails} failure{s.fails === 1 ? '' : 's'} in a row, last success {when(s.last_ok_at)}
+              {s.last_error ? ` · ${s.last_error}` : ''}
+            </Caption>
+          ))}
+          <Caption>Checked {when(health.data.checked_at)}.</Caption>
+        </Surface>
+      )}
+    </View>
+  );
+}
+
 function AdminApp() {
   const people = usePeople();
   const { width } = useWindowDimensions();
@@ -188,8 +238,10 @@ function AdminApp() {
   );
 
   return (
-    <View style={[styles.layout, wide && styles.layoutWide]}>
-      {list}
+    <View style={styles.editor}>
+      <SystemHealth />
+      <View style={[styles.layout, wide && styles.layoutWide]}>
+        {list}
       <View style={styles.editorCol}>
         {selected === 'new' ? (
           <PersonEditor person={null} onSaved={setSelected} />
@@ -198,6 +250,7 @@ function AdminApp() {
         ) : (
           <Body secondary>Choose a person to edit, or add one.</Body>
         )}
+        </View>
       </View>
     </View>
   );
@@ -248,4 +301,6 @@ const styles = StyleSheet.create({
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
   personRow: { minHeight: minTouch, paddingHorizontal: space.md, paddingVertical: space.sm, justifyContent: 'center', gap: 2 },
   personOn: { backgroundColor: color.fill },
+  health: { padding: space.md, gap: space.sm },
+  healthRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

@@ -15,6 +15,18 @@ async function getJson(url: string, headers: Record<string, string> = UA) {
   return res.json();
 }
 
+/** Records each outside source's success or failure for the health check (source_health). */
+async function track<T>(db: SupabaseClient, source: string, work: () => Promise<T>): Promise<T> {
+  try {
+    const value = await work();
+    await db.rpc('record_source', { p_source: source, p_error: null });
+    return value;
+  } catch (e) {
+    await db.rpc('record_source', { p_source: source, p_error: e instanceof Error ? e.message : String(e) });
+    throw e;
+  }
+}
+
 /** Which kinds can run for this person at all (no source → no state, no spinner). */
 export function kindsFor(p: Person): Kind[] {
   return KINDS.filter((k) => (k === 'finance' ? !!p.forbes_uri : k === 'social' ? !!socialFetcher(p) : true));
@@ -22,8 +34,8 @@ export function kindsFor(p: Person): Kind[] {
 
 // Forbes: today's real-time value, then the dated list estimates going back.
 async function finance(db: SupabaseClient, p: Person) {
-  const rtb = await getJson(
-    'https://www.forbes.com/forbesapi/person/rtb/0/position/true.json?fields=uri,rank,finalWorth,timestamp&limit=300',
+  const rtb = await track(db, 'Forbes real-time list', () =>
+    getJson('https://www.forbes.com/forbesapi/person/rtb/0/position/true.json?fields=uri,rank,finalWorth,timestamp&limit=300'),
   );
   const now = (rtb?.personList?.personsLists ?? []).find((x: { uri: string }) => x.uri === p.forbes_uri);
   const profile = `https://www.forbes.com/profile/${p.forbes_uri}/`;
@@ -41,7 +53,7 @@ async function finance(db: SupabaseClient, p: Person) {
       .maybeSingle();
     if (Number(last?.net_worth_usd) !== Math.round(now.finalWorth * 1e6)) rows.push({ as_of: new Date(now.timestamp).toISOString(), usd: now.finalWorth * 1e6, label: 'Forbes Real-Time Billionaires' });
   }
-  const person = (await getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`))?.person;
+  const person = (await track(db, 'Forbes profiles', () => getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`)))?.person;
   for (const l of person?.personLists ?? []) {
     if (!(l.finalWorth > 0) || !l.date) continue;
     rows.push({ as_of: new Date(l.date).toISOString(), usd: l.finalWorth * 1e6, label: `${/^Forbes/.test(l.name ?? '') ? l.name : `Forbes ${l.name ?? l.listUri}`} ${l.year ?? ''}`.trim() });
@@ -105,7 +117,7 @@ const OUTLET_FEEDS: [string, string][] = [
   ['TechCrunch', 'https://techcrunch.com/feed/'],
 ];
 
-async function headlines(name: string): Promise<Headline[]> {
+async function headlines(db: SupabaseClient, name: string): Promise<Headline[]> {
   const q = name.replace(/ & family$/, '');
   const mentions = (h: Headline) => `${h.title} ${h.summary}`.toLowerCase().includes(q.toLowerCase());
   const google = async () => {
@@ -139,9 +151,13 @@ async function headlines(name: string): Promise<Headline[]> {
         summary: '',
       }));
   };
-  const outlets = OUTLET_FEEDS.map(([outlet, url]) => async () => rssItems(await getText(url), outlet).filter(mentions));
+  const outlets = OUTLET_FEEDS.map(([outlet, url]): [string, () => Promise<Headline[]>] => [
+    outlet,
+    async () => rssItems(await getText(url), outlet).filter(mentions),
+  ]);
+  const sources: [string, () => Promise<Headline[]>][] = [['Google News', google], ['GDELT', gdelt], ['Hacker News', hn], ...outlets];
 
-  const results = await Promise.allSettled([google, gdelt, hn, ...outlets].map((f) => f()));
+  const results = await Promise.allSettled(sources.map(([source, f]) => track(db, source, f)));
   const ok = results.filter((r): r is PromiseFulfilledResult<Headline[]> => r.status === 'fulfilled');
   if (!ok.length) throw new Error('No news source answered.');
   const seen = new Set<string>();
@@ -153,7 +169,7 @@ async function headlines(name: string): Promise<Headline[]> {
 }
 
 async function news(db: SupabaseClient, p: Person) {
-  for (const h of await headlines(p.name)) {
+  for (const h of await headlines(db, p.name)) {
     await db.from('person_news').upsert(
       { person_id: p.id, title: h.title, source_name: h.source, source_url: h.link, published_at: h.published },
       { onConflict: 'person_id,source_url', ignoreDuplicates: true },

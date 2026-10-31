@@ -1,0 +1,30 @@
+name: Live refresh health
+
+# Hourly check of the live refresh (public refresh_health RPC). The run fails while it reports a problem, and GitHub
+# emails the owner about failed scheduled runs. Scheduled workflows only run from the default branch.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the backend for its refresh health
+        env:
+          # Public client values, as in pages.yml.
+          URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+          KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          body=$(curl -sS --fail-with-body -m 30 -X POST "$URL/rest/v1/rpc/refresh_health" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H 'content-type: application/json' -d '{}') \
+            || { echo "::error::Health check could not reach the backend: $body"; exit 1; }
+          echo "$body" | jq .
+          if [ "$(echo "$body" | jq -r .ok)" != "true" ]; then
+            echo "$body" | jq -r '.problems[]' | while read -r p; do echo "::error::$p"; done
+            exit 1
+          fi
