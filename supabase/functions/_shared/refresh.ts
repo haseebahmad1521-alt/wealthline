@@ -32,27 +32,28 @@ export function kindsFor(p: Person): Kind[] {
   return KINDS.filter((k) => (k === 'finance' ? !!p.forbes_uri : k === 'social' ? !!socialFetcher(p) : true));
 }
 
-// Forbes: today's real-time value, then the dated list estimates going back.
-async function finance(db: SupabaseClient, p: Person) {
+/**
+ * Intraday market values for everyone at once (refresh-due, every 10 minutes): one request to the Forbes real-time
+ * list, then record_market_values stores each changed value as 'computed' and keeps forbes_rank current.
+ * Returns how many new values were stored (0 while markets are closed and Forbes only re-stamps).
+ */
+export async function marketTick(db: SupabaseClient): Promise<number> {
   const rtb = await track(db, 'Forbes real-time list', () =>
     getJson('https://www.forbes.com/forbesapi/person/rtb/0/position/true.json?fields=uri,rank,finalWorth,timestamp&limit=300'),
   );
-  const now = (rtb?.personList?.personsLists ?? []).find((x: { uri: string }) => x.uri === p.forbes_uri);
+  const rows = ((rtb?.personList?.personsLists ?? []) as { uri: string; rank?: number; finalWorth?: number; timestamp?: number }[])
+    .filter((x) => x.uri && Number(x.finalWorth) > 0 && x.timestamp)
+    .map((x) => ({ uri: x.uri, rank: x.rank ?? null, usd: Number(x.finalWorth) * 1e6, as_of: new Date(x.timestamp!).toISOString() }));
+  if (!rows.length) throw new Error('Forbes real-time list came back empty.');
+  const { data, error } = await db.rpc('record_market_values', { p_rows: rows, p_source_url: 'https://www.forbes.com/profile/{uri}/' });
+  if (error) throw new Error(error.message);
+  return data as number;
+}
+
+// Forbes: dated list estimates going back (today's real-time value comes from marketTick).
+async function finance(db: SupabaseClient, p: Person) {
   const profile = `https://www.forbes.com/profile/${p.forbes_uri}/`;
   const rows: { as_of: string; usd: number; label: string }[] = [];
-  if (now?.finalWorth > 0 && now.timestamp) {
-    await db.from('people').update({ forbes_rank: now.rank ?? null }).eq('id', p.id);
-    // Forbes re-stamps an unchanged value (weekends, closed markets); storing it again would read as "0.00% change".
-    const { data: last } = await db
-      .from('net_worth_values')
-      .select('net_worth_usd')
-      .eq('person_id', p.id)
-      .eq('source_label', 'Forbes Real-Time Billionaires')
-      .order('as_of', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (Number(last?.net_worth_usd) !== Math.round(now.finalWorth * 1e6)) rows.push({ as_of: new Date(now.timestamp).toISOString(), usd: now.finalWorth * 1e6, label: 'Forbes Real-Time Billionaires' });
-  }
   const person = (await track(db, 'Forbes profiles', () => getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`)))?.person;
   for (const l of person?.personLists ?? []) {
     if (!(l.finalWorth > 0) || !l.date) continue;

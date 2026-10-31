@@ -1,7 +1,7 @@
 // Scheduled refresh (pg_cron every 10 minutes, holding CRON_SECRET): takes the few person/kind pairs whose
 // next_auto_at has passed (set per run with a random ±30 min offset) and refreshes them one at a time.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { kindsFor, PERSON_COLUMNS, run, type Kind } from '../_shared/refresh.ts';
+import { kindsFor, marketTick, PERSON_COLUMNS, run, type Kind } from '../_shared/refresh.ts';
 import { cors, json } from '../_shared/util.ts';
 
 const BATCH = 6;
@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
     const { data: ok } = await db.rpc('claim_refresh', { p_person: d.person_id, p_kind: d.kind, p_auto: true });
     if (ok) work.push({ p, kind: d.kind as Kind });
   }
+  // A failed tick is recorded in source_health by marketTick; it never blocks the per-person refreshes.
+  const market = await marketTick(db).catch(() => null);
   EdgeRuntime.waitUntil((async () => { for (const w of work) await run(db, w.p, w.kind); })());
-  return json({ seeded: fresh.length, started: work.length });
+  return json({ seeded: fresh.length, started: work.length, market });
 });
