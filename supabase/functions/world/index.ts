@@ -1,10 +1,12 @@
 // World sandbox collectors, called by pg_cron with CRON_SECRET (see migrations/20261101000200_world.sql).
 //   ?job=quotes  every 10 minutes: observed share prices for every listed company (Yahoo Finance chart data).
 //   ?job=facts   daily: company headquarters and facilities (Wikidata), country GDP and population (World Bank).
+//   ?job=edgar   hourly: revenue by country/region and subsidiaries from new 10-K filings (edgar.ts).
 // Everything stored is copied from its source with a link back; each source reports to source_health.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { getJson, track } from '../_shared/refresh.ts';
 import { cors, json } from '../_shared/util.ts';
+import { runEdgar } from './edgar.ts';
 
 const BROWSER = { 'User-Agent': 'Mozilla/5.0 (compatible; Wealthline/1.0; +https://haseebahmad1521-alt.github.io/wealthline/)' };
 
@@ -173,6 +175,10 @@ Deno.serve(async (req) => {
   const job = new URL(req.url).searchParams.get('job');
   const settle = async (f: () => Promise<number>) => f().then((n) => n, (e) => (e instanceof Error ? e.message : String(e)));
   if (job === 'quotes') return json({ quotes: await settle(() => quotes(db)) });
+  if (job === 'edgar') {
+    const done = await runEdgar(db).catch((e) => (e instanceof Error ? e.message : String(e)));
+    return json({ edgar: done });
+  }
   if (job === 'facts') {
     return json({
       places: await settle(() => track(db, 'Wikidata', () => companyPlaces(db))),

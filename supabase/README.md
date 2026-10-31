@@ -123,4 +123,9 @@ like watchlists, optionally public).
 
 pg_cron: `world-quotes` every 10 minutes (`world?job=quotes`), `world-facts` daily at 03:40 UTC (`world?job=facts`),
 both with the Vault `cron_secret`. Deploy with `--no-verify-jwt`. Each source reports to `source_health`.
-SEC EDGAR needs a contact email in its User-Agent (SEC fair-access rule); the EDGAR collector waits for one.
+SEC EDGAR (`20261101000300_edgar.sql`, `functions/world/edgar.ts`): `world-edgar` runs hourly, checks each listed
+company's latest 10-K and parses at most two new filings per run: revenue by country/region from the inline XBRL
+(only a set of reported lines that adds up to total revenue, so overlapping breakdowns are never summed) and
+subsidiaries from Exhibit 21. `company_exposure` gives each line's share of the company's latest-year revenue.
+Berkshire doesn't tag revenue by geography, so it has no rows. SEC's fair-access rule needs a contact in the
+User-Agent: set it once with `npx supabase secrets set SEC_CONTACT=<email> --project-ref <ref>` (never in the app).
