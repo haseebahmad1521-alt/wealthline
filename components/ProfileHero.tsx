@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Image, Linking, View, useWindowDimensions } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Button, Skeleton } from 'heroui-native';
 import * as Haptics from 'expo-haptics';
 import { ArrowUpRight, ImageOff } from 'lucide-react-native';
@@ -30,104 +31,60 @@ export default function ProfileHero({ person }: { person: Person }) {
         style={{
           borderRadius: 26,
           overflow: 'hidden',
-          backgroundColor: colors.hero,
-          flexDirection: desktop ? 'row' : 'column',
+          backgroundColor: colors.heroPhoto,
+          height: desktop ? 460 : Math.min(440, Math.round(width * 1.12)),
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
-        <View
-          style={{
-            flex: desktop ? 1.15 : undefined,
-            padding: desktop ? 38 : 24,
-            justifyContent: 'space-between',
-            gap: desktop ? 50 : 22,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}
-          >
-            <Type weight="semibold" style={{ color: colors.heroInk, fontSize: 14 }}>
-              No. {person.rank}
-            </Type>
-            <FollowButton person={person} />
-          </View>
-          <View style={{ gap: 14 }}>
-            <Type
-              weight="bold"
-              style={{
-                color: colors.heroInk,
-                fontSize: desktop ? 58 : 38,
-                lineHeight: desktop ? 62 : 42,
-                letterSpacing: desktop ? -2.5 : -1.5,
-              }}
-            >
-              {person.name}
-            </Type>
-            <Type style={{ color: colors.heroInk, fontSize: 15 }}>{person.main_source}</Type>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
-              {person.age != null && (
-                <Type style={{ color: colors.heroMuted, fontSize: 12 }}>Age {person.age}</Type>
-              )}
-              {!!person.residence && (
-                <Type style={{ color: colors.heroMuted, fontSize: 12 }}>{person.residence}</Type>
-              )}
-              {!!person.citizenship && (
-                <Type style={{ color: colors.heroMuted, fontSize: 12 }}>{person.citizenship}</Type>
-              )}
-            </View>
-          </View>
-        </View>
-        <View
-          style={{
-            flex: desktop ? 1 : undefined,
-            height: desktop ? 360 : 300,
-            minHeight: desktop ? 360 : 300,
-            backgroundColor: colors.heroPhoto,
-            overflow: 'hidden',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {portrait && status !== 'error' ? (
-            <>
-              {status === 'loading' && <Skeleton className="absolute inset-0 rounded-none" />}
+        {portrait && status !== 'error' ? (
+          <>
+            {status === 'loading' && <Skeleton className="absolute inset-0 rounded-none" />}
+            {desktop && (
+              // Wide screens: the portrait sits whole in the middle over a soft blurred copy,
+              // instead of being cropped to a strip of face.
               <Image
-                key={`${person.slug}-${attempt}`}
+                key={`backdrop-${person.slug}-${attempt}`}
                 source={{ uri: portrait.imageUrl }}
-                accessibilityLabel={`Portrait of ${person.name}`}
-                style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+                blurRadius={40}
+                accessible={false}
+                style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.55 }}
                 resizeMode="cover"
-                onLoad={() => setStatus('ready')}
-                onError={() => {
-                  setStatus('error');
-                  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                }}
               />
-            </>
-          ) : (
-            <View style={{ gap: 16, alignItems: 'center' }}>
-              <Avatar name={person.name ?? ''} size={76} />
-              <ImageOff size={20} color={colors.heroMuted} />
-              <Type style={{ color: colors.heroInk }}>Portrait unavailable</Type>
-              {portrait && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => {
-                    setStatus('loading');
-                    setAttempt(attempt + 1);
-                  }}
-                >
-                  <Button.Label>Retry photo</Button.Label>
-                </Button>
-              )}
-            </View>
-          )}
-        </View>
+            )}
+            <Image
+              key={`${person.slug}-${attempt}`}
+              source={{ uri: portrait.imageUrl }}
+              accessibilityLabel={`Portrait of ${person.name}`}
+              style={{ position: 'absolute', width: '100%', height: '100%' }}
+              resizeMode={desktop ? 'contain' : 'cover'}
+              onLoad={() => setStatus('ready')}
+              onError={() => {
+                setStatus('error');
+                void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              }}
+            />
+          </>
+        ) : (
+          <View style={{ gap: 16, alignItems: 'center', paddingTop: 60 }}>
+            <Avatar name={person.name ?? ''} size={76} />
+            <ImageOff size={20} color={colors.heroMuted} />
+            <Type style={{ color: colors.heroInk }}>Portrait unavailable</Type>
+            {portrait && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onPress={() => {
+                  setStatus('loading');
+                  setAttempt(attempt + 1);
+                }}
+              >
+                <Button.Label>Retry photo</Button.Label>
+              </Button>
+            )}
+          </View>
+        )}
+        <IdentityBar person={person} desktop={desktop} narrow={width < 400} />
       </View>
       {portrait && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
@@ -166,6 +123,83 @@ export default function ProfileHero({ person }: { person: Person }) {
       {!!person.bio && (
         <Type style={{ maxWidth: 740, lineHeight: 25, marginTop: 10 }}>{person.bio}</Type>
       )}
+    </View>
+  );
+}
+
+// Slim identity header over the top of the hero photo. The frosted blur is decoration; the
+// tinted layer under the text keeps it readable on any photo and where blur is unsupported.
+function IdentityBar({
+  person,
+  desktop,
+  narrow,
+}: {
+  person: Person;
+  desktop: boolean;
+  narrow: boolean;
+}) {
+  const details = [
+    narrow ? `No. ${person.rank}` : null,
+    person.main_source,
+    person.age != null ? `Age ${person.age}` : null,
+    person.residence,
+    person.citizenship,
+  ].filter(Boolean);
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        top: desktop ? 14 : 10,
+        left: desktop ? 14 : 10,
+        right: desktop ? 14 : 10,
+        borderRadius: 18,
+        overflow: 'hidden',
+      }}
+    >
+      <BlurView intensity={30} tint="light" style={{ position: 'absolute', inset: 0 }} />
+      <View
+        style={{
+          backgroundColor: colors.heroBar,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          paddingVertical: 9,
+          paddingLeft: desktop ? 18 : 14,
+          paddingRight: 9,
+        }}
+      >
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+            {!narrow && (
+              <Type weight="semibold" style={{ color: colors.heroInk, fontSize: 12 }}>
+                No. {person.rank}
+              </Type>
+            )}
+            <Type
+              weight="bold"
+              accessibilityRole="header"
+              numberOfLines={2}
+              style={{
+                flexShrink: 1,
+                fontSize: desktop ? 22 : 18,
+                lineHeight: desktop ? 27 : 22,
+                letterSpacing: desktop ? -0.6 : -0.4,
+              }}
+            >
+              {person.name}
+            </Type>
+          </View>
+          {details.length > 0 && (
+            <Type
+              numberOfLines={1}
+              style={{ color: colors.heroBarMuted, fontSize: 12, lineHeight: 17 }}
+            >
+              {details.join(' · ')}
+            </Type>
+          )}
+        </View>
+        <FollowButton person={person} compact={narrow} />
+      </View>
     </View>
   );
 }

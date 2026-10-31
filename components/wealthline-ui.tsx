@@ -355,7 +355,7 @@ export function DataState({
     );
   return null;
 }
-export function FollowButton({ person }: { person: Person }) {
+export function FollowButton({ person, compact = false }: { person: Person; compact?: boolean }) {
   const auth = useAuth();
   const watch = useWatchlist();
   const saved = watch.data?.includes(person.id);
@@ -366,6 +366,8 @@ export function FollowButton({ person }: { person: Person }) {
         variant="secondary"
         size="sm"
         className="bg-field rounded-full"
+        isIconOnly={compact}
+        style={compact ? { minWidth: 44, minHeight: 44 } : undefined}
         isDisabled={watch.pending === person.id}
         onPress={() => {
           if (!auth.user) router.push('/watchlist');
@@ -373,9 +375,11 @@ export function FollowButton({ person }: { person: Person }) {
         }}
       >
         <Bookmark size={15} fill={saved ? colors.text : 'none'} color={colors.text} />
-        <Button.Label style={{ fontSize: 12 }}>
-          {watch.pending === person.id ? 'Saving…' : saved ? 'Following' : 'Follow'}
-        </Button.Label>
+        {!compact && (
+          <Button.Label style={{ fontSize: 12 }}>
+            {watch.pending === person.id ? 'Saving…' : saved ? 'Following' : 'Follow'}
+          </Button.Label>
+        )}
       </Button>
       {!!watch.actionError && (
         <Type style={{ color: colors.red, fontSize: 11 }}>{watch.actionError}</Type>

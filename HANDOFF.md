@@ -44,7 +44,7 @@ Feature status below is the previous implementation record, not a fresh end-to-e
 | --- | --- |
 | Rankings | Ten supplied dated estimates; target 20; do not fabricate the remainder |
 | Profiles | Licensed Wikimedia portraits and editorial styling implemented |
-| Profile header | Slim top-of-hero identity overlay requested but not implemented |
+| Profile header | Slim frosted identity bar over the top of the hero photo implemented (Oct 31, 2026); checked in the browser at 320/390px and desktop against identity-only stand-in data; native iOS/Android not yet checked |
 | Intraday | Three-hour default; zoom/pan and fresh-only projections implemented; fresh-data/native gesture testing remains |
 | History | Recharts web and native SVG chart implementations |
 | Projects | Filterable feed implemented |

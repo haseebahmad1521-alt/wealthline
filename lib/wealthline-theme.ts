@@ -15,6 +15,8 @@ export const colors = {
   heroInk: '#153767',
   heroMuted: '#365785',
   heroPhoto: '#C2D6F2',
+  heroBar: 'rgba(251, 251, 253, 0.8)',
+  heroBarMuted: '#3A3A3C',
   projection: '#805900',
 };
 export const fonts = {
