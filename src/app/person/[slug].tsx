@@ -3,6 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { EmpireCard } from '@/components/empire-card';
 import { NewsList } from '@/components/news';
 import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
@@ -151,6 +152,7 @@ export default function Profile() {
           ) : (
             <Body secondary>{holdings.isPending ? 'Loading…' : 'No verified holdings recorded yet.'}</Body>
           )}
+          <EmpireCard personId={p.id} />
         </View>
       </View>
 

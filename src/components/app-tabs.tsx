@@ -15,6 +15,10 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Rankings</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="leaderboard" />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="world">
+        <NativeTabs.Trigger.Label>World</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="globe" md="public" />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="projects">
         <NativeTabs.Trigger.Label>Projects</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="sparkles" md="rocket_launch" />

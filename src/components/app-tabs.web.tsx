@@ -17,8 +17,9 @@ import { Icon, icons, type IconName } from '@/components/ui';
 import { useAuth } from '@/lib/data';
 import { color, contentWidth, desktopBreakpoint, font, space, type } from '@/theme';
 
-const tabs: { name: string; href: '/' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
+const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
   { name: 'index', href: '/', label: 'Rankings', icon: icons.rankings },
+  { name: 'world', href: '/world', label: 'World', icon: icons.world },
   { name: 'projects', href: '/projects', label: 'Projects', icon: icons.projects },
   { name: 'watchlist', href: '/watchlist', label: 'Watchlist', icon: icons.starFill },
 ];
