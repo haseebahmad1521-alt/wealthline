@@ -9,14 +9,14 @@ type Person = { id: string; name: string; forbes_uri: string | null; social: { p
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; Wealthline/1.0; +https://haseebahmad1521-alt.github.io/wealthline/)' };
 
-async function getJson(url: string, headers: Record<string, string> = UA) {
+export async function getJson(url: string, headers: Record<string, string> = UA) {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status}`);
   return res.json();
 }
 
 /** Records each outside source's success or failure for the health check (source_health). */
-async function track<T>(db: SupabaseClient, source: string, work: () => Promise<T>): Promise<T> {
+export async function track<T>(db: SupabaseClient, source: string, work: () => Promise<T>): Promise<T> {
   try {
     const value = await work();
     await db.rpc('record_source', { p_source: source, p_error: null });

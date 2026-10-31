@@ -111,3 +111,16 @@ success for 6 hours. Admin shows it as "System health."; `.github/workflows/heal
 
 Unofficial sources (Forbes JSON, Google News) can change or block without notice; values keep their source label
 and link, and a failed run shows as an error state rather than invented data.
+
+## World sandbox data (`20261101000200_world.sql`, function `world`)
+
+Facts behind the planned globe, each row with its source and link; public read, admin write:
+`companies` (seeded from holdings; HQ from Wikidata), `company_sites` (headquarters and facilities a company owns or
+operates, city-level, Wikidata), `company_regions` (revenue by reported region, from SEC filings; collector pending),
+`subsidiaries` (pending), `countries` (World Bank GDP and population), `quotes` + `quote_latest` (observed 5-minute
+share prices, Yahoo Finance chart data, kept 30 days), and `scenarios` (saved "what if" inputs, private to their owner
+like watchlists, optionally public).
+
+pg_cron: `world-quotes` every 10 minutes (`world?job=quotes`), `world-facts` daily at 03:40 UTC (`world?job=facts`),
+both with the Vault `cron_secret`. Deploy with `--no-verify-jwt`. Each source reports to `source_health`.
+SEC EDGAR needs a contact email in its User-Agent (SEC fair-access rule); the EDGAR collector waits for one.
