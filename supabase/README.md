@@ -97,6 +97,11 @@ Scheduler: pg_cron calls `refresh-due` every 10 minutes with header `x-cron-secr
 `select vault.update_secret((select id from vault.secrets where name = 'cron_secret'), '<v>');`.
 `refresh-due` is deployed with `--no-verify-jwt` (it has no user token; the secret protects it).
 
+Intraday market values (`20261101000100_market_tick.sql`): every `refresh-due` run (10 minutes) also fetches the
+Forbes real-time list once and `record_market_values` stores each changed value as kind `computed`, which the live
+view, 3-hour chart and labeled projection read. Unchanged re-stamps (closed markets) are skipped; `forbes_rank` is
+updated in the same pass. Own share counts × prices remain a later, independent check.
+
 Health and alerts (`20261101000000_refresh_health.sql`): every outside source records its last success and failure in
 `source_health` (`required = false` for best-effort sources such as Google News, which are shown but never alert).
 `refresh_health()` (public, read-only) reports a problem when the scheduler has not started a refresh for 30 minutes,
