@@ -133,16 +133,27 @@ export function geography(doc: string, reportDate: string) {
 const clean = (s: string) =>
   s.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/&#8217;|&rsquo;/g, '’').replace(/&#\d+;/g, ' ').replace(/\s+/g, ' ').trim();
 
-/** Exhibit 21 tables: first cell = subsidiary, last cell = jurisdiction. */
+/**
+ * Exhibit 21 subsidiaries. Tables: first text cell = subsidiary, last text cell = jurisdiction (percent-owned
+ * columns skipped). Lists without a table use "Name (Jurisdiction)" lines.
+ */
 export function subsidiaryRows(doc: string) {
   const rows: { name: string; jurisdiction: string }[] = [];
-  for (const [, tr] of doc.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
-    const cells = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => clean(m[1])).filter(Boolean);
-    if (cells.length < 2) continue;
-    const [name, jurisdiction] = [cells[0], cells[cells.length - 1]];
-    if (/^name\b/i.test(name) || /^(jurisdiction|where|state|country)\b/i.test(jurisdiction)) continue; // header row
-    if (name.length > 200 || jurisdiction.length > 80) continue;
+  const keep = (name: string, jurisdiction: string) => {
+    if (/^((company|legal|subsidiary) )?name\b|^subsidiar/i.test(name)) return; // header row
+    if (/jurisdiction|domicile|incorporat|percent|where|organiz/i.test(jurisdiction)) return;
+    if (name.length > 200 || jurisdiction.length > 80) return;
     rows.push({ name, jurisdiction });
+  };
+  for (const [, tr] of doc.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const cells = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => clean(m[1])).filter((c) => c && !/^[\d.,%\s]+$/.test(c));
+    if (cells.length >= 2) keep(cells[0], cells[cells.length - 1]);
+  }
+  if (!rows.length) {
+    for (const block of doc.split(/<\/(?:div|p)>|<br\s*\/?>/i)) {
+      const m = clean(block).match(/^(.{2,200}?)\s*\(([^()]{2,80})\)$/);
+      if (m) keep(m[1], m[2]);
+    }
   }
   return rows;
 }
@@ -187,7 +198,7 @@ export async function edgar(db: SupabaseClient) {
     }
 
     const index = await (await sec(`${base}/index.json`)).json();
-    const ex21 = (index.directory.item as { name: string }[]).find((x) => /ex-?21/i.test(x.name) && /\.html?$/i.test(x.name));
+    const ex21 = (index.directory.item as { name: string }[]).find((x) => /(?:ex|exhibit)[-_]?21/i.test(x.name) && /\.html?$/i.test(x.name));
     if (ex21) {
       const subs = subsidiaryRows(await (await sec(`${base}/${ex21.name}`)).text());
       const unique = [...new Map(subs.map((s) => [`${s.name}|${s.jurisdiction}`, s])).values()];
