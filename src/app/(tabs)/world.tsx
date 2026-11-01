@@ -1,9 +1,11 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { Globe, type GlobeMarker, type GlobeSite } from '@/components/globe';
+import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
+import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, revenueLines, whatIfTargets } from '@/components/world-views';
+import { countryShape } from '@/lib/geo';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime } from '@/lib/format';
 import { LIVE_QUOTE_MS, useWorld, type CompanyView, type Empire, type Quote, type SiteKind } from '@/lib/world';
@@ -23,6 +25,14 @@ const KIND: Record<SiteKind, [string, string]> = {
   other: ['Site', 'Sites'],
 };
 
+const VIEWS = [
+  { key: 'places', label: 'Places' },
+  { key: 'money', label: 'Money' },
+  { key: 'economies', label: 'Economies' },
+  { key: 'whatif', label: 'What if' },
+] as const;
+type ViewKey = (typeof VIEWS)[number]['key'];
+
 const isLive = (q: Quote | null) => !!q && Date.now() - Date.parse(q.as_of) < LIVE_QUOTE_MS;
 const open = (url: string | null) => url && void WebBrowser.openBrowserAsync(url);
 
@@ -30,9 +40,26 @@ export default function World() {
   const world = useWorld();
   const { width } = useWindowDimensions();
   const desktop = width >= desktopBreakpoint;
-  const { focus: slug } = useLocalSearchParams<{ focus?: string }>();
+  const { focus: slug, view: viewParam } = useLocalSearchParams<{ focus?: string; view?: string }>();
+  const view: ViewKey = VIEWS.some((v) => v.key === viewParam) ? (viewParam as ViewKey) : 'places';
   const empires = world.data ?? [];
   const focused = empires.find((e) => e.person.slug === slug) ?? null;
+  const lines = useMemo(() => revenueLines(world.data ?? []), [world.data]);
+  const targets = useMemo(() => whatIfTargets(lines), [lines]);
+  const [target, setTarget] = useState<string | null>(null);
+  const [drop, setDrop] = useState<number>(DROPS[1]);
+  // Default shock: the biggest market outside the United States.
+  const shock = target ?? targets.find((t) => t.key !== 'US')?.key ?? targets[0]?.key ?? '';
+
+  let arcs: GlobeArc[] = [];
+  let fills: GlobeFill[] = [];
+  if (view === 'money') arcs = flowArcs(lines, focused);
+  if (view === 'economies') fills = economyFills(lines, world.countries ?? [], focused).fills;
+  if (view === 'whatif') {
+    arcs = flowArcs(lines, null, (l) => l.placeKey === shock, true);
+    if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
+  }
+  const shockCentre = view === 'whatif' ? (arcs[0]?.from ?? null) : null;
 
   const { sites, markers } = useMemo(() => {
     const s: GlobeSite[] = [];
@@ -69,6 +96,20 @@ export default function World() {
         <StateView empty={{ title: 'No company places yet.', body: 'Places appear once company records are linked to their sources.' }} />
       ) : (
         <>
+          <View accessibilityRole="tablist" style={styles.segments}>
+            {VIEWS.map((v) => (
+              <Pressable
+                key={v.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: view === v.key }}
+                onPress={() => router.setParams({ view: v.key === 'places' ? undefined : v.key })}
+                style={[styles.segment, view === v.key && styles.segmentOn]}>
+                <Text numberOfLines={1} style={[type.headline, { fontSize: 14, color: view === v.key ? color.text : color.textSecondary }]}>
+                  {v.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityRole="tablist">
             <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
             {empires.map((e) => (
@@ -79,10 +120,12 @@ export default function World() {
             <Surface style={[styles.globeCard, desktop && styles.globeCardWide]}>
               <Globe
                 size={globeSize}
-                sites={sites}
+                sites={view === 'places' ? sites : []}
                 markers={markers}
-                focus={focused?.person.id ?? null}
-                center={focused?.hq ?? null}
+                arcs={arcs}
+                fills={fills}
+                focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
+                center={shockCentre ?? focused?.hq ?? null}
                 onSelect={(id) => select(id)}
                 label={
                   focused
@@ -91,11 +134,27 @@ export default function World() {
                 }
               />
               <Caption style={styles.globeNote}>
-                Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.
+                {view === 'places'
+                  ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
+                  : view === 'money'
+                    ? 'Drag to turn. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
+                    : view === 'economies'
+                      ? 'Drag to turn. Darker countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                      : 'Drag to turn. Hypothetical: the place in red and the revenue that flows from it.'}
               </Caption>
             </Surface>
             <View style={[styles.panel, desktop && styles.panelWide]}>
-              {focused ? <EmpirePanel empire={focused} /> : <Overview empires={empires} places={places} onSelect={select} />}
+              {view === 'money' ? (
+                <MoneyPanel lines={lines} focus={focused} />
+              ) : view === 'economies' ? (
+                <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} />
+              ) : view === 'whatif' ? (
+                <WhatIfPanel lines={lines} target={shock} drop={drop} onTarget={setTarget} onDrop={setDrop} />
+              ) : focused ? (
+                <EmpirePanel empire={focused} />
+              ) : (
+                <Overview empires={empires} places={places} onSelect={select} />
+              )}
             </View>
           </View>
         </>
@@ -265,6 +324,10 @@ function SourceLink({ label, url }: { label: string; url: string | null }) {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   chips: { gap: space.sm, paddingVertical: 2 },
+  // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
+  segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
+  segment: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
+  segmentOn: { backgroundColor: color.surface },
   chip: {
     minHeight: minTouch,
     flexDirection: 'row',

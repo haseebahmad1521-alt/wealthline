@@ -1,23 +1,24 @@
-// The World globe: real company sites as ripples, people as portraits at their main HQ. Drawn with d3-geo into
-// react-native-svg, so the same component runs on web, iOS and Android. Motion only ever means "this is a real site"
-// (ripples) or "this company's price moved today" (brighter, quicker ripples); it never stands in for data.
+// The World globe: real company sites as ripples, people as portraits at their main HQ, money flows as lines from
+// where revenue is earned to the company's HQ, and countries shaded by a figure the screen chooses. Drawn with d3-geo
+// into react-native-svg, so the same component runs on web, iOS and Android. Motion only ever means "this is a real
+// site", "this company's price moved today" or "money flows this way"; it never stands in for data.
 import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, PanResponder, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path } from 'react-native-svg';
-import { feature } from 'topojson-client';
-import type { GeometryCollection, Topology } from 'topojson-specification';
 
+import { countryShape, land, type LatLng } from '@/lib/geo';
 import type { SiteKind } from '@/lib/world';
 import { color } from '@/theme';
 
-// Natural Earth 1:110m countries via world-atlas (ISC), 108 KB.
-const topology = require('world-atlas/countries-110m.json') as Topology;
-const land = feature(topology, topology.objects.countries as GeometryCollection);
 const graticule = geoGraticule10();
 
 export type GlobeSite = { key: string; lat: number; lng: number; kind: SiteKind; group: string; live: boolean };
 export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string };
+/** A money flow: from where revenue is earned to the company's HQ. weight 0–1 sets the line width. */
+export type GlobeArc = { key: string; from: LatLng; to: LatLng; weight: number; group: string; risk?: boolean };
+/** A shaded country; strength 0–1. */
+export type GlobeFill = { iso2: string; strength: number; risk?: boolean };
 
 // Ring size by what the place is, not by any invented "influence" figure.
 const BASE: Record<SiteKind, number> = { hq: 7, factory: 6, launch_site: 5.5, data_center: 5, research: 4.5, office: 4.5, store: 4, other: 4 };
@@ -51,10 +52,14 @@ export function Globe({
   onSelect,
   spin = true,
   label,
+  arcs = [],
+  fills = [],
 }: {
   size: number;
   sites: GlobeSite[];
   markers: GlobeMarker[];
+  arcs?: GlobeArc[];
+  fills?: GlobeFill[];
   /** Group (person id) to bring forward; everything else fades. */
   focus: string | null;
   /** Where to turn the globe when focus changes. */
@@ -181,6 +186,34 @@ export function Globe({
     ];
   });
 
+  // Countries shaded by the screen's figure (Economies: revenue there as a share of GDP; What if: the shocked place).
+  const shading = fills.flatMap((f) => {
+    const shape = countryShape(f.iso2);
+    const d = shape ? path(shape) : null;
+    return d ? [<Path key={`fill-${f.iso2}`} d={d} fill={f.risk ? color.loss : color.text} fillOpacity={f.risk ? 0.35 : 0.08 + 0.55 * f.strength} stroke={color.surface} strokeWidth={0.6} />] : [];
+  });
+
+  // Money flows along great circles (clipped at the horizon); dashes travel toward the HQ.
+  const flows = arcs.flatMap((a) => {
+    const d = path({ type: 'LineString', coordinates: [[a.from.lng, a.from.lat], [a.to.lng, a.to.lat]] });
+    if (!d) return [];
+    const faded = !!focus && a.group !== focus;
+    const tint = a.risk ? color.loss : focus && !faded ? color.action : color.text;
+    return [
+      <Path
+        key={a.key}
+        d={d}
+        fill="none"
+        stroke={tint}
+        strokeOpacity={faded ? 0.12 : 0.55}
+        strokeWidth={(0.8 + 3.2 * Math.sqrt(a.weight)) * scale}
+        strokeLinecap="round"
+        strokeDasharray={reduce ? undefined : '2 6'}
+        strokeDashoffset={reduce ? undefined : -((t / 45) % 8)}
+      />,
+    ];
+  });
+
   // Portraits at HQs, only well inside the front (65° from centre); people sharing a city fan out around it.
   const placed = markers.flatMap((m) => {
     const vis = facing(m.lng, m.lat);
@@ -227,6 +260,8 @@ export function Globe({
         <Circle cx={r} cy={r} r={r - 1} fill={color.surface} stroke={color.hairline} strokeWidth={1} />
         <Path d={path(graticule) ?? ''} fill="none" stroke={color.hairline} strokeWidth={0.6} strokeOpacity={0.7} />
         <Path d={path(land) ?? ''} fill={LAND} stroke={color.surface} strokeWidth={0.6} />
+        {shading}
+        {flows}
         {rings}
         {pins}
       </Svg>
