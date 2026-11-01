@@ -8,7 +8,7 @@ import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import * as THREE from 'three';
 
 import { land } from '@/lib/geo';
-import { scene as sceneState } from '@/lib/scene';
+import { scene as sceneState, zoomFactor } from '@/lib/scene';
 import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { color } from '@/theme';
 import { atmosphereFragment, earthFragment, quadVertex, skyFragment, sunFragment, worldVertex } from './planet-shaders';
@@ -182,9 +182,23 @@ export function PlanetScene() {
         stars.minFilter = THREE.LinearFilter;
         skyUniforms.starMap.value = stars;
         setState('ready');
-        frame(performance.now());
+        invalidate();
       })
       .catch(() => !disposed && setState('failed'));
+
+    const viewport = { w: window.innerWidth, h: window.innerHeight };
+    // Declared before anything below can request a frame (resize runs immediately).
+    let raf = 0;
+    let still: ReturnType<typeof setInterval> | undefined;
+
+    // Sun glow: a soft warm light from the sun's side of the view. On screen it blooms around the sun itself; off
+    // screen it slides along the edge nearest the sun. Behind the UI, so the glass still dims it under text.
+    const glow = document.createElement('div');
+    glow.setAttribute('aria-hidden', 'true');
+    glow.style.cssText =
+      'position:absolute;left:0;top:0;pointer-events:none;border-radius:50%;mix-blend-mode:screen;will-change:transform,opacity;' +
+      'background:radial-gradient(circle,rgba(255,214,170,.55) 0%,rgba(255,184,124,.22) 20%,rgba(255,160,100,.08) 42%,rgba(255,150,90,0) 68%)';
+    el.appendChild(glow);
 
     const resize = () => {
       const w = el.clientWidth || window.innerWidth;
@@ -192,6 +206,9 @@ export function PlanetScene() {
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      viewport.w = w;
+      viewport.h = h;
+      sceneState.invalidate?.();
     };
     resize();
     window.addEventListener('resize', resize);
@@ -205,6 +222,22 @@ export function PlanetScene() {
     const fwd = new THREE.Vector3();
     const right = new THREE.Vector3();
     const target = new THREE.Vector3();
+    // Two poses, blended: the scroll-driven orbit view and the World view straight at the globe.
+    const orbitRig = new THREE.PerspectiveCamera();
+    const worldRig = new THREE.PerspectiveCamera();
+    let worldMix = sceneState.preset === 'world' ? 1 : 0;
+    const dir = new THREE.Vector3();
+    const tmp = new THREE.Vector3();
+    const toCam = new THREE.Vector3();
+    const look = new THREE.Vector3();
+
+    sceneState.project = (lat, lng) => {
+      tmp.set(...latLngToUnit(lat, lng));
+      toCam.copy(camera.position).sub(tmp).normalize();
+      const facing = tmp.dot(toCam);
+      tmp.project(camera);
+      return { x: ((tmp.x + 1) / 2) * viewport.w, y: ((1 - tmp.y) / 2) * viewport.h, facing };
+    };
 
     function place(now: number, dt: number) {
       if (now - sunAt > 30_000) {
@@ -240,34 +273,90 @@ export function PlanetScene() {
       up.crossVectors(right, f0).normalize();
       fwd.copy(f0).multiplyScalar(Math.cos(theta)).addScaledVector(up, Math.sin(theta));
       const upPitched = up.clone().multiplyScalar(Math.cos(theta)).addScaledVector(f0, -Math.sin(theta));
-      camera.position.copy(pos);
-      camera.up.copy(upPitched);
-      camera.lookAt(target.copy(pos).add(fwd));
-      camera.rotateZ(mix(ROLL[0], ROLL[1], e) * RAD);
+      orbitRig.position.copy(pos);
+      orbitRig.up.copy(upPitched);
+      orbitRig.lookAt(target.copy(pos).add(fwd));
+      orbitRig.rotateZ(mix(ROLL[0], ROLL[1], e) * RAD);
 
-      skyUniforms.haze.value = mix(HAZE[0], HAZE[1], e);
-      sky.position.copy(pos);
-      sunQuad.position.copy(pos).addScaledVector(earthUniforms.sunDir.value, 150);
+      // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
+      const w = sceneState.world;
+      const tanHalf = Math.tan((FOV / 2) * RAD);
+      const rNdc = (w.radiusPx * zoomFactor(w.zoom)) / (viewport.h / 2);
+      const dW = Math.max(1 / Math.sin(Math.atan(Math.min(rNdc, 50) * tanHalf)), 1.06);
+      worldRig.position.set(...latLngToUnit(w.lat, w.lng)).multiplyScalar(dW);
+      worldRig.up.set(0, 1, 0);
+      worldRig.lookAt(0, 0, 0);
+
+      const goalMix = sceneState.preset === 'world' ? 1 : 0;
+      worldMix = reduce ? goalMix : worldMix + (goalMix - worldMix) * (1 - Math.exp(-dt * 3.2));
+      if (Math.abs(goalMix - worldMix) < 1e-3) worldMix = goalMix;
+      const m = worldMix * worldMix * (3 - 2 * worldMix);
+      // Swing around Earth rather than through it: blend the direction and the distance separately.
+      dir.copy(orbitRig.position).normalize().lerp(tmp.copy(worldRig.position).normalize(), m).normalize();
+      camera.position.copy(dir).multiplyScalar(mix(orbitRig.position.length(), worldRig.position.length(), m));
+      camera.quaternion.slerpQuaternions(orbitRig.quaternion, worldRig.quaternion, m);
+      // Off-axis shift so the World globe sits in World's globe area instead of mid-screen.
+      camera.updateProjectionMatrix();
+      camera.projectionMatrix.elements[8] = (1 - 2 * w.centerX) * m;
+      camera.projectionMatrix.elements[9] = -(1 - 2 * w.centerY) * m;
+      camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+      camera.updateMatrixWorld();
+
+      skyUniforms.haze.value = mix(HAZE[0], HAZE[1], e) * (1 - m);
+      sky.position.copy(camera.position);
+      const sunDir = earthUniforms.sunDir.value;
+      sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
       sunQuad.quaternion.copy(camera.quaternion);
+      placeGlow(sunDir);
     }
 
-    let raf = 0;
-    let still: ReturnType<typeof setInterval> | undefined;
+    function placeGlow(sunDir: THREE.Vector3) {
+      camera.getWorldDirection(look);
+      const cosA = look.dot(sunDir);
+      tmp.copy(camera.position).addScaledVector(sunDir, 150).project(camera);
+      // A point behind the camera projects mirrored; flip it back to get the side of the view the sun is on.
+      let gx = cosA < 0 ? -tmp.x : tmp.x;
+      let gy = cosA < 0 ? -tmp.y : tmp.y;
+      const onScreen = cosA > 0 && Math.abs(gx) <= 1 && Math.abs(gy) <= 1;
+      if (!onScreen) {
+        const k = 1 / Math.max(Math.abs(gx), Math.abs(gy), 1e-6);
+        gx *= k;
+        gy *= k;
+      }
+      // Stronger the more the view faces the sun; softer when Earth is in front of it (the rim takes over).
+      const b = camera.position.dot(sunDir);
+      const behindEarth = b < 0 && b * b - (camera.position.lengthSq() - 1) > 0;
+      const strength = (0.3 + 0.7 * Math.min(Math.max((cosA + 0.7) / 1.6, 0), 1)) * (onScreen && behindEarth ? 0.5 : 1);
+      const size = (onScreen ? 0.9 : 1.25) * Math.max(viewport.w, viewport.h);
+      const x = ((gx + 1) / 2) * viewport.w - size / 2;
+      const y = ((1 - gy) / 2) * viewport.h - size / 2;
+      glow.style.width = glow.style.height = `${size}px`;
+      glow.style.transform = `translate3d(${x}px,${y}px,0)`;
+      glow.style.opacity = String(0.5 * strength);
+    }
+
+    // Draw a frame on demand (dragging or zooming the globe while the loop is paused for reduced motion or loading).
+    function invalidate() {
+      if (!raf && !disposed && earthUniforms.dayMap.value) raf = requestAnimationFrame(frame);
+    }
+    sceneState.invalidate = invalidate;
     function frame(now: number) {
       raf = 0;
       if (disposed) return;
       // Clamped: a negative or huge gap (rAF timestamps can trail performance.now(); tabs sleep) must not blow up the easing.
       const dt = Math.min(Math.max((now - lastT) / 1000, 0), 0.1);
       lastT = now;
-      place(now, dt);
-      renderer.render(scene, camera);
-      if (!reduce && document.visibilityState === 'visible') raf = requestAnimationFrame(frame);
+      try {
+        place(now, dt);
+        renderer.render(scene, camera);
+      } finally {
+        // Keep going even if one frame throws. Hidden tabs pause animation frames by themselves, so no visibility check
+        // (one stopped the loop for good when a page loaded in the background).
+        if (!reduce && !disposed) raf = requestAnimationFrame(frame);
+      }
     }
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && !raf && !reduce) {
-        lastT = performance.now();
-        raf = requestAnimationFrame(frame);
-      }
+      if (document.visibilityState === 'visible') lastT = performance.now();
     };
     document.addEventListener('visibilitychange', onVisible);
     if (reduce) still = setInterval(() => frame(performance.now()), 60_000);
@@ -275,6 +364,9 @@ export function PlanetScene() {
     return () => {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
+      sceneState.project = null;
+      sceneState.invalidate = null;
+      glow.remove();
       if (still) clearInterval(still);
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', onVisible);

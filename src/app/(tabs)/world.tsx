@@ -1,15 +1,17 @@
-import { Link, router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Chip as Tag } from 'heroui-native';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
+import { WorldGlobe } from '@/components/world-globe';
 import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
 import { countryShape } from '@/lib/geo';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
+import { scene } from '@/lib/scene';
 import { LIVE_QUOTE_MS, useWorld, type CompanyView, type Empire, type Quote, type SiteKind, type Stake } from '@/lib/world';
 import { color, desktopBreakpoint, radius, space, type } from '@/theme';
 
@@ -91,6 +93,20 @@ export default function World() {
   };
 
   const globeSize = desktop ? 520 : Math.min(width - space.md * 2 - space.md * 2, 440);
+  // Web, Places: the real planet is the globe. While World is open the planet turns to face us (one scene, no page
+  // change); leaving World swings it back to the orbit view.
+  const planet = Platform.OS === 'web' && view === 'places';
+  useFocusEffect(
+    useCallback(() => {
+      if (!planet) return;
+      scene.preset = 'world';
+      scene.invalidate?.();
+      return () => {
+        scene.preset = 'orbit';
+        scene.invalidate?.();
+      };
+    }, [planet]),
+  );
   const places = new Set(sites.map((s) => s.key.split(':').slice(1).join(':'))).size;
 
   return (
@@ -126,6 +142,26 @@ export default function World() {
             ))}
           </ScrollView>
           <View style={[styles.layout, desktop && styles.layoutWide]}>
+            {planet ? (
+              <View style={[styles.planetArea, desktop && styles.globeCardWide]}>
+                <WorldGlobe
+                  height={desktop ? 560 : Math.min(width - space.md * 2, 420)}
+                  sites={sites}
+                  markers={markers}
+                  focus={focused?.person.id ?? null}
+                  center={focused?.hq ?? null}
+                  onSelect={(id) => select(id)}
+                  label={
+                    focused
+                      ? `Globe turned to ${focused.person.name}'s companies: ${focused.companies.reduce((n, c) => n + c.sites.length, 0)} places. Details follow.`
+                      : `Globe of ${places} company places for ${empires.length} people. Details follow.`
+                  }
+                />
+                <Caption style={styles.globeNote}>
+                  Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd and split as you zoom in. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.
+                </Caption>
+              </View>
+            ) : (
             <Surface style={[styles.globeCard, desktop && styles.globeCardWide]}>
               <Globe
                 size={globeSize}
@@ -152,6 +188,7 @@ export default function World() {
                       : 'Drag to turn. Hypothetical: the place in red and the revenue that flows from it.'}
               </Caption>
             </Surface>
+            )}
             <View style={[styles.panel, desktop && styles.panelWide]}>
               {view === 'money' ? (
                 <MoneyPanel lines={lines} focus={focused} />
@@ -394,6 +431,8 @@ const styles = StyleSheet.create({
   layout: { gap: space.lg },
   layoutWide: { flexDirection: 'row', alignItems: 'flex-start' },
   globeCard: { padding: space.md, gap: space.md },
+  // No card: the planet behind the page is the globe; the area is just where it sits and where gestures land.
+  planetArea: { gap: space.sm },
   globeCardWide: { padding: space.lg },
   globeNote: { textAlign: 'center', maxWidth: 420, alignSelf: 'center' },
   panel: { gap: space.lg },

@@ -1,7 +1,10 @@
-// Shared state between screens and the planet scene, outside React so scrolling never re-renders anything.
-// Screens write; the renderer reads once per frame.
+// Shared state between screens and the planet scene, outside React so scrolling and zooming never re-render anything.
+// Screens write; the renderer reads once per frame and publishes `project` back for overlays.
 
-export type CameraPreset = 'orbit';
+/** 'orbit': the scroll-driven view behind most screens. 'world': looking straight at the globe (World tab). */
+export type CameraPreset = 'orbit' | 'world';
+
+export type Projected = { x: number; y: number; /** 1 facing the camera … 0 at the limb, negative behind. */ facing: number };
 
 type SceneState = {
   /** 0 = top of the page (high in space), 1 = bottom (closer, steeper horizon). */
@@ -9,9 +12,36 @@ type SceneState = {
   /** Scroll speed in screens per second (signed); adds a little spin to the view, even past the camera's descent. */
   velocity: number;
   preset: CameraPreset;
+  world: {
+    /** The point turned toward the camera. */
+    lat: number;
+    lng: number;
+    /** 0 = whole globe in view … 1 = zoomed in close. */
+    zoom: number;
+    /** Where the globe's centre sits on screen (fractions of the viewport) and its radius at zoom 0 (px). */
+    centerX: number;
+    centerY: number;
+    radiusPx: number;
+  };
+  /** Screen position (px, viewport coordinates) of a point on Earth's surface; set by the planet scene each frame. */
+  project: ((lat: number, lng: number) => Projected) | null;
+  /** Ask for a frame now (the loop pauses under reduced motion); set by the planet scene. */
+  invalidate: (() => void) | null;
 };
 
-export const scene: SceneState = { progress: 0, velocity: 0, preset: 'orbit' };
+export const scene: SceneState = {
+  progress: 0,
+  velocity: 0,
+  preset: 'orbit',
+  // Opens over the North Atlantic: the Americas, Europe and Africa (where most tracked headquarters are) in view.
+  world: { lat: 32, lng: -45, zoom: 0, centerX: 0.5, centerY: 0.5, radiusPx: 160 },
+  project: null,
+  invalidate: null,
+};
+
+/** Zoom 0…1 as a screen-size factor for the globe (1× … 5×). */
+export const clampZoom = (z: number) => Math.min(Math.max(z, 0), 1);
+export const zoomFactor = (z: number) => 2 ** (clampZoom(z) * 2.32);
 
 let last = { y: 0, t: 0 };
 
