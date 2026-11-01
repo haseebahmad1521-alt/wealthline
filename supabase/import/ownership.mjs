@@ -31,7 +31,8 @@ async function sec(url, as = 'text') {
     }
     await sleep(2000 * (i + 1));
   }
-  throw new Error(`SEC kept failing: ${url}`);
+  console.error(`skipped after retries: ${url}`); // one unreachable document never stops the run
+  return null;
 }
 const pick = (s, tag) => s.match(new RegExp(`<${tag}>\\s*(?:<value>)?\\s*([^<]+)`))?.[1]?.trim() ?? null;
 const all = (s, tag) => [...s.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g'))].map((m) => m[1]);
@@ -95,6 +96,10 @@ for (const l of work) {
   const c = l.companies;
   const k = nameKey(l.people.name);
   if (!issuerCache.has(c.cik)) issuerCache.set(c.cik, await sec(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, '0')}.json`, 'json'));
+  if (!issuerCache.get(c.cik)) {
+    report.push(`${l.people.name} · ${c.name}: SEC filing list unreachable; skipped`);
+    continue;
+  }
   const r = issuerCache.get(c.cik).filings.recent;
   const filings = r.form.map((form, i) => ({ form, date: r.filingDate[i], acc: r.accessionNumber[i], doc: r.primaryDocument[i] }));
   const archive = (acc, doc) => `https://www.sec.gov/Archives/edgar/data/${c.cik}/${acc.replace(/-/g, '')}/${doc.split('/').pop()}`;
@@ -110,7 +115,7 @@ for (const l of work) {
     }
   }
   if (ownerCik) {
-    const own = (await sec(`https://data.sec.gov/submissions/CIK${ownerCik.padStart(10, '0')}.json`, 'json')).filings.recent;
+    const own = (await sec(`https://data.sec.gov/submissions/CIK${ownerCik.padStart(10, '0')}.json`, 'json'))?.filings?.recent ?? { form: [] };
     const merged = new Map();
     let newest = null;
     for (let i = 0; i < own.form.length && i < 300; i++) {
