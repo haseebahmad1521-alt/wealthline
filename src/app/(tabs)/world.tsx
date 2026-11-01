@@ -113,7 +113,7 @@ export default function World() {
                 accessibilityState={{ selected: view === v.key }}
                 onPress={() => router.setParams({ view: v.key === 'places' ? undefined : v.key })}
                 style={[styles.segment, view === v.key && styles.segmentOn]}>
-                <Text numberOfLines={1} style={[type.headline, { fontSize: 14, color: view === v.key ? color.text : color.textSecondary }]}>
+                <Text numberOfLines={1} style={[type.headline, { fontSize: width < 360 ? 12.5 : 14, color: view === v.key ? color.text : color.textSecondary }]}>
                   {v.label}
                 </Text>
               </Pressable>
@@ -244,7 +244,7 @@ function Overview({ empires, places, onSelect }: { empires: Empire[]; places: nu
                   </Tag>
                 )}
                 <Tag size="sm" variant="soft" color="default">
-                  <Tag.Label>{n} places</Tag.Label>
+                  <Tag.Label>{n} {n === 1 ? 'place' : 'places'}</Tag.Label>
                 </Tag>
                 {k > 1 && (
                   <Tag size="sm" variant="soft" color="default">

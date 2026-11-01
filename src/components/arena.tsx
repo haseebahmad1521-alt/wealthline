@@ -68,7 +68,7 @@ function Step({ person, place, height, i }: { person: Person; place: number; hei
             {person.name.replace(/ & family$/, '')}
           </Text>
           {person.net_worth_usd != null && <Text style={[type.number, { color: color.text, fontSize: place === 1 ? 18 : 15 }]}>{money.format(person.net_worth_usd)}</Text>}
-          {delta != null && <Change delta={delta} base={person.prev_net_worth_usd!} size={12} compact />}
+          {delta === 0 ? <Caption>No change</Caption> : delta != null ? <Change delta={delta} base={person.prev_net_worth_usd!} size={12} compact /> : null}
         </Rise>
         <Rise i={i} from={height} style={[styles.pedestal, { height, backgroundColor: MEDAL[place - 1] }]}>
           <Text style={styles.pedestalText}>{place}</Text>
@@ -96,7 +96,7 @@ export function Podium({ people }: { people: Person[] }) {
 function MoverCard({ title, person, delta, base, up }: { title: string; person: Person; delta: number; base: number; up: boolean }) {
   return (
     <Link href={`/person/${person.slug}`} asChild>
-      <Pressable accessibilityRole="link" style={styles.flex}>
+      <Pressable accessibilityRole="link" style={styles.moverCell}>
         <Card style={[styles.mover, { borderColor: up ? color.gain : color.loss }]}>
           <Chip size="sm" variant="soft" color={up ? 'success' : 'danger'}>
             <Chip.Label>{title}</Chip.Label>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   centerText: { textAlign: 'center' },
   right: { textAlign: 'right' },
   section: { gap: space.sm },
-  headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.sm },
+  headRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', columnGap: space.sm },
   podiumCard: { paddingTop: space.lg, paddingHorizontal: space.sm, paddingBottom: 0, overflow: 'hidden', borderRadius: radius.lg },
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   step: { flex: 1, minWidth: 0, alignItems: 'center' },
@@ -209,7 +209,9 @@ const styles = StyleSheet.create({
   pedestal: { alignSelf: 'stretch', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 30, lineHeight: 34 },
   pair: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-  mover: { padding: space.md, gap: space.sm, borderWidth: 2, borderRadius: radius.md, minWidth: 140 },
+  // 150px basis: two cards side by side from ~330px, stacked on 320px phones.
+  moverCell: { flexGrow: 1, flexBasis: 150, minWidth: 150 },
+  mover: { padding: space.md, gap: space.sm, borderWidth: 2, borderRadius: radius.md },
   moverWho: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   list: { paddingVertical: space.xs, borderRadius: radius.lg },
   race: { paddingHorizontal: space.md, paddingVertical: space.sm + 2 },
