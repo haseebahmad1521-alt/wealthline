@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
+import { Movers, Overtakes, Podium, Races } from '@/components/arena';
 import { BriefCard } from '@/components/news';
 import { PersonList } from '@/components/person-row';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
+import { rankMoves } from '@/lib/arena';
 import { useLatestBrief, usePeople } from '@/lib/data';
 import { peopleSorts, sortLabels, sortPeople, type PeopleSort } from '@/lib/view-params';
 import { color, font, radius, space, type } from '@/theme';
@@ -29,6 +31,9 @@ export default function Rankings() {
     setQuery(applied.params.q);
     setSort(applied.params.sort);
   }
+  const moves = useMemo(() => rankMoves(people.data ?? []), [people.data]);
+  // The game layer shows on the plain leaderboard; searching, sorting or comparing goes straight to the list.
+  const arena = !query.trim() && sort === 'rank' && !comparing;
   const q = query.trim().toLowerCase();
   // Rank sort lists people without an estimate after the ranked ones.
   const sorted = sortPeople(people.data ?? [], sort);
@@ -141,7 +146,16 @@ export default function Rankings() {
         <StateView empty={{ title: `No one matches “${query.trim()}”.`, body: 'Try a different name, source, or country.' }} />
       ) : (
         <>
-          <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} />
+          {arena && (
+            <>
+              <Podium people={people.data ?? []} />
+              <Movers people={people.data ?? []} />
+              <Races people={people.data ?? []} />
+              <Overtakes people={people.data ?? []} />
+              <Heading level={2}>Leaderboard.</Heading>
+            </>
+          )}
+          <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} moves={moves} />
           <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
           <BriefCard brief={brief.data} people={people.data ?? []} />
         </>

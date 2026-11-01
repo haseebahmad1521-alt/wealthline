@@ -1,0 +1,220 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@import 'heroui-native/styles';
+
+/*
+ * Wealthline theme for HeroUI Native (owner's palette, CLAUDE.md "Visual direction"; game-like direction Nov 1, 2026).
+ * Tokens go inside the light and dark variants: a plain :root override looks right on web but native keeps
+ * HeroUI's defaults. The palette is light-only for now, so dark repeats light.
+ */
+@layer theme {
+  :root {
+    @variant light {
+      --background: #fbfbfd;
+      --foreground: #1d1d1f;
+      --surface: #ffffff;
+      --surface-foreground: #1d1d1f;
+      --muted: #6e6e73;
+      --default: #f2f2f7;
+      --default-foreground: #1d1d1f;
+      --accent: #0071e3;
+      --accent-foreground: #ffffff;
+      --success: #1e7b45;
+      --success-foreground: #ffffff;
+      --danger: #b42318;
+      --danger-foreground: #ffffff;
+      --warning: #805900;
+      --border: #e5e5ea;
+      --separator: #e5e5ea;
+      --focus: #0071e3;
+      --link: #0071e3;
+      --segment: #ffffff;
+      --segment-foreground: #1d1d1f;
+      --field-background: #f2f2f7;
+      --field-foreground: #1d1d1f;
+      --field-placeholder: #6e6e73;
+    }
+    @variant dark {
+      --background: #fbfbfd;
+      --foreground: #1d1d1f;
+      --surface: #ffffff;
+      --surface-foreground: #1d1d1f;
+      --muted: #6e6e73;
+      --default: #f2f2f7;
+      --default-foreground: #1d1d1f;
+      --accent: #0071e3;
+      --accent-foreground: #ffffff;
+      --success: #1e7b45;
+      --success-foreground: #ffffff;
+      --danger: #b42318;
+      --danger-foreground: #ffffff;
+      --warning: #805900;
+      --border: #e5e5ea;
+      --separator: #e5e5ea;
+      --focus: #0071e3;
+      --link: #0071e3;
+      --segment: #ffffff;
+      --segment-foreground: #1d1d1f;
+      --field-background: #f2f2f7;
+      --field-foreground: #1d1d1f;
+      --field-placeholder: #6e6e73;
+    }
+  }
+}
+
+/*
+ * Do not remove. HeroUI defines calculated theme colors with color-mix().
+ * On web, useThemeColor may return that unresolved expression. Components
+ * that pass an affected color through HeroUI's colorKit (including outline
+ * and ghost Buttons) then log "[colorKit.RGB] An error occurred" and fall
+ * back to black. Registering every calculated color token makes the browser
+ * resolve color-mix() to oklab() before Uniwind reads it. Native builds
+ * resolve these mixes at build time, so these declarations only change web
+ * behavior.
+ */
+@property --color-accent-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-accent-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-accent-soft-foreground {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-accent-soft-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-background-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-background-tertiary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-border-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-border-tertiary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-danger-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-danger-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-danger-soft-foreground {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-danger-soft-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-default-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-default-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-default-soft-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-field-border-focus {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-field-border-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-field-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-separator-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-separator-tertiary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-success-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-success-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-success-soft-foreground {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-success-soft-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-surface-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-warning-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-warning-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-warning-soft-foreground {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --color-warning-soft-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}

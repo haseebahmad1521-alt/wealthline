@@ -1,8 +1,10 @@
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useMemo, useState } from 'react';
+import { Chip as Tag } from 'heroui-native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
 import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
 import { countryShape } from '@/lib/geo';
@@ -201,34 +203,55 @@ function Chip({ label, selected, onPress, empire }: { label: string; selected: b
   );
 }
 
+/** Everyone: an empire leaderboard by reported revenue, then by places; medals for the top three. */
 function Overview({ empires, places, onSelect }: { empires: Empire[]; places: number; onSelect: (id: string) => void }) {
   const countries = new Set(empires.flatMap((e) => e.companies.flatMap((c) => c.sites.map((s) => s.country).filter(Boolean)))).size;
+  const board = empires
+    .map((e) => ({
+      e,
+      revenue: e.companies.reduce((n, c) => n + c.regions.reduce((m, r) => m + r.revenue_usd, 0), 0),
+      places: e.companies.reduce((n, c) => n + c.sites.length, 0),
+      countries: new Set(e.companies.flatMap((c) => c.sites.map((s) => s.country).filter(Boolean))).size,
+    }))
+    .sort((a, b) => b.revenue - a.revenue || b.places - a.places);
   return (
     <Surface style={styles.panelCard}>
-      <Heading level={2}>Everyone.</Heading>
+      <Heading level={2}>Empires.</Heading>
       <Text style={[type.title, styles.figure]}>
         {places} places in {countries} countries
       </Text>
-      <Body secondary>
-        Headquarters, factories, launch sites, data centres and offices owned or run by the companies behind {empires.length} fortunes.
-        Choose a person to follow one empire.
-      </Body>
+      <Body secondary>Ranked by the yearly revenue their companies report, then by places. Choose one to follow it round the globe.</Body>
       <View style={styles.list}>
-        {empires.map((e, i) => (
+        {board.map(({ e, revenue, places: n, countries: k }, i) => (
           <Pressable
             key={e.person.id}
             accessibilityRole="button"
-            accessibilityLabel={`Follow ${e.person.name}`}
+            accessibilityLabel={`Number ${i + 1}, ${e.person.name}: ${revenue ? `${usd(revenue)} revenue, ` : ''}${n} places in ${k} countries. Follow`}
             onPress={() => onSelect(e.person.id)}
             style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
+            <View style={[styles.place, i < 3 && { backgroundColor: MEDAL[i] }]}>
+              <Text style={[type.number, { fontSize: 13, color: i < 3 ? '#FFFFFF' : color.text }]}>{i + 1}</Text>
+            </View>
             <Portrait uri={e.person.portrait_url} name={e.person.name} size={36} />
             <View style={styles.flex}>
               <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
                 {e.person.name}
               </Text>
-              <Caption numberOfLines={1}>
-                {e.companies.map((c) => c.name).join(', ')} · {e.companies.reduce((n, c) => n + c.sites.length, 0)} places
-              </Caption>
+              <View style={styles.tags}>
+                {revenue > 0 && (
+                  <Tag size="sm" variant="soft" color="default">
+                    <Tag.Label>{usd(revenue)}/yr</Tag.Label>
+                  </Tag>
+                )}
+                <Tag size="sm" variant="soft" color="default">
+                  <Tag.Label>{n} places</Tag.Label>
+                </Tag>
+                {k > 1 && (
+                  <Tag size="sm" variant="soft" color="default">
+                    <Tag.Label>{k} countries</Tag.Label>
+                  </Tag>
+                )}
+              </View>
             </View>
           </Pressable>
         ))}
@@ -381,6 +404,8 @@ const styles = StyleSheet.create({
   row: { minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
   pressedRow: { backgroundColor: color.fill },
+  place: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
   who: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   link: { ...type.headline, color: color.action, alignSelf: 'flex-start', paddingVertical: space.sm },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline },

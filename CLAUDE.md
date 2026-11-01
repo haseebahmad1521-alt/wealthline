@@ -25,6 +25,8 @@ The target is 20 people; only ten owner-supplied October 1, 2026 estimates are c
 
 ## Visual direction
 
+> **Owner decision, Nov 1, 2026:** make it entertaining with a **game-like dashboard** layer (podium, rank moves, closest races, overtakes, empire leaderboard, medal tones for ranks 1–3) built with **HeroUI Native** (Uniwind) themed in this palette, starting with Rankings and World. Every game element stays derived from recorded values; motion is entrance and emphasis only, never data. The palette, Inter and the gain/loss + direction-icon rule below still hold.
+
 Preserve the minimal Apple-style foundation and the bolder photographic editorial profile treatment. Do not redesign unrelated screens.
 
 - Inter typography.

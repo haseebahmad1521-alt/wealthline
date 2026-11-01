@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions, type PressableStateCallbackType } from 'react-native';
 
+import { MEDAL, RankMove } from '@/components/arena';
 import { Caption, Change, Icon, Portrait, Surface, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { useMoney } from '@/lib/currency';
@@ -13,9 +14,12 @@ export function PersonRow({
   person,
   showRank = true,
   selection,
+  move,
 }: {
   person: Person;
   showRank?: boolean;
+  /** Places gained (+) or lost (−) since the previous values. */
+  move?: number;
   /** Compare mode: the row toggles selection instead of opening the profile. */
   selection?: { selected: boolean; onToggle: () => void };
 }) {
@@ -38,7 +42,10 @@ export function PersonRow({
         <View>
           <Portrait uri={person.portrait_url} name={person.name} size={tiny ? 36 : narrow ? 44 : 48} />
           {showRank && person.rank != null && (
-            <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <View
+              style={[styles.badge, person.rank <= 3 && { backgroundColor: MEDAL[person.rank - 1] }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
               <Text style={styles.badgeText}>{person.rank}</Text>
             </View>
           )}
@@ -47,7 +54,10 @@ export function PersonRow({
           <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
             {person.name}
           </Text>
-          <Caption numberOfLines={1}>{person.main_source ?? ' '}</Caption>
+          <View style={styles.sub}>
+            <RankMove places={move} compact />
+            <Caption numberOfLines={1} style={styles.flex}>{person.main_source ?? ' '}</Caption>
+          </View>
         </View>
         <View style={styles.value}>
           {worth != null ? (
@@ -110,9 +120,11 @@ export function PersonList({
   showRank = true,
   selectedIds,
   onToggle,
+  moves,
 }: {
   people: Person[];
   showRank?: boolean;
+  moves?: Map<string, number>;
   /** Present only in compare mode. */
   selectedIds?: string[];
   onToggle?: (id: string) => void;
@@ -126,6 +138,7 @@ export function PersonList({
           <PersonRow
             person={p}
             showRank={showRank}
+            move={moves?.get(p.id)}
             selection={selectedIds && onToggle ? { selected: selectedIds.includes(p.id), onToggle: () => onToggle(p.id) } : undefined}
           />
         </Fragment>
@@ -175,6 +188,8 @@ const styles = StyleSheet.create({
   },
   badgeText: { ...type.number, fontSize: 11, lineHeight: 13, color: '#FFFFFF' },
   identity: { flex: 1, minWidth: 0, gap: 2 },
+  sub: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  flex: { flex: 1, minWidth: 0 },
   value: { alignItems: 'flex-end', gap: 2 },
   worth: { fontSize: 17, color: color.text, letterSpacing: -0.3 },
 });

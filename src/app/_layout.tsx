@@ -1,3 +1,5 @@
+// Uniwind + HeroUI Native styles (Wealthline theme tokens live in this file).
+import '../global.css';
 // Per-weight imports: the package root would bundle all 18 Inter files (~6 MB).
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
@@ -8,7 +10,9 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { HeroUINativeProvider } from 'heroui-native';
 import { Platform, Pressable, Text, useWindowDimensions } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { TopNav } from '@/components/app-tabs';
 
@@ -34,6 +38,8 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+    <HeroUINativeProvider>
     <DataProvider>
       <CurrencyProvider>
       <StatusBar style="dark" />
@@ -68,6 +74,8 @@ export default function RootLayout() {
       </Stack>
       </CurrencyProvider>
     </DataProvider>
+    </HeroUINativeProvider>
+    </GestureHandlerRootView>
   );
 }
 

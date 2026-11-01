@@ -150,6 +150,8 @@ components:
 
 ## Overview
 
+**Game layer (owner, Nov 1, 2026).** On top of the Labelled Ledger: HeroUI Native components (Card, Chip) themed through `src/global.css`; Rankings opens with a podium (medal tones #C9971C, #8A96A3, #A8653A for ranks 1–3), today's biggest gain and drop, closest races with a tug-of-war bar, overtakes, and ▲/▼ place badges on every row; World's Everyone panel is an empire leaderboard. All of it comes from recorded values (`src/lib/arena.ts`, tested); entrance springs respect reduced motion.
+
 **Creative North Star: "The Labelled Ledger"**
 
 A minimal Apple-style foundation, quiet ground, white rounded surfaces, Inter tightly tracked, one action blue, where every headline number carries a small chip saying whether it is observed, projected, or an estimate as of a date. The system is restrained everywhere except profiles, which turn photographic: each profile's hero card is coloured by its own portrait, blurred and frosted into a field.
