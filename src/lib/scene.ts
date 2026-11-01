@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+
 // Shared state between screens and the planet scene, outside React so scrolling and zooming never re-render anything.
 // Screens write; the renderer reads once per frame and publishes `project` back for overlays.
 
@@ -45,13 +47,36 @@ export const zoomFactor = (z: number) => 2 ** (clampZoom(z) * 2.32);
 
 let last = { y: 0, t: 0 };
 
+// The ticker and tab bar slide away while you scroll down a page and come back when you scroll up (or reach the top).
+let chromeHidden = false;
+const chromeListeners = new Set<() => void>();
+function setChromeHidden(hidden: boolean) {
+  if (hidden === chromeHidden) return;
+  chromeHidden = hidden;
+  chromeListeners.forEach((l) => l());
+}
+const subscribeChrome = (l: () => void) => (chromeListeners.add(l), () => void chromeListeners.delete(l));
+/** True while the ticker and tab bar should be tucked away. */
+export const useChromeHidden = () => useSyncExternalStore(subscribeChrome, () => chromeHidden, () => false);
+
 /**
  * Report a scroll position, in px. `max` is the scrollable distance (content minus viewport), `viewport` the visible
  * height. The descent spans the whole page (owner, Nov 1, 2026): Earth keeps rising through the list and fills most
  * of the view at the bottom.
  */
-export function reportScroll(y: number, max: number, viewport: number, now = performance.now()) {
+export function reportScroll(y: number, max: number, viewport: number, now = performance.now(), jump = false) {
   const progress = max > 1 ? Math.min(Math.max(y / max, 0), 1) : 0;
+  if (jump) {
+    // Another screen came into view at its own scroll position: no spin, and the bars come back.
+    last = { y, t: now };
+    scene.progress = progress;
+    setChromeHidden(false);
+    return;
+  }
+  const dy = y - last.y;
+  if (y < 48) setChromeHidden(false);
+  else if (dy > 6) setChromeHidden(true);
+  else if (dy < -6) setChromeHidden(false);
   const dt = (now - last.t) / 1000;
   // A lone jump (wheel step, Page Down) arrives long after the last event: count it as a half-second flick.
   if (dt > 0 && viewport > 0) scene.velocity = (y - last.y) / viewport / Math.min(Math.max(dt, 1 / 60), 0.5);

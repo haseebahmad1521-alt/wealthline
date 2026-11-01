@@ -13,6 +13,7 @@ import {
   type StyleProp,
   type TextStyle,
   type ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 
 import { Glass } from '@/components/glass';
@@ -20,7 +21,7 @@ import { direction, formatDate, formatTime, percent } from '@/lib/format';
 import { useMoney } from '@/lib/currency';
 import { reportScroll } from '@/lib/scene';
 import type { LiveStatus } from '@/lib/live';
-import { color, contentWidth, radius, space, type } from '@/theme';
+import { color, contentWidth, desktopBreakpoint, radius, space, type } from '@/theme';
 
 /** Platform symbol names: SF Symbols on iOS, Material Symbols on Android and web. */
 export type IconName = { ios: string; android: string; web: string };
@@ -58,13 +59,16 @@ export function Icon({ name, size = 16, tint = color.text }: { name: IconName; s
 /** Scrollable page body, centered at the desktop content width. */
 export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   const inner = <View style={styles.inner}>{children}</View>;
+  // Phones on the web: room at the bottom so the last items scroll clear of the floating tab bar.
+  const floatingBar = Platform.OS === 'web' && useWindowDimensions().width < desktopBreakpoint;
+  const content = [styles.screenContent, floatingBar && { paddingBottom: 112 }];
   // Tabs stay mounted, each with its own scroll: when this screen comes back into view, the camera returns to its spot.
   const at = useRef({ y: 0, max: 0, viewport: 0 });
-  useFocusEffect(useCallback(() => reportScroll(at.current.y, at.current.max, at.current.viewport), []));
+  useFocusEffect(useCallback(() => reportScroll(at.current.y, at.current.max, at.current.viewport, performance.now(), true), []));
   return scroll ? (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.screenContent}
+      contentContainerStyle={content}
       contentInsetAdjustmentBehavior="automatic"
       // The planet's camera follows the scroll: top of the page is high in space, the bottom near the horizon.
       scrollEventThrottle={16}
@@ -75,7 +79,7 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
       {inner}
     </ScrollView>
   ) : (
-    <View style={[styles.screen, styles.screenContent]}>{inner}</View>
+    <View style={[styles.screen, content]}>{inner}</View>
   );
 }
 
@@ -89,11 +93,11 @@ export function Heading({ children, level = 1 }: { children: string; level?: 1 |
 }
 
 export function Body({ children, secondary, style }: { children: ReactNode; secondary?: boolean; style?: StyleProp<TextStyle> }) {
-  return <Text style={[type.body, { color: secondary ? color.textSecondary : color.text }, style]}>{children}</Text>;
+  return <Text style={[type.body, textShadow, { color: secondary ? color.textSecondary : color.text }, style]}>{children}</Text>;
 }
 
 export function Caption({ children, style, numberOfLines }: { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number }) {
-  return <Text numberOfLines={numberOfLines} style={[type.caption, { color: color.textSecondary }, style]}>{children}</Text>;
+  return <Text numberOfLines={numberOfLines} style={[type.caption, textShadow, { color: color.textSecondary }, style]}>{children}</Text>;
 }
 
 /** A Liquid Glass panel over the planet scene. */
@@ -241,6 +245,9 @@ export function StateView({
 export const minTouch = Platform.OS === 'android' ? 48 : 44;
 
 const headingShadow = { textShadowColor: 'rgba(0,0,0,0.65)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 1 } };
+// Body copy that can sit straight on the planet (captions under the globe, page intros): a fainter shadow keeps it
+// legible over the bright limb; on glass it's barely visible.
+const textShadow = { textShadowColor: 'rgba(0,0,0,0.55)', textShadowRadius: 8, textShadowOffset: { width: 0, height: 1 } };
 
 const styles = StyleSheet.create({
   // Transparent so the planet scene behind every screen shows through.

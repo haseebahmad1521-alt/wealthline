@@ -14,8 +14,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, icons, type IconName } from '@/components/ui';
+import { useChromeHidden } from '@/lib/scene';
 import { useAuth } from '@/lib/data';
-import { color, contentWidth, desktopBreakpoint, font, glass, space, type } from '@/theme';
+import { color, contentWidth, desktopBreakpoint, font, glass, radius, space, type } from '@/theme';
 
 const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
   { name: 'index', href: '/', label: 'Rankings', icon: icons.rankings },
@@ -63,13 +64,30 @@ export default function AppTabs() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const current = Math.max(0, tabs.findIndex((t) => (t.href === '/' ? pathname === '/' : pathname.startsWith(t.href))));
+  const hidden = useChromeHidden();
 
   // On desktop the triggers stay mounted (Tabs needs them for routing) but hidden; TopNav is the visible bar.
+  // Phones: a floating rounded glass bar (owner, Nov 2, 2026) that slides away while you scroll down a page. The glass
+  // is styled on the TabList row itself: Tabs only finds triggers in a TabList that is its direct child.
   const list = (
     <TabList asChild>
       <View
         accessibilityRole="tablist"
-        style={desktop ? styles.hidden : StyleSheet.flatten([styles.bottom, { paddingBottom: Math.max(insets.bottom, 6) }])}>
+        pointerEvents={hidden ? 'none' : 'auto'}
+        aria-hidden={!desktop && hidden}
+        style={
+          desktop
+            ? styles.hidden
+            : StyleSheet.flatten([
+                styles.bottom,
+                {
+                  bottom: Math.max(insets.bottom, space.sm) + 4,
+                  opacity: hidden ? 0 : 1,
+                  transform: hidden && !reduceMotion ? 'translate3d(0,140%,0)' : 'translate3d(0,0,0)',
+                  transition: reduceMotion ? 'opacity 120ms linear' : 'opacity 240ms ease, transform 320ms cubic-bezier(.2,.8,.2,1)',
+                } as unknown as ViewStyle,
+              ])
+        }>
         {tabs.map((t) => (
           <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
             <TabButton icon={t.icon} label={t.label} desktop={false} />
@@ -145,6 +163,7 @@ function TabButton({
             style={[
               desktop ? styles.topTab : styles.bottomTab,
               desktop && isFocused && styles.topTabActive,
+              !desktop && isFocused && styles.bottomTabActive,
               (hovered || pressed) && !isFocused && styles.hover,
             ]}>
             {!desktop && <Icon name={icon} size={24} tint={tint} />}
@@ -190,13 +209,20 @@ const styles = StyleSheet.create({
   hover: { backgroundColor: color.fill },
   account: { ...type.caption, fontSize: 14, color: color.action, marginLeft: space.md, paddingHorizontal: space.sm },
   bottom: {
+    position: 'absolute',
+    left: space.md,
+    right: space.md,
+    maxWidth: 440,
+    marginHorizontal: 'auto',
+    zIndex: 20,
     flexDirection: 'row',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: color.hairline,
+    padding: 6,
+    borderRadius: radius.pill,
     backgroundColor: glass.tint,
-    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as unknown as ViewStyle),
-    paddingTop: 6,
+    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop, boxShadow: `${glass.highlight}, ${glass.shadow}` } as unknown as ViewStyle),
   },
-  bottomTab: { flex: 1, alignItems: 'center', gap: 2, minHeight: 48, justifyContent: 'center' },
+  bottomTab: { flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center', borderRadius: radius.pill },
+  // Active tab: a rounded light pill inside the bar.
+  bottomTabActive: { backgroundColor: 'rgba(255,255,255,0.14)' },
   bottomLabel: { fontFamily: font.medium, fontSize: 11 },
 });

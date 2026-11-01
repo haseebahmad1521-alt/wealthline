@@ -1,10 +1,11 @@
 // Game-like Rankings pieces (owner's direction, Nov 1, 2026): podium, the day's movers, closest races, overtakes and
 // rank-move badges. All numbers come from recorded values via lib/arena.ts; motion is entrance only, never data.
 import { Link } from 'expo-router';
-import { Card, Chip } from 'heroui-native';
+import { Chip } from 'heroui-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { Glass } from '@/components/glass';
 import { Caption, Change, Heading, Icon, Portrait, icons } from '@/components/ui';
 import { closestRaces, overtakes, topMovers } from '@/lib/arena';
 import { useMoney } from '@/lib/currency';
@@ -83,13 +84,13 @@ export function Podium({ people }: { people: Person[] }) {
   const top = people.filter((p) => p.rank != null && p.rank <= 3).sort((a, b) => a.rank! - b.rank!);
   if (top.length < 3) return null;
   return (
-    <Card style={styles.podiumCard}>
+    <Glass style={styles.podiumCard}>
       <View style={styles.podium} accessibilityRole="list" accessibilityLabel="Top three">
         <Step person={top[1]} place={2} height={74} i={1} />
         <Step person={top[0]} place={1} height={104} i={0} />
         <Step person={top[2]} place={3} height={56} i={2} />
       </View>
-    </Card>
+    </Glass>
   );
 }
 
@@ -97,7 +98,7 @@ function MoverCard({ title, person, delta, base, up }: { title: string; person: 
   return (
     <Link href={`/person/${person.slug}`} asChild>
       <Pressable accessibilityRole="link" style={styles.moverCell}>
-        <Card style={[styles.mover, { borderColor: up ? color.gain : color.loss }]}>
+        <Glass radius={radius.md} style={[styles.mover, { borderColor: up ? color.gain : color.loss }]}>
           <Chip size="sm" variant="soft" color={up ? 'success' : 'danger'}>
             <Chip.Label>{title}</Chip.Label>
           </Chip>
@@ -108,7 +109,7 @@ function MoverCard({ title, person, delta, base, up }: { title: string; person: 
             </Text>
           </View>
           <Change delta={delta} base={base} size={16} />
-        </Card>
+        </Glass>
       </Pressable>
     </Link>
   );
@@ -141,7 +142,7 @@ export function Races({ people }: { people: Person[] }) {
   return (
     <View style={styles.section}>
       <Heading level={2}>Closest races.</Heading>
-      <Card style={styles.list}>
+      <Glass style={styles.list}>
         {races.map((r, i) => (
           <Rise key={`${r.leader.id}:${r.chaser.id}`} i={i} style={[styles.race, i > 0 && styles.sep]}>
             <View style={styles.raceRow} accessible accessibilityLabel={`Number ${r.rank} ${r.leader.name} leads number ${r.rank + 1} ${r.chaser.name} by ${money.format(r.gap)}`}>
@@ -165,7 +166,7 @@ export function Races({ people }: { people: Person[] }) {
             </View>
           </Rise>
         ))}
-      </Card>
+      </Glass>
     </View>
   );
 }
@@ -178,7 +179,7 @@ export function Overtakes({ people }: { people: Person[] }) {
   return (
     <View style={styles.section}>
       <Heading level={2}>Overtakes.</Heading>
-      <Card style={styles.list}>
+      <Glass style={styles.list}>
         {list.map((o, i) => (
           <View key={`${o.winner.id}:${o.passed.id}`} style={[styles.raceRow, styles.race, i > 0 && styles.sep]} accessible>
             <Icon name={icons.up} size={20} tint={color.gain} />
@@ -189,7 +190,7 @@ export function Overtakes({ people }: { people: Person[] }) {
             <Caption>+{money.format(o.gap)}</Caption>
           </View>
         ))}
-      </Card>
+      </Glass>
     </View>
   );
 }
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
   moverCell: { flexGrow: 1, flexBasis: 150, minWidth: 150 },
   mover: { padding: space.md, gap: space.sm, borderWidth: 2, borderRadius: radius.md },
   moverWho: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  list: { paddingVertical: space.xs, borderRadius: radius.lg },
+  list: { paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: radius.lg },
   race: { paddingHorizontal: space.md, paddingVertical: space.sm + 2 },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
   raceRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

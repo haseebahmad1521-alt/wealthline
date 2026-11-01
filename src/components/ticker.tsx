@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/glass';
 import { Icon, icons, minTouch, type IconName } from '@/components/ui';
 import { age, type Ticker as TickerData, type TickerItem } from '@/lib/ticker';
+import { useChromeHidden } from '@/lib/scene';
 import { useTicker } from '@/lib/ticker-data';
 import { color, contentWidth, radius, space, type } from '@/theme';
 
@@ -84,6 +85,7 @@ export function Ticker() {
   const { ticker } = useTicker();
   const reduce = useReducedMotion();
   const insets = useSafeAreaInsets();
+  const hidden = useChromeHidden();
   const now = useNow();
   const [userPaused, setUserPaused] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -144,7 +146,19 @@ export function Ticker() {
   );
 
   return (
-    <View style={[styles.band, { paddingTop: insets.top + space.sm }]} pointerEvents="box-none">
+    <View
+      style={[
+        styles.band,
+        { paddingTop: insets.top + space.sm },
+        // Tucks up and fades while you scroll down; back on scroll up. Reduced motion: a quick fade only.
+        {
+          opacity: hidden ? 0 : 1,
+          transform: [{ translateY: hidden && !reduce ? -(insets.top + 64) : 0 }],
+          transition: reduce ? 'opacity 120ms linear' : 'opacity 240ms ease, transform 320ms cubic-bezier(.2,.8,.2,1)',
+        } as object,
+      ]}
+      pointerEvents={hidden ? 'none' : 'box-none'}
+      aria-hidden={hidden}>
       <Glass radius={radius.pill} style={styles.pill}>
         <View
           style={[styles.strip, !(overflow && !reduce) && { paddingRight: space.md }]}

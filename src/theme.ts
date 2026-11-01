@@ -25,8 +25,9 @@ export const glass = {
   tint: color.surface,
   /** Web backdrop: blur, a little saturation, and dimming so text stays readable over bright cloud. */
   backdrop: 'blur(28px) saturate(160%) brightness(0.62)',
-  /** Inner light along the top edge and a faint rim, like light caught in the glass. */
-  highlight: 'inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.10)',
+  /** Liquid Glass bevel: light caught on the top-left edge, shade on the bottom-right, and a faint rim all round. */
+  highlight:
+    'inset 1.5px 1.5px 1px -0.5px rgba(255,255,255,0.38), inset -1.5px -1.5px 1px -0.5px rgba(0,0,0,0.45), inset 0 0 0 0.5px rgba(255,255,255,0.14)',
   /** Big, soft drop shadow. */
   shadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.25)',
 } as const;
