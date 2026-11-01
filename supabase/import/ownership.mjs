@@ -46,18 +46,28 @@ const scheduleName = (n, k) => {
   return p.at(-1).toLowerCase() === k.last && p[0][0].toUpperCase() === k.first;
 };
 
-/** Common-stock holdings in one Form 4, keyed by class + direct/indirect + nature. */
-function form4Holdings(xml) {
-  const out = new Map();
+// "Common Stock, par value $.01  per share" and "Clas A Common Stock" name the same classes as their tidy forms.
+const normClass = (t) => t.toLowerCase().replace(/\s+/g, ' ').replace(/\bclas\b/, 'class').replace(/,?\s*par value.*$/, '').replace(/\bcommon$/, 'common stock').trim();
+
+/**
+ * Common-stock holdings in one Form 4, per share class: within the filing the last row for each holding line
+ * (direct/indirect + nature) counts, and the lines of a class are added up. One filing describes a class completely
+ * when it mentions it, so classes are never mixed across filings (trust names change over the years).
+ */
+function form4Classes(xml) {
+  const lines = new Map();
   for (const tag of ['nonDerivativeTransaction', 'nonDerivativeHolding']) {
     for (const b of all(xml, tag)) {
       const title = pick(b, 'securityTitle');
       const shares = Number(pick(b, 'sharesOwnedFollowingTransaction'));
       if (!title || !Number.isFinite(shares) || !/common|ordinary|class [abc]\b/i.test(title)) continue;
-      out.set(`${title}|${pick(b, 'directOrIndirectOwnership')}|${pick(b, 'natureOfOwnership') ?? ''}`, { title, shares }); // last row wins within a filing
+      const cls = normClass(title);
+      lines.set(`${cls}|${pick(b, 'directOrIndirectOwnership')}|${(pick(b, 'natureOfOwnership') ?? '').toLowerCase().replace(/\s+/g, ' ')}`, { cls, title, shares });
     }
   }
-  return out;
+  const classes = new Map();
+  for (const l of lines.values()) classes.set(l.cls, { title: l.title, shares: (classes.get(l.cls)?.shares ?? 0) + l.shares });
+  return classes;
 }
 
 // Berkshire Class A is worth 1,500 Class B; other dual classes convert 1:1 or trade close together.
@@ -68,7 +78,9 @@ function toListedShares(company, title, shares) {
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const rest = (path) => fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key } }).then((r) => r.json());
-const links = await rest('person_companies?select=person_id,people(name,slug),companies(id,name,ticker,cik,quote_symbol)');
+const links = await rest('person_companies?select=person_id,people(name,slug,main_source),companies(id,name,ticker,cik,quote_symbol)');
+const worth = new Map((await rest('person_summary?select=person_id,net_worth_usd')).map((p) => [p.person_id, Number(p.net_worth_usd)]));
+const price = new Map((await rest('quote_latest?select=ticker,price')).map((x) => [x.ticker, Number(x.price)]));
 const work = links.filter((l) => l.companies?.cik && l.companies.ticker && !l.companies.quote_symbol); // listed in the US, SEC files
 console.error(`${work.length} person–company pairs with SEC filings`);
 
@@ -103,7 +115,7 @@ for (const l of work) {
       const xml = await sec(u);
       if (!xml || Number(pick(xml, 'issuerCik')) !== Number(c.cik)) continue;
       newest ??= { date: own.filingDate[i], url: u };
-      for (const [hk, h] of form4Holdings(xml)) if (!merged.has(hk)) merged.set(hk, h); // newest figure per key
+      for (const [cls, h] of form4Classes(xml)) if (!merged.has(cls)) merged.set(cls, h); // newest filing per class
     }
     if (merged.size && newest) {
       const classes = [...new Set([...merged.values()].map((h) => h.title))];
@@ -117,6 +129,8 @@ for (const l of work) {
   for (const f of filings.filter((x) => /^SCHEDULE 13[GD]/.test(x.form))) {
     const xml = await sec(archive(f.acc, f.doc));
     if (!xml) continue;
+    // The company's list also holds filings it makes about other companies (Berkshire): keep only filings about it.
+    if (Number(pick(xml, 'issuerCik')) !== Number(c.cik)) continue;
     const names = [...xml.matchAll(/<reportingPersonName>([^<]+)/g)].map((m) => m[1].trim());
     if (!names.length || !scheduleName(names[0], k)) continue;
     const shares = Number(pick(xml, 'reportingPersonBeneficiallyOwnedAggregateNumberOfShares') ?? pick(xml, 'aggregateAmountOwned'));
@@ -130,6 +144,16 @@ for (const l of work) {
   const best = [f4, sch].filter(Boolean).sort((a, b) => b.date.localeCompare(a.date))[0];
   if (!best) {
     report.push(`${l.people.name} · ${c.name}: no Form 4 or Schedule 13G/13D found (left as not recorded)`);
+    continue;
+  }
+  // Guard against partial pictures: Form 4s only list the classes traded, so a founder's main class can be missing
+  // (Meta Class B, Berkshire Class A). If the company is their main source of wealth but the shares found are worth
+  // under 2% of their fortune, leave the stake unrecorded rather than show it a hundred times too small.
+  const main = (l.people.main_source ?? '').toLowerCase();
+  const isMain = main && (main.includes(c.name.toLowerCase().split(' ')[0]) || c.name.toLowerCase().includes(main.split(/[ ,]/)[0]));
+  const value = best.shares * (price.get(c.ticker) ?? 0);
+  if (isMain && worth.get(l.person_id) && value < 0.02 * worth.get(l.person_id)) {
+    report.push(`${l.people.name} · ${c.name}: filings found cover only part of the stake (${Math.round(best.shares).toLocaleString('en-US')} shares, ${best.label}); left as not recorded`);
     continue;
   }
   report.push(`${l.people.name} · ${c.name}: ${Math.round(best.shares).toLocaleString('en-US')} shares (${best.label}${best.note ? `; ${best.note}` : ''})`);
