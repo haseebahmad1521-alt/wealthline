@@ -21,10 +21,14 @@ async function sec(url, as = 'text') {
   const wait = last + 130 - Date.now(); // well under SEC's 10 requests a second
   if (wait > 0) await sleep(wait);
   last = Date.now();
-  for (let i = 0; i < 3; i++) {
-    const r = await fetch(url, { headers: UA });
-    if (r.ok) return as === 'json' ? r.json() : r.text();
-    if (r.status === 404) return null;
+  for (let i = 0; i < 4; i++) {
+    try {
+      const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(30_000) });
+      if (r.ok) return as === 'json' ? r.json() : r.text();
+      if (r.status === 404) return null;
+    } catch {
+      // dropped connection or timeout: retry below
+    }
     await sleep(2000 * (i + 1));
   }
   throw new Error(`SEC kept failing: ${url}`);
@@ -81,7 +85,7 @@ const rest = (path) => fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key 
 const links = await rest('person_companies?select=person_id,people(name,slug,main_source),companies(id,name,ticker,cik,quote_symbol)');
 const worth = new Map((await rest('person_summary?select=person_id,net_worth_usd')).map((p) => [p.person_id, Number(p.net_worth_usd)]));
 const price = new Map((await rest('quote_latest?select=ticker,price')).map((x) => [x.ticker, Number(x.price)]));
-const work = links.filter((l) => l.companies?.cik && l.companies.ticker && !l.companies.quote_symbol); // listed in the US, SEC files
+const work = links.filter((l) => l.companies?.cik && l.companies.ticker); // an SEC id means it files with the SEC
 console.error(`${work.length} person–company pairs with SEC filings`);
 
 const out = [];
@@ -117,7 +121,15 @@ for (const l of work) {
       newest ??= { date: own.filingDate[i], url: u };
       for (const [cls, h] of form4Classes(xml)) if (!merged.has(cls)) merged.set(cls, h); // newest filing per class
     }
-    if (merged.size && newest) {
+    // Only clean pictures are kept. Several classes (or spellings of one) can't be added safely (units, restricted
+    // shares, typos); a lone Class A usually means the founder's Class B never traded; ordinary shares of a foreign
+    // issuer aren't the listed ADS. Those stakes stay unrecorded rather than wrong.
+    const kinds = [...merged.keys()];
+    const unsafe =
+      kinds.length > 1 ? 'mixed share classes' : /\bclass a\b/.test(kinds[0] ?? '') ? 'only Class A found' : /ordinary/.test(kinds[0] ?? '') ? 'ordinary shares, not the listed ADS' : null;
+    if (merged.size && newest && unsafe) {
+      report.push(`${l.people.name} · ${c.name}: Form 4 picture unsafe (${unsafe}); not used`);
+    } else if (merged.size && newest) {
       const classes = [...new Set([...merged.values()].map((h) => h.title))];
       const shares = [...merged.values()].reduce((n, h) => n + toListedShares(c.name, h.title, h.shares), 0);
       f4 = { shares, date: newest.date, url: newest.url, label: `SEC Form 4, latest filed ${newest.date}`, note: classes.join('; ') };
