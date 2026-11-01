@@ -6,6 +6,7 @@ import { Movers, Overtakes, Podium, Races } from '@/components/arena';
 import { BriefCard } from '@/components/news';
 import { PersonList } from '@/components/person-row';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
+import { Ticker, TickerSpace } from '@/components/ticker';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { rankMoves } from '@/lib/arena';
 import { useLatestBrief, usePeople } from '@/lib/data';
@@ -55,116 +56,121 @@ export default function Rankings() {
   };
 
   return (
-    <Screen>
-      <View>
-        <Heading>Rankings.</Heading>
-        <Body secondary>The world’s biggest fortunes.</Body>
-      </View>
-      {/* One row: filters, search, compare. Sort and saved views live in the filter panel. */}
-      <View style={styles.bar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Filters"
-          accessibilityHint="Sort and saved views"
-          accessibilityState={{ expanded: filtersOpen }}
-          onPress={() => setFiltersOpen(!filtersOpen)}
-          style={[styles.round, (filtersOpen || sort !== 'rank') && styles.roundOn]}>
-          <Icon name={icons.filter} size={18} tint={filtersOpen || sort !== 'rank' ? color.action : color.text} />
-        </Pressable>
-        {/* Narrow screens give compare mode the room: search returns when compare ends. */}
-        {!(comparing && narrow) && (
-        <View style={styles.search}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search"
-            placeholderTextColor={color.textSecondary}
-            accessibilityLabel="Search by name, source, or country"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            style={styles.input}
-          />
-          {query.length > 0 && (
-            <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setQuery('')} style={styles.clear}>
-              <Icon name={icons.close} size={14} tint={color.textSecondary} />
-            </Pressable>
-          )}
+    <View style={styles.page}>
+      <Screen>
+        <TickerSpace />
+        <View>
+          <Heading>Rankings.</Heading>
+          <Body secondary>The world’s biggest fortunes.</Body>
         </View>
-        )}
-        {comparing ? (
-          <>
-            <View style={narrow ? styles.grow : undefined}>
-              <Button label="Confirm" disabled={selected.length < 2} onPress={confirm} />
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Cancel compare" onPress={stop} style={styles.round}>
-              <Icon name={icons.close} size={16} tint={color.text} />
-            </Pressable>
-          </>
-        ) : (
-          <Button label="Compare" variant="secondary" onPress={() => setComparing(true)} />
-        )}
-      </View>
-      {filtersOpen && (
-        <Surface style={styles.panel}>
-          <Caption>Sort by</Caption>
-          <View accessibilityRole="tablist" style={styles.segments}>
-            {peopleSorts.map((s) => (
-              <Pressable
-                key={s}
-                accessibilityRole="tab"
-                accessibilityLabel={`Sort by ${sortLabels[s].toLowerCase()}`}
-                accessibilityState={{ selected: sort === s }}
-                onPress={() => setSort(s)}
-                style={[styles.segment, sort === s && styles.segmentOn]}>
-                <Text style={[type.headline, { color: sort === s ? color.text : color.textSecondary }]}>{sortLabels[s]}</Text>
+        {/* One row: filters, search, compare. Sort and saved views live in the filter panel. */}
+        <View style={styles.bar}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Filters"
+            accessibilityHint="Sort and saved views"
+            accessibilityState={{ expanded: filtersOpen }}
+            onPress={() => setFiltersOpen(!filtersOpen)}
+            style={[styles.round, (filtersOpen || sort !== 'rank') && styles.roundOn]}>
+            <Icon name={icons.filter} size={18} tint={filtersOpen || sort !== 'rank' ? color.action : color.text} />
+          </Pressable>
+          {/* Narrow screens give compare mode the room: search returns when compare ends. */}
+          {!(comparing && narrow) && (
+          <View style={styles.search}>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search"
+              placeholderTextColor={color.textSecondary}
+              accessibilityLabel="Search by name, source, or country"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              style={styles.input}
+            />
+            {query.length > 0 && (
+              <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setQuery('')} style={styles.clear}>
+                <Icon name={icons.close} size={14} tint={color.textSecondary} />
               </Pressable>
-            ))}
+            )}
           </View>
-          <SavedViews
-            target="people"
-            params={{ q: query.trim(), sort }}
-            onApply={(v) => {
-              if (v.target !== 'people') return;
-              setQuery(v.params.q);
-              setSort(v.params.sort);
-            }}
-          />
-        </Surface>
-      )}
-      {comparing && (
-        <View accessibilityLiveRegion="polite">
-          <Caption>{`Select 2–3 people to compare. ${selected.length} selected.`}</Caption>
-          {selected.length >= MAX_COMPARE && <Caption>Compare up to 3 people.</Caption>}
-        </View>
-      )}
-      {people.isPending || people.error ? (
-        <StateView loading={people.isPending} error={people.error} onRetry={() => void people.refetch()} />
-      ) : sorted.length === 0 ? (
-        <StateView empty={{ title: 'No one ranked yet.', body: 'Estimates appear here once they’ve been sourced and entered.' }} />
-      ) : shown.length === 0 ? (
-        <StateView empty={{ title: `No one matches “${query.trim()}”.`, body: 'Try a different name, source, or country.' }} />
-      ) : (
-        <>
-          {arena && (
-            <>
-              <Podium people={people.data ?? []} />
-              <Movers people={people.data ?? []} />
-              <Races people={people.data ?? []} />
-              <Overtakes people={people.data ?? []} />
-              <Heading level={2}>Leaderboard.</Heading>
-            </>
           )}
-          <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} moves={moves} />
-          <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
-          <BriefCard brief={brief.data} people={people.data ?? []} />
-        </>
-      )}
-    </Screen>
+          {comparing ? (
+            <>
+              <View style={narrow ? styles.grow : undefined}>
+                <Button label="Confirm" disabled={selected.length < 2} onPress={confirm} />
+              </View>
+              <Pressable accessibilityRole="button" accessibilityLabel="Cancel compare" onPress={stop} style={styles.round}>
+                <Icon name={icons.close} size={16} tint={color.text} />
+              </Pressable>
+            </>
+          ) : (
+            <Button label="Compare" variant="secondary" onPress={() => setComparing(true)} />
+          )}
+        </View>
+        {filtersOpen && (
+          <Surface style={styles.panel}>
+            <Caption>Sort by</Caption>
+            <View accessibilityRole="tablist" style={styles.segments}>
+              {peopleSorts.map((s) => (
+                <Pressable
+                  key={s}
+                  accessibilityRole="tab"
+                  accessibilityLabel={`Sort by ${sortLabels[s].toLowerCase()}`}
+                  accessibilityState={{ selected: sort === s }}
+                  onPress={() => setSort(s)}
+                  style={[styles.segment, sort === s && styles.segmentOn]}>
+                  <Text style={[type.headline, { color: sort === s ? color.text : color.textSecondary }]}>{sortLabels[s]}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <SavedViews
+              target="people"
+              params={{ q: query.trim(), sort }}
+              onApply={(v) => {
+                if (v.target !== 'people') return;
+                setQuery(v.params.q);
+                setSort(v.params.sort);
+              }}
+            />
+          </Surface>
+        )}
+        {comparing && (
+          <View accessibilityLiveRegion="polite">
+            <Caption>{`Select 2–3 people to compare. ${selected.length} selected.`}</Caption>
+            {selected.length >= MAX_COMPARE && <Caption>Compare up to 3 people.</Caption>}
+          </View>
+        )}
+        {people.isPending || people.error ? (
+          <StateView loading={people.isPending} error={people.error} onRetry={() => void people.refetch()} />
+        ) : sorted.length === 0 ? (
+          <StateView empty={{ title: 'No one ranked yet.', body: 'Estimates appear here once they’ve been sourced and entered.' }} />
+        ) : shown.length === 0 ? (
+          <StateView empty={{ title: `No one matches “${query.trim()}”.`, body: 'Try a different name, source, or country.' }} />
+        ) : (
+          <>
+            {arena && (
+              <>
+                <Podium people={people.data ?? []} />
+                <Movers people={people.data ?? []} />
+                <Races people={people.data ?? []} />
+                <Overtakes people={people.data ?? []} />
+                <Heading level={2}>Leaderboard.</Heading>
+              </>
+            )}
+            <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} moves={moves} />
+            <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
+            <BriefCard brief={brief.data} people={people.data ?? []} />
+          </>
+        )}
+      </Screen>
+      <Ticker />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   grow: { flex: 1 },
   panel: { padding: space.md, gap: space.sm },
