@@ -44,7 +44,7 @@ const open = (url: string | null) => url && void WebBrowser.openBrowserAsync(url
 
 export default function World() {
   const world = useWorld();
-  const { width } = useWindowDimensions();
+  const { width, height: windowHeight } = useWindowDimensions();
   const desktop = width >= desktopBreakpoint;
   const { focus: slug, view: viewParam } = useLocalSearchParams<{ focus?: string; view?: string }>();
   const view: ViewKey = VIEWS.some((v) => v.key === viewParam) ? (viewParam as ViewKey) : 'places';
@@ -145,7 +145,8 @@ export default function World() {
             {planet ? (
               <View style={[styles.planetArea, desktop && styles.globeCardWide]}>
                 <WorldGlobe
-                  height={desktop ? 560 : Math.min(width - space.md * 2, 420)}
+                  // Desktop: as tall as fits below the header, segments and chips (~360px), so the whole globe is in view.
+                  height={desktop ? Math.max(360, Math.min(560, windowHeight - 360)) : Math.min(width - space.md * 2, 420)}
                   sites={sites}
                   markers={markers}
                   focus={focused?.person.id ?? null}

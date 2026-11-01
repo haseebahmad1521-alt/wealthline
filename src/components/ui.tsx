@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import type { ReactNode } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -57,6 +58,9 @@ export function Icon({ name, size = 16, tint = color.text }: { name: IconName; s
 /** Scrollable page body, centered at the desktop content width. */
 export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   const inner = <View style={styles.inner}>{children}</View>;
+  // Tabs stay mounted, each with its own scroll: when this screen comes back into view, the camera returns to its spot.
+  const at = useRef({ y: 0, max: 0, viewport: 0 });
+  useFocusEffect(useCallback(() => reportScroll(at.current.y, at.current.max, at.current.viewport), []));
   return scroll ? (
     <ScrollView
       style={styles.screen}
@@ -64,7 +68,10 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
       contentInsetAdjustmentBehavior="automatic"
       // The planet's camera follows the scroll: top of the page is high in space, the bottom near the horizon.
       scrollEventThrottle={16}
-      onScroll={({ nativeEvent: e }) => reportScroll(e.contentOffset.y, e.contentSize.height - e.layoutMeasurement.height, e.layoutMeasurement.height)}>
+      onScroll={({ nativeEvent: e }) => {
+        at.current = { y: e.contentOffset.y, max: e.contentSize.height - e.layoutMeasurement.height, viewport: e.layoutMeasurement.height };
+        reportScroll(at.current.y, at.current.max, at.current.viewport);
+      }}>
       {inner}
     </ScrollView>
   ) : (

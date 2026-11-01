@@ -1,5 +1,5 @@
 import { Link, usePathname } from 'expo-router';
-import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
+import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
 import { Image } from 'expo-image';
 import type { ComponentRef, Ref } from 'react';
 import {
@@ -61,6 +61,8 @@ export function TopNav() {
 export default function AppTabs() {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const current = Math.max(0, tabs.findIndex((t) => (t.href === '/' ? pathname === '/' : pathname.startsWith(t.href))));
 
   // On desktop the triggers stay mounted (Tabs needs them for routing) but hidden; TopNav is the visible bar.
   const list = (
@@ -81,9 +83,42 @@ export default function AppTabs() {
     <Tabs style={styles.root}>
       {desktop && <TopNav />}
       {desktop && list}
-      <TabSlot style={styles.slot} />
+      <TabSlot style={styles.slot} renderFn={(d, o) => <EasedScreen key={d.route.key} descriptor={d} options={o} current={current} />} />
       {!desktop && list}
     </Tabs>
+  );
+}
+
+// One scene, not pages (owner, Nov 1, 2026): every visited tab stays mounted in the same frame. Changing tabs fades the
+// new view in while it slides a little from the side you're heading to, and the old one drifts away and fades out; the
+// planet behind keeps going. Hidden views can't be tapped, focused or read. Reduced motion: an instant swap.
+const reduceMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+
+function EasedScreen({ descriptor, options, current }: { descriptor: TabsDescriptor; options: TabsSlotRenderOptions; current: number }) {
+  const { isFocused, loaded, index } = options;
+  if (!loaded && !isFocused) return null;
+  const shift = isFocused ? 0 : index < current ? -28 : 28;
+  return (
+    <View
+      aria-hidden={!isFocused}
+      pointerEvents={isFocused ? 'auto' : 'none'}
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          opacity: isFocused ? 1 : 0,
+          transform: `translate3d(${shift}px,0,0) scale(${isFocused ? 1 : 0.985})`,
+          // Hide fully once faded so nothing behind is focusable; show immediately when coming in.
+          visibility: isFocused ? 'visible' : 'hidden',
+          transition: reduceMotion
+            ? 'none'
+            : isFocused
+              ? `opacity 360ms ${EASE}, transform 480ms ${EASE}, visibility 0s`
+              : `opacity 260ms ease, transform 420ms ${EASE}, visibility 0s linear 420ms`,
+        } as unknown as ViewStyle,
+      ]}>
+      {descriptor.render()}
+    </View>
   );
 }
 
@@ -123,7 +158,7 @@ function TabButton({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: 'transparent' },
-  slot: { flex: 1 },
+  slot: { flex: 1, position: 'relative' },
   hidden: { display: 'none' },
   top: {
     borderBottomWidth: StyleSheet.hairlineWidth,
