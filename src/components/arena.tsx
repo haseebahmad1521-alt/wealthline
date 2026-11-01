@@ -2,8 +2,8 @@
 // rank-move badges. All numbers come from recorded values via lib/arena.ts; motion is entrance only, never data.
 import { Link } from 'expo-router';
 import { Card, Chip } from 'heroui-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, ReduceMotion } from 'react-native-reanimated';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Caption, Change, Heading, Icon, Portrait, icons } from '@/components/ui';
 import { closestRaces, overtakes, topMovers } from '@/lib/arena';
@@ -15,7 +15,28 @@ import { color, radius, space, type } from '@/theme';
 // Medal tones for ranks 1–3 (game layer only; text on them stays dark or white at AA contrast).
 export const MEDAL = ['#C9971C', '#8A96A3', '#A8653A'] as const;
 
-const enter = (i: number) => FadeInUp.delay(i * 90).springify().damping(14).reduceMotion(ReduceMotion.System);
+/**
+ * Entrance: rises and fades in once, staggered by `i`. React Native's Animated (Reanimated's layout animations stayed
+ * stuck at their start state on web). Already visible when reduced motion is on.
+ */
+function Rise({ i = 0, children, style, from = 24 }: { i?: number; children: ReactNode; style?: StyleProp<ViewStyle>; from?: number }) {
+  const [reduce, setReduce] = useState(false);
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let alive = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((r) => {
+      if (!alive) return;
+      setReduce(r);
+      if (r) t.setValue(1);
+      else Animated.timing(t, { toValue: 1, duration: 520, delay: i * 90, easing: Easing.out(Easing.back(1.4)), useNativeDriver: false }).start();
+    }, () => t.setValue(1));
+    return () => {
+      alive = false;
+    };
+  }, [i, t]);
+  const motion = reduce ? null : { opacity: t.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }), transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }] };
+  return <Animated.View style={[style, motion]}>{children}</Animated.View>;
+}
 
 /** ▲ 2 / ▼ 1 places since the previous values; nothing when unchanged or unknown. */
 export function RankMove({ places, compact }: { places: number | undefined; compact?: boolean }) {
@@ -39,7 +60,7 @@ function Step({ person, place, height, i }: { person: Person; place: number; hei
   return (
     <Link href={`/person/${person.slug}`} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={`Number ${place}, ${person.name}, ${person.net_worth_usd != null ? money.format(person.net_worth_usd) : ''}`} style={styles.step}>
-        <Animated.View entering={FadeInDown.delay(250 + i * 90).reduceMotion(ReduceMotion.System)} style={styles.stepTop}>
+        <Rise i={i + 3} from={12} style={styles.stepTop}>
           <View style={[styles.ring, { borderColor: MEDAL[place - 1], borderRadius: (size + 8) / 2 }]}>
             <Portrait uri={person.portrait_url} name={person.name} size={size} />
           </View>
@@ -48,10 +69,10 @@ function Step({ person, place, height, i }: { person: Person; place: number; hei
           </Text>
           {person.net_worth_usd != null && <Text style={[type.number, { color: color.text, fontSize: place === 1 ? 18 : 15 }]}>{money.format(person.net_worth_usd)}</Text>}
           {delta != null && <Change delta={delta} base={person.prev_net_worth_usd!} size={12} compact />}
-        </Animated.View>
-        <Animated.View entering={enter(i)} style={[styles.pedestal, { height, backgroundColor: MEDAL[place - 1] }]}>
+        </Rise>
+        <Rise i={i} from={height} style={[styles.pedestal, { height, backgroundColor: MEDAL[place - 1] }]}>
           <Text style={styles.pedestalText}>{place}</Text>
-        </Animated.View>
+        </Rise>
       </Pressable>
     </Link>
   );
@@ -122,7 +143,7 @@ export function Races({ people }: { people: Person[] }) {
       <Heading level={2}>Closest races.</Heading>
       <Card style={styles.list}>
         {races.map((r, i) => (
-          <Animated.View key={`${r.leader.id}:${r.chaser.id}`} entering={enter(i)} style={[styles.race, i > 0 && styles.sep]}>
+          <Rise key={`${r.leader.id}:${r.chaser.id}`} i={i} style={[styles.race, i > 0 && styles.sep]}>
             <View style={styles.raceRow} accessible accessibilityLabel={`Number ${r.rank} ${r.leader.name} leads number ${r.rank + 1} ${r.chaser.name} by ${money.format(r.gap)}`}>
               <Portrait uri={r.leader.portrait_url} name={r.leader.name} size={34} />
               <View style={styles.flex}>
@@ -142,7 +163,7 @@ export function Races({ people }: { people: Person[] }) {
               </View>
               <Portrait uri={r.chaser.portrait_url} name={r.chaser.name} size={34} />
             </View>
-          </Animated.View>
+          </Rise>
         ))}
       </Card>
     </View>

@@ -63,7 +63,9 @@ export function PersonRow({
           {worth != null ? (
             <>
               <Text style={[type.number, styles.worth]}>{money.format(worth)}</Text>
-              {delta != null ? (
+              {delta === 0 ? (
+                <Caption>No change</Caption>
+              ) : delta != null ? (
                 <Change delta={delta} base={person.prev_net_worth_usd!} size={13} compact={narrow} />
               ) : (
                 <Caption>{person.as_of ? `as of ${formatDate(person.as_of)}` : ''}</Caption>
