@@ -7,7 +7,7 @@
 // 2. If none is kept, a company whose exact English name is a part of the Forbes source ("Walmart", "Zara") is linked
 //    as relation 'source': Forbes names it, Wikidata just identifies it.
 // 3. Every stock symbol is checked against the price feed; symbols it doesn't answer for are dropped.
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,11 +19,13 @@ const q = (v) => (v == null || v === '' ? 'null' : `'${String(v).replace(/'/g, "
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 async function sparql(query) {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 6; i++) {
     const r = await fetch(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`, { headers: { 'User-Agent': UA } });
     if (r.ok) return (await r.json()).results.bindings;
-    console.error(`Wikidata ${r.status}, retrying`);
-    await sleep(5000 * (i + 1));
+    // 429: wait as long as Wikidata asks; 5xx (query timeouts): back off further each time.
+    const wait = Number(r.headers.get('retry-after')) * 1000 || 10_000 * (i + 1);
+    console.error(`Wikidata ${r.status}, retrying in ${Math.round(wait / 1000)}s`);
+    await sleep(wait);
   }
   throw new Error('Wikidata kept failing');
 }
@@ -31,7 +33,9 @@ const qid = (uri) => uri.split('/').pop();
 
 // Exchange → price-feed suffix. US listings carry no suffix; Hong Kong codes are four digits.
 const EXCHANGES = [
-  [/new york stock exchange|nasdaq/i, ''],
+  // US Nasdaq only: "Nasdaq Stockholm", "Nasdaq Copenhagen" and the like are matched further down.
+  [/new york stock exchange|^nasdaq( stock market)?$/i, ''],
+  [/nasdaq copenhagen/i, '.CO'], [/nasdaq helsinki/i, '.HE'],
   [/euronext paris/i, '.PA'], [/euronext amsterdam/i, '.AS'], [/euronext brussels/i, '.BR'], [/euronext milan|borsa italiana/i, '.MI'],
   [/national stock exchange of india/i, '.NS'], [/bombay stock exchange|bse/i, '.BO'],
   [/hong kong/i, '.HK'], [/tokyo stock exchange/i, '.T'], [/shenzhen/i, '.SZ'], [/shanghai stock exchange/i, '.SS'],
@@ -50,17 +54,24 @@ function symbolFor(ticker, exchange) {
   return null;
 }
 
-const BUSINESS = /company|business|enterprise|conglomerate|corporation|holding|bank|brand|retail|manufacturer|exchange|group|firm|subsidiary|chain|airline|operator|producer|studio|marketplace|platform|startup|maker|fund/i;
-const NOT = /foundation|charity|nonprofit|non-profit|team|club|newspaper|magazine|university|school|award|family|band|film|television series|video game|album|song|website$/i;
+// Products and services ("cloud computing platform") and industries ("type of business") aren't companies.
+const BUSINESS = /company|business|enterprise|conglomerate|corporation|holding|bank|retail|manufacturer|exchange|group|firm|subsidiary|chain|airline|operator|producer|studio|startup|maker|fund/i;
+const NOT = /foundation|charity|nonprofit|non-profit|team|club|newspaper|magazine|university|school|award|family|band|film|television series|video game|album|song|website$|type of|industry|economic (sector|activity)|field of|profession|occupation|commodit|food|confection|rock$|mineral|sector$/i;
+// A company counts when at least one of its types is a company type (Amazon is also a "web service"; that's fine).
+const isCompany = (types) => [...types].some((t) => BUSINESS.test(t) && !NOT.test(t));
 
 const env = process.env;
 const url = env.EXPO_PUBLIC_SUPABASE_URL;
 const key = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const res = await fetch(`${url}/rest/v1/people?select=slug,name,main_source,wikidata_id&order=forbes_rank`, { headers: { apikey: key } });
 const people = await res.json();
+const known = new Set((await (await fetch(`${url}/rest/v1/companies?select=wikidata_id&wikidata_id=not.is.null`, { headers: { apikey: key } })).json()).map((c) => c.wikidata_id));
 console.error(`${people.length} people, ${people.filter((p) => p.wikidata_id).length} with a Wikidata item`);
 
-const sourceParts = (s) => (s ?? '').split(/,|&|\band\b|\//).map((x) => x.trim()).filter((x) => x.length > 1);
+// "Koch, Inc." is one name: legal suffixes stay attached instead of becoming parts of their own.
+const SUFFIX = /^(inc|ltd|llc|corp|co|plc|sa|ag|nv|se|lp)\.?$/i;
+const sourceParts = (s) =>
+  (s ?? '').split(/,|&|\band\b|\//).map((x) => x.trim()).filter((x) => x.length > 1 && !SUFFIX.test(x));
 const matchesSource = (label, source) => {
   const l = norm(label);
   return sourceParts(source).some((part) => {
@@ -69,68 +80,118 @@ const matchesSource = (label, source) => {
   });
 };
 
-// 1. Relations, 40 people per query.
+// Labels come from the entity API (50 ids a call); asking SPARQL for labels made the queries time out.
+const labelCache = new Map();
+async function labels(ids) {
+  const want = [...new Set(ids)].filter((id) => !labelCache.has(id));
+  for (let i = 0; i < want.length; i += 50) {
+    const batch = want.slice(i, i + 50);
+    let body = null;
+    for (let t = 0; t < 5 && !body; t++) {
+      const r = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${batch.join('|')}&props=labels&languages=en&format=json`, { headers: { 'User-Agent': UA } });
+      if (r.ok) body = await r.json();
+      else await sleep(Number(r.headers.get('retry-after')) * 1000 || 5000 * (t + 1));
+    }
+    if (!body) throw new Error('Wikidata labels kept failing'); // never silently drop companies
+    for (const id of batch) labelCache.set(id, body.entities?.[id]?.labels?.en?.value ?? null);
+    await sleep(300);
+  }
+  return (id) => labelCache.get(id) ?? null;
+}
+
+// 1. Relations, 10 people per query, ids only.
 const found = new Map(); // slug -> companies
 const withQ = people.filter((p) => p.wikidata_id);
-for (let i = 0; i < withQ.length; i += 40) {
-  const batch = withQ.slice(i, i + 40);
-  const rows = await sparql(`SELECT ?person ?co ?coLabel ?rel ?ticker ?exLabel (GROUP_CONCAT(DISTINCT ?typeLabel; separator="|") AS ?types) WHERE {
+for (let i = 0; i < withQ.length; i += 10) {
+  const batch = withQ.slice(i, i + 10);
+  const rows = await sparql(`SELECT ?person ?co ?rel ?type ?ticker ?ex ?parent WHERE {
     VALUES ?person { ${batch.map((p) => `wd:${p.wikidata_id}`).join(' ')} }
     { ?co wdt:P112 ?person . BIND("founder" AS ?rel) } UNION { ?co wdt:P127 ?person . BIND("owner" AS ?rel) } UNION { ?person wdt:P1830 ?co . BIND("owner" AS ?rel) }
-    ?co wdt:P31 ?type . ?type rdfs:label ?typeLabel . FILTER(LANG(?typeLabel) = "en")
-    OPTIONAL { ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker . FILTER NOT EXISTS { ?st pq:P582 ?ended } ?ex rdfs:label ?exLabel . FILTER(LANG(?exLabel) = "en") }
-    ?co rdfs:label ?coLabel . FILTER(LANG(?coLabel) = "en")
-  } GROUP BY ?person ?co ?coLabel ?rel ?ticker ?exLabel`);
+    OPTIONAL { ?co wdt:P31 ?type }
+    OPTIONAL { ?co wdt:P749 ?parent }
+    OPTIONAL { ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker . FILTER NOT EXISTS { ?st pq:P582 ?ended } }
+  }`);
+  const label = await labels(rows.flatMap((r) => [qid(r.co.value), r.type && qid(r.type.value), r.ex && qid(r.ex.value)].filter(Boolean)));
   for (const p of batch) {
-    const mine = rows.filter((r) => qid(r.person.value) === p.wikidata_id);
     const byCo = new Map();
-    for (const r of mine) {
-      const types = r.types?.value ?? '';
-      if (!BUSINESS.test(types) || NOT.test(types)) continue;
+    for (const r of rows.filter((x) => qid(x.person.value) === p.wikidata_id)) {
       const id = qid(r.co.value);
-      const c = byCo.get(id) ?? { qid: id, name: r.coLabel.value, rel: r.rel.value, listings: [] };
-      if (r.ticker && r.exLabel) {
-        const sym = symbolFor(r.ticker.value, r.exLabel.value);
-        if (sym) c.listings.push({ ticker: r.ticker.value, exchange: r.exLabel.value, symbol: sym });
+      const name = label(id);
+      if (!name) continue;
+      const c = byCo.get(id) ?? { qid: id, name, rel: r.rel.value, types: new Set(), listings: [], parents: new Set() };
+      if (r.type) c.types.add(label(qid(r.type.value)) ?? '');
+      if (r.parent) c.parents.add(qid(r.parent.value));
+      if (r.ticker && r.ex) {
+        const sym = symbolFor(r.ticker.value, label(qid(r.ex.value)) ?? '');
+        if (sym && !c.listings.some((l) => l.symbol === sym)) c.listings.push({ ticker: r.ticker.value, exchange: label(qid(r.ex.value)), symbol: sym });
       }
       if (r.rel.value === 'founder') c.rel = 'founder';
       byCo.set(id, c);
     }
-    const kept = [...byCo.values()]
+    const companies = [...byCo.values()].filter((c) => isCompany(c.types));
+    // A subsidiary whose parent is also theirs (Google under Alphabet) counts once, as the parent. Among names sharing
+    // a first word ("Oracle Corporation" / "Oracle Cloud", "Dell Technologies" / "Dell") one is kept: a company already
+    // in the database first, then one with a listing, then the shorter name.
+    const ids = new Set(companies.map((c) => c.qid));
+    const first = (n) => norm(n).split(' ')[0];
+    const score = (x) => [Number(known.has(x.qid)), x.listings.length, -x.name.length];
+    const prefer = (x, y) => {
+      const [a, b] = [score(x), score(y)];
+      const i = a.findIndex((v, k) => v !== b[k]);
+      return i < 0 ? 0 : a[i] - b[i];
+    };
+    const best = new Map();
+    for (const c of companies.filter((c) => ![...c.parents].some((pq) => ids.has(pq)))) {
+      const b = best.get(first(c.name));
+      if (!b || prefer(c, b) > 0) best.set(first(c.name), c);
+    }
+    const kept = [...best.values()]
       .map((c) => ({ ...c, source: matchesSource(c.name, p.main_source) }))
       .filter((c) => c.source || c.listings.length)
       .sort((a, b) => Number(b.source) - Number(a.source) || b.listings.length - a.listings.length)
       .slice(0, 3);
     if (kept.length) found.set(p.slug, kept);
   }
-  console.error(`relations: ${Math.min(i + 40, withQ.length)}/${withQ.length}`);
-  await sleep(1500);
+  console.error(`relations: ${Math.min(i + 10, withQ.length)}/${withQ.length}`);
+  await sleep(1000);
 }
 
-// 2. Exact-name fallback from the Forbes source.
+// 2. Exact-name fallback from the Forbes source: a business item whose English name is that part of the source.
+// Only proper names: ordinary words ("Candy", "Coal", "Real Estate") are also names of unrelated companies.
+const dictionary = new Set(existsSync('/usr/share/dict/words') ? readFileSync('/usr/share/dict/words', 'utf8').split('\n').map((w) => w.toLowerCase()) : []);
+const SECTOR = /^(biotech|fintech|investments?|retail|mining|real estate|hedge funds?|private equity|software|semiconductors?|pharmaceuticals?|diversified|shipping|steel|oil|gas|energy|media|telecom|cryptocurrency|banking)$/i;
+const word = (w) => dictionary.has(w) || (w.endsWith('s') && dictionary.has(w.slice(0, -1))); // "Sensors" too
+const properName = (n) => !SECTOR.test(n) && !n.toLowerCase().split(/\s+/).every(word);
 const missing = people.filter((p) => !found.has(p.slug));
-const names = [...new Set(missing.flatMap((p) => sourceParts(p.main_source)))].filter((n) => /^[A-Z0-9]/.test(n) && n.split(' ').length <= 4);
-for (let i = 0; i < names.length; i += 60) {
-  const batch = names.slice(i, i + 60);
-  const rows = await sparql(`SELECT ?name ?co ?coLabel ?ticker ?exLabel WHERE {
+const names = [...new Set(missing.flatMap((p) => sourceParts(p.main_source)))].filter((n) => /^[A-Z0-9]/.test(n) && n.split(' ').length <= 4 && properName(n));
+for (let i = 0; i < names.length; i += 20) {
+  const batch = names.slice(i, i + 20);
+  const rows = await sparql(`SELECT ?name ?co ?type ?ticker ?ex WHERE {
     VALUES ?name { ${batch.map((n) => `${JSON.stringify(n)}@en`).join(' ')} }
-    ?co rdfs:label ?name ; wdt:P31/wdt:P279* wd:Q4830453 .
-    OPTIONAL { ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker . FILTER NOT EXISTS { ?st pq:P582 ?ended } ?ex rdfs:label ?exLabel . FILTER(LANG(?exLabel) = "en") }
-    ?co rdfs:label ?coLabel . FILTER(LANG(?coLabel) = "en")
+    ?co rdfs:label ?name ; wdt:P31 ?type .
+    OPTIONAL { ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker . FILTER NOT EXISTS { ?st pq:P582 ?ended } }
   }`);
+  const label = await labels(rows.flatMap((r) => [qid(r.type.value), r.ex && qid(r.ex.value)].filter(Boolean)));
+  // Keep only items whose type reads as a business.
+  const business = rows.filter((r) => isCompany([label(qid(r.type.value)) ?? '']));
   for (const p of missing) {
     for (const part of sourceParts(p.main_source)) {
-      const hits = [...new Set(rows.filter((r) => r.name.value === part).map((r) => qid(r.co.value)))];
+      const hits = [...new Set(business.filter((r) => r.name.value === part).map((r) => qid(r.co.value)))];
       if (hits.length !== 1) continue; // ambiguous or unknown names are left for an admin
       const rs = rows.filter((r) => qid(r.co.value) === hits[0]);
-      const listings = rs.flatMap((r) => (r.ticker && r.exLabel ? [{ ticker: r.ticker.value, exchange: r.exLabel.value, symbol: symbolFor(r.ticker.value, r.exLabel.value) }] : [])).filter((l) => l.symbol);
+      const listings = [];
+      for (const r of rs) {
+        if (!r.ticker || !r.ex) continue;
+        const sym = symbolFor(r.ticker.value, label(qid(r.ex.value)) ?? '');
+        if (sym && !listings.some((l) => l.symbol === sym)) listings.push({ ticker: r.ticker.value, exchange: label(qid(r.ex.value)), symbol: sym });
+      }
       const list = found.get(p.slug) ?? [];
-      if (!list.some((c) => c.qid === hits[0])) list.push({ qid: hits[0], name: rs[0].coLabel.value, rel: 'source', listings, source: true });
+      if (!list.some((c) => c.qid === hits[0])) list.push({ qid: hits[0], name: part, rel: 'source', listings, source: true });
       found.set(p.slug, list.slice(0, 3));
     }
   }
-  console.error(`source names: ${Math.min(i + 60, names.length)}/${names.length}`);
-  await sleep(1500);
+  console.error(`source names: ${Math.min(i + 20, names.length)}/${names.length}`);
+  await sleep(1000);
 }
 
 // 3. Keep one price symbol per company that the feed actually answers for (US listing first).
@@ -140,8 +201,13 @@ const candidates = [...companies.values()].flatMap((c) => c.listings.map((l) => 
 const live = new Set();
 for (let i = 0; i < candidates.length; i += 20) {
   const syms = [...new Set(candidates.slice(i, i + 20))];
-  const r = await fetch(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${syms.map(encodeURIComponent).join(',')}&range=1d&interval=1d`, { headers: { 'User-Agent': BROWSER } });
-  const body = r.ok ? await r.json() : null;
+  let body = null;
+  for (let t = 0; t < 4 && !body; t++) {
+    const r = await fetch(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${syms.map(encodeURIComponent).join(',')}&range=1d&interval=1d`, { headers: { 'User-Agent': BROWSER } });
+    if (r.ok) body = await r.json();
+    else await sleep(4000 * (t + 1));
+  }
+  if (!body) throw new Error('Price feed kept failing');
   for (const s of body?.spark?.result ?? []) if (s.response?.[0]?.meta?.regularMarketPrice) live.add(s.symbol);
   await sleep(400);
 }

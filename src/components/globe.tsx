@@ -5,7 +5,7 @@
 import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, PanResponder, View } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path, Text as SvgText } from 'react-native-svg';
 
 import { countryShape, land, type LatLng } from '@/lib/geo';
 import type { SiteKind } from '@/lib/world';
@@ -247,7 +247,18 @@ export function Globe({
             <SvgImage href={m.uri} x={x - d / 2} y={y - d / 2} width={d} height={d} preserveAspectRatio="xMidYMin slice" clipPath={`url(#clip-${m.key})`} />
           </>
         ) : (
-          <Circle cx={x} cy={y} r={d / 2} fill={color.fill} />
+          // No free portrait: initials, as everywhere else in the app.
+          <>
+            <Circle cx={x} cy={y} r={d / 2} fill={color.fill} />
+            <SvgText x={x} y={y + d * 0.13} fontSize={d * 0.36} fontWeight="600" fill={color.textSecondary} textAnchor="middle">
+              {m.label
+                .replace(/ & family$/, '')
+                .split(/\s+/)
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join('')}
+            </SvgText>
+          </>
         )}
       </G>
     );
