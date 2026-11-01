@@ -1,0 +1,3002 @@
+[
+ {
+  "uri": "elon-musk",
+  "rank": 1,
+  "finalWorth": 868490.476,
+  "finalWorthBillions": 868.4904760000001,
+  "personName": "Elon Musk",
+  "source": "Tesla, SpaceX",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jeff-bezos",
+  "rank": 2,
+  "finalWorth": 361312.109,
+  "finalWorthBillions": 361.312109,
+  "personName": "Jeff Bezos",
+  "source": "Amazon",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "larry-page",
+  "rank": 3,
+  "finalWorth": 232736.2,
+  "finalWorthBillions": 232.73620000000003,
+  "personName": "Larry Page",
+  "source": "Google",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-dell",
+  "rank": 4,
+  "finalWorth": 228452.073,
+  "finalWorthBillions": 228.452073,
+  "personName": "Michael Dell",
+  "source": "Dell Technologies",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sergey-brin",
+  "rank": 5,
+  "finalWorth": 214274.89,
+  "finalWorthBillions": 214.27489000000003,
+  "personName": "Sergey Brin",
+  "source": "Google",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mark-zuckerberg",
+  "rank": 6,
+  "finalWorth": 211381.288,
+  "finalWorthBillions": 211.381288,
+  "personName": "Mark Zuckerberg",
+  "source": "Facebook",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jensen-huang",
+  "rank": 7,
+  "finalWorth": 177493.555,
+  "finalWorthBillions": 177.493555,
+  "personName": "Jensen Huang",
+  "source": "Nvidia",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "larry-ellison",
+  "rank": 8,
+  "finalWorth": 171578.052,
+  "finalWorthBillions": 171.57805199999999,
+  "personName": "Larry Ellison",
+  "source": "Oracle",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "steve-ballmer",
+  "rank": 9,
+  "finalWorth": 161692.638,
+  "finalWorthBillions": 161.69263800000002,
+  "personName": "Steve Ballmer",
+  "source": "Microsoft",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "warren-buffett",
+  "rank": 10,
+  "finalWorth": 154425.454,
+  "finalWorthBillions": 154.425454,
+  "personName": "Warren Buffett",
+  "source": "Berkshire Hathaway",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "rob-walton",
+  "rank": 11,
+  "finalWorth": 146371.562,
+  "finalWorthBillions": 146.371562,
+  "personName": "Rob Walton & family",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "amancio-ortega",
+  "rank": 12,
+  "finalWorth": 145033.679,
+  "finalWorthBillions": 145.033679,
+  "personName": "Amancio Ortega",
+  "source": "Zara",
+  "countryOfCitizenship": "Spain",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jim-walton",
+  "rank": 13,
+  "finalWorth": 143148.075,
+  "finalWorthBillions": 143.148075,
+  "personName": "Jim Walton & family",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alice-walton",
+  "rank": 14,
+  "finalWorth": 132624.471,
+  "finalWorthBillions": 132.624471,
+  "personName": "Alice Walton",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "carlos-slim-helu",
+  "rank": 15,
+  "finalWorth": 122073.356,
+  "finalWorthBillions": 122.073356,
+  "personName": "Carlos Slim Helu & family",
+  "source": "Telecom",
+  "countryOfCitizenship": "Mexico",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "bill-gates",
+  "rank": 16,
+  "finalWorth": 120378.341,
+  "finalWorthBillions": 120.378341,
+  "personName": "Bill Gates",
+  "source": "Microsoft",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "bernard-arnault",
+  "rank": 17,
+  "finalWorth": 117380.848,
+  "finalWorthBillions": 117.380848,
+  "personName": "Bernard Arnault & family",
+  "source": "LVMH",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "changpeng-zhao",
+  "rank": 18,
+  "finalWorth": 114611.309,
+  "finalWorthBillions": 114.61130899999999,
+  "personName": "Changpeng Zhao",
+  "source": "Cryptocurrency exchange",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "francoise-bettencourt-meyers",
+  "rank": 19,
+  "finalWorth": 102882.818,
+  "finalWorthBillions": 102.882818,
+  "personName": "Francoise Bettencourt Meyers & family",
+  "source": "L'Oréal",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-bloomberg",
+  "rank": 20,
+  "finalWorth": 94920,
+  "finalWorthBillions": 94.92,
+  "personName": "Michael Bloomberg",
+  "source": "Bloomberg LP",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "thomas-peterffy",
+  "rank": 21,
+  "finalWorth": 89982.612,
+  "finalWorthBillions": 89.98261199999999,
+  "personName": "Thomas Peterffy",
+  "source": "Discount brokerage",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "giancarlo-devasini",
+  "rank": 22,
+  "finalWorth": 89300,
+  "finalWorthBillions": 89.3,
+  "personName": "Giancarlo Devasini",
+  "source": "Cryptocurrency",
+  "countryOfCitizenship": "Italy",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "julia-koch",
+  "rank": 23,
+  "finalWorth": 84627,
+  "finalWorthBillions": 84.627,
+  "personName": "Julia Koch & family",
+  "source": "Koch, Inc.",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhang-yiming",
+  "rank": 24,
+  "finalWorth": 84000,
+  "finalWorthBillions": 84,
+  "personName": "Zhang Yiming",
+  "source": "TikTok",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mukesh-ambani",
+  "rank": 25,
+  "finalWorth": 80276.076,
+  "finalWorthBillions": 80.276076,
+  "personName": "Mukesh Ambani",
+  "source": "Diversified",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jeff-yass",
+  "rank": 26,
+  "finalWorth": 77790,
+  "finalWorthBillions": 77.79,
+  "personName": "Jeff Yass",
+  "source": "Trading, investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gautam-adani-1",
+  "rank": 27,
+  "finalWorth": 77718.717,
+  "finalWorthBillions": 77.718717,
+  "personName": "Gautam Adani",
+  "source": "Infrastructure, commodities",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "charles-koch",
+  "rank": 28,
+  "finalWorth": 76942,
+  "finalWorthBillions": 76.942,
+  "personName": "Charles Koch & family",
+  "source": "Koch, Inc.",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "tadashi-yanai",
+  "rank": 29,
+  "finalWorth": 65496.844,
+  "finalWorthBillions": 65.496844,
+  "personName": "Tadashi Yanai & family",
+  "source": "Fashion retail",
+  "countryOfCitizenship": "Japan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "german-larrea-mota-velasco",
+  "rank": 30,
+  "finalWorth": 62995.829,
+  "finalWorthBillions": 62.995829,
+  "personName": "Germán Larrea Mota Velasco & family",
+  "source": "Mining",
+  "countryOfCitizenship": "Mexico",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhong-shanshan",
+  "rank": 31,
+  "finalWorth": 61354.204,
+  "finalWorthBillions": 61.354203999999996,
+  "personName": "Zhong Shanshan",
+  "source": "Beverages, pharmaceuticals",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dieter-schwarz",
+  "rank": 32,
+  "finalWorth": 59831.021,
+  "finalWorthBillions": 59.831021,
+  "personName": "Dieter Schwarz",
+  "source": "Retail",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ken-griffin",
+  "rank": 33,
+  "finalWorth": 56704.123,
+  "finalWorthBillions": 56.704123,
+  "personName": "Ken Griffin",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "masayoshi-son",
+  "rank": 34,
+  "finalWorth": 55446.233,
+  "finalWorthBillions": 55.446233,
+  "personName": "Masayoshi Son",
+  "source": "Telecom, Investments",
+  "countryOfCitizenship": "Japan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "aliko-dangote",
+  "rank": 35,
+  "finalWorth": 55389.506,
+  "finalWorthBillions": 55.389506000000004,
+  "personName": "Aliko Dangote",
+  "source": "Cement, sugar",
+  "countryOfCitizenship": "Nigeria",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jacqueline-mars",
+  "rank": 36,
+  "finalWorth": 50348,
+  "finalWorthBillions": 50.348,
+  "personName": "Jacqueline Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-mars",
+  "rank": 36,
+  "finalWorth": 50348,
+  "finalWorthBillions": 50.348,
+  "personName": "John Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lukas-walton",
+  "rank": 38,
+  "finalWorth": 49085.402,
+  "finalWorthBillions": 49.085402,
+  "personName": "Lukas Walton",
+  "source": "Walmart ",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "li-ka-shing",
+  "rank": 39,
+  "finalWorth": 48978.341,
+  "finalWorthBillions": 48.978341,
+  "personName": "Li Ka-shing",
+  "source": "Diversified",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gianluigi-aponte",
+  "rank": 40,
+  "finalWorth": 46498.818,
+  "finalWorthBillions": 46.498818,
+  "personName": "Gianluigi Aponte",
+  "source": "Shipping",
+  "countryOfCitizenship": "Switzerland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "rafaela-aponte-diamant",
+  "rank": 40,
+  "finalWorth": 46498.818,
+  "finalWorthBillions": 46.498818,
+  "personName": "Rafaela Aponte-Diamant",
+  "source": "Shipping",
+  "countryOfCitizenship": "Switzerland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "liang-wenfeng",
+  "rank": 42,
+  "finalWorth": 46250.721,
+  "finalWorthBillions": 46.250721,
+  "personName": "Liang Wenfeng",
+  "source": "AI, hedge fund",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "giovanni-ferrero",
+  "rank": 43,
+  "finalWorth": 46096.227,
+  "finalWorthBillions": 46.096227,
+  "personName": "Giovanni Ferrero",
+  "source": "Nutella, chocolates",
+  "countryOfCitizenship": "Italy",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mark-mateschitz",
+  "rank": 44,
+  "finalWorth": 43292.029,
+  "finalWorthBillions": 43.292029,
+  "personName": "Mark Mateschitz",
+  "source": "Red Bull",
+  "countryOfCitizenship": "Austria",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ma-huateng",
+  "rank": 45,
+  "finalWorth": 42262.258,
+  "finalWorthBillions": 42.262258,
+  "personName": "Ma Huateng",
+  "source": "Online games",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stephen-schwarzman",
+  "rank": 46,
+  "finalWorth": 42124.279,
+  "finalWorthBillions": 42.124279,
+  "personName": "Stephen Schwarzman",
+  "source": "Investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "iris-fontbona",
+  "rank": 47,
+  "finalWorth": 41720.825,
+  "finalWorthBillions": 41.720825,
+  "personName": "Iris Fontbona & family",
+  "source": "Mining",
+  "countryOfCitizenship": "Chile",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "abigail-johnson",
+  "rank": 48,
+  "finalWorth": 41635.256,
+  "finalWorthBillions": 41.635256,
+  "personName": "Abigail Johnson",
+  "source": "Fidelity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "andrea-pignataro",
+  "rank": 49,
+  "finalWorth": 40301.965,
+  "finalWorthBillions": 40.301964999999996,
+  "personName": "Andrea Pignataro",
+  "source": "Financial software",
+  "countryOfCitizenship": "Italy",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alain-wertheimer",
+  "rank": 50,
+  "finalWorth": 39397.16,
+  "finalWorthBillions": 39.39716000000001,
+  "personName": "Alain Wertheimer",
+  "source": "Chanel",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gerard-wertheimer-1",
+  "rank": 50,
+  "finalWorth": 39397.16,
+  "finalWorthBillions": 39.39716000000001,
+  "personName": "Gerard Wertheimer",
+  "source": "Chanel",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robin-zeng",
+  "rank": 52,
+  "finalWorth": 39264.803,
+  "finalWorthBillions": 39.264803,
+  "personName": "Robin Zeng",
+  "source": "Batteries",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "he-xiangjian",
+  "rank": 53,
+  "finalWorth": 38708.157,
+  "finalWorthBillions": 38.708157,
+  "personName": "He Xiangjian & family",
+  "source": "Home appliances",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "william-ding",
+  "rank": 54,
+  "finalWorth": 38649.964,
+  "finalWorthBillions": 38.649964,
+  "personName": "William Ding",
+  "source": "Online games",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "thomas-frist-jr",
+  "rank": 55,
+  "finalWorth": 38411.575,
+  "finalWorthBillions": 38.411575,
+  "personName": "Thomas Frist Jr & family",
+  "source": "Hospitals",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jean-louis-van-der-velde",
+  "rank": 56,
+  "finalWorth": 38000,
+  "finalWorthBillions": 38,
+  "personName": "Jean-Louis van der Velde",
+  "source": "Cryptocurrency",
+  "countryOfCitizenship": "Netherlands",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "paolo-ardoino",
+  "rank": 56,
+  "finalWorth": 38000,
+  "finalWorthBillions": 38,
+  "personName": "Paolo Ardoino",
+  "source": "Cryptocurrency",
+  "countryOfCitizenship": "Italy",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "savitri-jindal",
+  "rank": 58,
+  "finalWorth": 37841.548,
+  "finalWorthBillions": 37.841548,
+  "personName": "Savitri Jindal & family",
+  "source": "Steel",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "pham-nhat-vuong",
+  "rank": 59,
+  "finalWorth": 37758.959,
+  "finalWorthBillions": 37.758959000000004,
+  "personName": "Pham Nhat Vuong",
+  "source": "Diversified",
+  "countryOfCitizenship": "Vietnam",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alexey-mordashov",
+  "rank": 60,
+  "finalWorth": 36907.045,
+  "finalWorthBillions": 36.907045,
+  "personName": "Alexey Mordashov & family",
+  "source": "Steel, investments",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "marilyn-simons",
+  "rank": 61,
+  "finalWorth": 36573.1,
+  "finalWorthBillions": 36.5731,
+  "personName": "Marilyn Simons & family",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "len-blavatnik",
+  "rank": 62,
+  "finalWorth": 35344.9,
+  "finalWorthBillions": 35.3449,
+  "personName": "Len Blavatnik",
+  "source": "Music, chemicals",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "peter-thiel",
+  "rank": 63,
+  "finalWorth": 35333.96,
+  "finalWorthBillions": 35.33396,
+  "personName": "Peter Thiel",
+  "source": "Facebook, investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "melinda-french-gates",
+  "rank": 64,
+  "finalWorth": 34496.916,
+  "finalWorthBillions": 34.496916,
+  "personName": "Melinda French Gates",
+  "source": "Microsoft",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "idan-ofer",
+  "rank": 65,
+  "finalWorth": 34437.502,
+  "finalWorthBillions": 34.437502,
+  "personName": "Idan Ofer",
+  "source": "Shipping",
+  "countryOfCitizenship": "Israel",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "andreas-von-bechtolsheim",
+  "rank": 66,
+  "finalWorth": 34325.06,
+  "finalWorthBillions": 34.32506,
+  "personName": "Andreas von Bechtolsheim & family",
+  "source": "Google",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "eduardo-saverin",
+  "rank": 67,
+  "finalWorth": 34206.867,
+  "finalWorthBillions": 34.206866999999995,
+  "personName": "Eduardo Saverin",
+  "source": "Facebook",
+  "countryOfCitizenship": "Brazil",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "eyal-ofer",
+  "rank": 68,
+  "finalWorth": 33264.665,
+  "finalWorthBillions": 33.264665,
+  "personName": "Eyal Ofer",
+  "source": "Real estate, shipping",
+  "countryOfCitizenship": "Israel",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "eric-schmidt",
+  "rank": 69,
+  "finalWorth": 32913.952,
+  "finalWorthBillions": 32.913951999999995,
+  "personName": "Eric Schmidt",
+  "source": "Google",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "elaine-marshall",
+  "rank": 70,
+  "finalWorth": 32239,
+  "finalWorthBillions": 32.239,
+  "personName": "Elaine Marshall & family",
+  "source": "Koch, Inc.",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "shiv-nadar",
+  "rank": 71,
+  "finalWorth": 31376.329,
+  "finalWorthBillions": 31.376329000000002,
+  "personName": "Shiv Nadar",
+  "source": "Software services",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "henry-samueli",
+  "rank": 72,
+  "finalWorth": 31163.206,
+  "finalWorthBillions": 31.163206,
+  "personName": "Henry Samueli",
+  "source": "Semiconductors",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lyndal-stephens-greth",
+  "rank": 73,
+  "finalWorth": 30957.467,
+  "finalWorthBillions": 30.957467,
+  "personName": "Lyndal Stephens Greth & family",
+  "source": "Oil & gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "miriam-adelson",
+  "rank": 74,
+  "finalWorth": 30628.465,
+  "finalWorthBillions": 30.628465,
+  "personName": "Miriam Adelson & family",
+  "source": "Casinos",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "vladimir-potanin",
+  "rank": 75,
+  "finalWorth": 29740.299,
+  "finalWorthBillions": 29.740299,
+  "personName": "Vladimir Potanin",
+  "source": "Metals",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jay-y-lee",
+  "rank": 76,
+  "finalWorth": 29633.211,
+  "finalWorthBillions": 29.633211,
+  "personName": "Jay Y. Lee",
+  "source": "Samsung",
+  "countryOfCitizenship": "South Korea",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robert-pera",
+  "rank": 77,
+  "finalWorth": 29624.85,
+  "finalWorthBillions": 29.62485,
+  "personName": "Robert Pera",
+  "source": "Wireless networking",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "vagit-alekperov",
+  "rank": 78,
+  "finalWorth": 29475.064,
+  "finalWorthBillions": 29.475064,
+  "personName": "Vagit Alekperov",
+  "source": "Oil",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lakshmi-mittal",
+  "rank": 79,
+  "finalWorth": 29229.659,
+  "finalWorthBillions": 29.229658999999998,
+  "personName": "Lakshmi Mittal",
+  "source": "Steel",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-tepper",
+  "rank": 80,
+  "finalWorth": 28504,
+  "finalWorthBillions": 28.504,
+  "personName": "David Tepper",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "leonid-mikhelson",
+  "rank": 81,
+  "finalWorth": 28301.37,
+  "finalWorthBillions": 28.30137,
+  "personName": "Leonid Mikhelson & family",
+  "source": "Gas, chemicals",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "reinhold-wuerth",
+  "rank": 82,
+  "finalWorth": 28293.717,
+  "finalWorthBillions": 28.293717,
+  "personName": "Reinhold Wuerth & family",
+  "source": "Fasteners",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "cyrus-poonawalla",
+  "rank": 83,
+  "finalWorth": 28100.793,
+  "finalWorthBillions": 28.100793000000003,
+  "personName": "Cyrus Poonawalla",
+  "source": "Vaccines",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "colin-huang",
+  "rank": 84,
+  "finalWorth": 27704.994,
+  "finalWorthBillions": 27.704994,
+  "personName": "Colin Huang",
+  "source": "E-commerce",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-tu",
+  "rank": 85,
+  "finalWorth": 27640.613,
+  "finalWorthBillions": 27.640613000000002,
+  "personName": "John Tu",
+  "source": "Computer hardware",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-sun",
+  "rank": 86,
+  "finalWorth": 27620.135,
+  "finalWorthBillions": 27.620134999999998,
+  "personName": "David Sun",
+  "source": "Computer hardware",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stanley-kroenke",
+  "rank": 87,
+  "finalWorth": 27588.8,
+  "finalWorthBillions": 27.5888,
+  "personName": "Stanley Kroenke",
+  "source": "Sports, real estate",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "israel-englander",
+  "rank": 88,
+  "finalWorth": 27555.932,
+  "finalWorthBillions": 27.555932000000002,
+  "personName": "Israel Englander",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mackenzie-scott",
+  "rank": 89,
+  "finalWorth": 26673.23,
+  "finalWorthBillions": 26.67323,
+  "personName": "MacKenzie Scott",
+  "source": "Amazon",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "steve-cohen",
+  "rank": 90,
+  "finalWorth": 26668.105,
+  "finalWorthBillions": 26.668105,
+  "personName": "Steve Cohen",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "phil-knight",
+  "rank": 91,
+  "finalWorth": 25898.5,
+  "finalWorthBillions": 25.8985,
+  "personName": "Phil Knight & family",
+  "source": "Nike",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "suleiman-kerimov-family",
+  "rank": 92,
+  "finalWorth": 25662.204,
+  "finalWorthBillions": 25.662204000000003,
+  "personName": "Suleiman Kerimov & family",
+  "source": "Gold",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "vladimir-lisin",
+  "rank": 93,
+  "finalWorth": 25532.466,
+  "finalWorthBillions": 25.532466,
+  "personName": "Vladimir Lisin",
+  "source": "Steel, transport",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "greg-brockman",
+  "rank": 94,
+  "finalWorth": 25486,
+  "finalWorthBillions": 25.486,
+  "personName": "Greg Brockman",
+  "source": "OpenAI",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "emmanuel-besnier",
+  "rank": 95,
+  "finalWorth": 25366.191,
+  "finalWorthBillions": 25.366191,
+  "personName": "Emmanuel Besnier",
+  "source": "Cheese",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dilip-shanghvi",
+  "rank": 96,
+  "finalWorth": 25188.563,
+  "finalWorthBillions": 25.188563,
+  "personName": "Dilip Shanghvi",
+  "source": "Pharmaceuticals",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gina-rinehart",
+  "rank": 97,
+  "finalWorth": 25144.664,
+  "finalWorthBillions": 25.144664000000002,
+  "personName": "Gina Rinehart",
+  "source": "Mining",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jack-ma",
+  "rank": 98,
+  "finalWorth": 25111.257,
+  "finalWorthBillions": 25.111257000000002,
+  "personName": "Jack Ma",
+  "source": "E-commerce",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "rupert-murdoch",
+  "rank": 99,
+  "finalWorth": 24957.364,
+  "finalWorthBillions": 24.957364000000002,
+  "personName": "Rupert Murdoch & family",
+  "source": "Newspapers, TV network",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stuart-hoegner",
+  "rank": 100,
+  "finalWorth": 24700,
+  "finalWorthBillions": 24.7,
+  "personName": "Stuart Hoegner",
+  "source": "Cryptocurrency",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "vinod-adani",
+  "rank": 101,
+  "finalWorth": 24432.081,
+  "finalWorthBillions": 24.432080999999997,
+  "personName": "Vinod Adani",
+  "source": "Infrastructure, commodities",
+  "countryOfCitizenship": "Cyprus",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "christy-walton",
+  "rank": 102,
+  "finalWorth": 24291.855,
+  "finalWorthBillions": 24.291854999999998,
+  "personName": "Christy Walton",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gennady-timchenko",
+  "rank": 103,
+  "finalWorth": 24165.649,
+  "finalWorthBillions": 24.165649000000002,
+  "personName": "Gennady Timchenko",
+  "source": "Oil, gas",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "susanne-klatten",
+  "rank": 104,
+  "finalWorth": 23907.166,
+  "finalWorthBillions": 23.907166,
+  "personName": "Susanne Klatten",
+  "source": "BMW, pharmaceuticals",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "vicky-safra",
+  "rank": 105,
+  "finalWorth": 23790.859,
+  "finalWorthBillions": 23.790859,
+  "personName": "Vicky Safra & family",
+  "source": "Banking",
+  "countryOfCitizenship": "Greece",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "chen-tianshi",
+  "rank": 106,
+  "finalWorth": 23703.367,
+  "finalWorthBillions": 23.703367,
+  "personName": "Chen Tianshi",
+  "source": "Semiconductors",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "diane-hendricks",
+  "rank": 107,
+  "finalWorth": 23578.2,
+  "finalWorthBillions": 23.578200000000002,
+  "personName": "Diane Hendricks",
+  "source": "Building supplies",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zheng-shuliang",
+  "rank": 108,
+  "finalWorth": 23549.848,
+  "finalWorthBillions": 23.549848,
+  "personName": "Zheng Shuliang & family",
+  "source": "Aluminum products",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "takemitsu-takizaki",
+  "rank": 109,
+  "finalWorth": 23500.831,
+  "finalWorthBillions": 23.500830999999998,
+  "personName": "Takemitsu Takizaki",
+  "source": "Sensors",
+  "countryOfCitizenship": "Japan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "prince-alwaleed-bin-talal-alsaud",
+  "rank": 110,
+  "finalWorth": 23437.31,
+  "finalWorthBillions": 23.43731,
+  "personName": "Prince Alwaleed Bin Talal Alsaud",
+  "source": "investments",
+  "countryOfCitizenship": "Saudi Arabia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "brett-adcock",
+  "rank": 111,
+  "finalWorth": 23386.244,
+  "finalWorthBillions": 23.386243999999998,
+  "personName": "Brett Adcock",
+  "source": "Robots",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jerry-jones",
+  "rank": 112,
+  "finalWorth": 23379.567,
+  "finalWorthBillions": 23.379566999999998,
+  "personName": "Jerry Jones & family",
+  "source": "Dallas Cowboys",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-fredriksen",
+  "rank": 113,
+  "finalWorth": 23289.961,
+  "finalWorthBillions": 23.289960999999998,
+  "personName": "John Fredriksen",
+  "source": "Shipping",
+  "countryOfCitizenship": "Cyprus",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "harry-triguboff",
+  "rank": 114,
+  "finalWorth": 23079.001,
+  "finalWorthBillions": 23.079001,
+  "personName": "Harry Triguboff",
+  "source": "Real estate",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stefan-quandt",
+  "rank": 115,
+  "finalWorth": 22990.614,
+  "finalWorthBillions": 22.990614,
+  "personName": "Stefan Quandt",
+  "source": "BMW",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ernest-garcia-ii",
+  "rank": 116,
+  "finalWorth": 22971.929,
+  "finalWorthBillions": 22.971929,
+  "personName": "Ernest Garcia II",
+  "source": "Used cars",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "francois-pinault",
+  "rank": 117,
+  "finalWorth": 22206.859,
+  "finalWorthBillions": 22.206859,
+  "personName": "François Pinault & family",
+  "source": "Luxury goods",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "chen-jianhua",
+  "rank": 118,
+  "finalWorth": 21926.212,
+  "finalWorthBillions": 21.926212,
+  "personName": "Chen Jianhua",
+  "source": "Chemicals",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stefan-persson",
+  "rank": 119,
+  "finalWorth": 21831.026,
+  "finalWorthBillions": 21.831026,
+  "personName": "Stefan Persson",
+  "source": "H&M",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jason-chang",
+  "rank": 120,
+  "finalWorth": 21798.141,
+  "finalWorthBillions": 21.798141,
+  "personName": "Jason Chang",
+  "source": "Semiconductors",
+  "countryOfCitizenship": "Singapore",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "stephen-ross",
+  "rank": 121,
+  "finalWorth": 21508.715,
+  "finalWorthBillions": 21.508715,
+  "personName": "Stephen Ross",
+  "source": "Real estate",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "daniel-gilbert",
+  "rank": 122,
+  "finalWorth": 21443.316,
+  "finalWorthBillions": 21.443316,
+  "personName": "Daniel Gilbert",
+  "source": "Rocket Mortgage",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lei-jun",
+  "rank": 123,
+  "finalWorth": 21309.834,
+  "finalWorthBillions": 21.309834,
+  "personName": "Lei Jun",
+  "source": "Smartphones, automobiles",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "kumar-birla",
+  "rank": 124,
+  "finalWorth": 21215.463,
+  "finalWorthBillions": 21.215463,
+  "personName": "Kumar Birla",
+  "source": "Diversified",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dang-yanbao",
+  "rank": 125,
+  "finalWorth": 21161.673,
+  "finalWorthBillions": 21.161673,
+  "personName": "Dang Yanbao",
+  "source": "Coal",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-platt",
+  "rank": 126,
+  "finalWorth": 20901,
+  "finalWorthBillions": 20.901,
+  "personName": "Michael Platt",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "henry-nicholas-iii",
+  "rank": 127,
+  "finalWorth": 20737.076,
+  "finalWorthBillions": 20.737076000000002,
+  "personName": "Henry Nicholas III",
+  "source": "Semiconductors",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "torstein-hagen",
+  "rank": 128,
+  "finalWorth": 20663.738,
+  "finalWorthBillions": 20.663738000000002,
+  "personName": "Torstein Hagen",
+  "source": "Cruises",
+  "countryOfCitizenship": "Norway",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "wang-chuanfu",
+  "rank": 129,
+  "finalWorth": 20564.522,
+  "finalWorthBillions": 20.564522,
+  "personName": "Wang Chuanfu",
+  "source": "Batteries, automobiles",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "andrey-melnichenko",
+  "rank": 130,
+  "finalWorth": 20422.087,
+  "finalWorthBillions": 20.422087,
+  "personName": "Andrey Melnichenko & family",
+  "source": "Fertilizers, coal",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "todd-graves",
+  "rank": 131,
+  "finalWorth": 19951,
+  "finalWorthBillions": 19.951,
+  "personName": "Todd Graves",
+  "source": "Fast food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-doerr",
+  "rank": 132,
+  "finalWorth": 19902.688,
+  "finalWorthBillions": 19.902687999999998,
+  "personName": "John Doerr",
+  "source": "Venture capital",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "rick-cohen",
+  "rank": 133,
+  "finalWorth": 19894.536,
+  "finalWorthBillions": 19.894536,
+  "personName": "Rick Cohen & family",
+  "source": "Warehouse automation",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "donald-bren",
+  "rank": 134,
+  "finalWorth": 19797.499,
+  "finalWorthBillions": 19.797499,
+  "personName": "Donald Bren",
+  "source": "Real estate",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alexander-karp",
+  "rank": 135,
+  "finalWorth": 19722.723,
+  "finalWorthBillions": 19.722723000000002,
+  "personName": "Alexander Karp",
+  "source": "Software firm",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jorge-paulo-lemann",
+  "rank": 136,
+  "finalWorth": 19620.728,
+  "finalWorthBillions": 19.620728,
+  "personName": "Jorge Paulo Lemann & family",
+  "source": "Beer",
+  "countryOfCitizenship": "Brazil",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "nancy-walton-laurie",
+  "rank": 137,
+  "finalWorth": 19550.907,
+  "finalWorthBillions": 19.550907,
+  "personName": "Nancy Walton Laurie",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "qin-yinglin",
+  "rank": 138,
+  "finalWorth": 19480.646,
+  "finalWorthBillions": 19.480646,
+  "personName": "Qin Yinglin",
+  "source": "Pig breeding",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "arthur-dantchik",
+  "rank": 139,
+  "finalWorth": 19477,
+  "finalWorthBillions": 19.477,
+  "personName": "Arthur Dantchik",
+  "source": "Trading, investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "philip-anschutz",
+  "rank": 140,
+  "finalWorth": 19300,
+  "finalWorthBillions": 19.3,
+  "personName": "Philip Anschutz",
+  "source": "Energy, sports, entertainment",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "nathan-kirsh",
+  "rank": 141,
+  "finalWorth": 19236.845,
+  "finalWorthBillions": 19.236845000000002,
+  "personName": "Nathan Kirsh",
+  "source": "Retail, real estate",
+  "countryOfCitizenship": "Eswatini (Swaziland)",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "renata-kellnerova",
+  "rank": 142,
+  "finalWorth": 19071.106,
+  "finalWorthBillions": 19.071106,
+  "personName": "Renata Kellnerova & family",
+  "source": "Finance, telecommunications",
+  "countryOfCitizenship": "Czech Republic",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "harold-hamm",
+  "rank": 143,
+  "finalWorth": 19000,
+  "finalWorthBillions": 19,
+  "personName": "Harold Hamm & family",
+  "source": "Oil & gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ray-dalio",
+  "rank": 144,
+  "finalWorth": 18894.528,
+  "finalWorthBillions": 18.894527999999998,
+  "personName": "Ray Dalio",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "huang-shilin",
+  "rank": 145,
+  "finalWorth": 18846.002,
+  "finalWorthBillions": 18.846002000000002,
+  "personName": "Huang Shilin",
+  "source": "Batteries",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "nik-storonsky",
+  "rank": 146,
+  "finalWorth": 18750,
+  "finalWorthBillions": 18.75,
+  "personName": "Nik Storonsky",
+  "source": "Fintech",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "enrique-razon-jr",
+  "rank": 147,
+  "finalWorth": 18708.925,
+  "finalWorthBillions": 18.708925,
+  "personName": "Enrique Razon Jr.",
+  "source": "Ports",
+  "countryOfCitizenship": "Philippines",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "marc-andreessen",
+  "rank": 148,
+  "finalWorth": 18545.637,
+  "finalWorthBillions": 18.545637,
+  "personName": "Marc Andreessen",
+  "source": "Venture capital investing",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jan-koum",
+  "rank": 149,
+  "finalWorth": 18481.303,
+  "finalWorthBillions": 18.481303,
+  "personName": "Jan Koum",
+  "source": "WhatsApp",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "yu-yong",
+  "rank": 150,
+  "finalWorth": 18197.249,
+  "finalWorthBillions": 18.197249,
+  "personName": "Yu Yong",
+  "source": "Mining",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ben-horowitz",
+  "rank": 151,
+  "finalWorth": 18124.415,
+  "finalWorthBillions": 18.124415000000003,
+  "personName": "Ben Horowitz",
+  "source": "Venture capital investing",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "beate-heister",
+  "rank": 152,
+  "finalWorth": 18007.585,
+  "finalWorthBillions": 18.007585,
+  "personName": "Beate Heister",
+  "source": "Supermarkets",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "karl-albrecht-jr",
+  "rank": 152,
+  "finalWorth": 18007.585,
+  "finalWorthBillions": 18.007585,
+  "personName": "Karl Albrecht Jr. & family",
+  "source": "Supermarkets",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "edwin-chen",
+  "rank": 154,
+  "finalWorth": 18000,
+  "finalWorthBillions": 18,
+  "personName": "Edwin Chen",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "eric-smidt",
+  "rank": 155,
+  "finalWorth": 17755.5,
+  "finalWorthBillions": 17.7555,
+  "personName": "Eric Smidt",
+  "source": "Hardware stores",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhong-huijuan",
+  "rank": 156,
+  "finalWorth": 17525.592,
+  "finalWorthBillions": 17.525592,
+  "personName": "Zhong Huijuan",
+  "source": "Pharmaceuticals",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-collison",
+  "rank": 157,
+  "finalWorth": 17490,
+  "finalWorthBillions": 17.49,
+  "personName": "John Collison",
+  "source": "Payment software",
+  "countryOfCitizenship": "Ireland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "patrick-collison",
+  "rank": 157,
+  "finalWorth": 17490,
+  "finalWorthBillions": 17.49,
+  "personName": "Patrick Collison",
+  "source": "Payment software",
+  "countryOfCitizenship": "Ireland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "james-ratcliffe",
+  "rank": 159,
+  "finalWorth": 17418.711,
+  "finalWorthBillions": 17.418711,
+  "personName": "James Ratcliffe",
+  "source": "Chemicals",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "charlene-de-carvalho-heineken",
+  "rank": 160,
+  "finalWorth": 17353.44,
+  "finalWorthBillions": 17.35344,
+  "personName": "Charlene de Carvalho-Heineken & family",
+  "source": "Heineken",
+  "countryOfCitizenship": "Netherlands",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "antonio-gracias",
+  "rank": 161,
+  "finalWorth": 17100,
+  "finalWorthBillions": 17.1,
+  "personName": "Antonio Gracias",
+  "source": "Investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "theo-albrecht-jr",
+  "rank": 162,
+  "finalWorth": 17047.639,
+  "finalWorthBillions": 17.047639,
+  "personName": "Theo Albrecht Jr & family",
+  "source": "Aldi, Trader Joe's",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "kwong-siu-hing",
+  "rank": 163,
+  "finalWorth": 16824.379,
+  "finalWorthBillions": 16.824379,
+  "personName": "Kwong Siu-hing",
+  "source": "Real estate",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mikhail-fridman",
+  "rank": 164,
+  "finalWorth": 16813.379,
+  "finalWorthBillions": 16.813379,
+  "personName": "Mikhail Fridman",
+  "source": "Oil, banking, telecom",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jaime-gilinski-bacal",
+  "rank": 165,
+  "finalWorth": 16790.006,
+  "finalWorthBillions": 16.790006,
+  "personName": "Jaime Gilinski Bacal",
+  "source": "Banking",
+  "countryOfCitizenship": "Colombia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "josh-kushner",
+  "rank": 166,
+  "finalWorth": 16690.704,
+  "finalWorthBillions": 16.690704,
+  "personName": "Josh Kushner",
+  "source": "Venture capital  ",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "peter-mallouk",
+  "rank": 167,
+  "finalWorth": 16533,
+  "finalWorthBillions": 16.533,
+  "personName": "Peter Mallouk",
+  "source": "Wealth planning",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "john-menard-jr",
+  "rank": 168,
+  "finalWorth": 16477.153,
+  "finalWorthBillions": 16.477152999999998,
+  "personName": "John Menard Jr",
+  "source": "Home improvement stores",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sarath-ratanavadi",
+  "rank": 169,
+  "finalWorth": 16474.433,
+  "finalWorthBillions": 16.474433,
+  "personName": "Sarath Ratanavadi",
+  "source": "Energy",
+  "countryOfCitizenship": "Thailand",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "edward-johnson-iv",
+  "rank": 170,
+  "finalWorth": 16303.349,
+  "finalWorthBillions": 16.303349,
+  "personName": "Edward Johnson IV",
+  "source": "Fidelity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "shahid-khan",
+  "rank": 171,
+  "finalWorth": 16237.473,
+  "finalWorthBillions": 16.237473,
+  "personName": "Shahid Khan",
+  "source": "Sports teams, auto parts",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "anders-holch-povlsen",
+  "rank": 172,
+  "finalWorth": 16215.771,
+  "finalWorthBillions": 16.215771,
+  "personName": "Anders Holch Povlsen",
+  "source": "Fashion retail",
+  "countryOfCitizenship": "Denmark",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dhanin-chearavanont",
+  "rank": 173,
+  "finalWorth": 16200.359,
+  "finalWorthBillions": 16.200359,
+  "personName": "Dhanin Chearavanont",
+  "source": "Diversified",
+  "countryOfCitizenship": "Thailand",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "wang-wei",
+  "rank": 174,
+  "finalWorth": 16055.435,
+  "finalWorthBillions": 16.055435,
+  "personName": "Wang Wei",
+  "source": "Package delivery",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lu-xiangyang",
+  "rank": 175,
+  "finalWorth": 16020.071,
+  "finalWorthBillions": 16.020071,
+  "personName": "Lu Xiangyang",
+  "source": "Automobiles, batteries",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "laurene-powell-jobs",
+  "rank": 176,
+  "finalWorth": 15879.876,
+  "finalWorthBillions": 15.879876,
+  "personName": "Laurene Powell Jobs",
+  "source": "Apple, Disney",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ralph-lauren",
+  "rank": 177,
+  "finalWorth": 15783.761,
+  "finalWorthBillions": 15.783761,
+  "personName": "Ralph Lauren & family",
+  "source": "Apparel",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "andrew-forrest",
+  "rank": 178,
+  "finalWorth": 15747.321,
+  "finalWorthBillions": 15.747321,
+  "personName": "Andrew Forrest & family",
+  "source": "Mining",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jeffery-hildebrand",
+  "rank": 179,
+  "finalWorth": 15726.941,
+  "finalWorthBillions": 15.726941,
+  "personName": "Jeffery Hildebrand",
+  "source": "Oil & gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "george-kaiser",
+  "rank": 180,
+  "finalWorth": 15642.082,
+  "finalWorthBillions": 15.642082,
+  "personName": "George Kaiser",
+  "source": "Oil & gas, banking",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "johann-rupert",
+  "rank": 181,
+  "finalWorth": 15451.623,
+  "finalWorthBillions": 15.451623,
+  "personName": "Johann Rupert & family",
+  "source": "Luxury goods",
+  "countryOfCitizenship": "South Africa",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "hussain-sajwani",
+  "rank": 182,
+  "finalWorth": 15276.922,
+  "finalWorthBillions": 15.276922,
+  "personName": "Hussain Sajwani",
+  "source": "Real estate",
+  "countryOfCitizenship": "United Arab Emirates",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robert-kraft",
+  "rank": 183,
+  "finalWorth": 15233.479,
+  "finalWorthBillions": 15.233478999999999,
+  "personName": "Robert Kraft",
+  "source": "Manufacturing, New England Patriots",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "uday-kotak",
+  "rank": 184,
+  "finalWorth": 15213.509,
+  "finalWorthBillions": 15.213509,
+  "personName": "Uday Kotak",
+  "source": "Banking",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ludwig-merckle",
+  "rank": 185,
+  "finalWorth": 15035.531,
+  "finalWorthBillions": 15.035531,
+  "personName": "Ludwig Merckle",
+  "source": "Pharmaceuticals",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ken-fisher",
+  "rank": 186,
+  "finalWorth": 14963.7,
+  "finalWorthBillions": 14.963700000000001,
+  "personName": "Ken Fisher",
+  "source": "Money management",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "james-dyson",
+  "rank": 187,
+  "finalWorth": 14903.644,
+  "finalWorthBillions": 14.903644,
+  "personName": "James Dyson",
+  "source": "Vacuums",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "georg-schaeffler",
+  "rank": 188,
+  "finalWorth": 14761.667,
+  "finalWorthBillions": 14.761667,
+  "personName": "Georg Schaeffler",
+  "source": "Auto parts",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "pierre-chen",
+  "rank": 189,
+  "finalWorth": 14758.525,
+  "finalWorthBillions": 14.758524999999999,
+  "personName": "Pierre Chen",
+  "source": "Electronics",
+  "countryOfCitizenship": "Taiwan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "hasso-plattner",
+  "rank": 190,
+  "finalWorth": 14756.291,
+  "finalWorthBillions": 14.756291,
+  "personName": "Hasso Plattner & family",
+  "source": "Software",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "terry-gou",
+  "rank": 191,
+  "finalWorth": 14723.729,
+  "finalWorthBillions": 14.723728999999999,
+  "personName": "Terry Gou",
+  "source": "Electronics",
+  "countryOfCitizenship": "Taiwan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ann-walton-kroenke",
+  "rank": 192,
+  "finalWorth": 14678.071,
+  "finalWorthBillions": 14.678071,
+  "personName": "Ann Walton Kroenke",
+  "source": "Walmart",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-sabel",
+  "rank": 193,
+  "finalWorth": 14630.249,
+  "finalWorthBillions": 14.630249,
+  "personName": "Michael Sabel",
+  "source": "oil & gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robert-pender",
+  "rank": 193,
+  "finalWorth": 14630.249,
+  "finalWorthBillions": 14.630249,
+  "personName": "Robert Pender",
+  "source": "oil & gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "friedhelm-loh",
+  "rank": 195,
+  "finalWorth": 14610.404,
+  "finalWorthBillions": 14.610404,
+  "personName": "Friedhelm Loh",
+  "source": "Manufacturing",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "liu-yongxing",
+  "rank": 196,
+  "finalWorth": 14573.974,
+  "finalWorthBillions": 14.573974,
+  "personName": "Liu Yongxing",
+  "source": "Diversified",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "wang-weixiu",
+  "rank": 197,
+  "finalWorth": 14527.352,
+  "finalWorthBillions": 14.527352,
+  "personName": "Wang Weixiu & family",
+  "source": "Machinery",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "eric-li",
+  "rank": 198,
+  "finalWorth": 14515.936,
+  "finalWorthBillions": 14.515936,
+  "personName": "Eric Li",
+  "source": "Automobiles",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "barry-lam",
+  "rank": 199,
+  "finalWorth": 14490.242,
+  "finalWorthBillions": 14.490242,
+  "personName": "Barry Lam",
+  "source": "Electronics",
+  "countryOfCitizenship": "Taiwan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "murali-divi",
+  "rank": 200,
+  "finalWorth": 14456.872,
+  "finalWorthBillions": 14.456871999999999,
+  "personName": "Murali Divi & family",
+  "source": "Pharmaceuticals",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "elizabeth-johnson",
+  "rank": 201,
+  "finalWorth": 14430.666,
+  "finalWorthBillions": 14.430665999999999,
+  "personName": "Elizabeth Johnson",
+  "source": "Fidelity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sunil-mittal-1",
+  "rank": 202,
+  "finalWorth": 14286.075,
+  "finalWorthBillions": 14.286075,
+  "personName": "Sunil Mittal",
+  "source": "Telecom",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "j-christopher-reyes",
+  "rank": 203,
+  "finalWorth": 14261,
+  "finalWorthBillions": 14.261,
+  "personName": "J. Christopher Reyes",
+  "source": "Food distribution",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jude-reyes",
+  "rank": 203,
+  "finalWorth": 14261,
+  "finalWorthBillions": 14.261,
+  "personName": "Jude Reyes",
+  "source": "Food distribution",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "joseph-lau",
+  "rank": 205,
+  "finalWorth": 14198.496,
+  "finalWorthBillions": 14.198495999999999,
+  "personName": "Joseph Lau",
+  "source": "Real estate",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "li-shuirong",
+  "rank": 206,
+  "finalWorth": 14155.795,
+  "finalWorthBillions": 14.155795,
+  "personName": "Li Shuirong & family",
+  "source": "Petrochemicals",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "peter-woo",
+  "rank": 207,
+  "finalWorth": 14146.958,
+  "finalWorthBillions": 14.146958,
+  "personName": "Peter Woo",
+  "source": "Real estate",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alejandro-bailleres-gual",
+  "rank": 208,
+  "finalWorth": 14134.911,
+  "finalWorthBillions": 14.134911,
+  "personName": "Alejandro Baillères Gual & family",
+  "source": "Diversified",
+  "countryOfCitizenship": "Mexico",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "leon-black",
+  "rank": 209,
+  "finalWorth": 14040.974,
+  "finalWorthBillions": 14.040974,
+  "personName": "Leon Black",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alisher-usmanov",
+  "rank": 210,
+  "finalWorth": 14035.119,
+  "finalWorthBillions": 14.035119,
+  "personName": "Alisher Usmanov",
+  "source": "Steel, telecom, investments",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "xavier-niel",
+  "rank": 211,
+  "finalWorth": 14028.72,
+  "finalWorthBillions": 14.02872,
+  "personName": "Xavier Niel & family",
+  "source": "Internet, telecom",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "pierre-omidyar",
+  "rank": 212,
+  "finalWorth": 13982.538,
+  "finalWorthBillions": 13.982538,
+  "personName": "Pierre Omidyar",
+  "source": "EBay, PayPal",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "kushal-pal-singh",
+  "rank": 213,
+  "finalWorth": 13935.524,
+  "finalWorthBillions": 13.935524,
+  "personName": "Kushal Pal Singh",
+  "source": "Real estate",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "george-kurtz",
+  "rank": 214,
+  "finalWorth": 13928.205,
+  "finalWorthBillions": 13.928205,
+  "personName": "George Kurtz",
+  "source": "Security software",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "george-roberts",
+  "rank": 215,
+  "finalWorth": 13859.861,
+  "finalWorthBillions": 13.859861,
+  "personName": "George Roberts",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "christopher-olah",
+  "rank": 216,
+  "finalWorth": 13800,
+  "finalWorthBillions": 13.8,
+  "personName": "Christopher Olah",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "tom-brown",
+  "rank": 216,
+  "finalWorth": 13800,
+  "finalWorthBillions": 13.8,
+  "personName": "Tom Brown",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michal-strnad",
+  "rank": 218,
+  "finalWorth": 13702.009,
+  "finalWorthBillions": 13.702009,
+  "personName": "Michal Strnad",
+  "source": "Defense Contracting",
+  "countryOfCitizenship": "Czech Republic",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "daniela-amodei",
+  "rank": 219,
+  "finalWorth": 13700,
+  "finalWorthBillions": 13.7,
+  "personName": "Daniela Amodei",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jack-clark",
+  "rank": 219,
+  "finalWorth": 13700,
+  "finalWorthBillions": 13.7,
+  "personName": "Jack Clark",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jared-kaplan",
+  "rank": 219,
+  "finalWorth": 13700,
+  "finalWorthBillions": 13.7,
+  "personName": "Jared Kaplan",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "tobi-lutke",
+  "rank": 222,
+  "finalWorth": 13610.222,
+  "finalWorthBillions": 13.610222,
+  "personName": "Tobi Lutke",
+  "source": "E-commerce",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dario-amodei",
+  "rank": 223,
+  "finalWorth": 13600,
+  "finalWorthBillions": 13.6,
+  "personName": "Dario Amodei",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dmitri-bukhman",
+  "rank": 224,
+  "finalWorth": 13542.98,
+  "finalWorthBillions": 13.54298,
+  "personName": "Dmitri Bukhman",
+  "source": "Online games",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "igor-bukhman",
+  "rank": 224,
+  "finalWorth": 13542.98,
+  "finalWorthBillions": 13.54298,
+  "personName": "Igor Bukhman",
+  "source": "Online games",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jay-chaudhry",
+  "rank": 226,
+  "finalWorth": 13508.818,
+  "finalWorthBillions": 13.508818,
+  "personName": "Jay Chaudhry",
+  "source": "Security software",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "richard-kinder",
+  "rank": 227,
+  "finalWorth": 13500.407,
+  "finalWorthBillions": 13.500407,
+  "personName": "Richard Kinder",
+  "source": "Pipelines",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhou-qunfei",
+  "rank": 228,
+  "finalWorth": 13465.003,
+  "finalWorthBillions": 13.465003000000001,
+  "personName": "Zhou Qunfei & family",
+  "source": "Smartphone screens",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "lin-tsung-chi",
+  "rank": 229,
+  "finalWorth": 13443.464,
+  "finalWorthBillions": 13.443464,
+  "personName": "Lin Tsung-Chi",
+  "source": "Furniture rails",
+  "countryOfCitizenship": "Taiwan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "daniel-ek",
+  "rank": 230,
+  "finalWorth": 13431.035,
+  "finalWorthBillions": 13.431035,
+  "personName": "Daniel Ek",
+  "source": "Spotify",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "charles-ergen",
+  "rank": 231,
+  "finalWorth": 13386.288,
+  "finalWorthBillions": 13.386288,
+  "personName": "Charles Ergen",
+  "source": "Satellite TV",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "arthur-blank",
+  "rank": 232,
+  "finalWorth": 13303.158,
+  "finalWorthBillions": 13.303158,
+  "personName": "Arthur Blank",
+  "source": "Home Depot",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "gong-hongjia",
+  "rank": 233,
+  "finalWorth": 13283.379,
+  "finalWorthBillions": 13.283379,
+  "personName": "Gong Hongjia & family",
+  "source": "Video surveillance ",
+  "countryOfCitizenship": "Hong Kong",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-reuben",
+  "rank": 234,
+  "finalWorth": 13226.56,
+  "finalWorthBillions": 13.22656,
+  "personName": "David Reuben",
+  "source": "Investments, real estate",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "simon-reuben",
+  "rank": 234,
+  "finalWorth": 13226.56,
+  "finalWorthBillions": 13.22656,
+  "personName": "Simon Reuben",
+  "source": "Real estate, investments",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ivan-glasenberg",
+  "rank": 236,
+  "finalWorth": 13155.189,
+  "finalWorthBillions": 13.155189,
+  "personName": "Ivan Glasenberg",
+  "source": "Mining",
+  "countryOfCitizenship": "Switzerland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sandra-ortega-mera",
+  "rank": 237,
+  "finalWorth": 13124.226,
+  "finalWorthBillions": 13.124226,
+  "personName": "Sandra Ortega Mera",
+  "source": "Zara ",
+  "countryOfCitizenship": "Spain",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sam-mccandlish",
+  "rank": 238,
+  "finalWorth": 13100,
+  "finalWorthBillions": 13.1,
+  "personName": "Sam McCandlish",
+  "source": "Artificial intelligence",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "antonia-axson-johnson",
+  "rank": 239,
+  "finalWorth": 13010.197,
+  "finalWorthBillions": 13.010197,
+  "personName": "Antonia Ax:son Johnson & family",
+  "source": "Diversified",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhang-zhidong",
+  "rank": 240,
+  "finalWorth": 12972.696,
+  "finalWorthBillions": 12.972696,
+  "personName": "Zhang Zhidong",
+  "source": "Online games",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "sherry-brydson",
+  "rank": 241,
+  "finalWorth": 12956.218,
+  "finalWorthBillions": 12.956218000000002,
+  "personName": "Sherry Brydson",
+  "source": "Thomson Reuters",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "charles-schwab",
+  "rank": 242,
+  "finalWorth": 12867.344,
+  "finalWorthBillions": 12.867344,
+  "personName": "Charles Schwab",
+  "source": "Discount brokerage",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "mike-cannon-brookes",
+  "rank": 243,
+  "finalWorth": 12856.012,
+  "finalWorthBillions": 12.856012,
+  "personName": "Mike Cannon-Brookes",
+  "source": "Software",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dan-friedkin",
+  "rank": 244,
+  "finalWorth": 12819.492,
+  "finalWorthBillions": 12.819492,
+  "personName": "Dan Friedkin",
+  "source": "Toyota dealerships",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "carrie-perrodo",
+  "rank": 245,
+  "finalWorth": 12791.142,
+  "finalWorthBillions": 12.791142,
+  "personName": "Carrie Perrodo & family",
+  "source": "Oil ",
+  "countryOfCitizenship": "France",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "martin-lorentzon",
+  "rank": 246,
+  "finalWorth": 12679.12,
+  "finalWorthBillions": 12.679120000000001,
+  "personName": "Martin Lorentzon",
+  "source": "Spotify",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "marijke-mars",
+  "rank": 247,
+  "finalWorth": 12593,
+  "finalWorthBillions": 12.593,
+  "personName": "Marijke Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "pamela-mars",
+  "rank": 247,
+  "finalWorth": 12593,
+  "finalWorthBillions": 12.593,
+  "personName": "Pamela Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "valerie-mars",
+  "rank": 247,
+  "finalWorth": 12593,
+  "finalWorthBillions": 12.593,
+  "personName": "Valerie Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "victoria-mars",
+  "rank": 247,
+  "finalWorth": 12593,
+  "finalWorthBillions": 12.593,
+  "personName": "Victoria Mars",
+  "source": "Candy, pet food",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "radhakishan-damani-1",
+  "rank": 251,
+  "finalWorth": 12548.807,
+  "finalWorthBillions": 12.548807,
+  "personName": "Radhakishan Damani",
+  "source": "Retail, investments",
+  "countryOfCitizenship": "India",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "henry-kravis",
+  "rank": 252,
+  "finalWorth": 12537.937,
+  "finalWorthBillions": 12.537937,
+  "personName": "Henry Kravis",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "scott-farquhar",
+  "rank": 253,
+  "finalWorth": 12497.604,
+  "finalWorthBillions": 12.497603999999999,
+  "personName": "Scott Farquhar",
+  "source": "Software",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "brad-jacobs",
+  "rank": 254,
+  "finalWorth": 12474.586,
+  "finalWorthBillions": 12.474585999999999,
+  "personName": "Brad Jacobs",
+  "source": "Logistics",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robert-duggan",
+  "rank": 255,
+  "finalWorth": 12449.152,
+  "finalWorthBillions": 12.449152,
+  "personName": "Robert Duggan",
+  "source": "Pharmaceuticals",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "robert-kuok",
+  "rank": 256,
+  "finalWorth": 12386.906,
+  "finalWorthBillions": 12.386906000000002,
+  "personName": "Robert Kuok",
+  "source": "Palm oil, shipping, property",
+  "countryOfCitizenship": "Malaysia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "abdulsamad-rabiu",
+  "rank": 257,
+  "finalWorth": 12294.511,
+  "finalWorthBillions": 12.294511,
+  "personName": "Abdulsamad Rabiu",
+  "source": "Cement, sugar",
+  "countryOfCitizenship": "Nigeria",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-steward",
+  "rank": 258,
+  "finalWorth": 12259,
+  "finalWorthBillions": 12.259,
+  "personName": "David Steward",
+  "source": "IT provider",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jimmy-haslam",
+  "rank": 259,
+  "finalWorth": 12219,
+  "finalWorthBillions": 12.219,
+  "personName": "Jimmy Haslam",
+  "source": "Gas stations, retail",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "zhu-yiming",
+  "rank": 260,
+  "finalWorth": 12162.815,
+  "finalWorthBillions": 12.162815,
+  "personName": "Zhu Yiming",
+  "source": "Semiconductors",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "r-budi-hartono",
+  "rank": 261,
+  "finalWorth": 12153.58,
+  "finalWorthBillions": 12.15358,
+  "personName": "R. Budi Hartono",
+  "source": "Banking, tobacco",
+  "countryOfCitizenship": "Indonesia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "wang-liping",
+  "rank": 262,
+  "finalWorth": 12153.119,
+  "finalWorthBillions": 12.153119,
+  "personName": "Wang Liping & family",
+  "source": "Hydraulic machinery",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "tilman-fertitta",
+  "rank": 263,
+  "finalWorth": 12104.704,
+  "finalWorthBillions": 12.104704,
+  "personName": "Tilman Fertitta",
+  "source": "Entertainment, Houston Rockets",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "andrew-beal",
+  "rank": 264,
+  "finalWorth": 12067.989,
+  "finalWorthBillions": 12.067988999999999,
+  "personName": "Andrew Beal",
+  "source": "Banks, real estate",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "micky-arison",
+  "rank": 265,
+  "finalWorth": 12046.543,
+  "finalWorthBillions": 12.046543,
+  "personName": "Micky Arison & family",
+  "source": "Carnival Cruises",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "bubba-cathy",
+  "rank": 266,
+  "finalWorth": 12012,
+  "finalWorthBillions": 12.012,
+  "personName": "Bubba Cathy",
+  "source": "Chick-fil-A",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dan-cathy",
+  "rank": 266,
+  "finalWorth": 12012,
+  "finalWorthBillions": 12.012,
+  "personName": "Dan Cathy",
+  "source": "Chick-fil-A",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "trudy-cathy-white",
+  "rank": 266,
+  "finalWorth": 12012,
+  "finalWorthBillions": 12.012,
+  "personName": "Trudy Cathy White",
+  "source": "Chick-fil-A",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jim-pattison",
+  "rank": 269,
+  "finalWorth": 11987.825,
+  "finalWorthBillions": 11.987825,
+  "personName": "Jim Pattison",
+  "source": "Diversified",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "william-ackman",
+  "rank": 270,
+  "finalWorth": 11957.336,
+  "finalWorthBillions": 11.957336,
+  "personName": "William Ackman",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "viatcheslav-kantor",
+  "rank": 271,
+  "finalWorth": 11953.658,
+  "finalWorthBillions": 11.953657999999999,
+  "personName": "Viatcheslav Kantor",
+  "source": "Fertilizer, real estate",
+  "countryOfCitizenship": "Russia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "alexander-gerko",
+  "rank": 272,
+  "finalWorth": 11926.323,
+  "finalWorthBillions": 11.926323,
+  "personName": "Alexander Gerko",
+  "source": "Trading",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "christopher-hohn",
+  "rank": 273,
+  "finalWorth": 11830,
+  "finalWorthBillions": 11.83,
+  "personName": "Christopher Hohn",
+  "source": "Hedge funds",
+  "countryOfCitizenship": "United Kingdom",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "daniel-tsai",
+  "rank": 274,
+  "finalWorth": 11819.911,
+  "finalWorthBillions": 11.819911,
+  "personName": "Daniel Tsai",
+  "source": "Finance",
+  "countryOfCitizenship": "Taiwan",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "pei-zhenhua-1",
+  "rank": 275,
+  "finalWorth": 11817.657,
+  "finalWorthBillions": 11.817656999999999,
+  "personName": "Pei Zhenhua",
+  "source": "Batteries",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "josh-harris",
+  "rank": 276,
+  "finalWorth": 11809.918,
+  "finalWorthBillions": 11.809918,
+  "personName": "Josh Harris",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "wang-xingxing",
+  "rank": 277,
+  "finalWorth": 11798.89,
+  "finalWorthBillions": 11.79889,
+  "personName": "Wang Xingxing",
+  "source": "Robotics",
+  "countryOfCitizenship": "China",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "joseph-tsai",
+  "rank": 278,
+  "finalWorth": 11795.42,
+  "finalWorthBillions": 11.79542,
+  "personName": "Joseph Tsai",
+  "source": "E-commerce",
+  "countryOfCitizenship": "Canada",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "terrence-pegula",
+  "rank": 279,
+  "finalWorth": 11768.26,
+  "finalWorthBillions": 11.76826,
+  "personName": "Terrence Pegula",
+  "source": "Natural gas",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-dorrell",
+  "rank": 280,
+  "finalWorth": 11719.76,
+  "finalWorthBillions": 11.71976,
+  "personName": "Michael Dorrell",
+  "source": "Investing",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "li-xiting",
+  "rank": 281,
+  "finalWorth": 11701.455,
+  "finalWorthBillions": 11.701455,
+  "personName": "Li Xiting",
+  "source": "Medical devices",
+  "countryOfCitizenship": "Singapore",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "francine-von-finck",
+  "rank": 282,
+  "finalWorth": 11685.677,
+  "finalWorthBillions": 11.685677,
+  "personName": "Francine von Finck & family",
+  "source": "Investments",
+  "countryOfCitizenship": "Germany",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "francesco-gaetano-caltagirone",
+  "rank": 283,
+  "finalWorth": 11678.568,
+  "finalWorthBillions": 11.678567999999999,
+  "personName": "Francesco Gaetano Caltagirone",
+  "source": "Cement, diversified",
+  "countryOfCitizenship": "Italy",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "michael-rubin",
+  "rank": 284,
+  "finalWorth": 11670,
+  "finalWorthBillions": 11.67,
+  "personName": "Michael Rubin",
+  "source": "Online retail",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "anthony-pratt",
+  "rank": 285,
+  "finalWorth": 11635.848,
+  "finalWorthBillions": 11.635848,
+  "personName": "Anthony Pratt",
+  "source": "Manufacturing",
+  "countryOfCitizenship": "Australia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "charoen-sirivadhanabhakdi",
+  "rank": 286,
+  "finalWorth": 11617.934,
+  "finalWorthBillions": 11.617934,
+  "personName": "Charoen Sirivadhanabhakdi & family",
+  "source": "Beverage, Real Estate",
+  "countryOfCitizenship": "Thailand",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "orlando-bravo",
+  "rank": 287,
+  "finalWorth": 11612,
+  "finalWorthBillions": 11.612,
+  "personName": "Orlando Bravo",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ramzi-musallam",
+  "rank": 288,
+  "finalWorth": 11587.718,
+  "finalWorthBillions": 11.587718,
+  "personName": "Ramzi Musallam",
+  "source": "Private equity",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "roger-penske",
+  "rank": 289,
+  "finalWorth": 11563.922,
+  "finalWorthBillions": 11.563922,
+  "personName": "Roger Penske",
+  "source": "Cars",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "finn-rausing",
+  "rank": 290,
+  "finalWorth": 11560.09,
+  "finalWorthBillions": 11.56009,
+  "personName": "Finn Rausing",
+  "source": "Packaging",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "jorn-rausing",
+  "rank": 291,
+  "finalWorth": 11552.086,
+  "finalWorthBillions": 11.552086,
+  "personName": "Jorn Rausing",
+  "source": "Packaging",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "kirsten-rausing",
+  "rank": 291,
+  "finalWorth": 11552.086,
+  "finalWorthBillions": 11.552086,
+  "personName": "Kirsten Rausing",
+  "source": "Packaging",
+  "countryOfCitizenship": "Sweden",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-duffield",
+  "rank": 293,
+  "finalWorth": 11542.078,
+  "finalWorthBillions": 11.542078,
+  "personName": "David Duffield",
+  "source": "Business software",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "randa-duncan-williams",
+  "rank": 294,
+  "finalWorth": 11523.2,
+  "finalWorthBillions": 11.523200000000001,
+  "personName": "Randa Duncan Williams",
+  "source": "Pipelines",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ken-langone",
+  "rank": 295,
+  "finalWorth": 11516.651,
+  "finalWorthBillions": 11.516651,
+  "personName": "Ken Langone",
+  "source": "Investments",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "david-velez",
+  "rank": 296,
+  "finalWorth": 11490.989,
+  "finalWorthBillions": 11.490988999999999,
+  "personName": "David Velez & family",
+  "source": "Fintech",
+  "countryOfCitizenship": "Colombia",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "ernesto-bertarelli",
+  "rank": 297,
+  "finalWorth": 11478.915,
+  "finalWorthBillions": 11.478915,
+  "personName": "Ernesto Bertarelli",
+  "source": "Biotech, investments",
+  "countryOfCitizenship": "Switzerland",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "dannine-avara",
+  "rank": 298,
+  "finalWorth": 11447.942,
+  "finalWorthBillions": 11.447942,
+  "personName": "Dannine Avara",
+  "source": "Pipelines",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "milane-frantz",
+  "rank": 299,
+  "finalWorth": 11434.799,
+  "finalWorthBillions": 11.434799000000002,
+  "personName": "Milane Frantz",
+  "source": "Pipelines",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ },
+ {
+  "uri": "brian-chesky",
+  "rank": 300,
+  "finalWorth": 11432.902,
+  "finalWorthBillions": 11.432902,
+  "personName": "Brian Chesky",
+  "source": "Airbnb",
+  "countryOfCitizenship": "United States",
+  "timestamp": 1793491202424
+ }
+]
