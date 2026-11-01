@@ -90,9 +90,11 @@ export function WorldGlobe({
     const dots = document.createElement('canvas');
     const goo = document.createElement('div');
     const faces = document.createElement('div');
-    dots.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+    // The layers cover the whole viewport (moved each frame so their origin is the viewport's), so portraits reach
+    // the screen edges instead of being cut at the globe area's box.
+    dots.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
     goo.style.cssText = `position:absolute;inset:0;pointer-events:none;filter:url(#${GOO_ID}) drop-shadow(0 8px 18px rgba(0,0,0,.55))`;
-    faces.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    faces.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
     el.prepend(dots, goo, faces);
 
     const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; s: Spring }>();
@@ -153,23 +155,32 @@ export function WorldGlobe({
 
       // Places: one dot per real site, faded with everyone else when a person is chosen.
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      if (dots.width !== Math.round(box.width * dpr)) {
-        dots.width = Math.round(box.width * dpr);
-        dots.height = Math.round(box.height * dpr);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const shift = `translate3d(${-box.left}px,${-box.top}px,0)`;
+      for (const layer of [dots, goo, faces]) {
+        layer.style.transform = shift;
+        layer.style.width = `${vw}px`;
+        layer.style.height = `${vh}px`;
+      }
+      if (dots.width !== Math.round(vw * dpr) || dots.height !== Math.round(vh * dpr)) {
+        dots.width = Math.round(vw * dpr);
+        dots.height = Math.round(vh * dpr);
       }
       const ctx = dots.getContext('2d');
       if (ctx) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, box.width, box.height);
+        ctx.clearRect(0, 0, vw, vh);
         for (const site of ss) {
           const p = project(site.lat, site.lng);
-          if (p.facing < 0.04) continue;
-          const a = Math.min((p.facing - 0.04) / 0.15, 1) * (f && site.group !== f ? FADED : 1);
+          // Visible right up to the horizon, then gone behind it.
+          if (p.facing <= 0) continue;
+          const a = Math.min(p.facing / 0.06, 1) * (f && site.group !== f ? FADED : 1);
           const r = site.kind === 'hq' ? 3.2 : 2.2;
           ctx.globalAlpha = a;
           ctx.fillStyle = site.live ? color.gain : '#9CCBFF';
           ctx.beginPath();
-          ctx.arc(p.x - box.left, p.y - box.top, r, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -185,9 +196,10 @@ export function WorldGlobe({
       const pos = new Map<string, { x: number; y: number; vis: number }>();
       for (const m of order) {
         const p = project(m.lat, m.lng);
-        const vis = Math.min(Math.max((p.facing - 0.05) / 0.15, 0), 1);
-        const x = p.x - box.left;
-        const y = p.y - box.top;
+        // Full strength until the last few degrees before the horizon, then tucked behind it.
+        const vis = Math.min(Math.max(p.facing / 0.06, 0), 1);
+        const x = p.x;
+        const y = p.y;
         pos.set(m.key, { x, y, vis });
         // Faded people (someone else is chosen) never merge: they stay where they are at 5%.
         if (vis <= 0 || (f && m.key !== f)) continue;
@@ -301,9 +313,8 @@ export function WorldGlobe({
       dragging = false;
       // A tap: open the person, or zoom into a joined bubble so it splits.
       if (down && !moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
-        const box = el.getBoundingClientRect();
-        const x = e.clientX - box.left;
-        const y = e.clientY - box.top;
+        const x = e.clientX;
+        const y = e.clientY;
         const hit = clusters.find((c) => Math.hypot(c.x - x, c.y - y) < S / 2 + 4);
         const { focus: f, onSelect: select } = live.current;
         if (hit && hit.keys.length > 1) tween.current = { lat: hit.lat, lng: hit.lng, zoom: clampZoom(scene.world.zoom + 0.35) };
@@ -388,7 +399,7 @@ function ZoomButton({ label, a11y, onPress }: { label: string; a11y: string; onP
 const styles = StyleSheet.create({
   // touch-action none: every gesture over the globe is ours (turn in any direction, pinch), so a turn never becomes a
   // page scroll halfway. The page scrolls from anywhere else.
-  area: { position: 'relative', overflow: 'hidden', touchAction: 'none', cursor: 'grab', userSelect: 'none' } as object,
+  area: { position: 'relative', overflow: 'visible', touchAction: 'none', cursor: 'grab', userSelect: 'none' } as object,
   zoom: { position: 'absolute', right: space.sm, bottom: space.sm, gap: space.sm, zIndex: 3 },
   zoomBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   zoomText: { fontFamily: font.semibold, fontSize: 22, lineHeight: 24, color: color.text },

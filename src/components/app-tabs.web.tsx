@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/ui';
 import { useChromeHidden } from '@/lib/scene';
 import { useAuth } from '@/lib/data';
-import { color, contentWidth, desktopBreakpoint, font, glass, radius, space, type } from '@/theme';
+import { color, contentWidth, desktopBreakpoint, font, glass, radius, scrim, space, type } from '@/theme';
 
 const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
   { name: 'index', href: '/', label: 'Rankings', icon: icons.rankings },
@@ -101,6 +101,14 @@ export default function AppTabs() {
     <Tabs style={styles.root}>
       {desktop && <TopNav />}
       {desktop && list}
+      {/* Phones: dark blurred fade under the floating bar, fading out with it. Before the bar, so the bar sits on top. */}
+      {!desktop && (
+        <View
+          pointerEvents="none"
+          aria-hidden
+          style={[styles.bottomScrim, scrim('top') as object, { opacity: hidden ? 0 : 1, transition: 'opacity 240ms ease' } as object]}
+        />
+      )}
       <TabSlot style={styles.slot} renderFn={(d, o) => <EasedScreen key={d.route.key} descriptor={d} options={o} current={current} />} />
       {!desktop && list}
     </Tabs>
@@ -208,6 +216,7 @@ const styles = StyleSheet.create({
   topLabel: { fontFamily: font.medium, fontSize: 14 },
   hover: { backgroundColor: color.fill },
   account: { ...type.caption, fontSize: 14, color: color.action, marginLeft: space.md, paddingHorizontal: space.sm },
+  bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140, zIndex: 19 },
   bottom: {
     position: 'absolute',
     left: space.md,

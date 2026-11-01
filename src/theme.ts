@@ -20,6 +20,18 @@ export const color = {
   projected: '#B1B1B8',
 } as const;
 
+/**
+ * Edge scrims behind the ticker (top) and the tab bar (bottom): a dark tint and a blur that both fade out, so the
+ * bars read over the brightest Earth without a hard edge. Web CSS; `to` is the direction the scrim fades toward.
+ */
+export const scrim = (to: 'top' | 'bottom') => ({
+  backgroundImage: `linear-gradient(to ${to}, rgba(4,6,11,0.78), rgba(4,6,11,0.45) 45%, rgba(4,6,11,0))`,
+  backdropFilter: 'blur(14px)',
+  WebkitBackdropFilter: 'blur(14px)',
+  maskImage: `linear-gradient(to ${to}, #000 35%, transparent)`,
+  WebkitMaskImage: `linear-gradient(to ${to}, #000 35%, transparent)`,
+});
+
 /** Liquid Glass recipe shared by web CSS and native fallbacks. */
 export const glass = {
   tint: color.surface,

@@ -14,10 +14,60 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 - Auth reality: built-in Supabase email sender only (rate-limited, ~2 emails/hour, can't show the 6-digit code). Owner signed up and activated on Oct 24 (1 verified session). Activation link signs you in and trusts the device (first sign-in, ≤15 min). New devices: the sign-in email's link, opened on that same device, verifies it (`activate` function, needs the live challenge + an email-link session); the code works once SMTP + templates are on.
 - Design: Impeccable finish review = ship; `DESIGN.md` + `.impeccable/design.json` record the system. Screenshot tooling: Playwright script lives in the session scratchpad (re-create if needed: capture live site at 1440/375/320).
 - Standards: Opus leads, Sonnet/Haiku subagents for well-specified work; Impeccable for UI; Ponytail discipline (see CLAUDE.md "Working conventions").
-- **Live planet redesign (owner, Nov 1, 2026 evening; plan in CLAUDE.md "Visual direction"):** Phase 1–2 landed: dark Liquid Glass tokens (`src/theme.ts`, `src/components/glass*.tsx`), real sun position (`src/lib/sun.ts`), NASA textures (`public/planet/`), and the three.js planet behind every screen (`src/components/planet/`) with a scroll-driven camera (`src/lib/scene.ts`, fed by `Screen`). Next: Rankings over the planet (glass podium, scroll choreography), eased views and zoom-ins (one persistent scene), World merged into the planet, NASA GIBS daily clouds, then native. The live ticker and the local phone + QR preview are being built in parallel sessions.
+- **Live planet redesign (owner, Nov 1–2, 2026):** see "Resume here" and "Next up" below for status and the work queue. Architecture: `src/components/planet/` (three.js scene + shaders), `src/lib/scene.ts` (shared camera/scroll/chrome state), `src/lib/sun.ts`, `src/lib/texture-tier.ts`, `src/components/world-globe*.tsx`, `src/components/glass*.tsx`, `src/components/ticker.tsx`, `src/components/app-tabs.web.tsx`.
 - Previous work (done, deployed): Rankings has one control row (filter button | search | Compare; in narrow compare mode search hides for Confirm + X) and a filter panel with sort + saved views; tagline is "The world's biggest fortunes.". Verified on the live site at 320 and 1440. Nothing is in progress.
-- No localhost: owner verifies on the live github.io site after each push.
+- Iterate locally: `npm run preview:phone` serves the phone frame at http://localhost:8090 around the live dev server on :8081 (hot reload; QR for a phone on the same Wi-Fi). Commit as you go; push to `main` (≈2-minute Pages deploy) at batch checkpoints only.
 - Domain: wealthline.com is taken (registered 2001). wealthline.io and getwealthline.com looked unregistered (whois, Oct 24 2026). Until a domain is bought, github.io is the home.
+
+## Resume here
+
+_Updated Nov 2, 2026 at the end of batch A (commit: see `git log -1`, pushed and deployed)._
+
+- **Just landed (batch A):** globe gestures (no scroll/tap conflict), portraits pinned with springs only on merge/split, close-up on a chosen person, night side lifts when close, performance pass (sphere LOD, cheaper atmosphere, no per-frame allocations, grid clustering), floating glass tab bar, ticker + tab bar hide on scroll, glass bevel on every panel, edge scrims behind the ticker and tab bar, portraits reach the screen edges and fade only at the horizon, adaptive 8K textures.
+- **Next:** batch B below (one scene for the remaining views).
+- **Half-done:** nothing uncommitted.
+- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation.
+- **Verify:** `npm run preview:phone` → http://localhost:8090 (phone frame) or http://localhost:8081 directly; `npm run typecheck`, `npm test`; `npm run build:pages` before a push.
+
+## Next up (work queue, priority order)
+
+When the owner writes "continue", take the first unchecked batch, do it, tick it, refresh "Resume here", commit and push.
+
+**Batch A — globe feel, performance, chrome (done Nov 2)**
+- [x] Globe: turning never scrolls the page or taps a portrait (touch-action none, drag threshold, cancelled pointer ≠ tap)
+- [x] Portraits pinned every frame; spring only on merge/split, stiffer (no jelly)
+- [x] Choosing a person flies in close over their HQ; Everyone eases out
+- [x] Cheap HDR: night side lifts as the camera gets close
+- [x] Performance: sphere LOD (64×48 / 128×96), 32×16 sky, 8×3 atmosphere samples, no per-frame allocations, grid clustering
+- [x] Floating rounded glass tab bar with rounded active highlight
+- [x] Ticker and tab bar slide/fade away on scroll down, back on scroll up (reduced motion: fade)
+- [x] Liquid Glass bevel (light top-left, dark bottom-right) on every glass surface; Rankings panels on Glass
+- [x] Dark blurred edge scrims behind the ticker (top) and tab bar (bottom)
+- [x] Portraits not clipped at the globe area; fade only at the horizon
+- [x] Adaptive texture tiers incl. 8K (`src/lib/texture-tier.ts`)
+
+**Batch B — one scene for every view**
+- [ ] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
+- [ ] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
+- [ ] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
+- [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
+- [ ] News items open as a glass sheet that zooms from the row
+
+**Batch C — Rankings over the planet**
+- [ ] Glass podium: bars fade toward Earth, side bars lean in at the bottom (flat 2D, not 3D)
+- [ ] Scroll choreography: sections fade/slide/scale in and out tied to scroll; reduced-motion fallback
+
+**Batch D — legibility and design review**
+- [ ] Measure text contrast over the brightest and darkest planet frames (sampled screenshots), adapt tint where needed
+- [ ] Impeccable audit → critique → polish → document; refresh DESIGN.md for the dark-glass system
+- [ ] Data check: Today's movers shows +876% for Marc Andreessen "since Mar 10, 2026" (baseline looks wrong)
+
+**Batch E — live Earth and assets**
+- [ ] NASA GIBS daily cloud layer with its capture date (never presented as real-time)
+- [ ] In-app Credits sheet for NASA imagery (texture provenance is in `public/planet/NOTICE.md`)
+
+**Batch F — native**
+- [ ] Planet on iOS/Android (expo-gl + three), `expo-glass-effect` on iOS 26, `expo-blur` on Android; development build; simulator and device checks reported separately
 
 ## Decisions (owner)
 

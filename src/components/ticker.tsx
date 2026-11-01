@@ -12,7 +12,7 @@ import { Icon, icons, minTouch, type IconName } from '@/components/ui';
 import { age, type Ticker as TickerData, type TickerItem } from '@/lib/ticker';
 import { useChromeHidden } from '@/lib/scene';
 import { useTicker } from '@/lib/ticker-data';
-import { color, contentWidth, radius, space, type } from '@/theme';
+import { color, contentWidth, radius, scrim, space, type } from '@/theme';
 
 /** Scroll speed in px per second. */
 const SPEED = 40;
@@ -159,6 +159,8 @@ export function Ticker() {
       ]}
       pointerEvents={hidden ? 'none' : 'box-none'}
       aria-hidden={hidden}>
+      {/* Dark blurred fade behind the pill so it reads over bright Earth; moves and fades with the band. */}
+      {Platform.OS === 'web' && <View pointerEvents="none" style={[styles.scrim, scrim('bottom') as object]} />}
       <Glass radius={radius.pill} style={styles.pill}>
         <View
           style={[styles.strip, !(overflow && !reduce) && { paddingRight: space.md }]}
@@ -199,6 +201,7 @@ export function Ticker() {
 
 const styles = StyleSheet.create({
   band: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: space.md, zIndex: 10 },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: -40 },
   pill: { width: '100%', maxWidth: contentWidth, alignSelf: 'center' },
   strip: { flexDirection: 'row', alignItems: 'center', minHeight: minTouch, borderRadius: radius.pill, overflow: 'hidden' },
   badge: {
