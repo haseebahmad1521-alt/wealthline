@@ -26,6 +26,7 @@ _Updated Nov 2, 2026 at the end of batch A (commit: see `git log -1`, pushed and
 - **Just landed (batch A):** globe gestures (no scroll/tap conflict), portraits pinned with springs only on merge/split, close-up on a chosen person, night side lifts when close, performance pass (sphere LOD, cheaper atmosphere, no per-frame allocations, grid clustering), floating glass tab bar, ticker + tab bar hide on scroll, glass bevel on every panel, edge scrims behind the ticker and tab bar, portraits reach the screen edges and fade only at the horizon, adaptive 8K textures.
 - **Next:** batch B below (one scene for the remaining views).
 - **Half-done:** nothing uncommitted.
+- **Ask the owner:** nothing open.
 - **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation.
 - **Verify:** `npm run preview:phone` → http://localhost:8090 (phone frame) or http://localhost:8081 directly; `npm run typecheck`, `npm test`; `npm run build:pages` before a push.
 
