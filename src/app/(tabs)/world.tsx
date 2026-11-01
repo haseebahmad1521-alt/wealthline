@@ -40,7 +40,9 @@ export default function World() {
     for (const e of world.data ?? []) {
       for (const c of e.companies) {
         const live = isLive(c.quote);
-        for (const site of c.sites) s.push({ key: `${c.id}:${site.kind}:${site.name}`, lat: site.lat, lng: site.lng, kind: site.kind, group: e.person.id, live });
+        // Keyed by person too: a company shared by several people (Alphabet, Walmart) is drawn once per empire, and
+        // duplicate keys left stale rings frozen at old positions as the globe turned.
+        for (const site of c.sites) s.push({ key: `${e.person.id}:${c.id}:${site.kind}:${site.name}`, lat: site.lat, lng: site.lng, kind: site.kind, group: e.person.id, live });
       }
       if (e.hq) m.push({ key: e.person.id, lat: e.hq.lat, lng: e.hq.lng, uri: e.person.portrait_url, label: e.person.name });
     }
@@ -53,7 +55,7 @@ export default function World() {
   };
 
   const globeSize = desktop ? 520 : Math.min(width - space.md * 2 - space.md * 2, 440);
-  const places = new Set(sites.map((s) => s.key)).size;
+  const places = new Set(sites.map((s) => s.key.split(':').slice(1).join(':'))).size;
 
   return (
     <Screen>
