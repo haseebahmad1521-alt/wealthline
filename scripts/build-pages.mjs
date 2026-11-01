@@ -52,6 +52,7 @@ writeFileSync(
   sub('preview/index.html', {
     APP_SRC: './app/',
     APP_URL: appUrl,
+    QR_NOTE: 'Scan to open the app directly. Add it to your Home Screen from Account.',
     MODE_NOTE: `Deployed from commit <a href="https://github.com/${repo}/commit/${sha}">${sha.slice(0, 7)}</a>`,
   }),
 );

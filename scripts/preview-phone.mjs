@@ -88,7 +88,13 @@ createServer((req, res) => {
   try {
     if (path === '/' || path === '/index.html') {
       // Re-read each request so shell edits show on refresh.
-      const html = sub(readFileSync('preview/index.html', 'utf8'), { APP_SRC: frameUrl, APP_URL: appUrl, MODE_NOTE: note });
+      const html = sub(readFileSync('preview/index.html', 'utf8'), {
+        APP_SRC: frameUrl,
+        APP_URL: appUrl,
+        MODE_NOTE: note,
+        // Home Screen install needs HTTPS and the service worker, which only the Pages build has.
+        QR_NOTE: 'Scan with a phone on the same Wi-Fi to open the live dev app in its browser.',
+      });
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       return res.end(html);
     }
