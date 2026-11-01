@@ -12,7 +12,7 @@ import type { CompanyView, Country, Empire } from '@/lib/world';
 import { color, radius, space, type } from '@/theme';
 
 const regionName = new Intl.DisplayNames(['en'], { type: 'region' });
-const placeName = (region: string, country: string | null) => (country ? (regionName.of(country) ?? region) : region);
+const placeName = (region: string, country: string | null) => (country && /^[A-Z]{2}$/.test(country) ? (regionName.of(country) ?? region) : region);
 const open = (url: string | null) => url && void WebBrowser.openBrowserAsync(url);
 const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
 

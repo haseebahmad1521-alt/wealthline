@@ -24,6 +24,8 @@ const cache = new Map<string, Feature<Geometry, { name: string }> | null>();
 
 /** The country's shape by ISO 3166-1 alpha-2 code, or null when the 1:110m atlas has none (small states). */
 export function countryShape(iso2: string) {
+  // Only real two-letter codes: a region name ("EMEA") would make Intl.DisplayNames throw.
+  if (!/^[A-Z]{2}$/.test(iso2)) return null;
   if (!cache.has(iso2)) cache.set(iso2, byName.get(ATLAS_NAME[iso2] ?? regionName.of(iso2) ?? '') ?? null);
   return cache.get(iso2)!;
 }

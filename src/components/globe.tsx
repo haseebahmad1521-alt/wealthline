@@ -199,18 +199,22 @@ export function Globe({
     if (!d) return [];
     const faded = !!focus && a.group !== focus;
     const tint = a.risk ? color.loss : focus && !faded ? color.action : color.text;
+    const width = (1 + 3.5 * Math.sqrt(a.weight)) * scale;
+    // A soft solid line shows the route; brighter dashes travelling along it show the direction (toward the HQ).
     return [
-      <Path
-        key={a.key}
-        d={d}
-        fill="none"
-        stroke={tint}
-        strokeOpacity={faded ? 0.12 : 0.55}
-        strokeWidth={(0.8 + 3.2 * Math.sqrt(a.weight)) * scale}
-        strokeLinecap="round"
-        strokeDasharray={reduce ? undefined : '2 6'}
-        strokeDashoffset={reduce ? undefined : -((t / 45) % 8)}
-      />,
+      <G key={a.key}>
+        <Path d={d} fill="none" stroke={tint} strokeOpacity={faded ? 0.08 : 0.22} strokeWidth={width} strokeLinecap="round" />
+        <Path
+          d={d}
+          fill="none"
+          stroke={tint}
+          strokeOpacity={faded ? 0.15 : 0.85}
+          strokeWidth={width}
+          strokeLinecap="round"
+          strokeDasharray={reduce ? undefined : '8 14'}
+          strokeDashoffset={reduce ? undefined : -((t / 30) % 22)}
+        />
+      </G>,
     ];
   });
 
