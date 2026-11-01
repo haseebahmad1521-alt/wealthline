@@ -65,7 +65,6 @@ _project_metadata.jsonl
 preview-artifacts/
 .kotlin/
 pages-dist/
-supabase/import/bilt-import.sql
 supabase/import/setup-all.sql
 .impeccable/review/
 

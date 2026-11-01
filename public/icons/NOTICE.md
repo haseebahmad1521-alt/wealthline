@@ -1,7 +1,7 @@
 # Icon provenance
 
 Temporary Wealthline icon: the "trending-up" glyph from Lucide (https://lucide.dev), white on #0071E3,
-rendered to PNG with resvg. Replaces the earlier Bilt-generated icon (Oct 24, 2026).
+rendered to PNG with resvg. Replaces the earlier placeholder icon (Oct 24, 2026).
 
 Lucide is licensed under the ISC License:
 

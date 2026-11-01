@@ -1,14 +1,14 @@
 # Wealthline — project instructions
 
-This file contains the owner's Wealthline requirements for an independent project takeover. It does not contain Bilt's internal instructions. Read `HANDOFF.md` for the implementation plan, current limitations, preview requirements, and acceptance checklist.
+This file contains the owner's Wealthline requirements. Wealthline is fully independent: its own repository, Supabase backend and GitHub Pages hosting. Read `HANDOFF.md` for the architecture, operations and acceptance checklist, and `PLAN.md` for current status.
 
 ## Objective
 
-Take over the actual GitHub repository, preserve its working features and data, finish its cross-platform React Native implementation, and publish an automatically updated GitHub Pages web preview inside an iPhone-style presentation.
+Preserve Wealthline's working features and data, finish its cross-platform React Native implementation, and keep the automatically updated GitHub Pages web preview inside an iPhone-style presentation.
 
-**Repository:** `<GITHUB_REPOSITORY_URL>` — the owner must supply this.
+**Repository:** <https://github.com/haseebahmad1521-alt/wealthline> (default branch `main`).
 
-Wealthline already uses **React Native, Expo, Expo Router, and React Native Web**. Do not rebuild it as if it were a plain React website. Do not introduce Vite solely to obtain a browser preview. Audit the checked-out repository first; this handoff is a baseline, not a substitute for inspection.
+Wealthline already uses **React Native, Expo, Expo Router, and React Native Web**. Do not rebuild it as if it were a plain React website. Do not introduce Vite solely to obtain a browser preview. Audit the checked-out repository first; these instructions are a baseline, not a substitute for inspection.
 
 ## Product requirements
 
@@ -77,13 +77,13 @@ The existing short-term projection feature is based on sufficiently recent obser
 
 Inspect the existing package scripts, Expo configuration, navigation, theme, backend client, and charts before changing them. Keep changes reviewable and avoid unnecessary rewrites.
 
-Known baseline, to confirm against the clone:
+Known baseline, to confirm against `package.json`:
 
-- TypeScript; Expo SDK 57; React Native 0.86; React 19.
-- Expo Router and React Native Web.
+- TypeScript; Expo SDK 58; React Native 0.88; React 19.
+- Expo Router (routes in `src/app/`) and React Native Web.
 - HeroUI Native and Uniwind, with existing Inter fonts and theme.
-- Recharts on web; native SVG chart implementations.
-- Single-page web export and Workbox PWA build scripts.
+- Supabase (`@supabase/supabase-js`) client in `src/lib/supabase.ts`.
+- Single-page web export; `npm run build:pages` assembles the Pages artifact with the PWA service worker.
 
 Keep web-only dependencies isolated in `.web.tsx` files. Use native app UI rather than wrapping the website in a WebView. Reuse the existing shared components and theme.
 
@@ -93,11 +93,11 @@ Report browser, simulator, and physical-device checks separately. An iPhone-shap
 
 ## Backend and security
 
-Keep the working backend initially if it is accessible from the exported repository. A GitHub deployment does not migrate databases, users, or server-side functions.
+The backend is the owner's Supabase project: schema and RLS in `supabase/migrations/`, Edge Functions in `supabase/functions/`, auth settings in `supabase/config.toml`, setup in `supabase/README.md`. A GitHub deployment does not migrate databases, users, or server-side functions; those deploy through the Supabase CLI.
 
-Inspect `lib/bilt.ts`, generated database types, auth flows, and deployed-function dependencies. Verify private watchlists and admin restrictions with separate identities. Preserve source provenance and portrait licensing.
+Inspect `src/lib/supabase.ts`, `src/lib/types.ts`, auth flows, and Edge Function dependencies before changing them. Verify private watchlists and admin restrictions with separate identities. Preserve source provenance (including labels recording records imported from the previous backend) and portrait licensing.
 
-If independent hosting requires replacing a dependency, first document the exact problem and propose a migration preserving data, ownership, and authentication. Obtain owner approval before destructive migrations or backend replacement.
+Obtain owner approval before destructive migrations, data deletion, or replacing a backend dependency.
 
 Never commit credentials or embed market-data keys, service credentials, admin credentials, or scheduler secrets in a browser bundle. Supply public client configuration separately in local development and deployment. Keep server-side secrets on the backend.
 

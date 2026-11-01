@@ -49,7 +49,7 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 
 ## Evidence on Hand
 
-- Ten dated estimates, sources, holdings, projects, events, and licensed Wikimedia portraits exist in the previous Bilt backend, pending one-time export. Nothing else may be invented: no testimonials, no fabricated values, history, holdings, or sources.
+- Ten dated owner estimates, sources, holdings, and licensed Wikimedia portraits were exported once from the previous Bilt backend into Supabase (done); their source labels record that provenance. Nothing else may be invented: no testimonials, no fabricated values, history, holdings, or sources.
 - Portrait credit and license links must stay accessible wherever a portrait appears.
 
 ## Product Principles
