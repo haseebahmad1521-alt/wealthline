@@ -60,7 +60,7 @@ Preserve attribution and license access.
 
 ## Data integrity and chart behavior
 
-Keep the default three-hour window and smooth zoom/pan from seconds to longer windows. Synchronize fractional displayed estimates and chart movement.
+Charts open on all time (owner, Nov 1, 2026; previously a three-hour default), with the three-hour window one tap away and smooth zoom/pan from seconds to longer windows. Synchronize fractional displayed estimates and chart movement.
 
 - Never generate random financial fluctuations.
 - Distinguish observed values, interpolation, and projections.

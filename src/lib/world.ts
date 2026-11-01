@@ -1,4 +1,5 @@
-// World tab data: each tracked person's companies, their real sites (Wikidata), revenue by reported place (SEC 10-K),
+// World tab data: each tracked person's companies (person_companies: Wikidata links, Forbes source, holdings), their
+// real sites (Wikidata), revenue by reported place (SEC 10-K),
 // subsidiary counts (Exhibit 21) and the latest observed share price. Nothing here is computed beyond grouping.
 import { useQuery } from '@tanstack/react-query';
 
@@ -32,7 +33,7 @@ async function loadWorld() {
     db().from('company_sites').select('company_id, kind, name, city, country, lat, lng, source_url').not('lat', 'is', null),
     db().from('company_exposure').select('company_id, fiscal_year, region, country, share, source_label, source_url'),
     db().from('quote_latest').select('ticker, as_of, price, prev_close, change_pct, source_label, source_url'),
-    db().from('holdings').select('person_id, company_id').not('company_id', 'is', null),
+    db().from('person_companies').select('person_id, company_id'),
     db().from('subsidiaries').select('company_id, source_url'),
   ]);
   for (const r of [companies, sites, regions, quotes, holdings, subs]) if (r.error) throw r.error;

@@ -265,7 +265,7 @@ Calm, pill-shaped, and confident.
 - **Focus:** global 2px Action Blue outline; selection tinted Action Blue at 18%.
 
 ### Segmented Controls
-Fill pill trough with 3px inset; the selected option is a Surface pill with Segment Thumb shadow and Ink label, others Ink Secondary. Used for sort, chart range (3H default, 1D, 1M, 1Y, All), and compare modes.
+Fill pill trough with 3px inset; the selected option is a Surface pill with Segment Thumb shadow and Ink label, others Ink Secondary. Used for sort, chart range (3H, 24H, 7D, 1M, 1Y, All; All is the default since Nov 1, 2026), and compare modes.
 
 ### Navigation
 - **Desktop (≥900px):** sticky frosted bar, logo plus "Wealthline" (700, 17px, -0.4px) left; tabs as 36px pills, active on Fill with Ink label, inactive Ink Secondary with Fill on hover; "Sign in"/"Account" as an Action Blue text link.

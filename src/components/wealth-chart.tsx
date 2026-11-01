@@ -49,7 +49,8 @@ export function WealthChart({ points, live, now }: Props) {
   const money = useMoney();
   const first = points[0]?.t ?? now - presets[0].span;
   const fullSpan = Math.max(now - first, MIN_SPAN);
-  const [span, setSpan] = useState<number>(presets[0].span);
+  // Opens on all time (owner, Nov 1, 2026); 3H stays one tap away for intraday moves.
+  const [span, setSpan] = useState<number>(Infinity);
   const [end, setEnd] = useState<number | null>(null); // null = follow now
   const [width, setWidth] = useState(0);
   const [cursor, setCursor] = useState<number | null>(null); // scrubbed time

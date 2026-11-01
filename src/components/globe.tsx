@@ -152,10 +152,13 @@ export function Globe({
   const scale = clamp(size / 360, 0.75, 1.5);
   const t = clock.current;
 
-  // How far round the limb a point sits: 1 facing us, fading to 0 at the edge, null when behind.
+  // How far round the limb a point sits: 1 facing us, fading to 0 over the last 35° before the edge, null when behind.
+  // Near the edge the curve squeezes places into a sliver (a whole coast can sit there), so they fade out rather than
+  // read as if they were somewhere else.
+  const EDGE_FADE = (35 * Math.PI) / 180;
   const facing = (lng: number, lat: number) => {
     const d = geoDistance([lng, lat], centre);
-    return d >= Math.PI / 2 ? null : clamp((Math.PI / 2 - d) / 0.35, 0, 1);
+    return d >= Math.PI / 2 ? null : clamp((Math.PI / 2 - d) / EDGE_FADE, 0, 1);
   };
 
   const rings = sites.flatMap((s) => {
@@ -178,10 +181,10 @@ export function Globe({
     ];
   });
 
-  // Portraits at HQs; people sharing a city fan out around it so none hides another.
+  // Portraits at HQs, only well inside the front (65° from centre); people sharing a city fan out around it.
   const placed = markers.flatMap((m) => {
     const vis = facing(m.lng, m.lat);
-    const xy = vis != null && vis > 0.3 ? projection([m.lng, m.lat]) : null;
+    const xy = vis != null && geoDistance([m.lng, m.lat], centre) < (65 * Math.PI) / 180 ? projection([m.lng, m.lat]) : null;
     return xy ? [{ ...m, x: xy[0], y: xy[1], vis: vis! }] : [];
   });
   const at = new Map<string, number>();

@@ -1,10 +1,22 @@
-// Generates top100.sql from Forbes + Wikimedia Commons. Run: node supabase/import/top100.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+// Generates top<N>.sql from Forbes + Wikipedia/Wikidata + Wikimedia Commons.
+// Run: node supabase/import/top100.mjs (top 100), or TOP=300 node supabase/import/top100.mjs. A missing
+// forbes-top<N>.json snapshot is fetched once from the Forbes real-time list and saved for review.
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const dir = dirname(fileURLToPath(import.meta.url));
-const forbes = JSON.parse(readFileSync(join(dir, 'forbes-top100.json'), 'utf8'));
+const TOP = Number(process.env.TOP ?? 100);
+const snapshot = join(dir, `forbes-top${TOP}.json`);
+if (!existsSync(snapshot)) {
+  const r = await fetch(`https://www.forbes.com/forbesapi/person/rtb/0/position/true.json?fields=rank,uri,personName,finalWorth,source,countryOfCitizenship,timestamp&limit=${TOP}`, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' },
+  });
+  const list = (await r.json())?.personList?.personsLists ?? [];
+  if (list.length < TOP * 0.9) throw new Error(`Forbes returned ${list.length} people, expected ~${TOP}`);
+  writeFileSync(snapshot, JSON.stringify(list, null, 1));
+}
+const forbes = JSON.parse(readFileSync(snapshot, 'utf8'));
 const socials = Object.fromEntries(JSON.parse(readFileSync(join(dir, 'social-accounts.json'), 'utf8')).map((s) => [s.uri, s]));
 const WIKI_UA = 'WealthlineImport/1.0 (haseebahmad1521-alt.github.io/wealthline)';
 const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -60,17 +72,19 @@ async function findPortrait(name, notes) {
       continue;
     }
     if (m === 'fuzzy') notes.push(`UNSURE (fuzzy title) "${sum.title}" accepted for ${name}`);
-    const pi = await getJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&piprop=name&titles=${encodeURIComponent(sum.title)}&format=json`, WIKI_UA);
-    const file = Object.values(pi?.query?.pages ?? {})[0]?.pageimage;
-    if (!file) { notes.push(`no page image for ${name} ("${sum.title}")`); return null; }
+    const pi = await getJson(`https://en.wikipedia.org/w/api.php?action=query&prop=pageimages|pageprops&piprop=name&ppprop=wikibase_item&titles=${encodeURIComponent(sum.title)}&format=json`, WIKI_UA);
+    const page = Object.values(pi?.query?.pages ?? {})[0];
+    const qid = page?.pageprops?.wikibase_item ?? null; // the matched page's Wikidata item, for company links
+    const file = page?.pageimage;
+    if (!file) { notes.push(`no page image for ${name} ("${sum.title}")`); return { qid, portrait: null }; }
     const ci = await getJson(`https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent('File:' + file)}&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=600&format=json`, WIKI_UA);
     const info = Object.values(ci?.query?.pages ?? {})[0]?.imageinfo?.[0];
-    if (!info) { notes.push(`image not on Commons for ${name}: ${file}`); return null; }
+    if (!info) { notes.push(`image not on Commons for ${name}: ${file}`); return { qid, portrait: null }; }
     const md = info.extmetadata ?? {};
     const lic = md.LicenseShortName?.value;
-    if (!lic || !FREE.test(lic) || /-(NC|ND)\b|\bNC\b/i.test(lic)) { notes.push(`non-free/unknown licence "${lic}" for ${name}: ${file}`); return null; }
+    if (!lic || !FREE.test(lic) || /-(NC|ND)\b|\bNC\b/i.test(lic)) { notes.push(`non-free/unknown licence "${lic}" for ${name}: ${file}`); return { qid, portrait: null }; }
     const author = (md.Artist?.value ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 120) || null;
-    return { url: info.thumburl, page: info.descriptionurl, author, license: lic, licenseUrl: md.LicenseUrl?.value ?? null };
+    return { qid, portrait: { url: info.thumburl, page: info.descriptionurl, author, license: lic, licenseUrl: md.LicenseUrl?.value ?? null } };
   }
   return null;
 }
@@ -102,20 +116,21 @@ for (const p of forbes) {
   const sa = socials[p.uri];
   const social = sa?.platform && sa?.url ? `${q(JSON.stringify({ platform: sa.platform, handle: sa.handle, url: sa.url }))}::jsonb` : 'null';
 
-  const pt = await findPortrait(p.personName, notes);
+  const found = await findPortrait(p.personName, notes);
+  const pt = found?.portrait ?? null;
   await sleep(100);
   if (pt) portraits++; else noPortrait.push(p.personName);
 
   out.push(
-    `insert into public.people (slug, name, age, residence, citizenship, main_source, forbes_uri, forbes_rank, social, portrait_url, portrait_page_url, portrait_author, portrait_license, portrait_license_url) values (${[
-      q(slug), q(p.personName), age ?? 'null', q(residence), q(p.countryOfCitizenship), q(p.source), q(p.uri), p.rank, social,
+    `insert into public.people (slug, name, age, residence, citizenship, main_source, forbes_uri, forbes_rank, social, wikidata_id, portrait_url, portrait_page_url, portrait_author, portrait_license, portrait_license_url) values (${[
+      q(slug), q(p.personName), age ?? 'null', q(residence), q(p.countryOfCitizenship), q(p.source), q(p.uri), p.rank, social, q(found?.qid),
       q(pt?.url), q(pt?.page), q(pt?.author), q(pt?.license), q(pt?.licenseUrl),
-    ].join(', ')}) on conflict (slug) do update set forbes_uri = excluded.forbes_uri, forbes_rank = excluded.forbes_rank, social = coalesce(excluded.social, people.social), portrait_url = coalesce(people.portrait_url, excluded.portrait_url), portrait_page_url = coalesce(people.portrait_page_url, excluded.portrait_page_url), portrait_author = coalesce(people.portrait_author, excluded.portrait_author), portrait_license = coalesce(people.portrait_license, excluded.portrait_license), portrait_license_url = coalesce(people.portrait_license_url, excluded.portrait_license_url), age = coalesce(people.age, excluded.age), residence = coalesce(people.residence, excluded.residence), citizenship = coalesce(people.citizenship, excluded.citizenship), main_source = coalesce(people.main_source, excluded.main_source);`,
+    ].join(', ')}) on conflict (slug) do update set forbes_uri = excluded.forbes_uri, forbes_rank = excluded.forbes_rank, wikidata_id = coalesce(people.wikidata_id, excluded.wikidata_id), social = coalesce(excluded.social, people.social), portrait_url = coalesce(people.portrait_url, excluded.portrait_url), portrait_page_url = coalesce(people.portrait_page_url, excluded.portrait_page_url), portrait_author = coalesce(people.portrait_author, excluded.portrait_author), portrait_license = coalesce(people.portrait_license, excluded.portrait_license), portrait_license_url = coalesce(people.portrait_license_url, excluded.portrait_license_url), age = coalesce(people.age, excluded.age), residence = coalesce(people.residence, excluded.residence), citizenship = coalesce(people.citizenship, excluded.citizenship), main_source = coalesce(people.main_source, excluded.main_source);`,
   );
   console.error(`${p.rank} ${p.personName}: ${pt ? 'portrait' : 'none'}`);
 }
 
-writeFileSync(join(dir, 'top100.sql'), `-- generated by top100.mjs on ${new Date().toISOString().slice(0, 10)}\nbegin;\n${out.join('\n')}\ncommit;\n`);
+writeFileSync(join(dir, `top${TOP}.sql`), `-- generated by top100.mjs (TOP=${TOP}) on ${new Date().toISOString().slice(0, 10)}\nbegin;\n${out.join('\n')}\ncommit;\n`);
 console.log(`\n${forbes.length} people, ${portraits} with portraits`);
 console.log('No portrait:', noPortrait.join('; '));
 console.log('Notes:\n' + notes.join('\n'));

@@ -19,13 +19,21 @@ type Spark = {
 };
 
 async function quotes(db: SupabaseClient) {
-  const { data: companies, error } = await db.from('companies').select('ticker').not('ticker', 'is', null).eq('is_private', false);
+  const { data: companies, error } = await db.from('companies').select('ticker, quote_symbol').not('ticker', 'is', null).eq('is_private', false);
   if (error) throw new Error(error.message);
-  const bySymbol = new Map((companies ?? []).map((c) => [yahooSymbol(c.ticker as string), c.ticker as string]));
+  // Price-feed symbol: the verified quote_symbol (world exchanges, e.g. MC.PA), else derived from the US ticker.
+  const bySymbol = new Map((companies ?? []).map((c) => [(c.quote_symbol as string | null) ?? yahooSymbol(c.ticker as string), c.ticker as string]));
   if (!bySymbol.size) return 0;
-  const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${[...bySymbol.keys()].join(',')}&range=1d&interval=5m`;
-  const body = await track(db, 'Yahoo Finance', () => getJson(url, BROWSER));
-  const rows = ((body?.spark?.result ?? []) as Spark[]).flatMap((r) => {
+  const symbols = [...bySymbol.keys()];
+  const results: Spark[] = [];
+  await track(db, 'Yahoo Finance', async () => {
+    for (let i = 0; i < symbols.length; i += 20) {
+      const batch = symbols.slice(i, i + 20).map(encodeURIComponent).join(',');
+      const body = await getJson(`https://query1.finance.yahoo.com/v7/finance/spark?symbols=${batch}&range=1d&interval=5m`, BROWSER);
+      results.push(...((body?.spark?.result ?? []) as Spark[]));
+    }
+  });
+  const rows = results.flatMap((r) => {
     const ticker = bySymbol.get(r.symbol);
     const series = r.response?.[0];
     if (!ticker || !series?.timestamp) return [];
@@ -93,10 +101,14 @@ async function companyPlaces(db: SupabaseClient) {
   const { data: linked } = await db.from('companies').select('id, wikidata_id').not('wikidata_id', 'is', null);
   if (!linked?.length) return 0;
   const byQ = new Map(linked.map((c) => [c.wikidata_id as string, c.id as string]));
-  const values = [...byQ.keys()].map((q) => `wd:${q}`).join(' ');
+  // Wikidata queries in chunks of 30 companies, so a large empire's facilities can't crowd out the rest.
+  const chunks: string[] = [];
+  const qids = [...byQ.keys()];
+  for (let i = 0; i < qids.length; i += 30) chunks.push(qids.slice(i, i + 30).map((q) => `wd:${q}`).join(' '));
+  const inChunks = async (query: (values: string) => string) => (await Promise.all(chunks.map((v) => sparql(query(v))))).flat();
 
   // 2. Headquarters (city, country, coordinates).
-  const hq = await sparql(
+  const hq = await inChunks((values) =>
     `SELECT ?co ?hqLabel ?coord ?cc WHERE { VALUES ?co { ${values} } ?co wdt:P159 ?hq . ?hq wdt:P625 ?coord .
        OPTIONAL { ?hq wdt:P17 ?c . ?c wdt:P297 ?cc } SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }`,
   );
@@ -113,7 +125,7 @@ async function companyPlaces(db: SupabaseClient) {
   }
 
   // 3. Facilities the company owns or operates.
-  const fac = await sparql(
+  const fac = await inChunks((values) =>
     `SELECT ?co ?site ?siteLabel ?typeLabel ?coord ?cc ?cityLabel WHERE { VALUES ?co { ${values} } ?site wdt:P127|wdt:P137 ?co ; wdt:P625 ?coord .
        OPTIONAL { ?site wdt:P31 ?type } OPTIONAL { ?site wdt:P17 ?c . ?c wdt:P297 ?cc } OPTIONAL { ?site wdt:P131 ?city }
        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } } LIMIT 3000`,
