@@ -6,59 +6,60 @@
 /*
  * Wealthline theme for HeroUI Native (owner's palette, CLAUDE.md "Visual direction"; game-like direction Nov 1, 2026).
  * Tokens go inside the light and dark variants: a plain :root override looks right on web but native keeps
- * HeroUI's defaults. The palette is light-only for now, so dark repeats light.
+ * HeroUI's defaults. Live-planet decision (Nov 1, 2026): one dark-glass palette, so both variants are the same
+ * and match `color` in src/theme.ts.
  */
 @layer theme {
   :root {
     @variant light {
-      --background: #fbfbfd;
-      --foreground: #1d1d1f;
-      --surface: #ffffff;
-      --surface-foreground: #1d1d1f;
-      --muted: #6e6e73;
-      --default: #f2f2f7;
-      --default-foreground: #1d1d1f;
-      --accent: #0071e3;
-      --accent-foreground: #ffffff;
-      --success: #1e7b45;
-      --success-foreground: #ffffff;
-      --danger: #b42318;
-      --danger-foreground: #ffffff;
-      --warning: #805900;
-      --border: #e5e5ea;
-      --separator: #e5e5ea;
-      --focus: #0071e3;
-      --link: #0071e3;
-      --segment: #ffffff;
-      --segment-foreground: #1d1d1f;
-      --field-background: #f2f2f7;
-      --field-foreground: #1d1d1f;
-      --field-placeholder: #6e6e73;
+      --background: #04060b;
+      --foreground: #f5f5f7;
+      --surface: rgba(16, 18, 26, 0.7);
+      --surface-foreground: #f5f5f7;
+      --muted: #b1b1b8;
+      --default: rgba(255, 255, 255, 0.08);
+      --default-foreground: #f5f5f7;
+      --accent: #6cb8ff;
+      --accent-foreground: #04060b;
+      --success: #4ade80;
+      --success-foreground: #04060b;
+      --danger: #ff8a80;
+      --danger-foreground: #04060b;
+      --warning: #f5c451;
+      --border: rgba(255, 255, 255, 0.14);
+      --separator: rgba(255, 255, 255, 0.14);
+      --focus: #6cb8ff;
+      --link: #6cb8ff;
+      --segment: rgba(255, 255, 255, 0.14);
+      --segment-foreground: #f5f5f7;
+      --field-background: rgba(255, 255, 255, 0.08);
+      --field-foreground: #f5f5f7;
+      --field-placeholder: #b1b1b8;
     }
     @variant dark {
-      --background: #fbfbfd;
-      --foreground: #1d1d1f;
-      --surface: #ffffff;
-      --surface-foreground: #1d1d1f;
-      --muted: #6e6e73;
-      --default: #f2f2f7;
-      --default-foreground: #1d1d1f;
-      --accent: #0071e3;
-      --accent-foreground: #ffffff;
-      --success: #1e7b45;
-      --success-foreground: #ffffff;
-      --danger: #b42318;
-      --danger-foreground: #ffffff;
-      --warning: #805900;
-      --border: #e5e5ea;
-      --separator: #e5e5ea;
-      --focus: #0071e3;
-      --link: #0071e3;
-      --segment: #ffffff;
-      --segment-foreground: #1d1d1f;
-      --field-background: #f2f2f7;
-      --field-foreground: #1d1d1f;
-      --field-placeholder: #6e6e73;
+      --background: #04060b;
+      --foreground: #f5f5f7;
+      --surface: rgba(16, 18, 26, 0.7);
+      --surface-foreground: #f5f5f7;
+      --muted: #b1b1b8;
+      --default: rgba(255, 255, 255, 0.08);
+      --default-foreground: #f5f5f7;
+      --accent: #6cb8ff;
+      --accent-foreground: #04060b;
+      --success: #4ade80;
+      --success-foreground: #04060b;
+      --danger: #ff8a80;
+      --danger-foreground: #04060b;
+      --warning: #f5c451;
+      --border: rgba(255, 255, 255, 0.14);
+      --separator: rgba(255, 255, 255, 0.14);
+      --focus: #6cb8ff;
+      --link: #6cb8ff;
+      --segment: rgba(255, 255, 255, 0.14);
+      --segment-foreground: #f5f5f7;
+      --field-background: rgba(255, 255, 255, 0.08);
+      --field-foreground: #f5f5f7;
+      --field-placeholder: #b1b1b8;
     }
   }
 }

@@ -6,7 +6,7 @@ import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { useFonts } from 'expo-font';
-import { Stack, router } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -15,6 +15,7 @@ import { Platform, Pressable, Text, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { TopNav } from '@/components/app-tabs';
+import { PlanetScene } from '@/components/planet/planet-scene';
 
 import { CurrencyProvider } from '@/lib/currency';
 import { DataProvider } from '@/lib/data';
@@ -25,6 +26,12 @@ import '@/lib/activation';
 import { color, desktopBreakpoint, font } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
+
+// Navigation paints its own background under screens; keep it clear so the planet shows through.
+const navTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: 'transparent', card: 'transparent', text: color.text, primary: color.action, border: color.hairline },
+};
 
 export default function RootLayout() {
   // Desktop web: Stack screens above the tabs keep the site's top navigation instead of a back header.
@@ -42,14 +49,17 @@ export default function RootLayout() {
     <HeroUINativeProvider>
     <DataProvider>
       <CurrencyProvider>
-      <StatusBar style="dark" />
+      <ThemeProvider value={navTheme}>
+      <StatusBar style="light" />
+      {/* One planet behind every screen; screens and headers are transparent glass over it. */}
+      <PlanetScene />
       <Stack
         screenOptions={{
-          contentStyle: { backgroundColor: color.bg },
+          contentStyle: { backgroundColor: 'transparent' },
           headerTintColor: color.action,
           headerTitleStyle: { fontFamily: font.semibold, color: color.text },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: color.bg },
+          headerStyle: { backgroundColor: 'transparent' },
           headerBackButtonDisplayMode: 'minimal',
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -72,6 +82,7 @@ export default function RootLayout() {
           options={{ presentation: 'modal', title: '', headerRight: () => <HeaderLink label="Done" />, ...topNav }}
         />
       </Stack>
+      </ThemeProvider>
       </CurrencyProvider>
     </DataProvider>
     </HeroUINativeProvider>

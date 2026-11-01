@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: color.surface,
-    backgroundColor: color.text,
+    borderColor: color.hairline,
+    backgroundColor: '#1C1E26', // solid, so the white rank number reads on any photo
     alignItems: 'center',
     justifyContent: 'center',
   },

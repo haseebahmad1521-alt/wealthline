@@ -44,7 +44,7 @@ export function RankMove({ places, compact }: { places: number | undefined; comp
   const up = places > 0;
   return (
     <View
-      style={[styles.move, { backgroundColor: up ? color.gainTint : '#FBEAE8' }]}
+      style={[styles.move, { backgroundColor: up ? color.gainTint : color.lossTint }]}
       accessible
       accessibilityLabel={`${up ? 'Up' : 'Down'} ${Math.abs(places)} ${Math.abs(places) === 1 ? 'place' : 'places'}`}>
       <Icon name={up ? icons.up : icons.down} size={compact ? 13 : 15} tint={up ? color.gain : color.loss} />

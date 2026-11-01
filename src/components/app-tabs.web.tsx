@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, icons, type IconName } from '@/components/ui';
 import { useAuth } from '@/lib/data';
-import { color, contentWidth, desktopBreakpoint, font, space, type } from '@/theme';
+import { color, contentWidth, desktopBreakpoint, font, glass, space, type } from '@/theme';
 
 const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
   { name: 'index', href: '/', label: 'Rankings', icon: icons.rankings },
@@ -122,15 +122,15 @@ function TabButton({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: color.bg },
+  root: { flex: 1, backgroundColor: 'transparent' },
   slot: { flex: 1 },
   hidden: { display: 'none' },
   top: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.hairline,
-    backgroundColor: 'rgba(251,251,253,0.85)',
-    // Web-only: sticky translucent bar, like the platform's own.
-    ...({ backdropFilter: 'saturate(180%) blur(20px)', position: 'sticky', top: 0 } as unknown as ViewStyle),
+    backgroundColor: glass.tint,
+    // Web-only: sticky Liquid Glass bar over the planet scene.
+    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop, position: 'sticky', top: 0 } as unknown as ViewStyle),
     zIndex: 10,
   },
   topInner: {
@@ -158,7 +158,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: color.hairline,
-    backgroundColor: 'rgba(251,251,253,0.94)',
+    backgroundColor: glass.tint,
+    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as unknown as ViewStyle),
     paddingTop: 6,
   },
   bottomTab: { flex: 1, alignItems: 'center', gap: 2, minHeight: 48, justifyContent: 'center' },

@@ -13,6 +13,14 @@ module.exports = {
   // Only app navigations; anything with a file extension (assets) is never answered with index.html.
   navigateFallbackAllowlist: [new RegExp(`^${base}/`)],
   navigateFallbackDenylist: [/\/[^/?]+\.[^/]+$/],
+  // Planet textures (public/planet/*.jpg) are big and only needed by the scene: cached on first use, not precached.
+  runtimeCaching: [
+    {
+      urlPattern: /\/planet\/[^/]+\.jpg$/,
+      handler: 'CacheFirst',
+      options: { cacheName: 'planet-textures', expiration: { maxEntries: 12 } },
+    },
+  ],
   cleanupOutdatedCaches: true,
   skipWaiting: true,
   clientsClaim: true,

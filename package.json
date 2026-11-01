@@ -40,6 +40,7 @@
     "tailwind-merge": "^3.7.0",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^4.3.3",
+    "three": "^0.187.0",
     "topojson-client": "^3.1.0",
     "uniwind": "^1.13.1",
     "world-atlas": "^2.0.2"
@@ -48,6 +49,7 @@
     "@types/d3-geo": "^3.1.1",
     "@types/node": "^24.19.2",
     "@types/react": "~19.3.0",
+    "@types/three": "^0.187.0",
     "@types/topojson-client": "^3.1.5",
     "qrcode": "^1.5.4",
     "typescript": "~6.0.3",

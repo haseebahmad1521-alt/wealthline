@@ -25,6 +25,8 @@ The target is 20 people; only ten owner-supplied October 1, 2026 estimates are c
 
 ## Visual direction
 
+> **Owner decision, Nov 1, 2026 (evening) — live planet:** the whole app becomes one continuous scene: a realistic Earth (real-time sun angle, rim light, atmospheric glow, a stylized night side with city lights that is darker but never black) against a star map, with every view (Rankings home, World, Projects, Watchlist, profiles, news) as eased "zoom" states over it instead of page changes. All UI in front follows Apple's Liquid Glass (frosted glass, refraction, big soft shadows). Scrolling moves the camera from high in space (only Earth's tip showing) down toward a steeper horizon where stars give way to atmospheric haze. A live ticker of recent company and personal-wealth moves runs at the top. Built web first; native follows. The dark-glass palette in `src/theme.ts` replaces the light background/surface/text values below; Inter, period-ended headings, and gain/loss-with-direction-icon still hold. The planet's lighting is real (computed from UTC); its motion and glow are presentation, never data. Plan: `PLAN.md`.
+>
 > **Owner decision, Nov 1, 2026:** make it entertaining with a **game-like dashboard** layer (podium, rank moves, closest races, overtakes, empire leaderboard, medal tones for ranks 1–3) built with **HeroUI Native** (Uniwind) themed in this palette, starting with Rankings and World. Every game element stays derived from recorded values; motion is entrance and emphasis only, never data. The palette, Inter and the gain/loss + direction-icon rule below still hold.
 
 Preserve the minimal Apple-style foundation and the bolder photographic editorial profile treatment. Do not redesign unrelated screens.

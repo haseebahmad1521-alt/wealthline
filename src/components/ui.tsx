@@ -14,10 +14,12 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { Glass } from '@/components/glass';
 import { direction, formatDate, formatTime, percent } from '@/lib/format';
 import { useMoney } from '@/lib/currency';
+import { reportScroll } from '@/lib/scene';
 import type { LiveStatus } from '@/lib/live';
-import { color, contentWidth, radius, shadow, space, type } from '@/theme';
+import { color, contentWidth, radius, space, type } from '@/theme';
 
 /** Platform symbol names: SF Symbols on iOS, Material Symbols on Android and web. */
 export type IconName = { ios: string; android: string; web: string };
@@ -59,7 +61,10 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.screenContent}
-      contentInsetAdjustmentBehavior="automatic">
+      contentInsetAdjustmentBehavior="automatic"
+      // The planet's camera follows the scroll: top of the page is high in space, the bottom near the horizon.
+      scrollEventThrottle={16}
+      onScroll={({ nativeEvent: e }) => reportScroll(e.contentOffset.y, e.contentSize.height - e.layoutMeasurement.height, e.layoutMeasurement.height)}>
       {inner}
     </ScrollView>
   ) : (
@@ -84,8 +89,9 @@ export function Caption({ children, style, numberOfLines }: { children: ReactNod
   return <Text numberOfLines={numberOfLines} style={[type.caption, { color: color.textSecondary }, style]}>{children}</Text>;
 }
 
+/** A Liquid Glass panel over the planet scene. */
 export function Surface({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.surface, style]}>{children}</View>;
+  return <Glass style={style}>{children}</Glass>;
 }
 
 /** Change with a drawn direction icon and a spoken direction; color is never the only signal. */
@@ -143,7 +149,7 @@ export function Button({
   icon?: IconName;
 }) {
   const primary = variant === 'primary';
-  const fg = primary ? '#FFFFFF' : color.action;
+  const fg = primary ? color.onAction : color.action;
   return (
     <Pressable
       accessibilityRole="button"
@@ -227,13 +233,16 @@ export function StateView({
 
 export const minTouch = Platform.OS === 'android' ? 48 : 44;
 
+const headingShadow = { textShadowColor: 'rgba(0,0,0,0.65)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 1 } };
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.bg },
+  // Transparent so the planet scene behind every screen shows through.
+  screen: { flex: 1, backgroundColor: 'transparent' },
   screenContent: { paddingHorizontal: space.md, paddingTop: space.md, paddingBottom: space.xxl },
   inner: { width: '100%', maxWidth: contentWidth, alignSelf: 'center', gap: space.lg },
-  h1: { ...type.display, color: color.text, marginTop: space.sm },
-  h2: { ...type.title, fontSize: 22, lineHeight: 28, color: color.text, marginTop: space.md },
-  surface: { backgroundColor: color.surface, borderRadius: radius.lg, ...shadow },
+  // Headings sit straight on the planet (no glass): a soft shadow keeps them readable over the bright limb.
+  h1: { ...type.display, color: color.text, marginTop: space.sm, ...headingShadow },
+  h2: { ...type.title, fontSize: 22, lineHeight: 28, color: color.text, marginTop: space.md, ...headingShadow },
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   chip: {
     flexDirection: 'row',

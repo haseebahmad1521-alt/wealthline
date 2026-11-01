@@ -105,7 +105,8 @@ const styles = StyleSheet.create({
   heroDesktop: { paddingHorizontal: space.xl, paddingTop: space.xl },
   // Oversized so the blur's soft edges fall outside the rounded card.
   bg: { position: 'absolute', top: '-25%', left: '-25%', width: '150%', height: '150%' },
-  frost: { backgroundColor: 'rgba(251,251,253,0.62)' },
+  // Dark frost keeps white text AA over the blurred portrait, however bright the photo.
+  frost: { backgroundColor: 'rgba(16,18,26,0.66)' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   portrait: { borderRadius: 32, ...shadow, shadowOpacity: 0.16 },
   identity: { flex: 1, minWidth: 0, gap: 4 },
