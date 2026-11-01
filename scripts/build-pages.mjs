@@ -49,7 +49,11 @@ const sub = (file, vars) =>
   Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{{${k}}}`, v), readFileSync(file, 'utf8'));
 writeFileSync(
   'pages-dist/index.html',
-  sub('preview/index.html', { COMMIT: sha.slice(0, 7), COMMIT_URL: `https://github.com/${repo}/commit/${sha}`, PAGES_URL: pagesUrl, APP_URL: appUrl }),
+  sub('preview/index.html', {
+    APP_SRC: './app/',
+    APP_URL: appUrl,
+    MODE_NOTE: `Deployed from commit <a href="https://github.com/${repo}/commit/${sha}">${sha.slice(0, 7)}</a>`,
+  }),
 );
 writeFileSync('pages-dist/404.html', sub('preview/404.html', { APP_PREFIX: `${appBase}/`, SHELL_URL: `${pagesBase}/` }));
 

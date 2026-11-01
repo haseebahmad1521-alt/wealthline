@@ -39,14 +39,14 @@
   /* Presentation-only iPhone: thin even bezel; the island and status bar live on the screen.
      The app iframe fills the space between the status bar and the home indicator, like a real safe area. */
   .phone { flex: none; padding: 12px; border-radius: 68px; background: #0A0A0B; box-shadow: 0 0 0 2px var(--rim), 0 0 0 1px rgba(255,255,255,.06) inset, 0 32px 80px var(--glow); }
-  .screen { position: relative; width: 390px; height: 844px; border-radius: 56px; overflow: hidden; background: #FBFBFD; display: flex; flex-direction: column; }
-  .status { flex: none; height: 54px; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 44px; color: #1D1D1F; font: 600 17px/1 Inter, -apple-system, system-ui, sans-serif; letter-spacing: -0.02em; }
+  .screen { position: relative; width: 390px; height: 844px; border-radius: 56px; overflow: hidden; background: #04060b; /* the app is a dark space scene (Nov 1, 2026) */ display: flex; flex-direction: column; }
+  .status { flex: none; height: 54px; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 44px; color: #F5F5F7; font: 600 17px/1 Inter, -apple-system, system-ui, sans-serif; letter-spacing: -0.02em; }
   .status svg { display: block; }
   .status .sys { display: flex; gap: 6px; align-items: center; }
   .island { position: absolute; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: #000; }
   .screen iframe { flex: 1; display: block; width: 100%; border: 0; }
   .home { flex: none; height: 34px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; }
-  .home span { width: 134px; height: 5px; border-radius: 3px; background: #1D1D1F; }
+  .home span { width: 134px; height: 5px; border-radius: 3px; background: #F5F5F7; }
   .status, .home { pointer-events: none; user-select: none; }
   @media (max-width: 699px) {
     main { padding: 32px 16px; gap: 24px; }
@@ -62,12 +62,12 @@
     <h1>Wealthline.</h1>
     <p>The world's biggest fortunes.</p>
     <p>This is the real web export of the app, shown in a phone-shaped frame. It previews React Native Web in a browser, not a native iOS runtime.</p>
-    <a class="btn" href="./app/">Open app</a>
+    <a class="btn" href="{{APP_SRC}}">Open app</a>
     <div class="qr">
-      <img src="qr.svg" width="112" height="112" alt="QR code that opens the Wealthline app ({{APP_URL}}) on a phone" />
+      <img src="qr.svg" width="112" height="112" alt="Web-preview QR code that opens the Wealthline app ({{APP_URL}}) on a phone" />
       <p><strong>Open on your phone.</strong> Scan to open the app directly. Add it to your Home Screen from Account.</p>
     </div>
-    <p class="meta">Deployed from commit <a href="{{COMMIT_URL}}">{{COMMIT}}</a></p>
+    <p class="meta">{{MODE_NOTE}}</p>
   </section>
   <div class="phone">
     <div class="screen">
@@ -75,12 +75,12 @@
         <span>9:41</span>
         <div class="island"></div>
         <div class="sys">
-          <svg width="18" height="12" viewBox="0 0 18 12" fill="#1D1D1F"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
-          <svg width="16" height="12" viewBox="0 0 16 12" fill="#1D1D1F"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .4 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2Zm0 3.6c1.4 0 2.7.5 3.7 1.5L13 6a7 7 0 0 0-10 0l1.3 1.3c1-1 2.3-1.5 3.7-1.5Zm0 3.6c-.5 0-1 .2-1.3.5L8 11.2l1.3-1.3c-.3-.3-.8-.5-1.3-.5Z"/></svg>
-          <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#1D1D1F" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#1D1D1F"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill="#1D1D1F" opacity=".4"/></svg>
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="#F5F5F7"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="#F5F5F7"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .4 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2Zm0 3.6c1.4 0 2.7.5 3.7 1.5L13 6a7 7 0 0 0-10 0l1.3 1.3c1-1 2.3-1.5 3.7-1.5Zm0 3.6c-.5 0-1 .2-1.3.5L8 11.2l1.3-1.3c-.3-.3-.8-.5-1.3-.5Z"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#F5F5F7" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#F5F5F7"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill="#F5F5F7" opacity=".4"/></svg>
         </div>
       </div>
-      <iframe id="app" title="Wealthline app preview" data-src="./app/" allow="clipboard-write"></iframe>
+      <iframe id="app" title="Wealthline app preview" data-src="{{APP_SRC}}" allow="clipboard-write"></iframe>
       <div class="home" aria-hidden="true"><span></span></div>
     </div>
   </div>
@@ -89,10 +89,14 @@
   // Never nest the shell inside itself or anything else.
   if (self !== top) { document.documentElement.hidden = true; }
   // Load the app only when the frame is visible; narrow screens use the direct "Open app" link.
-  if (matchMedia("(min-width: 700px)").matches) {
+  // Also load it if the window widens later.
+  var wide = matchMedia("(min-width: 700px)");
+  function load() {
     var f = document.getElementById("app");
-    f.src = f.dataset.src;
+    if (wide.matches && !f.getAttribute("src")) f.src = f.dataset.src;
   }
+  load();
+  if (wide.addEventListener) wide.addEventListener("change", load);
 </script>
 </body>
 </html>
