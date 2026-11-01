@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { land } from '@/lib/geo';
 import { scene as sceneState, zoomFactor } from '@/lib/scene';
 import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
+import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
 import { color } from '@/theme';
 import { atmosphereFragment, earthFragment, quadVertex, skyFragment, sunFragment, worldVertex } from './planet-shaders';
 
@@ -98,10 +99,9 @@ export function PlanetScene() {
     const camera = new THREE.PerspectiveCamera(FOV, 1, 0.01, 400);
 
     // Phones get 2K textures; bigger or denser screens 4K.
-    const big = Math.max(window.innerWidth, window.innerHeight) * (window.devicePixelRatio || 1) > 1800;
-    const res = big ? '4k' : '2k';
+    const res = TIERS[startTierFor(Math.max(window.innerWidth, window.innerHeight) * (window.devicePixelRatio || 1))];
     const loader = new THREE.TextureLoader();
-    const load = (name: string, srgb = true, size = res) =>
+    const load = (name: string, srgb = true, size: Tier = res) =>
       new Promise<THREE.Texture>((resolve, reject) =>
         loader.load(`${BASE}/planet/${name}-${size}.jpg`, (t) => {
           t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
@@ -171,12 +171,77 @@ export function PlanetScene() {
     if (__DEV__) (window as unknown as { __planet: object }).__planet = { renderer, scene, camera, earth, sky, atmosphere, sunQuad, state: sceneState };
 
     let disposed = false;
+
+    // Texture detail adapts to the device (owner, Nov 2, 2026). First paint uses the tier above; once the scene holds a
+    // smooth frame rate, the next tier loads in the background and swaps in, and a sustained slowdown swaps back (and
+    // stops trying). 8K only where the GPU takes it, the screen is big and memory isn't tight; Save-Data and slow
+    // connections never upgrade. The service worker caches whatever loads (public/planet, CacheFirst).
+    const startTier = TIERS.indexOf(res);
+    let tier = startTier;
+    const loaded: ({ day: THREE.Texture; night: THREE.Texture } | undefined)[] = [];
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string }; deviceMemory?: number };
+    const maxTier = maxTierFor({
+      start: startTier,
+      maxTexture: renderer.capabilities.maxTextureSize,
+      phone,
+      deviceMemory: nav.deviceMemory,
+      saveData: nav.connection?.saveData,
+      effectiveType: nav.connection?.effectiveType,
+    });
+    let readyAt = 0;
+    let frameMs = 16.7; // smoothed frame time
+    let lastRaw = 0;
+    let checkAt = 0;
+    let busy = false;
+    let settled = false; // a drop back ends upgrades for this visit
+
+    function swapTo(next: number) {
+      const t = loaded[next];
+      if (!t) return;
+      earthUniforms.dayMap.value = t.day;
+      earthUniforms.nightMap.value = t.night;
+      tier = next;
+    }
+    function adapt(now: number) {
+      if (now - lastRaw < 250) frameMs = frameMs * 0.95 + (now - lastRaw) * 0.05;
+      lastRaw = now;
+      if (__DEV__) Object.assign((window as unknown as { __planet: object }).__planet, { lod: { tier: TIERS[tier], maxTier: TIERS[maxTier], frameMs, readyAt, busy, settled } });
+      if (!readyAt || busy || now < checkAt || now - readyAt < 3000) return;
+      checkAt = now + 2000;
+      const step = nextStep({ frameMs, tier, start: startTier, max: maxTier, settled });
+      if (step === 'down') {
+        // Too slow since the upgrade: back down, free the big textures, and stay there.
+        const big = loaded[tier];
+        swapTo(tier - 1);
+        loaded[tier + 1] = undefined;
+        big?.day.dispose();
+        big?.night.dispose();
+        settled = true;
+      } else if (step === 'up') {
+        busy = true;
+        const next = tier + 1;
+        Promise.all([load('day', true, TIERS[next]), load('night', true, TIERS[next])])
+          .then(([day, night]) => {
+            if (disposed) return void (day.dispose(), night.dispose());
+            loaded[next] = { day, night };
+            swapTo(next);
+            // The upload hitches a frame or two: measure afresh before judging the new tier.
+            frameMs = 16.7;
+            checkAt = performance.now() + 3000;
+          })
+          .catch(() => (settled = true))
+          .finally(() => (busy = false));
+      }
+    }
+
     // Stars always come from the 4K map: at 2K each star is under a pixel and smears when magnified.
     Promise.all([load('day'), load('night'), load('stars', true, '4k')])
       .then(([day, night, stars]) => {
         if (disposed) return;
         earthUniforms.dayMap.value = day;
         earthUniforms.nightMap.value = night;
+        loaded[tier] = { day, night };
+        readyAt = performance.now();
         // Stars wrap at RA 0h; without mipmaps there's no seam line where the texture's edges meet.
         stars.generateMipmaps = false;
         stars.minFilter = THREE.LinearFilter;
@@ -346,6 +411,7 @@ export function PlanetScene() {
       // Clamped: a negative or huge gap (rAF timestamps can trail performance.now(); tabs sleep) must not blow up the easing.
       const dt = Math.min(Math.max((now - lastT) / 1000, 0), 0.1);
       lastT = now;
+      if (!reduce) adapt(now);
       try {
         place(now, dt);
         renderer.render(scene, camera);
@@ -370,6 +436,8 @@ export function PlanetScene() {
       if (still) clearInterval(still);
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', onVisible);
+      // Tiers not currently on the globe (the one in use is freed with the materials below).
+      loaded.forEach((t, i) => i !== tier && (t?.day.dispose(), t?.night.dispose()));
       scene.traverse((o) => {
         if (o instanceof THREE.Mesh) {
           o.geometry.dispose();

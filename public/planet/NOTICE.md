@@ -2,7 +2,9 @@
 
 All three images are NASA imagery, public domain (no copyright in the U.S.); NASA asks for credit, which the app
 shows in its Credits sheet. Resized to 4096×2048 (`-4k`, desktop) and 2048×1024 (`-2k`, phones) with macOS `sips`
-on Nov 1, 2026. Not edited otherwise.
+on Nov 1, 2026, plus an optional 8192×4096 tier (`-8k`, day and night only, Nov 2, 2026) that the app loads only on
+capable devices once the scene runs smoothly. Not edited otherwise. The `day-8k` file comes from NASA's
+21600×10800 version of the same image (`world.200407.3x21600x10800.jpg`).
 
 | File | Source |
 | --- | --- |
