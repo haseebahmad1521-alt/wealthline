@@ -22,14 +22,17 @@ export type Company = {
   source_url: string | null;
 };
 export type CompanyView = Company & { sites: Site[]; regions: RegionShare[]; quote: Quote | null; subsidiaries: number; subsidiariesUrl: string | null };
-export type Empire = { person: Person; companies: CompanyView[]; hq: { lat: number; lng: number } | null };
+/** A recorded share count (SEC Form 4 or Schedule 13G/13D) valued at the latest observed price. */
+export type Stake = { company: CompanyView; shares: number; value: number | null; asOf: string | null; label: string | null; url: string | null; note: string | null };
+export type Empire = { person: Person; companies: CompanyView[]; hq: { lat: number; lng: number } | null; stakes: Stake[] };
+type ShareRow = { person_id: string; company_id: string; shares_owned: number; shares_as_of: string | null; shares_source_label: string | null; shares_source_url: string | null; shares_note: string | null };
 export type Country = { iso2: string; name: string; gdp_usd: number | null; gdp_year: number | null; source_url: string | null };
 
 /** A price newer than this counts as "moving now" (markets open); older ones are shown as the last price. */
 export const LIVE_QUOTE_MS = 30 * 60_000;
 
 async function loadWorld() {
-  const [companies, sites, regions, quotes, holdings, subs, countries] = await Promise.all([
+  const [companies, sites, regions, quotes, holdings, subs, countries, shareRows] = await Promise.all([
     db().from('companies').select('id, name, ticker, is_private, country, hq_city, hq_lat, hq_lng, source_url'),
     db().from('company_sites').select('company_id, kind, name, city, country, lat, lng, source_url').not('lat', 'is', null),
     db().from('company_exposure').select('company_id, fiscal_year, region, country, revenue_usd, share, source_label, source_url'),
@@ -37,8 +40,9 @@ async function loadWorld() {
     db().from('person_companies').select('person_id, company_id'),
     db().from('subsidiaries').select('company_id, source_url'),
     db().from('countries').select('iso2, name, gdp_usd, gdp_year, source_url'),
+    db().from('holdings').select('person_id, company_id, shares_owned, shares_as_of, shares_source_label, shares_source_url, shares_note').gt('shares_owned', 0).not('company_id', 'is', null),
   ]);
-  for (const r of [companies, sites, regions, quotes, holdings, subs, countries]) if (r.error) throw r.error;
+  for (const r of [companies, sites, regions, quotes, holdings, subs, countries, shareRows]) if (r.error) throw r.error;
   return {
     companies: companies.data as Company[],
     sites: sites.data as Site[],
@@ -47,6 +51,7 @@ async function loadWorld() {
     holdings: holdings.data as { person_id: string; company_id: string }[],
     subs: subs.data as { company_id: string; source_url: string | null }[],
     countries: countries.data as Country[],
+    shares: shareRows.data as ShareRow[],
   };
 }
 
@@ -79,7 +84,14 @@ export function useWorld() {
           // Listed companies first (they carry the live price), then by number of places.
           .sort((a, b) => Number(a.is_private) - Number(b.is_private) || b.sites.length - a.sites.length);
         const main = owned.find((c) => c.hq_lat != null);
-        return { person, companies: owned, hq: main ? { lat: main.hq_lat!, lng: main.hq_lng! } : null };
+        const stakes = w.shares
+          .filter((h) => h.person_id === person.id && companies.has(h.company_id))
+          .map((h) => {
+            const company = companies.get(h.company_id)!;
+            const shares = Number(h.shares_owned);
+            return { company, shares, value: company.quote ? shares * company.quote.price : null, asOf: h.shares_as_of, label: h.shares_source_label, url: h.shares_source_url, note: h.shares_note };
+          });
+        return { person, companies: owned, hq: main ? { lat: main.hq_lat!, lng: main.hq_lng! } : null, stakes };
       })
       .filter((e) => e.companies.length > 0);
   }

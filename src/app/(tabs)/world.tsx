@@ -4,11 +4,11 @@ import { Fragment, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
-import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, revenueLines, whatIfTargets } from '@/components/world-views';
+import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
 import { countryShape } from '@/lib/geo';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
-import { formatDate, formatTime } from '@/lib/format';
-import { LIVE_QUOTE_MS, useWorld, type CompanyView, type Empire, type Quote, type SiteKind } from '@/lib/world';
+import { formatDate, formatTime, usd } from '@/lib/format';
+import { LIVE_QUOTE_MS, useWorld, type CompanyView, type Empire, type Quote, type SiteKind, type Stake } from '@/lib/world';
 import { color, desktopBreakpoint, radius, space, type } from '@/theme';
 
 const regionName = new Intl.DisplayNames(['en'], { type: 'region' });
@@ -33,6 +33,8 @@ const VIEWS = [
 ] as const;
 type ViewKey = (typeof VIEWS)[number]['key'];
 
+const formatShares = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n.toLocaleString('en-US'));
+
 const isLive = (q: Quote | null) => !!q && Date.now() - Date.parse(q.as_of) < LIVE_QUOTE_MS;
 const open = (url: string | null) => url && void WebBrowser.openBrowserAsync(url);
 
@@ -48,17 +50,22 @@ export default function World() {
   const targets = useMemo(() => whatIfTargets(lines), [lines]);
   const [target, setTarget] = useState<string | null>(null);
   const [drop, setDrop] = useState<number>(DROPS[1]);
-  // Default shock: the biggest market outside the United States.
+  const [mode, setMode] = useState<WhatIfMode>('place');
+  const [firm, setFirm] = useState<string | null>(null);
+  // Default shock: the biggest market outside the United States; default company: the largest recorded stakes.
   const shock = target ?? targets.find((t) => t.key !== 'US')?.key ?? targets[0]?.key ?? '';
+  const firms = useMemo(() => priceTargets(world.data ?? []), [world.data]);
+  const company = firm ?? firms[0]?.key ?? '';
 
   let arcs: GlobeArc[] = [];
   let fills: GlobeFill[] = [];
   if (view === 'money') arcs = flowArcs(lines, focused);
   if (view === 'economies') fills = economyFills(lines, world.countries ?? [], focused).fills;
-  if (view === 'whatif') {
+  if (view === 'whatif' && mode === 'place') {
     arcs = flowArcs(lines, null, (l) => l.placeKey === shock, true);
     if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
   }
+  if (view === 'whatif' && mode === 'price') arcs = flowArcs(lines, null, (l) => l.company.id === company, true);
   const shockCentre = view === 'whatif' ? (arcs[0]?.from ?? null) : null;
 
   const { sites, markers } = useMemo(() => {
@@ -149,7 +156,18 @@ export default function World() {
               ) : view === 'economies' ? (
                 <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} />
               ) : view === 'whatif' ? (
-                <WhatIfPanel lines={lines} target={shock} drop={drop} onTarget={setTarget} onDrop={setDrop} />
+                <WhatIfPanel
+                  lines={lines}
+                  empires={empires}
+                  mode={mode}
+                  target={shock}
+                  company={company}
+                  drop={drop}
+                  onMode={setMode}
+                  onTarget={setTarget}
+                  onCompany={setFirm}
+                  onDrop={setDrop}
+                />
               ) : focused ? (
                 <EmpirePanel empire={focused} />
               ) : (
@@ -239,14 +257,14 @@ function EmpirePanel({ empire }: { empire: Empire }) {
       {empire.companies.map((c) => (
         <Fragment key={c.id}>
           <View style={styles.rule} />
-          <CompanySection company={c} />
+          <CompanySection company={c} stake={empire.stakes.find((s) => s.company.id === c.id)} worth={empire.person.net_worth_usd} />
         </Fragment>
       ))}
     </Surface>
   );
 }
 
-function CompanySection({ company: c }: { company: CompanyView }) {
+function CompanySection({ company: c, stake, worth }: { company: CompanyView; stake?: Stake; worth: number | null }) {
   const q = c.quote;
   const kinds = new Map<SiteKind, CompanyView['sites']>();
   for (const s of c.sites) kinds.set(s.kind, [...(kinds.get(s.kind) ?? []), s]);
@@ -267,6 +285,16 @@ function CompanySection({ company: c }: { company: CompanyView }) {
           </View>
         ) : null}
       </View>
+
+      {stake ? (
+        <View style={styles.block} accessible>
+          <Text style={[type.body, { color: color.text }]}>
+            {formatShares(stake.shares)} shares{stake.value ? ` · ${usd(stake.value)} at the latest price` : ''}
+            {stake.value && worth ? ` · ${Math.round((stake.value / worth) * 100)}% of the fortune` : ''}
+          </Text>
+          <SourceLink label={stake.label ?? 'SEC filing'} url={stake.url} />
+        </View>
+      ) : null}
 
       {c.regions.length ? (
         <View style={styles.block}>

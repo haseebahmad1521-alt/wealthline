@@ -214,6 +214,7 @@ export function EconomiesPanel({ lines, countries, empires, focus }: { lines: Li
 // ——— What if ———
 
 export const DROPS = [0.1, 0.25, 0.5] as const;
+export type WhatIfMode = 'place' | 'price';
 
 export function whatIfTargets(lines: Line[]) {
   const by = new Map<string, { key: string; label: string; revenue: number }>();
@@ -226,23 +227,96 @@ export function whatIfTargets(lines: Line[]) {
   return [...by.values()].sort((a, b) => b.revenue - a.revenue);
 }
 
+/** Companies with at least one recorded, priced stake: what the share-price mode can move. */
+export function priceTargets(empires: Empire[]) {
+  const by = new Map<string, { key: string; label: string; value: number }>();
+  for (const e of empires) {
+    for (const s of e.stakes) {
+      if (!s.value) continue;
+      const t = by.get(s.company.id) ?? { key: s.company.id, label: s.company.name, value: 0 };
+      t.value += s.value;
+      by.set(s.company.id, t);
+    }
+  }
+  return [...by.values()].sort((a, b) => b.value - a.value);
+}
+
+type WealthHit = { empire: Empire; company: CompanyView; loss: number; stake: number };
+
+function WealthRow({ h, first, assumption }: { h: WealthHit; first: boolean; assumption: string }) {
+  const worth = h.empire.person.net_worth_usd;
+  const share = worth ? h.loss / worth : null;
+  return (
+    <View
+      style={[styles.row, !first && styles.sep]}
+      accessible
+      accessibilityLabel={`${h.empire.person.name}: down ${usd(h.loss)}${share != null ? `, ${pct(share)} of their fortune` : ''}, ${assumption}`}>
+      <View style={styles.flex}>
+        <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+          {h.empire.person.name}
+        </Text>
+        <Caption numberOfLines={1}>
+          {h.company.name} stake {usd(h.stake)}
+        </Caption>
+      </View>
+      <View style={styles.price}>
+        <View style={styles.rowLine}>
+          <Icon name={icons.down} size={16} tint={color.loss} />
+          <Text style={[type.number, { color: color.loss, fontSize: 15 }]}>{usd(h.loss)}</Text>
+        </View>
+        {share != null && <Caption>{pct(share)} of their fortune</Caption>}
+      </View>
+    </View>
+  );
+}
+
 export function WhatIfPanel({
   lines,
+  empires,
+  mode,
   target,
+  company,
   drop,
+  onMode,
   onTarget,
+  onCompany,
   onDrop,
 }: {
   lines: Line[];
+  empires: Empire[];
+  mode: WhatIfMode;
   target: string;
+  company: string;
   drop: number;
+  onMode: (m: WhatIfMode) => void;
   onTarget: (key: string) => void;
+  onCompany: (id: string) => void;
   onDrop: (d: number) => void;
 }) {
-  const targets = whatIfTargets(lines);
-  const hit = lines.filter((l) => l.placeKey === target);
-  const total = hit.reduce((n, l) => n + l.revenue * drop, 0);
-  const label = targets.find((t) => t.key === target)?.label ?? target;
+  const places = whatIfTargets(lines);
+  const firms = priceTargets(empires);
+  const hit = mode === 'place' ? lines.filter((l) => l.placeKey === target) : [];
+  const revenueAtRisk = hit.reduce((n, l) => n + l.revenue * drop, 0);
+  const label = mode === 'place' ? (places.find((t) => t.key === target)?.label ?? target) : (firms.find((t) => t.key === company)?.label ?? '');
+
+  // Wealth: share price mode is exact (recorded shares × price × fall). Place mode assumes the share price falls by the
+  // same share as the company's revenue lost there, and says so.
+  const wealth: WealthHit[] = [];
+  for (const e of empires) {
+    for (const s of e.stakes) {
+      if (!s.value) continue;
+      if (mode === 'price' && s.company.id === company) wealth.push({ empire: e, company: s.company, loss: s.value * drop, stake: s.value });
+      if (mode === 'place') {
+        const l = hit.find((x) => x.company.id === s.company.id);
+        if (l) wealth.push({ empire: e, company: s.company, loss: s.value * l.share * drop, stake: s.value });
+      }
+    }
+  }
+  wealth.sort((a, b) => b.loss - a.loss);
+  const wealthTotal = wealth.reduce((n, w) => n + w.loss, 0);
+  const assumption = mode === 'price' ? 'from recorded shares times the price fall' : 'if the share price fell by the same share as the revenue lost';
+  const unrecorded = mode === 'place' ? [...new Set(hit.flatMap((l) => l.owners.filter((o) => !o.stakes.some((s) => s.company.id === l.company.id && s.value)).map((o) => o.person.name)))] : [];
+
   return (
     <Surface style={styles.card}>
       <View style={styles.rowLine}>
@@ -251,50 +325,89 @@ export function WhatIfPanel({
           <Caption>Hypothetical</Caption>
         </View>
       </View>
-      <Body secondary>Pick a place and a fall in business there. The globe and the list show whose companies would lose revenue, using what each company reports earning there.</Body>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
-        {targets.map((t) => (
-          <Pressable key={t.key} accessibilityRole="tab" accessibilityState={{ selected: t.key === target }} onPress={() => onTarget(t.key)} style={[styles.pill, t.key === target && styles.pillOn]}>
-            <Text style={[type.headline, { fontSize: 15, color: t.key === target ? color.action : color.text }]}>{t.label}</Text>
+      <View accessibilityRole="tablist" style={styles.segments}>
+        {(['place', 'price'] as const).map((m) => (
+          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
+            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'place' ? 'A place' : 'A share price'}</Text>
           </Pressable>
         ))}
+      </View>
+      <Body secondary>
+        {mode === 'place'
+          ? 'Pick a place and a fall in business there: whose companies lose revenue, and roughly what that could mean for their owners.'
+          : 'Pick a company and a fall in its share price: exactly how much each owner’s recorded stake would lose.'}
+      </Body>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
+        {(mode === 'place' ? places : firms).map((t) => {
+          const on = t.key === (mode === 'place' ? target : company);
+          return (
+            <Pressable key={t.key} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => (mode === 'place' ? onTarget(t.key) : onCompany(t.key))} style={[styles.pill, on && styles.pillOn]}>
+              <Text style={[type.headline, { fontSize: 15, color: on ? color.action : color.text }]}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
       <View accessibilityRole="tablist" style={styles.segments}>
         {DROPS.map((d) => (
-          <Pressable key={d} accessibilityRole="tab" accessibilityLabel={`Business falls ${d * 100} percent`} accessibilityState={{ selected: d === drop }} onPress={() => onDrop(d)} style={[styles.segment, d === drop && styles.segmentOn]}>
+          <Pressable key={d} accessibilityRole="tab" accessibilityLabel={`Falls ${d * 100} percent`} accessibilityState={{ selected: d === drop }} onPress={() => onDrop(d)} style={[styles.segment, d === drop && styles.segmentOn]}>
             <Text style={[type.headline, { color: d === drop ? color.text : color.textSecondary }]}>−{d * 100}%</Text>
           </Pressable>
         ))}
       </View>
-      <View style={styles.result} accessible accessibilityLabel={`If business in ${label} fell ${drop * 100} percent, ${usd(total)} of yearly revenue would be at risk across ${hit.length} companies`}>
-        <Icon name={icons.down} size={22} tint={color.loss} />
-        <Text style={[type.title, { color: color.loss, fontVariant: ['tabular-nums'] }]}>{usd(total)}</Text>
-        <Caption style={styles.flex}>
-          of yearly revenue at risk if business in {label} fell {drop * 100}%
-        </Caption>
-      </View>
-      <View style={styles.list}>
-        {hit.map((l, i) => (
-          <View key={l.key} style={[styles.row, i > 0 && styles.sep]} accessible accessibilityLabel={`${l.company.name}, owned by ${l.owners.map((o) => o.person.name).join(' and ')}: down ${usd(l.revenue * drop)}, ${pct(l.share * drop)} of its revenue`}>
-            <View style={styles.flex}>
-              <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
-                {l.company.name}
-              </Text>
-              <Caption numberOfLines={1}>{l.owners.map((o) => o.person.name).join(', ')}</Caption>
-            </View>
-            <View style={styles.price}>
-              <View style={styles.rowLine}>
-                <Icon name={icons.down} size={16} tint={color.loss} />
-                <Text style={[type.number, { color: color.loss, fontSize: 15 }]}>{usd(l.revenue * drop)}</Text>
-              </View>
-              <Caption>{pct(l.share * drop)} of its revenue</Caption>
-            </View>
+
+      {mode === 'place' && (
+        <>
+          <View style={styles.result} accessible accessibilityLabel={`If business in ${label} fell ${drop * 100} percent, ${usd(revenueAtRisk)} of yearly revenue would be at risk`}>
+            <Icon name={icons.down} size={22} tint={color.loss} />
+            <Text style={[type.title, { color: color.loss, fontVariant: ['tabular-nums'] }]}>{usd(revenueAtRisk)}</Text>
+            <Caption style={styles.flex}>
+              of yearly revenue at risk if business in {label} fell {drop * 100}%
+            </Caption>
           </View>
-        ))}
-      </View>
+          <View style={styles.list}>
+            {hit.map((l, i) => (
+              <View key={l.key} style={[styles.row, i > 0 && styles.sep]} accessible accessibilityLabel={`${l.company.name}: down ${usd(l.revenue * drop)}, ${pct(l.share * drop)} of its revenue`}>
+                <View style={styles.flex}>
+                  <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+                    {l.company.name}
+                  </Text>
+                  <Caption numberOfLines={1}>{l.owners.map((o) => o.person.name).join(', ')}</Caption>
+                </View>
+                <View style={styles.price}>
+                  <View style={styles.rowLine}>
+                    <Icon name={icons.down} size={16} tint={color.loss} />
+                    <Text style={[type.number, { color: color.loss, fontSize: 15 }]}>{usd(l.revenue * drop)}</Text>
+                  </View>
+                  <Caption>{pct(l.share * drop)} of its revenue</Caption>
+                </View>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
+      <Heading level={2}>{mode === 'place' ? 'Owners’ wealth.' : `${label} owners.`}</Heading>
+      {wealth.length ? (
+        <>
+          <View style={styles.result} accessible accessibilityLabel={`${usd(wealthTotal)} off these fortunes, ${assumption}`}>
+            <Icon name={icons.down} size={22} tint={color.loss} />
+            <Text style={[type.title, { color: color.loss, fontVariant: ['tabular-nums'] }]}>{usd(wealthTotal)}</Text>
+            <Caption style={styles.flex}>off these fortunes, {assumption}</Caption>
+          </View>
+          <View style={styles.list}>
+            {wealth.map((h, i) => (
+              <WealthRow key={`${h.empire.person.id}:${h.company.id}`} h={h} first={i === 0} assumption={assumption} />
+            ))}
+          </View>
+        </>
+      ) : (
+        <Caption>No recorded share counts for these owners yet.</Caption>
+      )}
+      {unrecorded.length > 0 && <Caption>No recorded share count, so not included: {unrecorded.join(', ')}.</Caption>}
       <Caption>
-        Revenue only. Not modelled: share prices, profits, supply chains, or the owners’ wealth (their share counts aren’t recorded yet). Companies that report this place
-        inside a wider region aren’t counted.
+        {mode === 'place'
+          ? 'Revenue from annual reports; stakes are recorded shares (SEC Form 4 or Schedule 13G/13D) at the latest price. Share prices don’t move one-for-one with revenue: the wealth figure is a rough scale, not a forecast. Profits, supply chains and other assets aren’t modelled.'
+          : 'Stakes are recorded shares (SEC Form 4 or Schedule 13G/13D) at the latest price. Other assets and companies aren’t moved.'}
       </Caption>
     </Surface>
   );
