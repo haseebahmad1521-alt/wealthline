@@ -57,7 +57,9 @@ export function WorldGlobe({
 
   // Turn toward the chosen person (or the place in question) and lean in a little.
   useEffect(() => {
-    if (center) tween.current = { lat: center.lat, lng: center.lng, zoom: Math.max(scene.world.zoom, focus ? 0.3 : scene.world.zoom) };
+    // Choosing a person flies in close over their headquarters; "Everyone" eases back out to the whole globe.
+    if (center) tween.current = { lat: center.lat, lng: center.lng, zoom: focus ? 0.78 : scene.world.zoom };
+    else if (!focus && scene.world.zoom > 0.3) tween.current = { lat: scene.world.lat, lng: scene.world.lng, zoom: 0 };
     scene.invalidate?.();
   }, [center?.lat, center?.lng, focus]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -177,6 +179,9 @@ export function WorldGlobe({
       const order = f ? [...ms.filter((m) => m.key === f), ...ms.filter((m) => m.key !== f)] : ms;
       const R = S * 0.9;
       const next: typeof clusters = [];
+      // Screen-space grid (cell = merge radius): each portrait only checks its own and neighbouring cells.
+      const grid = new Map<number, (typeof next)[number][]>();
+      const cell = (x: number, y: number) => Math.floor(x / R) * 4096 + Math.floor(y / R);
       const pos = new Map<string, { x: number; y: number; vis: number }>();
       for (const m of order) {
         const p = project(m.lat, m.lng);
@@ -186,15 +191,25 @@ export function WorldGlobe({
         pos.set(m.key, { x, y, vis });
         // Faded people (someone else is chosen) never merge: they stay where they are at 5%.
         if (vis <= 0 || (f && m.key !== f)) continue;
-        const c = next.find((c) => Math.hypot(c.x - x, c.y - y) < R);
+        const gx = Math.floor(x / R);
+        const gy = Math.floor(y / R);
+        let c: (typeof next)[number] | undefined;
+        for (let i = -1; i <= 1 && !c; i++)
+          for (let j = -1; j <= 1 && !c; j++) c = grid.get((gx + i) * 4096 + gy + j)?.find((k) => (k.x - x) ** 2 + (k.y - y) ** 2 < R * R);
         if (c) c.keys.push(m.key);
-        else next.push({ x, y, keys: [m.key], lat: m.lat, lng: m.lng });
+        else {
+          const nc = { x, y, keys: [m.key], lat: m.lat, lng: m.lng };
+          next.push(nc);
+          const key = cell(x, y);
+          grid.set(key, [...(grid.get(key) ?? []), nc]);
+        }
       }
       clusters = next;
       const leaderOf = new Map<string, (typeof next)[number]>();
       for (const c of next) for (const k of c.keys) leaderOf.set(k, c);
 
-      // Springs: members slide to their cluster's centre; underdamped, so merges and splits overshoot a little.
+      // Portraits are pinned to their place on the globe every frame (no lag while it turns). Only the merge/split
+      // offset, from the portrait's own place to its cluster's centre, is sprung, with a slight overshoot.
       for (const m of order) {
         const n = nodeFor(m);
         const p = pos.get(m.key)!;
@@ -204,25 +219,30 @@ export function WorldGlobe({
         const ty = c ? c.y : p.y;
         const faded = !!f && m.key !== f;
         const targetOp = p.vis * (faded ? FADED : c && !isLeader ? 0 : 1);
-        const s = n.s;
+        const s = n.s; // s.x / s.y: the sprung offset from the portrait's own place
+        const ox = tx - p.x;
+        const oy = ty - p.y;
         if (!s.init || reduce) {
-          s.x = tx;
-          s.y = ty;
+          s.x = ox;
+          s.y = oy;
           s.vx = s.vy = 0;
           s.init = true;
         } else {
-          const k = 190;
-          const d = 13;
-          s.vx += (k * (tx - s.x) - d * s.vx) * dt;
-          s.vy += (k * (ty - s.y) - d * s.vy) * dt;
+          // Stiff and well damped: a quick merge with a small bounce, not jelly.
+          const k = 320;
+          const d = 26;
+          s.vx += (k * (ox - s.x) - d * s.vx) * dt;
+          s.vy += (k * (oy - s.y) - d * s.vy) * dt;
           s.x += s.vx * dt;
           s.y += s.vy * dt;
         }
+        const x = p.x + s.x;
+        const y = p.y + s.y;
         s.op += (targetOp - s.op) * (reduce ? 1 : 1 - Math.exp(-dt * 10));
         const blobOp = faded ? 0 : p.vis;
-        n.blob.style.transform = `translate3d(${s.x - (S + 8) / 2}px,${s.y - (S + 8) / 2}px,0)`;
+        n.blob.style.transform = `translate3d(${x - (S + 8) / 2}px,${y - (S + 8) / 2}px,0)`;
         n.blob.style.opacity = String(blobOp);
-        n.face.style.transform = `translate3d(${s.x - S / 2}px,${s.y - S / 2}px,0) scale(${c && !isLeader ? 0.7 : 1})`;
+        n.face.style.transform = `translate3d(${x - S / 2}px,${y - S / 2}px,0) scale(${c && !isLeader ? 0.7 : 1})`;
         n.face.style.opacity = String(s.op);
         n.face.style.zIndex = isLeader ? '2' : '1';
         const more = isLeader && c!.keys.length > 1 ? c!.keys.length - 1 : 0;
@@ -235,6 +255,7 @@ export function WorldGlobe({
     // Gestures. Drag turns the globe; pinch / ctrl+wheel / Safari gestures zoom it.
     const pointers = new Map<number, { x: number; y: number }>();
     let down: { x: number; y: number; t: number } | null = null;
+    let moved = false; // once a drag passes 6 px it's a turn, even if it ends near where it started
     let pinch: { d: number; zoom: number } | null = null;
     const degPerPx = () => 57.3 / (scene.world.radiusPx * zoomFactor(scene.world.zoom));
     const zoomBy = (dz: number) => {
@@ -244,7 +265,10 @@ export function WorldGlobe({
     };
     const onDown = (e: PointerEvent) => {
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, t: performance.now() };
+      if (pointers.size === 1) {
+        down = { x: e.clientX, y: e.clientY, t: performance.now() };
+        moved = false;
+      } else down = null; // a second finger: a pinch, never a tap
       if (pointers.size === 2) {
         const [a, b] = [...pointers.values()];
         pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), zoom: scene.world.zoom };
@@ -259,6 +283,7 @@ export function WorldGlobe({
         scene.world.zoom = clampZoom(pinch.zoom + Math.log2(Math.hypot(a.x - b.x, a.y - b.y) / pinch.d) / 2.32);
         tween.current = null;
       } else if (pointers.size === 1) {
+        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) moved = true;
         dragging = true;
         tween.current = null;
         const k = degPerPx();
@@ -268,12 +293,14 @@ export function WorldGlobe({
       scene.invalidate?.();
     };
     const onUp = (e: PointerEvent) => {
+      // A cancelled pointer (the browser took the gesture) is never a tap.
+      if (e.type === 'pointercancel') down = null;
       pointers.delete(e.pointerId);
       if (pointers.size < 2) pinch = null;
       if (pointers.size) return;
       dragging = false;
       // A tap: open the person, or zoom into a joined bubble so it splits.
-      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
+      if (down && !moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
         const box = el.getBoundingClientRect();
         const x = e.clientX - box.left;
         const y = e.clientY - box.top;
@@ -359,8 +386,9 @@ function ZoomButton({ label, a11y, onPress }: { label: string; a11y: string; onP
 }
 
 const styles = StyleSheet.create({
-  // touch-action pan-y: one finger up/down still scrolls the page on phones; sideways turns the globe; pinches are ours.
-  area: { position: 'relative', overflow: 'hidden', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none' } as object,
+  // touch-action none: every gesture over the globe is ours (turn in any direction, pinch), so a turn never becomes a
+  // page scroll halfway. The page scrolls from anywhere else.
+  area: { position: 'relative', overflow: 'hidden', touchAction: 'none', cursor: 'grab', userSelect: 'none' } as object,
   zoom: { position: 'absolute', right: space.sm, bottom: space.sm, gap: space.sm, zIndex: 3 },
   zoomBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   zoomText: { fontFamily: font.semibold, fontSize: 22, lineHeight: 24, color: color.text },

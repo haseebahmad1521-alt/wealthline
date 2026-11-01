@@ -116,9 +116,14 @@ export function PlanetScene() {
       nightMap: { value: null as THREE.Texture | null },
       oceanMap: { value: oceanMask() as THREE.Texture },
       sunDir: { value: sun.vec.clone() },
+      nightLift: { value: 0 },
     };
+    // Level of detail: a light sphere normally, a finer one only when the globe is big on screen and a coarse limb
+    // would show (the shading is per pixel, so the facet count only matters at the silhouette).
+    const sphereLo = new THREE.SphereGeometry(1, 64, 48);
+    const sphereHi = new THREE.SphereGeometry(1, 128, 96);
     const earth = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 128, 96),
+      sphereLo,
       new THREE.ShaderMaterial({ uniforms: earthUniforms, vertexShader: worldVertex, fragmentShader: earthFragment }),
     );
     // three's sphere puts texture u = 0.5 (0°) on +X; turn it so 0° faces +Z and 90°E faces +X, matching sun.ts.
@@ -136,7 +141,7 @@ export function PlanetScene() {
       g: { value: 0.76 },
     };
     const atmosphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.055, 128, 96),
+      sphereLo, // scaled to the shell radius below
       new THREE.ShaderMaterial({
         uniforms: atmoUniforms,
         vertexShader: worldVertex,
@@ -155,7 +160,7 @@ export function PlanetScene() {
       sunDir: earthUniforms.sunDir,
     };
     const sky = new THREE.Mesh(
-      new THREE.SphereGeometry(200, 64, 32),
+      new THREE.SphereGeometry(200, 32, 16), // per-pixel directions: the sky needs no more facets
       new THREE.ShaderMaterial({ uniforms: skyUniforms, vertexShader: worldVertex, fragmentShader: skyFragment, side: THREE.BackSide, depthWrite: false }),
     );
     sky.renderOrder = -1;
@@ -166,6 +171,7 @@ export function PlanetScene() {
     );
     sunQuad.scale.setScalar(70);
 
+    atmosphere.scale.setScalar(1.055);
     scene.add(sky, earth, atmosphere, sunQuad);
     // Development only: lets the browser console inspect the scene.
     if (__DEV__) (window as unknown as { __planet: object }).__planet = { renderer, scene, camera, earth, sky, atmosphere, sunQuad, state: sceneState };
@@ -295,6 +301,10 @@ export function PlanetScene() {
     const tmp = new THREE.Vector3();
     const toCam = new THREE.Vector3();
     const look = new THREE.Vector3();
+    const f0v = new THREE.Vector3();
+    const posV = new THREE.Vector3();
+    const upP = new THREE.Vector3();
+    const Y_UP = new THREE.Vector3(0, 1, 0);
 
     sceneState.project = (lat, lng) => {
       tmp.set(...latLngToUnit(lat, lng));
@@ -328,16 +338,16 @@ export function PlanetScene() {
       const drift = reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S);
       const lng = sun.lng + CAMERA_EAST_OF_SUN + drift + spin;
       if (__DEV__) Object.assign((window as unknown as { __planet: object }).__planet, { dbg: { lng, sunLng: sun.lng, drift, spin, p, dt, vel: sceneState.velocity } });
-      const pos = new THREE.Vector3(...latLngToUnit(CAMERA_LAT, lng)).multiplyScalar(d);
+      const pos = posV.set(...latLngToUnit(CAMERA_LAT, lng)).multiplyScalar(d);
 
       // Look from the camera toward Earth's centre, then pitch up so the horizon lands at LIMB_Y on screen.
       const alpha = Math.asin(1 / d);
       const theta = alpha - Math.atan(mix(LIMB_Y[0], LIMB_Y[1], e) * Math.tan((FOV / 2) * RAD));
-      const f0 = pos.clone().negate().normalize();
-      right.crossVectors(f0, new THREE.Vector3(0, 1, 0)).normalize();
+      const f0 = f0v.copy(pos).negate().normalize();
+      right.crossVectors(f0, Y_UP).normalize();
       up.crossVectors(right, f0).normalize();
       fwd.copy(f0).multiplyScalar(Math.cos(theta)).addScaledVector(up, Math.sin(theta));
-      const upPitched = up.clone().multiplyScalar(Math.cos(theta)).addScaledVector(f0, -Math.sin(theta));
+      const upPitched = upP.copy(up).multiplyScalar(Math.cos(theta)).addScaledVector(f0, -Math.sin(theta));
       orbitRig.position.copy(pos);
       orbitRig.up.copy(upPitched);
       orbitRig.lookAt(target.copy(pos).add(fwd));
@@ -373,6 +383,13 @@ export function PlanetScene() {
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
       sunQuad.quaternion.copy(camera.quaternion);
       placeGlow(sunDir);
+
+      // Finer sphere only when Earth's radius on screen passes ~520 px.
+      const rPx = ((viewport.h / 2) * Math.tan(Math.asin(Math.min(1 / camera.position.length(), 1)))) / tanHalf;
+      const geo = rPx > 520 ? sphereHi : sphereLo;
+      if (earth.geometry !== geo) earth.geometry = atmosphere.geometry = geo;
+      // Cheap HDR: the closer we look (World zoom, or the bottom of a page), the more the night side opens up.
+      earthUniforms.nightLift.value = Math.max(m * w.zoom, (1 - m) * e * 0.35);
     }
 
     function placeGlow(sunDir: THREE.Vector3) {
@@ -436,6 +453,7 @@ export function PlanetScene() {
       if (still) clearInterval(still);
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', onVisible);
+      (earth.geometry === sphereHi ? sphereLo : sphereHi).dispose();
       // Tiers not currently on the globe (the one in use is freed with the materials below).
       loaded.forEach((t, i) => i !== tier && (t?.day.dispose(), t?.night.dispose()));
       scene.traverse((o) => {

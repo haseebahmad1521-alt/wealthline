@@ -26,6 +26,7 @@ export const earthFragment = /* glsl */ `
   uniform sampler2D nightMap;
   uniform sampler2D oceanMap;
   uniform vec3 sunDir;
+  uniform float nightLift; // 0 … 1: brightens the night side as the camera zooms in close (a cheap HDR feel)
   varying vec2 vUv;
   varying vec3 vNormalW;
   varying vec3 vPosW;
@@ -44,7 +45,7 @@ export const earthFragment = /* glsl */ `
 
     // Night side: stylized, never black. A cool moonlit floor that keeps continents legible, plus warm city lights
     // that are strongest just past the terminator (early evening) and settle a little deeper into the night.
-    vec3 floorCol = day * vec3(0.11, 0.14, 0.24) + vec3(0.004, 0.008, 0.018);
+    vec3 floorCol = (day * vec3(0.11, 0.14, 0.24) + vec3(0.004, 0.008, 0.018)) * (1.0 + 1.6 * nightLift);
     float l = dot(lights, vec3(0.2126, 0.7152, 0.0722));
     vec3 city = vec3(1.0, 0.70, 0.36) * pow(l, 1.35) * 2.4 * (0.72 + 0.28 * smoothstep(-0.5, -0.04, ndl));
     vec3 col = mix(floorCol + city, lit, dayW);
@@ -101,8 +102,9 @@ export const atmosphereFragment = /* glsl */ `
     float t1 = ta.y;
     if (tp.x < tp.y && tp.x > 0.0) t1 = tp.x;
 
-    const int N = 10;
-    const int M = 4;
+    // 8 view samples × 3 light samples: visually the same glow as 10 × 4 at about half the cost.
+    const int N = 8;
+    const int M = 3;
     float ds = (t1 - t0) / float(N);
     vec3 sumR = vec3(0.0);
     vec3 sumM = vec3(0.0);
