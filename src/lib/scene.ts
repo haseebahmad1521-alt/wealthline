@@ -17,11 +17,11 @@ let last = { y: 0, t: 0 };
 
 /**
  * Report a scroll position, in px. `max` is the scrollable distance (content minus viewport), `viewport` the visible
- * height. The camera completes its descent within the first two screens, so long lists don't stretch it out.
+ * height. The descent spans the whole page (owner, Nov 1, 2026): Earth keeps rising through the list and fills most
+ * of the view at the bottom.
  */
 export function reportScroll(y: number, max: number, viewport: number, now = performance.now()) {
-  const span = Math.min(max, 2 * viewport);
-  const progress = span > 1 ? Math.min(Math.max(y / span, 0), 1) : 0;
+  const progress = max > 1 ? Math.min(Math.max(y / max, 0), 1) : 0;
   const dt = (now - last.t) / 1000;
   // A lone jump (wheel step, Page Down) arrives long after the last event: count it as a half-second flick.
   if (dt > 0 && viewport > 0) scene.velocity = (y - last.y) / viewport / Math.min(Math.max(dt, 1 / 60), 0.5);

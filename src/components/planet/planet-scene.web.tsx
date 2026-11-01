@@ -18,10 +18,12 @@ const RAD = Math.PI / 180;
 const FOV = 40;
 
 // Camera path, from the top of a page (p = 0) to the bottom (p = 1).
-const DIST = [1.62, 1.38] as const; // distance from Earth's centre, in Earth radii: close enough for a wide horizon, only a little closer at the bottom
-const LIMB_Y = [-0.6, -0.1] as const; // top: just the tip of Earth, clear of the phone tab bar // where the horizon sits on screen (NDC, -1 bottom … 1 top)
+const DIST = [1.62, 1.3] as const; // distance from Earth's centre, in Earth radii: a wide horizon at the top, a little closer at the bottom
+// Where the horizon sits on screen (NDC, -1 bottom … 1 top). Top of the page: just Earth's tip, clear of the phone tab
+// bar. Bottom: the horizon near the top edge, so Earth fills most of the view from the bottom up.
+const LIMB_Y = [-0.6, 0.7] as const;
 const ROLL = [0, -9] as const; // degrees: the horizon tilts steeper on the way down
-const HAZE = [0.0, 1.1] as const;
+const HAZE = [0.0, 1.3] as const;
 // Where the camera hangs: south of the places we look across, so the horizon runs over the populated mid-latitudes,
 // and east of the subsolar point, so the evening terminator and its city lights cross the view.
 const CAMERA_LAT = -26;
@@ -30,7 +32,6 @@ const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;
 
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
-const ease = (t: number) => t * t * (3 - 2 * t);
 
 function useReducedMotion() {
   const [reduce, setReduce] = useState(false);
@@ -223,7 +224,8 @@ export function PlanetScene() {
         sceneState.velocity *= Math.exp(-dt * 4);
         if (!Number.isFinite(spin) || !Number.isFinite(sceneState.velocity)) spin = sceneState.velocity = 0;
       }
-      const e = ease(p);
+      // Linear: Earth rises steadily through the whole list (a slow-in curve would stall it over the first screens).
+      const e = p;
       const d = mix(DIST[0], DIST[1], e);
       const drift = reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S);
       const lng = sun.lng + CAMERA_EAST_OF_SUN + drift + spin;
