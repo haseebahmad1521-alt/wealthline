@@ -97,6 +97,13 @@
   }
   load();
   if (wide.addEventListener) wide.addEventListener("change", load);
+  // A trackpad pinch over the phone belongs to the app, not the page: don't zoom the whole shell.
+  // (Pinches inside the iframe reach the app, which handles its own zoom.) Keyboard zoom still works.
+  var phone = document.querySelector(".phone");
+  phone.addEventListener("wheel", function (e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  ["gesturestart", "gesturechange"].forEach(function (t) {
+    phone.addEventListener(t, function (e) { e.preventDefault(); });
+  });
 </script>
 </body>
 </html>
