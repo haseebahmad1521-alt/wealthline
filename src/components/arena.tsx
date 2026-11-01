@@ -148,10 +148,10 @@ export function Races({ people }: { people: Person[] }) {
               <Portrait uri={r.leader.portrait_url} name={r.leader.name} size={34} />
               <View style={styles.flex}>
                 <View style={styles.raceNames}>
-                  <Text style={[type.headline, styles.flex, { color: color.text, fontSize: 15 }]} numberOfLines={1}>
+                  <Text style={[type.headline, styles.flex, { color: color.text, fontSize: 15 }]} numberOfLines={2}>
                     #{r.rank} {r.leader.name.replace(/ & family$/, '')}
                   </Text>
-                  <Text style={[type.headline, styles.flex, styles.right, { color: color.text, fontSize: 15 }]} numberOfLines={1}>
+                  <Text style={[type.headline, styles.flex, styles.right, { color: color.text, fontSize: 15 }]} numberOfLines={2}>
                     #{r.rank + 1} {r.chaser.name.replace(/ & family$/, '')}
                   </Text>
                 </View>
