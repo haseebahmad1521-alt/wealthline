@@ -56,7 +56,8 @@ async function finance(db: SupabaseClient, p: Person) {
   const rows: { as_of: string; usd: number; label: string }[] = [];
   const person = (await track(db, 'Forbes profiles', () => getJson(`https://www.forbes.com/forbesapi/person/${p.forbes_uri}.json`)))?.person;
   for (const l of person?.personLists ?? []) {
-    if (!(l.finalWorth > 0) || !l.date) continue;
+    // Real-time entries (year 0, a placeholder date that parses as 1993) are today's value, which marketTick stores.
+    if (!(l.finalWorth > 0) || !l.date || !(Number(l.year) > 1900)) continue;
     rows.push({ as_of: new Date(l.date).toISOString(), usd: l.finalWorth * 1e6, label: `${/^Forbes/.test(l.name ?? '') ? l.name : `Forbes ${l.name ?? l.listUri}`} ${l.year ?? ''}`.trim() });
   }
   if (!rows.length) throw new Error('Forbes has no value for this person.');
