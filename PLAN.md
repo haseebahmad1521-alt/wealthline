@@ -21,9 +21,11 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 (late): glass-clear on Rankings reverted; first smoothness pass landed (pushed; see `git log`). Next: batch S (rest), then batch C._
+_Updated Nov 2, 2026 (late): rocket camera raised; batch K (chat with a billionaire) researched and planned, waiting on the owner's three answers. Next: batch S (rest), then K once answered, then C._
 
 - **Just landed:**
+  - **Rocket (owner):** camera 25% back toward the earlier higher pose (`ROCKET` in `planet-scene.web.tsx`, `DEPTH` in `rocket.ts`): the horizon curves and the haze blends into the surface instead of a grey overcast close-up.
+  - **Batch K researched** (see the batch): sources, what's already wired, the plan and three owner questions.
   - **Reverted (owner):** Rankings glass no longer clears/unblurs on fast scroll (`8101359` reverts `f0505a2`).
   - **Smoothness rule (owner, Nov 2):** data and images a view needs are fetched and decoded ahead of time, off the interaction path; changing views must never stall on the network or a decode. Applies app-wide.
   - **Portraits** (`src/lib/portrait.ts` + tests): every view asks Wikimedia Commons for a 250 px thumbnail (500/960 only for big draws) instead of the stored original or 960 px thumb (≈20 KB instead of 200–750 KB each; both `upload.` and `thumb.wikimedia.org`). `Portrait` falls back to the stored URL on error. Globe bubbles decode async.
@@ -47,6 +49,23 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [ ] Stars as points: Yale Bright Star Catalogue (public domain, ≈9k stars to mag 6.5) as one `THREE.Points` (size from magnitude, colour from B−V, sidereal rotation as now), with the same haze/air fade as `skyFragment`; the sky shader keeps haze/air only. Drops the 1.6 MB download and ≈32 MB of GPU memory, crisp at any zoom, no shimmer. Keep the Milky Way as a faint 1K glow (stars removed) or drop it: show the owner both.
 - [ ] Compressed planet textures: KTX2/Basis (`KTX2Loader`, transcoder in a worker) for day/night tiers, cutting GPU memory ≈4–8× and the one-frame upload stall when a bigger tier swaps in. Then, if 8K is still worth it, stream it as tiles (only tiles in view, uploaded a few per frame) for close World zoom.
 - [ ] Measure: long tasks (PerformanceObserver) on app start, opening World, opening a profile, switching tabs; target none over 50 ms. Persist the React Query cache (localStorage) so a cold start shows last data instantly.
+
+**Batch K — Chat with a billionaire (owner, Nov 2, 2026: "the big selling point")**
+A messaging screen per person: our messages on the right, theirs on the left, an animated "…" while they type, the whole reply shown only when ready, timestamps, simulated ✓✓ seen. Replies come from Claude (server side, `chat` Edge Function) speaking in a persona built from what is publicly known about the person and how they talk, driven by recent news and posts, able to pull older material when relevant.
+- Research (Nov 2):
+  - Already in place: `people.social` (one main account each; of 100: X 21, Instagram 6, LinkedIn 2, Facebook 1, none 70), `social_posts` (latest post only), `person_news` (30 days, Google News/GDELT/HN/outlet RSS), Claude in `daily-brief`/`project-scout`.
+  - Free official reads: Bluesky (`public.api.bsky.app`, wired), Mastodon (`/api/v1/accounts/:id/statuses`), YouTube channel RSS (`youtube.com/feeds/videos.xml?channel_id=`), blogs and letters by RSS (e.g. GatesNotes, Berkshire letters), Telegram public channels.
+  - X: official API with `X_BEARER_TOKEN` (wired; paid). Open-source no-key readers ([twscrape](https://github.com/vladkens/twscrape), [Scweet](https://github.com/Altimis/Scweet), [x-reader](https://github.com/DjinnFoundry/x-reader)) call X's internal GraphQL with logged-in accounts: against X's terms, accounts get banned, breaks often. Not recommended for a product.
+  - [RSSHub](https://github.com/DIYgod/RSSHub) (AGPL-3.0, 46k★, active): one self-hosted service with routes for Instagram, Bluesky, Facebook, YouTube, Telegram and many more; its X route also needs a logged-in cookie (same problem). [RSS-Bridge](https://github.com/RSS-Bridge/rss-bridge) (PHP, 400+ bridges) is the alternative. Either runs as its own container, outside Supabase; the AGPL only binds that service, not our app.
+  - Instagram/LinkedIn/Threads/Facebook: no official API for other people's posts; scraping is against their terms.
+  - 70 of 100 have no social account: their persona has to come from interviews, shareholder letters, books, speeches and news (with links).
+- Plan:
+  - [ ] Data: `person_posts` (many posts per person, not just the latest; text copied, link kept) and `person_sources` (quotes/excerpts from interviews, letters, speeches with URL and date), Postgres full-text search for older material (pgvector + Supabase's built-in `gte-small` embeddings later if search is weak)
+  - [ ] Persona card per person (voice, topics, catchphrases, stances, each line with a source), drafted by Claude from the sources, stored, admin-reviewable
+  - [ ] `chat` Edge Function: signed-in users only, per-user rate limit and daily cap, Claude Sonnet 5.5 with prompt caching (persona + recent posts/news cached), a search tool over older sources; never invents numbers (net worth from our records only), declines defamatory, medical and investment-advice content; key stays on the server
+  - [ ] Chat UI (Liquid Glass over the planet): bubbles right/left, "…" typing (reduced motion: static "typing…"), reply appears whole, timestamps, ✓ sent / ✓✓ seen, "Message" entry on profiles, chat history per user (RLS: private)
+  - [ ] Honesty: a permanent "AI simulation, not the real [Name]" label in the header, and the same watermark on anything shareable (screenshots will travel); replies can show "based on" source chips
+- **Ask the owner** (before building): (1) X data: pay for the official X API, skip X, or self-host RSSHub with an X cookie (against X's terms)? (2) Who may chat: signed-in only (recommended) and how many messages a day? (3) Legal review of using real people's names/likeness in a simulated chat before launch (right of publicity/false endorsement), and OK with the permanent AI label + watermark?
 
 **Batch A — globe feel, performance, chrome (done Nov 2)**
 - [x] Globe: turning never scrolls the page or taps a portrait (touch-action none, drag threshold, cancelled pointer ≠ tap)
