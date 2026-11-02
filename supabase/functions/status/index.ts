@@ -1,14 +1,16 @@
 // The "lately" line on profiles (batch K, owner Nov 2): one or two sentences, first person, in the person's style, on
-// what they have done lately, paraphrased by Haiku from their latest archived posts and headlines. The app shows it as
+// what they have done lately, paraphrased by Grok (owner, Nov 3: xAI replaces Anthropic) from their latest archived posts
+// and headlines. The app shows it as
 // an AI simulation (stylised avatar + sparkle) without naming the platform. Nothing is invented: no numbers, no events
 // beyond the material; with no recent material there is no line. Inputs are hashed, so the model only runs when
 // something new arrived. Invoked hourly by a scheduler holding CRON_SECRET; `?person=<slug>` runs one person.
-import Anthropic from 'npm:@anthropic-ai/sdk';
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 import { cors, json, sha256Hex } from '../_shared/util.ts';
+import { reserve, xaiKey, xaiText } from '../_shared/xai.ts';
 
-const MODEL = 'claude-haiku-4-5'; // owner: a cheaper model is fine for this line
+const MODEL = Deno.env.get('XAI_MODEL') ?? 'grok-4.3'; // owner: a cheaper model is fine for this line
+const ESTIMATE = 5_000; // $0.005 reserved per line, corrected to the real cost
 const PER_RUN = 25; // model calls per run at most; the rest wait for the next hour
 const DAYS = 30;
 
@@ -63,21 +65,21 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   const secret = Deno.env.get('CRON_SECRET');
   if (!secret || req.headers.get('x-cron-secret') !== secret) return json({ error: 'Forbidden.' }, 403);
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) return json({ skipped: 'ANTHROPIC_API_KEY not set' });
+  const key = xaiKey();
+  if (!key) return json({ skipped: 'XAI_API_KEY not set' });
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
   const slug = new URL(req.url).searchParams.get('person');
-  let q = db.from('people').select('id, name').order('rank', { ascending: true, nullsFirst: false });
+  let q = db.from('people').select('id, name').order('forbes_rank', { ascending: true, nullsFirst: false });
   if (slug) q = q.eq('slug', slug);
   const people = await q;
   if (people.error) return json({ error: people.error.message }, 500);
   const existing = await db.from('person_status').select('person_id, inputs_hash');
   const hashes = new Map((existing.data ?? []).map((r) => [r.person_id, r.inputs_hash]));
 
-  const client = new Anthropic({ apiKey });
   const done: string[] = [];
   const cleared: string[] = [];
+  const errors: string[] = [];
   let calls = 0;
   for (const p of people.data ?? []) {
     if (calls >= PER_RUN) break;
@@ -101,21 +103,27 @@ Deno.serve(async (req) => {
       own.length ? `How they talk (their own words, for tone only):\n${own.map((s) => `- "${s}"`).join('\n')}` : '',
     ].filter(Boolean).join('\n\n');
 
+    const settle = await reserve(db, ESTIMATE);
+    if (!settle) return json({ written: done, cleared, calls, stopped: 'Monthly Grok share for background jobs reached.' });
     calls++;
     let text: string | null = null;
     try {
-      const r = await client.messages.create({ model: MODEL, max_tokens: 200, system: RULES, messages: [{ role: 'user', content: prompt }] });
-      if (r.stop_reason !== 'refusal') text = clean(r.content.map((b) => (b.type === 'text' ? b.text : '')).join(''));
+      // max_output_tokens includes reasoning, so leave room beyond the ≈60-token line.
+      const r = await xaiText({ key, model: MODEL, system: RULES, input: prompt, maxTokens: 900 });
+      await settle(r.cost);
+      if (r.status !== 'incomplete') text = clean(r.text);
     } catch (e) {
+      await settle(ESTIMATE / 3);
       console.error(p.name, e);
+      errors.push(`${p.name}: ${String(e).slice(0, 200)}`);
       continue; // try again next hour
     }
     // A SKIP is stored as a null line with its hash, so the same material isn't sent again.
     const based_on = items.map((i) => ({ title: i.text.slice(0, 200), url: i.url, at: i.at }));
     const { error } = await db.from('person_status')
       .upsert({ person_id: p.id, text, based_on, inputs_hash: hash, model: MODEL, generated_at: new Date().toISOString() });
-    if (error) console.error(p.name, error.message);
+    if (error) errors.push(`${p.name}: ${error.message}`);
     else if (text) done.push(p.name);
   }
-  return json({ written: done, cleared, calls });
+  return json({ written: done, cleared, calls, ...(errors.length ? { errors } : {}) });
 });

@@ -11,6 +11,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { fromDate, nextDue, statusId, syndicationToken, xaiCostMicros, xPostId, type XaiUsage } from '../_shared/recent.ts';
 import { cors, json } from '../_shared/util.ts';
+import { ceilingMicros, DATA_SHARE } from '../_shared/xai.ts';
 
 const MODEL = Deno.env.get('XAI_MODEL') ?? 'grok-4.3';
 const PER_RUN = 3;
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
   // A pasted key with a stray character fails every call; say which kind, never the key itself.
   const bad = [...key].map((c, i) => ({ i, code: c.codePointAt(0)! })).filter((x) => x.code < 33 || x.code > 126);
   if (bad.length) return json({ error: 'XAI_API_KEY has characters a key can’t contain; set it again.', length: key.length, starts_xai: key.startsWith('xai-'), bad: bad.slice(0, 5) }, 500);
-  const ceiling = Math.round((Number(Deno.env.get('XAI_MONTHLY_USD') ?? '') || 20) * 1e6);
+  const ceiling = ceilingMicros(DATA_SHARE); // background job: leaves the rest of the month's ceiling to chat
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
   const params = new URL(req.url).searchParams;
