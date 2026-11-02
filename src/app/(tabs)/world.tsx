@@ -93,9 +93,9 @@ export default function World() {
   };
 
   const globeSize = desktop ? 520 : Math.min(width - space.md * 2 - space.md * 2, 440);
-  // Web, Places: the real planet is the globe. While World is open the planet turns to face us (one scene, no page
-  // change); leaving World swings it back to the orbit view.
-  const planet = Platform.OS === 'web' && view === 'places';
+  // Web: the real planet is the globe in every view (flows and shaded countries are drawn on it). While World is open
+  // the planet turns to face us (one scene, no page change); leaving World swings it back to the orbit view.
+  const planet = Platform.OS === 'web';
   useFocusEffect(
     useCallback(() => {
       if (!planet) return;
@@ -147,10 +147,12 @@ export default function World() {
                 <WorldGlobe
                   // Desktop: as tall as fits below the header, segments and chips (~360px), so the whole globe is in view.
                   height={desktop ? Math.max(360, Math.min(560, windowHeight - 360)) : Math.min(width - space.md * 2, 420)}
-                  sites={sites}
+                  sites={view === 'places' ? sites : []}
                   markers={markers}
-                  focus={focused?.person.id ?? null}
-                  center={focused?.hq ?? null}
+                  arcs={arcs}
+                  fills={fills}
+                  focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
+                  center={shockCentre ?? focused?.hq ?? null}
                   onSelect={(id) => select(id)}
                   onOpen={(id) => {
                     const e = empires.find((x) => x.person.id === id);
@@ -163,7 +165,13 @@ export default function World() {
                   }
                 />
                 <Caption style={styles.globeNote}>
-                  Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.
+                  {view === 'places'
+                    ? 'Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.'
+                    : view === 'money'
+                      ? 'Drag to turn; pinch to zoom. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
+                      : view === 'economies'
+                        ? 'Drag to turn; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                        : 'Drag to turn; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
                 </Caption>
               </View>
             ) : (

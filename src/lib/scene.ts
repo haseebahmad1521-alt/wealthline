@@ -27,6 +27,9 @@ type SceneState = {
     centerY: number;
     radiusPx: number;
   };
+  /** Countries shaded on the planet (World's Economies and What if views); bump `fillsVersion` after changing them. */
+  fills: { iso2: string; strength: number; risk?: boolean }[];
+  fillsVersion: number;
   /** Screen position (px, viewport coordinates) of a point on Earth's surface; set by the planet scene each frame. */
   project: ((lat: number, lng: number) => Projected) | null;
   /** Ask for a frame now (the loop pauses under reduced motion); set by the planet scene. */
@@ -40,6 +43,8 @@ export const scene: SceneState = {
   worldMix: 0,
   // Opens over the North Atlantic: the Americas, Europe and Africa (where most tracked headquarters are) in view.
   world: { lat: 32, lng: -45, zoom: 0, centerX: 0.5, centerY: 0.5, radiusPx: 160 },
+  fills: [],
+  fillsVersion: 0,
   project: null,
   invalidate: null,
 };

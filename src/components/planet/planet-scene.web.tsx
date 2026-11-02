@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import * as THREE from 'three';
 
-import { land } from '@/lib/geo';
+import { countryShape, land } from '@/lib/geo';
 import { scene as sceneState, zoomFactor } from '@/lib/scene';
 import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
@@ -64,6 +64,27 @@ function oceanMask() {
   return t;
 }
 
+// World's shaded countries, painted into an equirectangular map the Earth shader blends over the surface. Economies
+// tints by strength (more of the tracked revenue against GDP: stronger); What if marks the shocked place in red.
+const FILL = { base: [156, 203, 255], risk: [255, 138, 128] } as const;
+function paintFills(c: HTMLCanvasElement, fills: typeof sceneState.fills) {
+  const ctx = c.getContext('2d')!;
+  ctx.clearRect(0, 0, c.width, c.height);
+  const path = geoPath(geoEquirectangular().fitSize([c.width, c.height], { type: 'Sphere' }), ctx);
+  for (const f of fills) {
+    const shape = countryShape(f.iso2);
+    if (!shape) continue;
+    const [r, g, b] = f.risk ? FILL.risk : FILL.base;
+    ctx.fillStyle = `rgba(${r},${g},${b},${f.risk ? 0.5 : 0.1 + 0.4 * f.strength})`;
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    path(shape);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
 function sunDirection(now: number) {
   const s = subsolarPoint(now);
   return { vec: new THREE.Vector3(...latLngToUnit(s.lat, s.lng)), lng: s.lng };
@@ -117,7 +138,16 @@ export function PlanetScene() {
       oceanMap: { value: oceanMask() as THREE.Texture },
       sunDir: { value: sun.vec.clone() },
       nightLift: { value: 0 },
+      fillMap: { value: null as THREE.Texture | null },
+      fillMix: { value: 0 },
     };
+    const fillCanvas = document.createElement('canvas');
+    fillCanvas.width = 2048;
+    fillCanvas.height = 1024;
+    const fillTexture = new THREE.CanvasTexture(fillCanvas);
+    fillTexture.colorSpace = THREE.SRGBColorSpace;
+    earthUniforms.fillMap.value = fillTexture;
+    let fillsVersion = -1;
     // Level of detail: a light sphere normally, a finer one only when the globe is big on screen and a coarse limb
     // would show (the shading is per pixel, so the facet count only matters at the silhouette).
     const sphereLo = new THREE.SphereGeometry(1, 64, 48);
@@ -390,6 +420,13 @@ export function PlanetScene() {
       const rPx = ((viewport.h / 2) * Math.tan(Math.asin(Math.min(1 / camera.position.length(), 1)))) / tanHalf;
       const geo = rPx > 520 ? sphereHi : sphereLo;
       if (earth.geometry !== geo) earth.geometry = atmosphere.geometry = geo;
+      if (fillsVersion !== sceneState.fillsVersion) {
+        fillsVersion = sceneState.fillsVersion;
+        paintFills(fillCanvas, sceneState.fills);
+        fillTexture.needsUpdate = true;
+      }
+      // Shading belongs to World: it fades with the swing out (a profile on top, another tab).
+      earthUniforms.fillMix.value = sceneState.fills.length ? m : 0;
       // Cheap HDR: the closer we look (World zoom, or the bottom of a page), the more the night side opens up.
       earthUniforms.nightLift.value = Math.max(m * w.zoom, (1 - m) * e * 0.35);
     }

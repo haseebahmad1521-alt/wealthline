@@ -27,6 +27,8 @@ export const earthFragment = /* glsl */ `
   uniform sampler2D oceanMap;
   uniform vec3 sunDir;
   uniform float nightLift; // 0 … 1: brightens the night side as the camera zooms in close (a cheap HDR feel)
+  uniform sampler2D fillMap; // countries shaded by World (Economies, What if); alpha 0 where nothing is shaded
+  uniform float fillMix; // 0 … 1: how far the camera has swung into the World view
   varying vec2 vUv;
   varying vec3 vNormalW;
   varying vec3 vPosW;
@@ -49,6 +51,10 @@ export const earthFragment = /* glsl */ `
     float l = dot(lights, vec3(0.2126, 0.7152, 0.0722));
     vec3 city = vec3(1.0, 0.70, 0.36) * pow(l, 1.35) * 2.4 * (0.72 + 0.28 * smoothstep(-0.5, -0.04, ndl));
     vec3 col = mix(floorCol + city, lit, dayW);
+
+    // World's country shading sits on the surface, equally readable by day and night (a figure, not light).
+    vec4 fill = texture2D(fillMap, vUv);
+    col = mix(col, fill.rgb, fill.a * fillMix);
 
     // Sun glint on open water.
     vec3 H = normalize(sunDir + V);

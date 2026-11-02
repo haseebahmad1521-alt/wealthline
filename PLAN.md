@@ -27,7 +27,7 @@ _Updated Nov 2, 2026 after the World return fix (commit: see `git log -1`, pushe
 - **Earlier (batch A2):** "+N" bubbles fan out at any depth; a portrait tap opens the profile; Back keeps World as it was; no-history Back goes to the last tab (`src/lib/last-tab.ts`).
 - **Next:** batch B below (one scene for the remaining views), then P.
 - **Half-done:** nothing uncommitted.
-- **Ask the owner:** rocket source for batch P: (a) build our own low-poly rocket in code (recommended: no licence risk, tiny, "Falcon-like but not quite" by design), or (b) a NASA 3D Resources model (US-government work, free; SLS/Saturn V/Ares glb, heavier and needs decimating), or (c) a CC0 model the owner picks.
+- **Ask the owner:** nothing open. (Rocket source decided Nov 2: built in code.)
 - **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation, the fan on a 320 px phone.
 - **Verify:** `npm run preview:phone` → http://localhost:8090 (phone frame) or http://localhost:8081 directly; `npm run typecheck`, `npm test`; `npm run build:pages` before a push.
 
@@ -55,7 +55,7 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] Return from a profile: no NaN camera/springs; portraits fade in pinned once the camera arrives
 
 **Batch B — one scene for every view**
-- [ ] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
+- [x] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
 - [ ] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
 - [ ] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
 - [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
@@ -64,7 +64,7 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 **Batch P — Projects: the ascent (owner, Nov 2, 2026; planned, not started)**
 The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
 - Layout: rocket in the bottom-right third, angled up and to the right, exhaust trailing to the bottom right. Content weighted to the top left: a "top 3 projects" glass podium like Rankings, then project news and the latest recorded wealth jumps or drops tied to projects (from existing records only; no invented moves), then the rest of the list below.
-- Rocket: low poly (≈2–5k triangles), one texture atlas or flat PBR materials, white body with a dark interstage, grid fins and landing legs folded. Generic, not SpaceX: no logos, flag or name. Source is the open owner question in "Resume here" (default: built in code from a LatheGeometry body plus fins).
+- Rocket: low poly (≈2–5k triangles), one texture atlas or flat PBR materials, white body with a dark interstage, grid fins and landing legs folded. Generic, not SpaceX: no logos, flag or name. Source (owner, Nov 2): built in code from a LatheGeometry body plus fins.
 - Engine: an additive glowing plume (a cone with a shader, hot white core fading to orange), a soft point light on the hull, and a bloom-like sprite at the nozzle.
 - Smoke: white, soft billboard puffs (one instanced mesh, ~60–120 particles) spawned at the nozzle, drifting back and expanding, fading out. Fluffy from a noise-shaded sprite texture, not a photo.
 - Speed cues: a few thin diagonal motion lines (screen-space, 3–6 at a time, top-right to bottom-left, low opacity); every 6–12 s a very faint cloud sprite sweeps fast across in front of the rocket.

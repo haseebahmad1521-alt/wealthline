@@ -3,12 +3,14 @@
 // they slide into one joined bubble (an SVG "goo" filter fuses their glass circles, springs give the elastic overshoot)
 // and split apart again as you zoom in. Tapping a "+N" bubble leans in a little and fans its people out around it, even
 // when they share a city; tapping a portrait opens that person's profile. Company places are small dots: every one is
-// a real site. Choosing a person fades everyone else to 5%. Pinch, ctrl+wheel (trackpad pinch) and Safari gestures zoom the globe, never the page.
-import { useEffect, useRef } from 'react';
+// a real site. Money flows (Money, What if) are lines along great circles with dashes travelling toward headquarters;
+// shaded countries (Economies, What if) are painted on the planet itself. Choosing a person fades everyone else to 5%. Pinch, ctrl+wheel (trackpad pinch) and Safari gestures zoom the globe, never the page.
+import { geoInterpolate } from 'd3-geo';
+import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Glass } from '@/components/glass';
-import type { GlobeMarker, GlobeSite } from '@/components/globe';
+import type { GlobeArc, GlobeFill, GlobeMarker, GlobeSite } from '@/components/globe';
 import { clampZoom, scene, zoomFactor } from '@/lib/scene';
 import { color, font, radius, space } from '@/theme';
 
@@ -34,6 +36,9 @@ type Spring = { x: number; y: number; vx: number; vy: number; op: number; scale:
 let opened: { keys: Set<string>; zoom: number } | null = null;
 let openedFocus: string | null = null;
 
+const ARC_STEPS = 48;
+const ARC_TINT = '#9CCBFF';
+
 const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const wrap180 = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
 
@@ -41,6 +46,8 @@ export function WorldGlobe({
   height,
   markers,
   sites,
+  arcs = [],
+  fills = [],
   focus,
   center,
   onSelect,
@@ -50,6 +57,8 @@ export function WorldGlobe({
   height: number;
   markers: GlobeMarker[];
   sites: GlobeSite[];
+  arcs?: GlobeArc[];
+  fills?: GlobeFill[];
   focus: string | null;
   center: { lat: number; lng: number } | null;
   onSelect: (id: string | null) => void;
@@ -59,8 +68,33 @@ export function WorldGlobe({
 }) {
   const host = useRef<HTMLElement | null>(null);
   // Props the frame loop reads without re-subscribing.
-  const live = useRef({ markers, sites, focus, onSelect, onOpen });
-  live.current = { markers, sites, focus, onSelect, onOpen };
+  // Each flow sampled once along its great circle (the frame loop only projects the points).
+  const arcKey = arcs.map((a) => `${a.key}:${a.weight}:${a.risk ? 1 : 0}`).join('|');
+  const paths = useMemo(
+    () =>
+      arcs.map((a) => {
+        const at = geoInterpolate([a.from.lng, a.from.lat], [a.to.lng, a.to.lat]);
+        return { arc: a, points: Array.from({ length: ARC_STEPS + 1 }, (_, i) => at(i / ARC_STEPS)) };
+      }),
+    [arcKey], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const live = useRef({ markers, sites, paths, focus, onSelect, onOpen });
+  live.current = { markers, sites, paths, focus, onSelect, onOpen };
+
+  // Shaded countries live on the planet itself; cleared when World goes.
+  const fillKey = fills.map((f) => `${f.iso2}:${f.strength}:${f.risk ? 1 : 0}`).join('|');
+  useEffect(() => {
+    scene.fills = fills;
+    scene.fillsVersion++;
+    scene.invalidate?.();
+  }, [fillKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(
+    () => () => {
+      scene.fills = [];
+      scene.fillsVersion++;
+    },
+    [],
+  );
   const tween = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
 
   // Turn toward the chosen person (or the place in question) and lean in a little.
@@ -179,7 +213,7 @@ export function WorldGlobe({
       // Portraits stay pinned to the planet but only show once the camera has nearly swung into the World view, so
       // coming back from another screen they fade in on the globe instead of riding the swing through space.
       const arrive = reduce ? 1 : Math.min(Math.max((scene.worldMix - 0.75) / 0.25, 0), 1);
-      const { markers: ms, sites: ss, focus: f } = live.current;
+      const { markers: ms, sites: ss, paths: ps, focus: f } = live.current;
 
       // Places: one dot per real site, faded with everyone else when a person is chosen.
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -211,6 +245,38 @@ export function WorldGlobe({
           ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
           ctx.fill();
         }
+        // Money flows: a soft line for the route, brighter dashes travelling along it toward headquarters. Drawn
+        // segment by segment so each fades out at the horizon instead of crossing the planet's back.
+        ctx.lineCap = 'round';
+        const dash = reduce ? 0 : (now / 40) % 22;
+        for (const { arc, points } of ps) {
+          const faded = !!f && arc.group !== f;
+          ctx.strokeStyle = arc.risk ? color.loss : f && !faded ? color.action : ARC_TINT;
+          ctx.lineWidth = 1 + 3 * Math.sqrt(arc.weight);
+          let prev: ReturnType<typeof project> | null = null;
+          let along = 0;
+          for (const [lng, lat] of points) {
+            const p = project(lat, lng);
+            if (prev && prev.facing > 0 && p.facing > 0) {
+              const vis = Math.min(Math.min(prev.facing, p.facing) / 0.08, 1) * (faded ? FADED * 2 : 1);
+              ctx.beginPath();
+              ctx.moveTo(prev.x, prev.y);
+              ctx.lineTo(p.x, p.y);
+              ctx.setLineDash([]);
+              ctx.globalAlpha = 0.28 * vis;
+              ctx.stroke();
+              if (!reduce) {
+                ctx.setLineDash([8, 14]);
+                ctx.lineDashOffset = along - dash;
+                ctx.globalAlpha = 0.9 * vis;
+                ctx.stroke();
+              }
+              along += Math.hypot(p.x - prev.x, p.y - prev.y); // keeps the dash pattern continuous across segments
+            }
+            prev = p;
+          }
+        }
+        ctx.setLineDash([]);
         ctx.globalAlpha = 1;
       }
       dots.style.opacity = goo.style.opacity = faces.style.opacity = String(arrive);
