@@ -12,6 +12,7 @@ import { ANGLES, scene as sceneState, zoomFactor } from '@/lib/scene';
 import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
 import { color } from '@/theme';
+import { createRocket } from './rocket';
 import { atmosphereFragment, earthFragment, quadVertex, skyFragment, sunFragment, worldVertex } from './planet-shaders';
 
 const BASE = process.env.EXPO_PUBLIC_BASE_URL ?? '';
@@ -204,6 +205,10 @@ export function PlanetScene() {
 
     atmosphere.scale.setScalar(1.055);
     scene.add(sky, earth, atmosphere, sunQuad);
+    // Projects' rocket hangs in camera space, so the camera joins the scene graph.
+    const rocket = createRocket();
+    camera.add(rocket.group);
+    scene.add(camera);
     // Development only: lets the browser console inspect the scene.
     if (__DEV__) (window as unknown as { __planet: object }).__planet = { renderer, scene, camera, earth, sky, atmosphere, sunQuad, state: sceneState };
 
@@ -331,6 +336,8 @@ export function PlanetScene() {
     const visitRig = new THREE.PerspectiveCamera();
     let worldMix = sceneState.preset === 'world' ? 1 : 0;
     let visitMix = sceneState.visit ? 1 : 0;
+    let rocketMix = 0;
+    const sunView = new THREE.Vector3();
     let visitAt = { lat: 0, lng: 0 }; // the last place visited: flying back out keeps aiming at it
     const easeTo = (v: number, goal: number, dt: number, rate: number) => {
       const next = reduce ? goal : v + (goal - v) * (1 - Math.exp(-dt * rate));
@@ -373,8 +380,16 @@ export function PlanetScene() {
       }
       // Linear: Earth rises steadily through the whole list (a slow-in curve would stall it over the first screens).
       const e = p;
-      const d = mix(DIST[0], DIST[1], e);
-      const drift = reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S);
+      // Projects rides a rocket (batch P): there scrolling climbs a little higher instead of descending, and the camera
+      // floats on two summed sines so the rocket parallaxes against Earth and the stars.
+      rocketMix = easeTo(rocketMix, sceneState.angle === 'projects' && sceneState.preset !== 'world' && !sceneState.visit ? 1 : 0, dt, 1.6);
+      const rk = rocketMix * rocketMix * (3 - 2 * rocketMix);
+      const ts = now / 1000;
+      const float = reduce ? 0 : rk;
+      const d = mix(mix(DIST[0], DIST[1], e), DIST[0] + 0.22 * e, rk);
+      const drift =
+        (reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S)) +
+        float * (2.2 * Math.sin(ts * 0.19) + 1.1 * Math.sin(ts * 0.41 + 2));
       // Ease toward the page's angle (the shorter way round in longitude).
       const goalAngle = ANGLES[sceneState.angle];
       const ka = reduce ? 1 : 1 - Math.exp(-dt * 1.8);
@@ -383,11 +398,12 @@ export function PlanetScene() {
       angle.roll += (goalAngle.roll - angle.roll) * ka;
       const lng = sun.lng + angle.east + drift + spin;
       if (__DEV__) Object.assign((window as unknown as { __planet: object }).__planet, { dbg: { lng, sunLng: sun.lng, drift, spin, p, dt, vel: sceneState.velocity } });
-      const pos = posV.set(...latLngToUnit(angle.lat, lng)).multiplyScalar(d);
+      const lat = angle.lat + float * (1.2 * Math.sin(ts * 0.23 + 1) + 0.6 * Math.sin(ts * 0.53));
+      const pos = posV.set(...latLngToUnit(lat, lng)).multiplyScalar(d);
 
       // Look from the camera toward Earth's centre, then pitch up so the horizon lands at LIMB_Y on screen.
       const alpha = Math.asin(1 / d);
-      const theta = alpha - Math.atan(mix(LIMB_Y[0], LIMB_Y[1], e) * Math.tan((FOV / 2) * RAD));
+      const theta = alpha - Math.atan(mix(mix(LIMB_Y[0], LIMB_Y[1], e), LIMB_Y[0] - 0.12 * e, rk) * Math.tan((FOV / 2) * RAD));
       const f0 = f0v.copy(pos).negate().normalize();
       right.crossVectors(f0, Y_UP).normalize();
       up.crossVectors(right, f0).normalize();
@@ -396,7 +412,7 @@ export function PlanetScene() {
       orbitRig.position.copy(pos);
       orbitRig.up.copy(upPitched);
       orbitRig.lookAt(target.copy(pos).add(fwd));
-      orbitRig.rotateZ((mix(ROLL[0], ROLL[1], e) + angle.roll) * RAD);
+      orbitRig.rotateZ((mix(mix(ROLL[0], ROLL[1], e), 0, rk) + angle.roll + float * (1.5 * Math.sin(ts * 0.27) + 0.7 * Math.sin(ts * 0.61 + 1))) * RAD);
 
       // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
       const w = sceneState.world;
@@ -441,6 +457,7 @@ export function PlanetScene() {
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
       sunQuad.quaternion.copy(camera.quaternion);
       placeGlow(sunDir);
+      rocket.update(dt, now, rocketMix, camera.aspect, FOV, sunView.copy(sunDir).transformDirection(camera.matrixWorldInverse), reduce);
 
       // Finer sphere only when Earth's radius on screen passes ~520 px.
       const rPx = ((viewport.h / 2) * Math.tan(Math.asin(Math.min(1 / camera.position.length(), 1)))) / tanHalf;
@@ -515,6 +532,8 @@ export function PlanetScene() {
       sceneState.project = null;
       sceneState.invalidate = null;
       glow.remove();
+      camera.remove(rocket.group);
+      rocket.dispose();
       if (still) clearInterval(still);
       window.removeEventListener('resize', resize);
       document.removeEventListener('visibilitychange', onVisible);
