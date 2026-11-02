@@ -172,23 +172,26 @@ export function strikeNotice(outcome: StrikeOutcome, strikes: number, name: stri
 }
 
 /** Plans (owner, Nov 2, 2026): Free has no chat. The daily allowance is spend, not a message count, so short messages
- * go further. Budgets are in micro-dollars at list API prices; tune them once real usage is measured. */
+ * go further. Budgets are in micro-dollars at xAI list prices; tune them once real usage is measured. Replies come from
+ * Grok (owner, Nov 3: xAI replaces Anthropic); `localModel` is the dev bridge's Claude model. After a 30% store fee the
+ * worst month (every day at the cap) stays under the price: Pro $2.40 of $3.49, Premium $9 of $10.49. */
 export const PLANS = {
-  // `estimate`: reserved before each reply, corrected to the real cost after it.
+  // `estimate`: reserved before each reply, corrected to the real cost after it (≈4k input tokens, mostly the persona
+  // material, plus ≈150 reply and ≈300 reasoning tokens: ≈$0.006 on grok-4.3 uncached, ≈$0.002 once xAI caches it).
   // `history`: messages of the thread sent with each reply; `memory`: facts about the user kept per thread.
-  pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000, estimate: 6_000, history: 30, memory: 8 }, // ≈ 20 typical replies ($0.08/day at most)
-  // $14.99/month: the worst case (every day at the cap, $9/month) stays under what's left after a 30% store fee.
-  // Premium extras (owner, Nov 3): longer memory (60 messages, 24 facts) and early access to new people and features.
-  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000, estimate: 12_000, history: 60, memory: 24 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
+  pro: { model: 'grok-4.3', localModel: 'haiku', dailyMicros: 80_000, estimate: 7_000, history: 30, memory: 8 }, // ≈ 20–40 replies ($0.08/day at most)
+  // Premium extras (owner, Nov 3): the bigger model, longer memory (60 messages, 24 facts) and early access.
+  premium: { model: 'grok-4.7', localModel: 'sonnet', dailyMicros: 300_000, estimate: 12_000, history: 60, memory: 24 }, // ≈ 40–80 replies ($0.30/day at most)
 } as const;
 export type Plan = keyof typeof PLANS;
-/** All users together, per UTC day: the circuit breaker's default ($25), overridable with CHAT_GLOBAL_DAILY_USD. */
+/** All users together, per UTC day: the circuit breaker's default ($25), overridable with CHAT_GLOBAL_DAILY_USD. The
+ * monthly xAI ceiling (`_shared/xai.ts`) applies on top. */
 export const GLOBAL_DAILY_MICROS = 25_000_000;
 
-// List prices, $ per million tokens = micro-dollars per token (claude-api skill, Nov 2026).
+// Claude list prices for the dev bridge's budget only, $ per million tokens = micro-dollars per token.
 const PRICE = {
-  'claude-haiku-4-5': { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
-  'claude-sonnet-5-5': { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+  haiku: { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
+  sonnet: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
 } as const;
 
 export type Usage = { input?: number; output?: number; cacheRead?: number; cacheWrite?: number };

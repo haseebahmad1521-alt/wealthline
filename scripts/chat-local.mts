@@ -70,7 +70,7 @@ function ask(system: string, prompt: string, model: string) {
         const u = j.usage ?? {};
         resolve({
           reply: j.structured_output as PersonaReply,
-          weight: costMicros(PLANS[plan].model, { input: u.input_tokens, cacheRead: u.cache_read_input_tokens, cacheWrite: u.cache_creation_input_tokens, output: u.output_tokens }),
+          weight: costMicros(PLANS[plan].localModel, { input: u.input_tokens, cacheRead: u.cache_read_input_tokens, cacheWrite: u.cache_creation_input_tokens, output: u.output_tokens }),
         });
       } catch (e) {
         reject(new Error(`${(e as Error).message}\n${err}`.trim()));

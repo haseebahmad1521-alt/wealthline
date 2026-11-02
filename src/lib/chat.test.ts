@@ -26,7 +26,7 @@ test('keywords drop stop words and OR the rest', () => {
 });
 
 test('cost is list price per token', () => {
-  assert.equal(costMicros('claude-haiku-4-5', { input: 1000, output: 100 }), 1500);
+  assert.equal(costMicros('haiku', { input: 1000, output: 100 }), 1500);
 });
 
 test('strikes: three in the window → 24 h cooldown; any strike after a cooldown → on hold for review', () => {

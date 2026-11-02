@@ -24,13 +24,25 @@ export async function reserve(db: SupabaseClient, estimate: number, share = DATA
   return (actual: number) => db.rpc('settle_xai_spend', { p_delta: actual - estimate });
 }
 
-type Opts = { key: string; model: string; system: string; input: string; maxTokens: number; schema?: Record<string, unknown> };
+export type Turn = { role: 'user' | 'assistant'; content: string };
+type Opts = {
+  key: string;
+  model: string;
+  /** Several parts go in order: shared ones first, so xAI's prefix cache is reused across calls. */
+  system: string | string[];
+  /** One user message, or a conversation. */
+  input: string | Turn[];
+  maxTokens: number;
+  schema?: Record<string, unknown>;
+  /** Routes related calls (one chat thread) to the same cache (xAI's `x-grok-conv-id`). */
+  convId?: string;
+};
 
 /** A plain (tool-free) Responses call: the text out and its cost in micro-dollars. */
-export async function xaiText({ key, model, system, input, maxTokens, schema }: Opts) {
+export async function xaiText({ key, model, system, input, maxTokens, schema, convId }: Opts) {
   const res = await fetch('https://api.x.ai/v1/responses', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...(convId ? { 'x-grok-conv-id': convId } : {}) },
     signal: AbortSignal.timeout(60_000),
     body: JSON.stringify({
       model,
@@ -38,7 +50,10 @@ export async function xaiText({ key, model, system, input, maxTokens, schema }: 
       max_output_tokens: maxTokens,
       reasoning: { effort: 'low' },
       ...(schema ? { text: { format: { type: 'json_schema', name: 'out', schema, strict: true } } } : {}),
-      input: [{ role: 'system', content: system }, { role: 'user', content: input }],
+      input: [
+        ...[system].flat().map((content) => ({ role: 'system', content })),
+        ...(typeof input === 'string' ? [{ role: 'user', content: input }] : input),
+      ],
     }),
   });
   const body = await res.json().catch(() => null);
