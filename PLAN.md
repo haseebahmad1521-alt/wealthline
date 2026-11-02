@@ -21,17 +21,16 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026: batch B done (pushed; see `git log`). Next: batch P._
+_Updated Nov 2, 2026: batch P's rocket landed (pushed; see `git log`). Next: batch C, unless the owner answers the Projects question below first._
 
 - **Just landed:**
-  - **One search field** (`src/lib/search.ts`, `src/components/search-field.tsx`). Each tab keeps its own query: people on Rankings, people/companies/places on World, projects, and watched people. Phones: a round glass button beside the floating tab bar expands into a field that rides above the keyboard (visualViewport). ✕ or Escape clears and closes. Desktop web: a field in the top nav. Native: inline `<PageSearch>` on each tab. World publishes suggestions, and picking one focuses the owner and flies the globe to that HQ or site (`spot` in world.tsx).
-  - **Glass frosts the globe portraits.** The portrait layer is isolated at z 0, and Glass, World's chips and the segment control sit at z 1 with backdrop blur.
-  - **Opened bubbles are big and wealth-sized:** `packFan` in `world-globe.web.tsx` puts the richest in the middle and the rest on a spiral. Diameters range from ~50% to 100% of min(30% of the short side, 108/136 px), so area follows net worth. The fan fits the screen (on desktop, the globe column).
-  - Global focus ring and selection now use the dark palette's action blue (`public/index.html`).
-- **Next:** batch P (rocket on Projects). Then C.
+  - **Rocket on Projects** (`src/components/planet/rocket.ts`, wired in `planet-scene.web.tsx`). It's a camera-space low-poly rocket in the bottom-right third, angled up and to the right, built from a LatheGeometry body with folded grid fins and legs, and lit by the real sun direction. Additive plume, nozzle bloom, hull point light, 96 instanced smoke puffs drifting down and to the right, motion lines, and a faint cloud sweep every 6–12 s. On Projects the camera floats on summed sines and scrolling climbs a little higher. Under reduced motion the rocket is still with a steady plume. It flies in and out along its heading when you enter or leave Projects.
+  - **Phone search above the keyboard:** the keyboard inset is now measured against `#root`'s box and the visual viewport, not `innerHeight`, and re-measured after the keyboard settles. Before, the field sat slightly under the iOS keyboard.
+  - **World drag bug:** portrait layers are clipped to the viewport, and `html`/`body`/`#root` never scroll. Off-screen portraits had been lengthening the page, so a drag could scroll the whole document on iOS and lift the tab bar. Measured headless: the document is 844 px for an 844 px viewport, and only the screen scrolls.
+  - **World handle:** a pill under the globe gives a double glow every 5 s, three times, then stops. Tapping it scrolls the details into view. The globe instructions moved to the end of the details.
 - **Half-done:** nothing uncommitted.
-- **Ask the owner:** nothing open.
-- **Not verified on a device yet:** the phone search above the iOS keyboard (visualViewport math), globe feel on a real phone, the 8K swap, Safari pinch, the fan on a 320 px phone, the news sheet and the profile fly-in on a phone.
+- **Ask the owner:** the `projects` table has no public rows (checked Nov 2), so the planned Projects content (a top-3 podium, project news, and wealth moves tied to projects) has nothing real to show. Which should come first: enter projects (and what ranks the top 3, e.g. owner's net worth or announcement date), or build the layout now so it fills in once projects exist?
+- **Not verified on a device yet:** the rocket's frame time on a mid phone; the keyboard fix and the World drag fix on a real iPhone; plus the earlier list (globe feel, 8K swap, Safari pinch, fan at 320 px, news sheet, profile fly-in).
 - **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain`, or `npm run preview:phone` → http://localhost:8090. Also `npm run typecheck`, `npm test`, `npm run build:pages` before a push. (Don't run `npx expo lint`: it installs and configures ESLint on its own.)
 
 ## Next up (work queue, priority order)
@@ -66,7 +65,10 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] Glass frosts the globe portraits (they no longer draw over UI)
 - [x] Opened bubbles: bigger portraits, sized by net worth
 
-**Batch P — Projects: the ascent (owner, Nov 2, 2026; planned, not started)**
+**Batch P — Projects: the ascent (owner, Nov 2, 2026)**
+- [x] Rocket, plume, bloom, hull light, smoke, motion lines, cloud sweeps, floaty camera, scroll climbs, reduced motion, same WebGL context
+- [ ] Content: top-3 podium, project news, project-tied wealth moves (blocked: no projects recorded; see "Ask the owner")
+- [ ] Frame time on a mid phone
 The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
 - Layout: rocket in the bottom-right third, angled up and to the right, exhaust trailing to the bottom right. Content weighted to the top left: a "top 3 projects" glass podium like Rankings, then project news and the latest recorded wealth jumps or drops tied to projects (from existing records only; no invented moves), then the rest of the list below.
 - Rocket: low poly (≈2–5k triangles), one texture atlas or flat PBR materials, white body with a dark interstage, grid fins and landing legs folded. Generic, not SpaceX: no logos, flag or name. Source (owner, Nov 2): built in code from a LatheGeometry body plus fins.
