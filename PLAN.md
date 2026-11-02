@@ -21,15 +21,15 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 5, 2026: every model call is now on Grok (code done and committed); **nothing deployed yet**: auto mode blocks production deploys, so the owner runs the list below._
+_Updated Nov 5, 2026: every model call is now on Grok; **deployed by the owner** (migration `status_requests`, functions `status`, `chat`, `sources`, `daily-brief`, `project-scout`). End-to-end checks still to do (Next below; auto mode blocks Claude's vault-reading test calls, so the owner runs them with `!`)._
 
 - **Landed Nov 5:**
   - Owner answers (Nov 5): opener defaults kept; **"Your name." card** in Account (`setFirstName` in `src/lib/auth.ts` → `user_metadata.first_name`, used first and kept as typed by `memberName`); the code-built **greeting now shows for everyone** (Free and signed-out too) when there's no AI line.
   - `chat` on Grok: Pro `grok-4.3`, Premium `grok-4.7` (`PLANS` re-priced; `localModel` stays for the Claude bridge, whose budget `costMicros` is now keyed `haiku`/`sonnet`). Each reply reserves under the user's daily allowance **and** the shared monthly xAI ceiling (share 1). System parts in cache order (rules, persona material, user facts, opener), thread history as turns, `x-grok-conv-id` = thread id. Output room = 220 + 1200 for reasoning (a real grok-4.3 call used 626 reasoning tokens on "low"; schema accepted, `remember` filled, $0.003).
   - `sources`, `daily-brief`, `project-scout` on Grok (`XAI_MODEL`, default grok-4.3), background share. `sources`' hourly cron now acts only every 6 h on 2 articles of ≤20k chars (≈$2/month; it would have been ≈$70); scout capped at 1000 headlines (≈$1.5/month). No Anthropic left in `supabase/functions`. README "AI features" section rewritten.
   - Checked: functions type-check (scratchpad recipe), `npm test` 72/72, app typecheck (only the 2 known persona.ts errors). **Not** checked end to end: needs the deploys.
-- **Owner-run (with `!`, from the project folder), in this order:**
-  1. `npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261104000000_status_requests.sql` (still not applied on Nov 5: `status_requests` missing)
+- **~~Owner-run~~ done Nov 5 (kept for reference):**
+  1. `npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261104000000_status_requests.sql` (applied; table confirmed)
   2. `npx supabase@latest functions deploy status --project-ref qucpeyrbzyfqtmxhmezr --use-api --no-verify-jwt --yes`
   3. `for f in chat sources daily-brief project-scout; do npx supabase@latest functions deploy $f --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes; done` (`sources` has `verify_jwt = false` in config.toml)
   4. Optional, to let Claude deploy functions next time: allow `npx supabase@latest functions deploy:*` in `.claude/settings.json` (auto mode still classifies it as a production deploy otherwise).
