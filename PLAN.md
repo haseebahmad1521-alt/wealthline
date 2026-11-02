@@ -21,7 +21,7 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 (late): stars are points; long tasks measured; public data cache persisted; rocket shaders precompiled; rocket camera raised; batch K (chat with a billionaire) researched and planned, waiting on the owner's three answers. Next: batch S (rest), then K once answered, then C._
+_Updated Nov 2, 2026 (night): batch S done except KTX2 (blocked, owner) and first-visit mount cost; batch K planned with all owner answers. **Next: batch K, step 1 (data), then the `chat` function, then the UI.**_
 
 - **Just landed:**
   - **Rocket (owner):** camera 25% back toward the earlier higher pose (`ROCKET` in `planet-scene.web.tsx`, `DEPTH` in `rocket.ts`): the horizon curves and the haze blends into the surface instead of a grey overcast close-up.
@@ -36,7 +36,14 @@ _Updated Nov 2, 2026 (late): stars are points; long tasks measured; public data 
   - **World:** `useWorld` memoizes empires (it rebuilt them, and so the globe markers/arcs, on every render); country shading is painted in idle time instead of inside a render frame.
   - **Planet textures:** `ImageBitmapLoader` decodes off the main thread (bitmaps closed on a tier drop). The GPU upload of a big tier still happens in one frame (see batch S).
   - Checked headless (Chromium, 390 px @3x): Rankings and World render, no console errors, 298 portrait requests all 250 px except 4 SVG logos stored as portraits.
-- **Half-done:** nothing uncommitted.
+- **Half-done:** nothing uncommitted (`.claude/launch.json` is untracked and not ours to commit).
+- **Batch K, how to start (fresh session):**
+  1. Load the `claude-api` skill before any Claude code (model id, prompt caching, tool use). Read `supabase/functions/daily-brief/index.ts` for how Claude is already called and `supabase/functions/_shared/refresh.ts` (`socialFetcher`, `headlines`) for the fetch/scheduler pattern.
+  2. Migration (additive only): `person_posts` (many per person; id, person_id, platform, handle, post_url unique, text, posted_at, fetched_at; public read, service-role write), `person_sources` (kind interview/letter/speech/article/book, title, url, published_at, excerpt text in their own words, fetched_at; public read) with a `tsvector` index for full-text search; `chat_threads`/`chat_messages` (owner = auth.uid(), RLS private, role user/assistant, created_at, seen_at) and a per-user daily counter (20/day, enforced in the function).
+  3. X fetcher: one person per scheduled run, spread out, honest UA `WealthlineBot/1.0 (+https://haseebahmad1521-alt.github.io/wealthline/)`, cache every post into `person_posts`. On Nov 2 the embed timeline endpoint answered 429 twice from this Mac (possibly per-IP); test again from the Edge Function, back off on 429, fall back to self-hosted FxTwitter (`/2/profile/<handle>/statuses`).
+  4. Interviews first: search news (`person_news` sources + Google News query `"<name>" interview`) and store quoted passages with their URL; recent news next.
+  5. Then the `chat` function and the UI (run `/impeccable shape` first; sparkle beside the name, typing dots, ✓✓ seen, timestamps).
+
 - **Data note:** a few `portrait_url`s are SVG logos/coats of arms (e.g. Amancio Ortega, Friedhelm Loh), not portraits. Owner/admin should review; not changed.
 - **Default chosen (tell the owner if asked):** the projects podium ranks projects by their builder's rank; switch to announcement date in `podiumProjects` if the owner prefers.
 - **Legibility note for batch D:** the brighter rocket sky lowers contrast for secondary text and the inactive filter labels on Projects (e.g. the empty-state body). Measure and adapt tint there first.
