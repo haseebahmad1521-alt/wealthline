@@ -26,6 +26,9 @@ const DIST = [1.62, 1.3] as const; // distance from Earth's centre, in Earth rad
 const LIMB_Y = [-0.6, 0.7] as const;
 const ROLL = [0, -9] as const; // degrees: the horizon tilts steeper on the way down
 const HAZE = [0.0, 1.3] as const;
+// Projects rides a rocket low over Earth (owner, Nov 2, 2026): the horizon across the middle of the view, the planet
+// and its atmosphere below, stars above; scrolling climbs a little higher. Distance (Earth radii), horizon (NDC), haze.
+const ROCKET = { dist: [1.18, 1.28], limbY: [0.04, -0.12], haze: 0.75 } as const;
 // Where the camera hangs comes from the page in view (ANGLES in scene.ts); switching pages eases from one angle to the next.
 const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;
@@ -386,7 +389,7 @@ export function PlanetScene() {
       const rk = rocketMix * rocketMix * (3 - 2 * rocketMix);
       const ts = now / 1000;
       const float = reduce ? 0 : rk;
-      const d = mix(mix(DIST[0], DIST[1], e), DIST[0] + 0.22 * e, rk);
+      const d = mix(mix(DIST[0], DIST[1], e), mix(ROCKET.dist[0], ROCKET.dist[1], e), rk);
       const drift =
         (reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S)) +
         float * (2.2 * Math.sin(ts * 0.19) + 1.1 * Math.sin(ts * 0.41 + 2));
@@ -403,7 +406,7 @@ export function PlanetScene() {
 
       // Look from the camera toward Earth's centre, then pitch up so the horizon lands at LIMB_Y on screen.
       const alpha = Math.asin(1 / d);
-      const theta = alpha - Math.atan(mix(mix(LIMB_Y[0], LIMB_Y[1], e), LIMB_Y[0] - 0.12 * e, rk) * Math.tan((FOV / 2) * RAD));
+      const theta = alpha - Math.atan(mix(mix(LIMB_Y[0], LIMB_Y[1], e), mix(ROCKET.limbY[0], ROCKET.limbY[1], e), rk) * Math.tan((FOV / 2) * RAD));
       const f0 = f0v.copy(pos).negate().normalize();
       right.crossVectors(f0, Y_UP).normalize();
       up.crossVectors(right, f0).normalize();
@@ -451,7 +454,7 @@ export function PlanetScene() {
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       camera.updateMatrixWorld();
 
-      skyUniforms.haze.value = mix(HAZE[0], HAZE[1], e) * (1 - mw) * (1 - v);
+      skyUniforms.haze.value = mix(mix(HAZE[0], HAZE[1], e), ROCKET.haze, rk) * (1 - mw) * (1 - v);
       sky.position.copy(camera.position);
       const sunDir = earthUniforms.sunDir.value;
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);

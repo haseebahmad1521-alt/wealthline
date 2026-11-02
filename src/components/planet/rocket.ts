@@ -46,12 +46,14 @@ function spriteTexture(kind: 'puff' | 'glow') {
   return t;
 }
 
+// Smooth shading round the hull; hard edges only where parts meet (stage seams, the base, fins, legs), because each
+// part is its own mesh and the boxes keep their crisp corners (owner, Nov 2, 2026).
 function buildBody() {
   const body = new THREE.Group();
-  const white = new THREE.MeshStandardMaterial({ color: WHITE, roughness: 0.55, metalness: 0.05, flatShading: true });
-  const dark = new THREE.MeshStandardMaterial({ color: DARK, roughness: 0.7, metalness: 0.1, flatShading: true });
-  const metal = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.35, metalness: 0.8, flatShading: true });
-  const seg = 18;
+  const white = new THREE.MeshStandardMaterial({ color: WHITE, roughness: 0.42, metalness: 0.05 });
+  const dark = new THREE.MeshStandardMaterial({ color: DARK, roughness: 0.6, metalness: 0.15 });
+  const metal = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.3, metalness: 0.85, side: THREE.DoubleSide });
+  const seg = 40;
   const cyl = (y0: number, y1: number, m: THREE.Material, r0 = R, r1 = R) => {
     const g = new THREE.CylinderGeometry(r1, r0, y1 - y0, seg, 1, true);
     g.translate(0, (y0 + y1) / 2, 0);
@@ -196,12 +198,15 @@ export function createRocket(): Rocket {
   };
   const plumeOuter = new THREE.Mesh(plumeGeo(R * 0.85, 0.5), plumeMat);
   const plumeCore = new THREE.Mesh(plumeGeo(R * 0.45, 0.2), plumeMat);
+  // Flame after the smoke, so the smoke reads as pouring out from behind the fire.
+  plumeOuter.renderOrder = plumeCore.renderOrder = 2;
   body.add(plumeOuter, plumeCore);
 
   const glowTex = spriteTexture('glow');
   const bloom = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
   bloom.scale.setScalar(0.34);
   bloom.position.y = -0.01;
+  bloom.renderOrder = 2;
   body.add(bloom);
 
   // Smoke: spawned at the nozzle in camera space, left behind (down and to the right), growing and fading.
@@ -231,7 +236,7 @@ export function createRocket(): Rocket {
   const smoke = makePuffs(SMOKE, puffFragment, THREE.NormalBlending, new THREE.Color(0.94, 0.95, 0.97));
   const lines = makePuffs(LINES, lineFragment, THREE.AdditiveBlending, new THREE.Color(1, 1, 1));
   const cloud = makePuffs(1, puffFragment, THREE.NormalBlending, new THREE.Color(1, 1, 1));
-  smoke.mesh.renderOrder = 1; // behind the plume's glow, in front of the planet
+  smoke.mesh.renderOrder = 1; // over the planet, under the flame
   group.add(smoke.mesh, lines.mesh, cloud.mesh);
 
   const puffs = Array.from({ length: SMOKE }, () => ({ age: 1, life: 1, x: 0, y: 0, z: 0, vx: 0, vy: 0, size: 0, spin: 0, rot: 0 }));
@@ -247,6 +252,7 @@ export function createRocket(): Rocket {
   const scl = new THREE.Vector3();
   const nozzle = new THREE.Vector3();
   const axis = new THREE.Vector3();
+  const toGroup = new THREE.Matrix4();
   const Z = new THREE.Vector3(0, 0, 1);
   const hide = () => m4.makeScale(0, 0, 0);
 
@@ -287,7 +293,12 @@ export function createRocket(): Rocket {
     body.updateWorldMatrix(true, false);
     nozzle.set(0, -0.02, 0).applyMatrix4(body.matrixWorld);
     group.worldToLocal(nozzle);
-    axis.set(0, -1, 0).transformDirection(body.matrixWorld);
+    // The exhaust direction in the group's (camera's) frame, where the smoke and lines live.
+    axis.set(0, -1, 0).transformDirection(body.matrixWorld).transformDirection(toGroup.copy(group.matrixWorld).invert());
+    // Its direction on screen; the motion lines streak along it, the same angle as the rocket.
+    const flat = Math.hypot(axis.x, axis.y) || 1;
+    const dirX = axis.x / flat;
+    const dirY = axis.y / flat;
 
     // Smoke.
     const motion = !reduce;
@@ -297,16 +308,17 @@ export function createRocket(): Rocket {
         if (spawn < 1) break;
         if (s.age < s.life) continue;
         spawn -= 1;
-        const jitter = (Math.random() - 0.5) * L * 0.03;
+        // Born at the nozzle exit and shot straight back along the exhaust, spreading a little to either side.
+        const spread = (Math.random() - 0.5) * 0.22;
+        const speed = L * (1.1 + Math.random() * 0.5);
         s.age = 0;
         s.life = 2.4 + Math.random() * 1.6;
-        s.x = nozzle.x + axis.x * L * 0.28 + jitter;
-        s.y = nozzle.y + axis.y * L * 0.28 + jitter;
-        s.z = nozzle.z;
-        // Out along the exhaust, then carried down and to the right.
-        s.vx = axis.x * L * 0.35 + L * 0.26;
-        s.vy = axis.y * L * 0.35 - L * 0.04;
-        s.size = L * (0.09 + Math.random() * 0.07);
+        s.x = nozzle.x + axis.x * L * 0.02;
+        s.y = nozzle.y + axis.y * L * 0.02;
+        s.z = nozzle.z + axis.z * L * 0.02;
+        s.vx = (dirX - dirY * spread) * speed;
+        s.vy = (dirY + dirX * spread) * speed;
+        s.size = L * (0.06 + Math.random() * 0.05);
         s.rot = Math.random() * Math.PI * 2;
         s.spin = (Math.random() - 0.5) * 0.6;
       }
@@ -321,34 +333,35 @@ export function createRocket(): Rocket {
         smoke.alpha.setX(i, 0);
         continue;
       }
-      const drag = Math.exp(-dt * 0.9);
+      const drag = Math.exp(-dt * 1.1);
       s.vx *= drag;
       s.vy *= drag;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
+      // Once the burst slows, the trail keeps sliding back along the exhaust (the rocket outruns it).
+      s.x += (s.vx + dirX * L * 0.22) * dt;
+      s.y += (s.vy + dirY * L * 0.22) * dt;
       s.rot += s.spin * dt;
       const size = s.size * (1 + k * 4);
       q.setFromAxisAngle(Z, s.rot);
       smoke.mesh.setMatrixAt(i, m4.compose(pos.set(s.x, s.y, s.z), q, scl.set(size, size, 1)));
-      // Quick fade in, long fade out.
-      smoke.alpha.setX(i, Math.min(k * 8, 1) * (1 - k) * (1 - k) * 0.95 * eased);
+      // Thin inside the flame, thickest just past its tip, then a long fade out.
+      smoke.alpha.setX(i, Math.min(k * 6, 1) * (1 - k) * (1 - k) * 0.95 * eased);
     }
     smoke.mesh.instanceMatrix.needsUpdate = true;
     smoke.alpha.needsUpdate = true;
 
-    // Motion lines: 3–6 thin streaks, top right to bottom left, low opacity.
-    const dirX = -0.62;
-    const dirY = -0.78;
+    // Motion lines: 3–6 thin streaks whooshing past along the rocket's own angle, nose end to tail end.
     if (motion && now / 1000 > streakAt) {
       const free = streaks.find((s) => s.age >= s.life);
       if (free) {
         free.age = 0;
-        free.life = 0.35 + Math.random() * 0.3;
-        free.x = (Math.random() * 1.6 - 0.3) * hw;
-        free.y = (Math.random() * 1.6 - 0.3) * hh;
-        free.len = hh * (0.4 + Math.random() * 0.5);
+        free.life = 0.28 + Math.random() * 0.22;
+        // Anywhere across the view, started upstream so each one crosses the screen.
+        const across = (Math.random() * 2 - 1) * Math.hypot(hw, hh);
+        free.x = -dirY * across - dirX * hh * 1.1;
+        free.y = dirX * across - dirY * hh * 1.1;
+        free.len = hh * (0.5 + Math.random() * 0.6);
       }
-      streakAt = now / 1000 + 0.12 + Math.random() * 0.35;
+      streakAt = now / 1000 + 0.08 + Math.random() * 0.22;
     }
     const angle = Math.atan2(dirY, dirX);
     for (let i = 0; i < LINES; i++) {
@@ -360,13 +373,13 @@ export function createRocket(): Rocket {
         lines.alpha.setX(i, 0);
         continue;
       }
-      const travel = k * hh * 2.2;
+      const travel = k * hh * 2.4;
       q.setFromAxisAngle(Z, angle);
       lines.mesh.setMatrixAt(
         i,
-        m4.compose(pos.set(s.x + dirX * travel, s.y + dirY * travel, -DEPTH * 1.05), q, scl.set(s.len, hh * 0.006, 1)),
+        m4.compose(pos.set(s.x + dirX * travel, s.y + dirY * travel, -DEPTH * 1.05), q, scl.set(s.len, hh * 0.012, 1)),
       );
-      lines.alpha.setX(i, Math.sin(k * Math.PI) * 0.22 * eased);
+      lines.alpha.setX(i, Math.sin(k * Math.PI) * 0.5 * eased);
     }
     lines.mesh.instanceMatrix.needsUpdate = true;
     lines.alpha.needsUpdate = true;

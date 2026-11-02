@@ -21,13 +21,11 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026: batch P's rocket landed (pushed; see `git log`). Next: batch C, unless the owner answers the Projects question below first._
+_Updated Nov 2, 2026: Rankings glass clears with scroll speed; rocket revised from owner feedback (pushed; see `git log`). Next: the rest of batch C, unless the owner answers the Projects question below first._
 
 - **Just landed:**
-  - **Rocket on Projects** (`src/components/planet/rocket.ts`, wired in `planet-scene.web.tsx`). It's a camera-space low-poly rocket in the bottom-right third, angled up and to the right, built from a LatheGeometry body with folded grid fins and legs, and lit by the real sun direction. Additive plume, nozzle bloom, hull point light, 96 instanced smoke puffs drifting down and to the right, motion lines, and a faint cloud sweep every 6–12 s. On Projects the camera floats on summed sines and scrolling climbs a little higher. Under reduced motion the rocket is still with a steady plume. It flies in and out along its heading when you enter or leave Projects.
-  - **Phone search above the keyboard:** the keyboard inset is now measured against `#root`'s box and the visual viewport, not `innerHeight`, and re-measured after the keyboard settles. Before, the field sat slightly under the iOS keyboard.
-  - **World drag bug:** portrait layers are clipped to the viewport, and `html`/`body`/`#root` never scroll. Off-screen portraits had been lengthening the page, so a drag could scroll the whole document on iOS and lift the tab bar. Measured headless: the document is 844 px for an 844 px viewport, and only the screen scrolls.
-  - **World handle:** a pill under the globe gives a double glow every 5 s, three times, then stops. Tapping it scrolls the details into view. The globe instructions moved to the end of the details.
+  - **Scroll-clear glass on Rankings** (`src/lib/scroll-clear.web.ts`, native no-op `scroll-clear.ts`). The faster you scroll, the thinner the default glass (tint 0.70 → 0.08, blur 28 → 0 px, less dimming), so the planet shows through; it frosts back over as you slow. Driven by `scene.velocity` through CSS custom properties that `Glass` (web) reads with full-glass fallbacks (`glassVars`, `clearGlass` in `glass.web.tsx`). Off under reduced motion or reduced transparency. Measured headless: 0.35 tint and 12 px blur mid-flick, back to 0.70/28 px once you stop.
+  - **Rocket revision (owner feedback):** smooth shading with hard edges only at part seams, fins and legs; smoke is born at the nozzle exit and shoots straight back along the exhaust (the exhaust axis was in world space, not the camera frame, which sent smoke the wrong way); flame draws over the smoke; motion lines streak along the rocket's own angle and are visible now (2× thicker, 0.5 opacity, faster cadence). Projects camera hangs low (1.18–1.28 Earth radii) with the horizon across the middle, curving down to the right, haze on the limb, stars above (`ROCKET` in `planet-scene.web.tsx`).
 - **Half-done:** nothing uncommitted.
 - **Ask the owner:** the `projects` table has no public rows (checked Nov 2), so the planned Projects content (a top-3 podium, project news, and wealth moves tied to projects) has nothing real to show. Which should come first: enter projects (and what ranks the top 3, e.g. owner's net worth or announcement date), or build the layout now so it fills in once projects exist?
 - **Not verified on a device yet:** the rocket's frame time on a mid phone; the keyboard fix and the World drag fix on a real iPhone; plus the earlier list (globe feel, 8K swap, Safari pinch, fan at 320 px, news sheet, profile fly-in).
@@ -81,6 +79,7 @@ The Projects tab becomes a camera pose on a rocket climbing away from Earth. The
 - Web first (three.js in `src/components/planet/`); native follows in batch F.
 
 **Batch C — Rankings over the planet**
+- [x] Glass clears as you scroll faster (owner, Nov 2)
 - [ ] Glass podium: bars fade toward Earth, side bars lean in at the bottom (flat 2D, not 3D)
 - [ ] Scroll choreography: sections fade/slide/scale in and out tied to scroll; reduced-motion fallback
 
