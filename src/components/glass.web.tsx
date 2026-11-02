@@ -57,19 +57,6 @@ if (lensing && !document.getElementById(FILTER_ID)) {
 
 const backdrop = lensing ? `url(#${FILTER_ID}) ${glass.backdrop}` : glass.backdrop;
 
-// A screen can thin its default glass by setting these custom properties on an ancestor (Rankings clears its panels
-// while you scroll fast, so the planet shows through; see `useScrollClear`). Unset, they fall back to the full glass.
-export const glassVars = { tint: '--wl-glass-tint', backdrop: '--wl-glass-backdrop', webkit: '--wl-glass-backdrop-webkit' } as const;
-/** The default glass at clarity 0 (full frost) … 1 (nearly clear), as values for `glassVars`. */
-export function clearGlass(c: number) {
-  const filter = `blur(${(28 * (1 - c)).toFixed(1)}px) saturate(${Math.round(160 - 50 * c)}%) brightness(${(0.62 + 0.3 * c).toFixed(3)})`;
-  return {
-    tint: `rgba(16,18,26,${(0.7 - 0.62 * c).toFixed(3)})`,
-    backdrop: lensing ? `url(#${FILTER_ID}) ${filter}` : filter,
-    webkit: filter,
-  };
-}
-
 export function Glass({
   children,
   style,
@@ -86,12 +73,12 @@ export function Glass({
     <View
       style={[
         {
-          backgroundColor: tint === glass.tint ? `var(${glassVars.tint}, ${tint})` : tint,
+          backgroundColor: tint,
           borderRadius: radius,
           // Above the World globe's portrait layer (which is isolated at z 0), so glass frosts the portraits.
           zIndex: 1,
-          backdropFilter: `var(${glassVars.backdrop}, ${backdrop})`,
-          WebkitBackdropFilter: `var(${glassVars.webkit}, ${glass.backdrop})`,
+          backdropFilter: backdrop,
+          WebkitBackdropFilter: glass.backdrop,
           boxShadow: `${glass.highlight}, ${glass.shadow}`,
         } as ViewStyle,
         style,
