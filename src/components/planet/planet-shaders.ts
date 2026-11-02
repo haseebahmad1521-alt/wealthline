@@ -160,6 +160,7 @@ export const skyFragment = /* glsl */ `
   uniform float gmst;      // radians: the right ascension on the Greenwich meridian
   uniform float haze;      // optical depth of the haze at the horizon (grows as the camera descends)
   uniform float starGain;
+  uniform float air;       // 0 … 1: sky glow seen from inside the atmosphere (Projects' rocket); 0 elsewhere
   uniform vec3 sunDir;
   varying vec3 vPosW;
   const float PI = 3.141592653589793;
@@ -183,6 +184,19 @@ export const skyFragment = /* glsl */ `
     vec3 T = exp(-tau * vec3(0.55, 0.78, 1.0));
     float sunSide = 0.3 + 0.7 * (dot(d, sunDir) * 0.5 + 0.5);
     vec3 col = stars * T + vec3(0.22, 0.42, 0.90) * sunSide * (1.0 - T.b) * 0.38;
+    // From inside the thin upper air: bright blue at the horizon, thinning with elevation to black and faint stars
+    // overhead. g is the height above the visible horizon (0 at the horizon, about 0.4 at the top of the view).
+    if (air > 0.0) {
+      float camH = length(o) - 1.0;
+      float dip = sqrt(max(1.0 - 1.0 / dot(o, o), 0.0));
+      float g = max(dot(d, normalize(o)) + dip, 0.0);
+      float day = smoothstep(-0.25, 0.25, dot(normalize(o), sunDir));
+      float glow = air * exp(-g * 5.5) * exp(-camH / 0.06);
+      vec3 blue = mix(vec3(0.55, 0.78, 1.0), vec3(0.12, 0.32, 0.85), smoothstep(0.0, 0.35, g));
+      // Stars only start to show in the top part of the view, where the air has thinned out.
+      float starsLeft = mix(1.0, smoothstep(0.26, 0.46, g), air);
+      col = col * starsLeft * (1.0 - glow * 0.95) + blue * glow * mix(0.12, 1.15, day) * (0.75 + 0.25 * sunSide);
+    }
     gl_FragColor = vec4(col, 1.0);
     ${finish}
   }

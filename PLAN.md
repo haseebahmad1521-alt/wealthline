@@ -21,13 +21,14 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026: Rankings glass clears with scroll speed; rocket revised from owner feedback (pushed; see `git log`). Next: the rest of batch C, unless the owner answers the Projects question below first._
+_Updated Nov 2, 2026: Projects content layout landed; rocket view reworked from owner feedback (pushed; see `git log`). Next: the rest of batch C._
 
 - **Just landed:**
-  - **Scroll-clear glass on Rankings** (`src/lib/scroll-clear.web.ts`, native no-op `scroll-clear.ts`). The faster you scroll, the thinner the default glass (tint 0.70 → 0.08, blur 28 → 0 px, less dimming), so the planet shows through; it frosts back over as you slow. Driven by `scene.velocity` through CSS custom properties that `Glass` (web) reads with full-glass fallbacks (`glassVars`, `clearGlass` in `glass.web.tsx`). Off under reduced motion or reduced transparency. Measured headless: 0.35 tint and 12 px blur mid-flick, back to 0.70/28 px once you stop.
-  - **Rocket revision (owner feedback):** smooth shading with hard edges only at part seams, fins and legs; smoke is born at the nozzle exit and shoots straight back along the exhaust (the exhaust axis was in world space, not the camera frame, which sent smoke the wrong way); flame draws over the smoke; motion lines streak along the rocket's own angle and are visible now (2× thicker, 0.5 opacity, faster cadence). Projects camera hangs low (1.18–1.28 Earth radii) with the horizon across the middle, curving down to the right, haze on the limb, stars above (`ROCKET` in `planet-scene.web.tsx`).
+  - **Projects content (owner chose "build the layout now"):** `src/lib/projects.ts` (+ tests) and `src/components/project-arena.tsx`. Top projects podium (each builder's latest project, top 3 by the builder's rank; shown only with ≥3 ranked builders), Project news (cached `person_news` headlines of builders whose title contains a project title; `useNewsFor` in `data.tsx`), Builders' wealth moves (recorded change since the previous value, captioned "Not attributed to any project"), then "All projects." with the filter and list. With no projects: "Nothing on the launch pad yet." Checked headless at 390 px with test-only rows injected in the browser (nothing written to the database).
+  - **Rocket view (owner feedback):** camera skims the atmosphere (1.028–1.045 Earth radii) looking along the surface, horizon below the middle; the sky shader's new `air` uniform paints bright blue air at the horizon that thins to black with stars only in the top part of the view. The planet turns slowly and steadily (0.06°/s); the camera float, scroll spin and big drift are off in this view. The rocket stays in the lower right with a slow wander of a few percent of the view; its yaw sway is smaller. Rocket now sits 0.035 units from the camera so the nearby ground never cuts it.
 - **Half-done:** nothing uncommitted.
-- **Ask the owner:** the `projects` table has no public rows (checked Nov 2), so the planned Projects content (a top-3 podium, project news, and wealth moves tied to projects) has nothing real to show. Which should come first: enter projects (and what ranks the top 3, e.g. owner's net worth or announcement date), or build the layout now so it fills in once projects exist?
+- **Default chosen (tell the owner if asked):** the podium ranks projects by their builder's rank; switch to announcement date in `podiumProjects` if the owner prefers.
+- **Legibility note for batch D:** the brighter rocket sky lowers contrast for secondary text and the inactive filter labels on Projects (e.g. the empty-state body). Measure and adapt tint there first.
 - **Not verified on a device yet:** the rocket's frame time on a mid phone; the keyboard fix and the World drag fix on a real iPhone; plus the earlier list (globe feel, 8K swap, Safari pinch, fan at 320 px, news sheet, profile fly-in).
 - **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain`, or `npm run preview:phone` → http://localhost:8090. Also `npm run typecheck`, `npm test`, `npm run build:pages` before a push. (Don't run `npx expo lint`: it installs and configures ESLint on its own.)
 
@@ -65,7 +66,8 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 
 **Batch P — Projects: the ascent (owner, Nov 2, 2026)**
 - [x] Rocket, plume, bloom, hull light, smoke, motion lines, cloud sweeps, floaty camera, scroll climbs, reduced motion, same WebGL context
-- [ ] Content: top-3 podium, project news, project-tied wealth moves (blocked: no projects recorded; see "Ask the owner")
+- [x] Content layout: top-3 podium, project news, builders' wealth moves (fills in once projects are recorded)
+- [x] Rocket view at the edge of space: low skimming camera, blue air fading to stars, slow planet spin, rocket held in frame with a slight wander (owner, Nov 2)
 - [ ] Frame time on a mid phone
 The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
 - Layout: rocket in the bottom-right third, angled up and to the right, exhaust trailing to the bottom right. Content weighted to the top left: a "top 3 projects" glass podium like Rankings, then project news and the latest recorded wealth jumps or drops tied to projects (from existing records only; no invented moves), then the rest of the list below.

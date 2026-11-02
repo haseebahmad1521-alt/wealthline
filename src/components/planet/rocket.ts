@@ -256,8 +256,9 @@ export function createRocket(): Rocket {
   const Z = new THREE.Vector3(0, 0, 1);
   const hide = () => m4.makeScale(0, 0, 0);
 
-  // The rocket sits this far in front of the camera (scene units; Earth's surface is ≥0.3 away).
-  const DEPTH = 0.12;
+  // The rocket sits this far in front of the camera (scene units). Close, because the camera skims the surface: the
+  // ground below the rocket is ≥0.06 away. Its size on screen does not depend on this.
+  const DEPTH = 0.035;
   const LEAN = -0.32; // radians: nose up and to the right
 
   function update(dt: number, now: number, mix: number, aspect: number, fovDeg: number, sunDirView: THREE.Vector3, reduce: boolean) {
@@ -271,13 +272,16 @@ export function createRocket(): Rocket {
     const eased = mix * mix * (3 - 2 * mix);
     // Flies in from below-right along its own heading.
     const away = (1 - eased) * L * 1.6;
-    craft.position.set(hw * 0.5 + Math.sin(LEAN) * away, -hh * 0.5 - Math.cos(LEAN) * away, -DEPTH);
+    // The camera follows the rocket loosely: a slow wander of a few percent of the view so it never sits pinned.
+    const wx = reduce ? 0 : hw * (0.05 * Math.sin(t * 0.083) + 0.025 * Math.sin(t * 0.191 + 1.3));
+    const wy = reduce ? 0 : hh * (0.04 * Math.sin(t * 0.067 + 2.1) + 0.02 * Math.sin(t * 0.157));
+    craft.position.set(hw * 0.5 + wx + Math.sin(LEAN) * away, -hh * 0.5 + wy - Math.cos(LEAN) * away, -DEPTH);
     craft.rotation.set(0, 0, LEAN);
     craft.scale.setScalar(L);
     // Floaty: two summed sines of yaw and roll so the hull turns in the light (none under reduced motion).
     body.rotation.set(
-      reduce ? 0.1 : 0.1 + 0.04 * Math.sin(t * 0.31),
-      reduce ? 0.6 : 0.6 + 0.35 * Math.sin(t * 0.17) + 0.12 * Math.sin(t * 0.43),
+      reduce ? 0.1 : 0.1 + 0.02 * Math.sin(t * 0.19),
+      reduce ? 0.6 : 0.6 + 0.12 * Math.sin(t * 0.11) + 0.04 * Math.sin(t * 0.29),
       reduce ? 0 : 0.03 * Math.sin(t * 0.23 + 1),
     );
     sunLight.position.copy(sunDirView);

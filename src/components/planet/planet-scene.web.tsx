@@ -26,9 +26,11 @@ const DIST = [1.62, 1.3] as const; // distance from Earth's centre, in Earth rad
 const LIMB_Y = [-0.6, 0.7] as const;
 const ROLL = [0, -9] as const; // degrees: the horizon tilts steeper on the way down
 const HAZE = [0.0, 1.3] as const;
-// Projects rides a rocket low over Earth (owner, Nov 2, 2026): the horizon across the middle of the view, the planet
-// and its atmosphere below, stars above; scrolling climbs a little higher. Distance (Earth radii), horizon (NDC), haze.
-const ROCKET = { dist: [1.18, 1.28], limbY: [0.04, -0.12], haze: 0.75 } as const;
+// Projects rides a rocket at the edge of space (owner, Nov 2, 2026): the camera skims the atmosphere looking along the
+// surface, which stretches back to a near-flat horizon below the middle of the view; the sky above is bright blue air
+// that thins to faint stars at the top. Scrolling climbs a little. Distance (Earth radii), horizon (NDC), haze, and
+// `air`: how much sky glow the camera sees from inside the atmosphere. The planet turns very slowly (SPIN, °/s).
+const ROCKET = { dist: [1.028, 1.045], limbY: [-0.22, -0.3], haze: 0.75, air: 1, spin: 0.06 } as const;
 // Where the camera hangs comes from the page in view (ANGLES in scene.ts); switching pages eases from one angle to the next.
 const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;
@@ -192,6 +194,7 @@ export function PlanetScene() {
       gmst: { value: greenwichSiderealDeg(Date.now()) * RAD },
       haze: { value: HAZE[0] as number },
       starGain: { value: 3.2 },
+      air: { value: 0 },
       sunDir: earthUniforms.sunDir,
     };
     const sky = new THREE.Mesh(
@@ -340,6 +343,7 @@ export function PlanetScene() {
     let worldMix = sceneState.preset === 'world' ? 1 : 0;
     let visitMix = sceneState.visit ? 1 : 0;
     let rocketMix = 0;
+    let rocketSpin = 0;
     const sunView = new THREE.Vector3();
     let visitAt = { lat: 0, lng: 0 }; // the last place visited: flying back out keeps aiming at it
     const easeTo = (v: number, goal: number, dt: number, rate: number) => {
@@ -383,25 +387,23 @@ export function PlanetScene() {
       }
       // Linear: Earth rises steadily through the whole list (a slow-in curve would stall it over the first screens).
       const e = p;
-      // Projects rides a rocket (batch P): there scrolling climbs a little higher instead of descending, and the camera
-      // floats on two summed sines so the rocket parallaxes against Earth and the stars.
+      // Projects rides a rocket (batch P): there scrolling climbs a little higher instead of descending, the usual drift
+      // and scroll spin fade out, and the planet turns slowly and steadily underneath.
       rocketMix = easeTo(rocketMix, sceneState.angle === 'projects' && sceneState.preset !== 'world' && !sceneState.visit ? 1 : 0, dt, 1.6);
       const rk = rocketMix * rocketMix * (3 - 2 * rocketMix);
       const ts = now / 1000;
-      const float = reduce ? 0 : rk;
+      if (!reduce) rocketSpin = (rocketSpin + dt * ROCKET.spin * rk) % 360;
       const d = mix(mix(DIST[0], DIST[1], e), mix(ROCKET.dist[0], ROCKET.dist[1], e), rk);
-      const drift =
-        (reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S)) +
-        float * (2.2 * Math.sin(ts * 0.19) + 1.1 * Math.sin(ts * 0.41 + 2));
+      const drift = (reduce ? 0 : DRIFT_DEG * Math.sin((ts * 2 * Math.PI) / DRIFT_PERIOD_S)) * (1 - rk) + rocketSpin;
       // Ease toward the page's angle (the shorter way round in longitude).
       const goalAngle = ANGLES[sceneState.angle];
       const ka = reduce ? 1 : 1 - Math.exp(-dt * 1.8);
       angle.lat += (goalAngle.lat - angle.lat) * ka;
       angle.east += ((((goalAngle.east - angle.east + 180) % 360) + 360) % 360 - 180) * ka;
       angle.roll += (goalAngle.roll - angle.roll) * ka;
-      const lng = sun.lng + angle.east + drift + spin;
+      const lng = sun.lng + angle.east + drift + spin * (1 - rk);
       if (__DEV__) Object.assign((window as unknown as { __planet: object }).__planet, { dbg: { lng, sunLng: sun.lng, drift, spin, p, dt, vel: sceneState.velocity } });
-      const lat = angle.lat + float * (1.2 * Math.sin(ts * 0.23 + 1) + 0.6 * Math.sin(ts * 0.53));
+      const lat = angle.lat;
       const pos = posV.set(...latLngToUnit(lat, lng)).multiplyScalar(d);
 
       // Look from the camera toward Earth's centre, then pitch up so the horizon lands at LIMB_Y on screen.
@@ -415,7 +417,7 @@ export function PlanetScene() {
       orbitRig.position.copy(pos);
       orbitRig.up.copy(upPitched);
       orbitRig.lookAt(target.copy(pos).add(fwd));
-      orbitRig.rotateZ((mix(mix(ROLL[0], ROLL[1], e), 0, rk) + angle.roll + float * (1.5 * Math.sin(ts * 0.27) + 0.7 * Math.sin(ts * 0.61 + 1))) * RAD);
+      orbitRig.rotateZ((mix(mix(ROLL[0], ROLL[1], e), 0, rk) + angle.roll) * RAD);
 
       // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
       const w = sceneState.world;
@@ -454,6 +456,7 @@ export function PlanetScene() {
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       camera.updateMatrixWorld();
 
+      skyUniforms.air.value = ROCKET.air * rk * (1 - mw) * (1 - v);
       skyUniforms.haze.value = mix(mix(HAZE[0], HAZE[1], e), ROCKET.haze, rk) * (1 - mw) * (1 - v);
       sky.position.copy(camera.position);
       const sunDir = earthUniforms.sunDir.value;
