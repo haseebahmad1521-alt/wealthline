@@ -64,6 +64,7 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
   const [pausedUntil, setPausedUntil] = useState<string | null>(null);
+  const [onHold, setOnHold] = useState(false);
   const [error, setError] = useState<{ text: string; limit?: boolean } | null>(null);
 
   const query = useQuery({
@@ -127,6 +128,7 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
       clearTimeout(reading);
       setTyping(false);
       if (typeof j.paused_until === 'string') setPausedUntil(j.paused_until);
+      if (j.on_hold === true) setOnHold(true);
       setError({ text: typeof j.error === 'string' ? j.error : 'Could not send. Try again.', limit: status === 429 });
       // A capped or rejected message was never stored: take it back out so the thread shows only what was sent.
       put((old) => old.filter((m) => m.id !== temp.id));
@@ -139,6 +141,7 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
       clearTimeout(reading);
       setTyping(false);
       if (typeof j.paused_until === 'string') setPausedUntil(j.paused_until);
+      if (j.on_hold === true) setOnHold(true);
       put((old) => [
         ...old.map((m) => (m.id === temp.id ? { ...m, pending: false } : m)),
         { id: `notice-${Date.now()}`, role: 'notice', text: j.notice as string, sources: null, created_at: now(), seen_at: null },
@@ -163,5 +166,5 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
     return true;
   }
 
-  return { messages: query.data ?? [], loading: query.isPending && query.fetchStatus !== 'idle', loadError: query.error, send, sending, typing, pausedUntil, error };
+  return { messages: query.data ?? [], loading: query.isPending && query.fetchStatus !== 'idle', loadError: query.error, send, sending, typing, pausedUntil, onHold, error };
 }

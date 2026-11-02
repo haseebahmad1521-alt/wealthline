@@ -423,6 +423,7 @@ export function PlanetScene() {
     let visitMix = sceneState.visit ? 1 : 0;
     let rocketMix = 0;
     let rocketSpin = 0;
+    const rocketLight = { mu: 1, alt: 0 };
     const sunView = new THREE.Vector3();
     let visitAt = { lat: 0, lng: 0 }; // the last place visited: flying back out keeps aiming at it
     const easeTo = (v: number, goal: number, dt: number, rate: number) => {
@@ -545,7 +546,10 @@ export function PlanetScene() {
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
       sunQuad.quaternion.copy(camera.quaternion);
       placeGlow(sunDir);
-      rocket.update(dt, now, rocketMix, camera.aspect, FOV, sunView.copy(sunDir).transformDirection(camera.matrixWorldInverse), reduce);
+      // The light where the rocket is: the sun's height over the ground below it, and how far it has climbed.
+      rocketLight.mu = tmp.copy(camera.position).normalize().dot(sunDir);
+      rocketLight.alt = e;
+      rocket.update(dt, now, rocketMix, camera.aspect, FOV, sunView.copy(sunDir).transformDirection(camera.matrixWorldInverse), reduce, rocketLight);
 
       // Finer sphere only when Earth's radius on screen passes ~520 px.
       const rPx = ((viewport.h / 2) * Math.tan(Math.asin(Math.min(1 / camera.position.length(), 1)))) / tanHalf;

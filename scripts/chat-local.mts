@@ -16,16 +16,15 @@ import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 
 import {
-  PAUSE_HOURS,
   PLANS,
   REPLY_SCHEMA,
   RULES,
-  STRIKES_TO_PAUSE,
-  STRIKE_WINDOW_DAYS,
   personaContext,
   screen,
   settle,
   strikeNotice,
+  addStrike,
+  type StrikeState,
   costMicros,
   type Flag,
   type PersonaReply,
@@ -44,7 +43,7 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 // An empty folder, so the CLI picks up no project instructions, hooks or memory.
 const cwd = mkdtempSync(join(tmpdir(), 'wealthline-chat-'));
 
-const state = { strikes: [] as number[], pausedUntil: 0, day: '', used: 0 };
+const state = { mod: { strikes: [], pausedBefore: false, pausedUntil: 0, onHold: false } as StrikeState, day: '', used: 0 };
 
 type Turn = { role: 'user' | 'assistant'; text: string };
 
@@ -80,20 +79,22 @@ function ask(system: string, prompt: string, model: string) {
 
 function strike(name: string) {
   const now = Date.now();
-  state.strikes = [...state.strikes.filter((t) => now - t < STRIKE_WINDOW_DAYS * 864e5), now];
-  const n = state.strikes.length;
-  if (n >= STRIKES_TO_PAUSE) {
-    state.pausedUntil = now + PAUSE_HOURS * 36e5;
-    state.strikes = [];
-  }
-  return { notice: strikeNotice(n, name), strikes: n, paused_until: state.pausedUntil > now ? new Date(state.pausedUntil).toISOString() : null };
+  const r = addStrike(state.mod, now);
+  state.mod = r.state;
+  return {
+    notice: strikeNotice(r.outcome, r.strikes, name),
+    strikes: r.strikes,
+    paused_until: r.state.pausedUntil > now ? new Date(r.state.pausedUntil).toISOString() : null,
+    on_hold: r.state.onHold,
+  };
 }
 
 async function chat(body: { person?: unknown; text?: unknown; history?: unknown }) {
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if (!text || text.length > 1000 || typeof body.person !== 'string') return [400, { error: 'Write 1–1000 characters.' }] as const;
-  if (state.pausedUntil > Date.now())
-    return [429, { error: `Chat is paused until ${new Date(state.pausedUntil).toLocaleString()}.`, paused_until: new Date(state.pausedUntil).toISOString() }] as const;
+  if (state.mod.onHold) return [403, { error: 'Your account is on hold until a person reviews it.', on_hold: true }] as const;
+  if (state.mod.pausedUntil > Date.now())
+    return [429, { error: `Chat is paused until ${new Date(state.mod.pausedUntil).toLocaleString()}.`, paused_until: new Date(state.mod.pausedUntil).toISOString() }] as const;
   const today = new Date().toISOString().slice(0, 10);
   if (state.day !== today) Object.assign(state, { day: today, used: 0 });
   const limit = PLANS[plan].dailyMicros;

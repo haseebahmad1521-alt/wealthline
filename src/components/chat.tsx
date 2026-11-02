@@ -222,7 +222,7 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const send = async (text = draft) => {
-    if (!text.trim() || chat.sending || paused) return;
+    if (!text.trim() || chat.sending || paused || chat.onHold) return;
     setDraft('');
     const ok = await chat.send(text);
     if (!ok) setDraft((d) => d || text);
@@ -275,12 +275,16 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
           )
         )}
         {typing && <Typing name={first(person)} person={person} />}
-        {chat.error && !paused && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
+        {chat.error && !paused && !chat.onHold && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
       </ScrollView>
-      {paused ? (
+      {chat.onHold ? (
+        <View style={styles.composer} accessibilityLiveRegion="polite" aria-live="polite">
+          <Text style={[styles.inline, { flex: 1 }]}>Your account is on hold while a person reviews recent messages. Chat is off until then.</Text>
+        </View>
+      ) : paused ? (
         <View style={styles.composer} accessibilityLiveRegion="polite" aria-live="polite">
           <Text style={[styles.inline, { flex: 1 }]}>
-            Chat is paused until {formatDate(paused)}, {formatTime(paused)} after repeated rule breaks. If it keeps happening, the account may be banned.
+            Chat is paused until {formatDate(paused)}, {formatTime(paused)} after repeated rule breaks. Any rule break after that puts the account on hold for review.
           </Text>
         </View>
       ) : (

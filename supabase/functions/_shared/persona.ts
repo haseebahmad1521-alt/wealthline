@@ -30,8 +30,9 @@ is an AI simulation of one real, living person, built from public material. The 
 reply "AI simulation".
 
 How to reply:
-- Write as the person, first person, in their voice, at chat length: usually one to four sentences, no headings or \
-lists. Sound like a person texting, not an assistant: no "Great question", no offers of further help. An emoji inside \
+- Write as the person, first person, in their voice, at chat length: usually one to three sentences and never more \
+than about 60 words, no headings or lists. Asked something big, give one point the way they'd say it and let the user \
+ask for more; never lecture, list or explain at length. This is chatting with someone, not asking an encyclopaedia. Sound like a person texting, not an assistant: no "Great question", no offers of further help. An emoji inside \
 the text is fine only if it suits how they actually write.
 - Ground opinions and facts in the material below, and speak from it with their confidence and opinions; don't \
 hedge or mention what you can't say unless the user asks for a specific fact you don't have. Then answer the way \
@@ -125,23 +126,41 @@ export function settle(r: PersonaReply): PersonaReply {
   return { reply: r.reply.trim(), reaction: REACTIONS.includes(r.reaction as Reaction) ? r.reaction : null, flag: null };
 }
 
-/** Strikes inside STRIKE_WINDOW_DAYS; the STRIKES_TO_PAUSE-th pauses chat for PAUSE_HOURS. Bans are an admin decision. */
+/** Strike policy (owner, Nov 2, 2026): STRIKES_TO_PAUSE strikes inside STRIKE_WINDOW_DAYS → a PAUSE_HOURS cooldown.
+ * Any strike after a cooldown puts the account on hold until an admin decides (no automatic ban). */
 export const STRIKES_TO_PAUSE = 3;
 export const STRIKE_WINDOW_DAYS = 30;
 export const PAUSE_HOURS = 24;
+/** Per-reply output cap: replies stay chat-length on every plan, so nobody can milk it as an information bot. */
+export const REPLY_MAX_TOKENS = 220;
 
-export function strikeNotice(strikes: number, name: string) {
+export type StrikeState = { strikes: number[]; pausedBefore: boolean; pausedUntil: number; onHold: boolean };
+export type StrikeOutcome = 'warn' | 'pause' | 'hold';
+
+/** Records a strike at `now` (ms) and says what follows. Pure: callers persist the returned state. */
+export function addStrike(state: StrikeState, now: number): { state: StrikeState; outcome: StrikeOutcome; strikes: number } {
+  if (state.pausedBefore || state.onHold) return { state: { ...state, onHold: true }, outcome: 'hold', strikes: state.strikes.length + 1 };
+  const strikes = [...state.strikes.filter((t) => now - t < STRIKE_WINDOW_DAYS * 864e5), now];
+  if (strikes.length >= STRIKES_TO_PAUSE)
+    return { state: { strikes: [], pausedBefore: true, pausedUntil: now + PAUSE_HOURS * 36e5, onHold: false }, outcome: 'pause', strikes: strikes.length };
+  return { state: { ...state, strikes }, outcome: 'warn', strikes: strikes.length };
+}
+
+export function strikeNotice(outcome: StrikeOutcome, strikes: number, name: string) {
+  if (outcome === 'hold')
+    return `That message breaks the chat rules again after a cooldown. Your account is on hold until a person reviews it; chat is off until then.`;
+  if (outcome === 'pause')
+    return `Strike ${STRIKES_TO_PAUSE} of ${STRIKES_TO_PAUSE}: chat is paused for ${PAUSE_HOURS} hours. Any rule break after that puts the account on hold for review.`;
   const left = STRIKES_TO_PAUSE - strikes;
-  if (left > 0)
-    return `That message breaks the chat rules: no insults, threats or slurs aimed at ${name} or anyone else. Strike ${strikes} of ${STRIKES_TO_PAUSE}. ${left === 1 ? 'One more' : `${left} more`} and chat pauses for ${PAUSE_HOURS} hours.`;
-  return `Strike ${STRIKES_TO_PAUSE} of ${STRIKES_TO_PAUSE}: chat is paused for ${PAUSE_HOURS} hours. If this keeps happening, the account may be banned.`;
+  return `That message breaks the chat rules: no insults, threats or slurs aimed at ${name} or anyone else. Strike ${strikes} of ${STRIKES_TO_PAUSE}. ${left === 1 ? 'One more' : `${left} more`} and chat pauses for ${PAUSE_HOURS} hours.`;
 }
 
 /** Plans (owner, Nov 2, 2026): Free has no chat. The daily allowance is spend, not a message count, so short messages
  * go further. Budgets are in micro-dollars at list API prices; tune them once real usage is measured. */
 export const PLANS = {
   pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000 }, // ≈ 20 typical replies ($0.08/day at most)
-  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 400_000 }, // ≈ 50 typical replies ($0.40/day)
+  // $14.99/month: the worst case (every day at the cap, $9/month) stays under what's left after a 30% store fee.
+  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
 } as const;
 export type Plan = keyof typeof PLANS;
 
