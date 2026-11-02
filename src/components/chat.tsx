@@ -217,18 +217,12 @@ function Gate({ person, unverified, onGo }: { person: Person; unverified: boolea
 function Thread({ person, input }: { person: Person; input: React.RefObject<ComponentRef<typeof TextInput> | null> }) {
   const chat = useChat(person.id, person.slug, true);
   const [draft, setDraft] = useState('');
-  const [typing, setTyping] = useState(false);
+  const typing = chat.typing;
+  const paused = chat.pausedUntil && new Date(chat.pausedUntil).getTime() > Date.now() ? chat.pausedUntil : null;
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
-  // The reply is written in one go server side; show them "typing" a beat after the message lands, until it arrives.
-  useEffect(() => {
-    if (!chat.sending) return setTyping(false);
-    const id = setTimeout(() => setTyping(true), 600);
-    return () => clearTimeout(id);
-  }, [chat.sending]);
-
   const send = async (text = draft) => {
-    if (!text.trim() || chat.sending) return;
+    if (!text.trim() || chat.sending || paused) return;
     setDraft('');
     const ok = await chat.send(text);
     if (!ok) setDraft((d) => d || text);
@@ -265,7 +259,10 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
             ))}
           </View>
         ) : (
-          chat.messages.map((m, i) => (
+          chat.messages.map((m, i) =>
+            m.role === 'notice' ? (
+              <Notice key={m.id} text={m.text} />
+            ) : (
             <Bubble
               key={m.id}
               m={m}
@@ -274,11 +271,19 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
               seen={!!m.seen_at || (typing && i === chat.messages.length - 1)}
               avatar={chat.messages[i - 1]?.role !== 'assistant' ? person : null}
             />
-          ))
+            ),
+          )
         )}
         {typing && <Typing name={first(person)} person={person} />}
-        {chat.error && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
+        {chat.error && !paused && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
       </ScrollView>
+      {paused ? (
+        <View style={styles.composer} accessibilityLiveRegion="polite" aria-live="polite">
+          <Text style={[styles.inline, { flex: 1 }]}>
+            Chat is paused until {formatDate(paused)}, {formatTime(paused)} after repeated rule breaks. If it keeps happening, the account may be banned.
+          </Text>
+        </View>
+      ) : (
       <View style={styles.composer}>
         <TextInput
           ref={input}
@@ -313,6 +318,7 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
           <Icon name={icons.send} size={20} tint={color.onAction} />
         </Pressable>
       </View>
+      )}
     </>
   );
 }
@@ -329,11 +335,12 @@ function Bubble({ m, name, dayBreak, seen, avatar }: { m: ChatMessage; name: str
         <View style={[styles.bubbleWrap, mine ? styles.right : styles.left]}>
         <View
           accessible
-          accessibilityLabel={`${mine ? 'You' : `${name}, AI simulation`}: ${m.text}. ${formatTime(m.created_at)}${status ? `, ${status}` : ''}`}
-          style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
+          accessibilityLabel={`${mine ? 'You' : `${name}, AI simulation`}: ${m.text}. ${formatTime(m.created_at)}${status ? `, ${status}` : ''}${m.reaction ? `. ${name} reacted ${REACTION_NAMES[m.reaction] ?? m.reaction}` : ''}`}
+          style={[styles.bubble, mine ? styles.mine : styles.theirs, !!m.reaction && styles.reacted]}>
           <Text selectable style={[type.body, { color: mine ? color.onAction : color.text }]}>
             {m.text}
           </Text>
+          {!!m.reaction && <Reaction emoji={m.reaction} />}
         </View>
         <View style={[styles.meta, mine && { justifyContent: 'flex-end' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {!mine && <Icon name={icons.sparkle} size={11} tint={color.textSecondary} />}
@@ -365,6 +372,39 @@ function Bubble({ m, name, dayBreak, seen, avatar }: { m: ChatMessage; name: str
 }
 
 const AVATAR = 28;
+
+const REACTION_NAMES: Record<string, string> = { '👍': 'thumbs up', '❤️': 'heart', '😂': 'laughing', '😮': 'surprised', '🤔': 'thinking', '😕': 'confused' };
+
+/** Their tapback, pinned to the top-left corner of your bubble; it pops in once (reduced motion: appears). */
+function Reaction({ emoji }: { emoji: string }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let alive = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((still) => {
+      if (!alive) return;
+      if (still) pop.setValue(1);
+      else Animated.spring(pop, { toValue: 1, friction: 5, tension: 160, useNativeDriver: !web }).start();
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pop]);
+  return (
+    <Animated.View style={[styles.reaction, { transform: [{ scale: pop }] }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Text style={styles.reactionText}>{emoji}</Text>
+    </Animated.View>
+  );
+}
+
+/** A chat-rules warning: centred in the thread, announced once. */
+function Notice({ text }: { text: string }) {
+  return (
+    <View style={styles.notice} accessibilityRole="alert" accessibilityLiveRegion="assertive" aria-live="assertive">
+      <Icon name={icons.warning} size={14} tint={color.loss} />
+      <Text style={styles.noticeText}>{text}</Text>
+    </View>
+  );
+}
 
 /** Their side of the thread: the stylised AI avatar beside the first bubble of each run, a same-width gap beside the rest. */
 function Theirs({ person, children }: { person: Person | null | undefined; children: ReactNode }) {
@@ -510,6 +550,35 @@ const styles = StyleSheet.create({
   },
   chipText: { fontFamily: font.medium, fontSize: 12, color: color.textSecondary, flexShrink: 1 },
   typing: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 40 },
+  reacted: { marginTop: 12 },
+  reaction: {
+    position: 'absolute',
+    top: -14,
+    left: -10,
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(40,44,58,0.96)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(16,18,26,0.92)',
+  },
+  reactionText: { fontSize: 15, lineHeight: 18 },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    alignSelf: 'center',
+    maxWidth: '92%',
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(180,35,24,0.14)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,120,110,0.35)',
+  },
+  noticeText: { ...type.caption, color: color.text, flexShrink: 1 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.text },
   composer: {
     flexDirection: 'row',
