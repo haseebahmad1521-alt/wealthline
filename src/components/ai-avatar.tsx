@@ -1,10 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
+import { AI_CEL_FILTER } from '@/components/ai-cel-filter';
 import { Icon, Portrait, icons } from '@/components/ui';
 
 /**
- * The portrait as the AI simulation wears it (owner, Nov 2): toned down and washed orange→purple, with a sparkle badge
- * at the top right, so the chat and status lines never pass for the real person. The real, credited portrait stays
+ * The portrait as the AI simulation wears it (owner, Nov 2): cel-shaded (posterized, inked edges), lightly washed
+ * orange→purple, with a sparkle badge at the top right, so the chat and status lines never pass for the real person. The real, credited portrait stays
  * unfiltered in the hero.
  */
 export function AiAvatar({ uri, name, size }: { uri: string | null; name: string; size: number }) {
@@ -29,10 +30,10 @@ const WASH = 'linear-gradient(135deg, #FF9A4D 0%, #C2569E 55%, #7B5CFF 100%)';
 
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },
-  // Flattened a little first so the colour wash reads the same on any photo.
-  tone: { filter: 'grayscale(0.85) contrast(1.2) brightness(1.08)' } as object,
-  wash: { experimental_backgroundImage: WASH, backgroundImage: WASH, mixBlendMode: 'color', opacity: 0.8 } as object,
-  glow: { experimental_backgroundImage: WASH, backgroundImage: WASH, mixBlendMode: 'soft-light', opacity: 0.45 } as object,
+  // Posterized with inked edges; the wash keeps the photo's luminance, so the ink stays dark (owner: a bit weaker).
+  tone: { filter: AI_CEL_FILTER } as object,
+  wash: { experimental_backgroundImage: WASH, backgroundImage: WASH, mixBlendMode: 'color', opacity: 0.5 } as object,
+  glow: { experimental_backgroundImage: WASH, backgroundImage: WASH, mixBlendMode: 'soft-light', opacity: 0.3 } as object,
   badge: {
     position: 'absolute',
     alignItems: 'center',
