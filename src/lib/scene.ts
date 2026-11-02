@@ -14,6 +14,8 @@ type SceneState = {
   /** Scroll speed in screens per second (signed); adds a little spin to the view, even past the camera's descent. */
   velocity: number;
   preset: CameraPreset;
+  /** How far the camera has swung into the World view (0 orbit … 1 world, eased); set by the planet scene each frame. */
+  worldMix: number;
   world: {
     /** The point turned toward the camera. */
     lat: number;
@@ -35,6 +37,7 @@ export const scene: SceneState = {
   progress: 0,
   velocity: 0,
   preset: 'orbit',
+  worldMix: 0,
   // Opens over the North Atlantic: the Americas, Europe and Africa (where most tracked headquarters are) in view.
   world: { lat: 32, lng: -45, zoom: 0, centerX: 0.5, centerY: 0.5, radiusPx: 160 },
   project: null,

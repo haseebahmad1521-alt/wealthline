@@ -21,10 +21,10 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 at the end of batch A2 (commit: see `git log -1`, pushed and deployed)._
+_Updated Nov 2, 2026 after the World return fix (commit: see `git log -1`, pushed and deployed)._
 
-- **Just landed (batch A2, owner's request on "continue"):** World "+N" bubbles fan their people out (ring up to 6, sunflower beyond; touching crowds merge; everyone else dims to 30%) with only a small lean-in (+0.12 zoom), so people sharing a city are reachable; tapping open space or zooming out closes it. A portrait tap now opens the profile (chips still choose a person). Back from a profile keeps World as it was (the open fan survives); with no history (refresh, shared link, relaunched PWA) Back goes to the last tab visited instead of Rankings (`src/lib/last-tab.ts`). Projects "ascent" scene planned as batch P.
-- **Back bug note:** with history, Back already returned correctly on localhost and the live site (World, Projects, Rankings with scroll kept); the Rankings jump only reproduced with no history, which is what was fixed. If the owner still sees it, ask which screen and how the profile was opened.
+- **Just landed (owner's report on "continue"):** coming back to World from a profile no longer breaks the globe. Cause: while a profile covers World, World's globe area measures 0×0 and wrote a zero radius and a 0,0 centre into the shared scene, which put the camera at NaN (blank planet behind the profile) and left every portrait's merge spring at NaN for good (bubbles and fans dead on return). Now the hidden area keeps its last good place, the planet never uses a zero radius, springs restart from each portrait's own place on return, and portraits/dots stay hidden during the camera swing and fade in once it has nearly arrived (`scene.worldMix`), pinned to the planet. Verified in the browser at 390×844: fan open → profile → Back keeps the fan, no NaN, taps and drags work.
+- **Earlier (batch A2):** "+N" bubbles fan out at any depth; a portrait tap opens the profile; Back keeps World as it was; no-history Back goes to the last tab (`src/lib/last-tab.ts`).
 - **Next:** batch B below (one scene for the remaining views), then P.
 - **Half-done:** nothing uncommitted.
 - **Ask the owner:** rocket source for batch P: (a) build our own low-poly rocket in code (recommended: no licence risk, tiny, "Falcon-like but not quite" by design), or (b) a NASA 3D Resources model (US-government work, free; SLS/Saturn V/Ares glb, heavier and needs decimating), or (c) a CC0 model the owner picks.
@@ -52,6 +52,7 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] "+N" bubbles fan out at any depth with a small lean-in; shared-city people reachable
 - [x] Tapping a portrait (fanned or single) opens the profile
 - [x] Back from a profile returns to where you were; no-history Back goes to the last tab
+- [x] Return from a profile: no NaN camera/springs; portraits fade in pinned once the camera arrives
 
 **Batch B — one scene for every view**
 - [ ] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)

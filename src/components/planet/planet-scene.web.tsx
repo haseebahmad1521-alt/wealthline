@@ -356,7 +356,8 @@ export function PlanetScene() {
       // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
       const w = sceneState.world;
       const tanHalf = Math.tan((FOV / 2) * RAD);
-      const rNdc = (w.radiusPx * zoomFactor(w.zoom)) / (viewport.h / 2);
+      // Never a zero radius (an unmeasured globe area would put the camera at infinity and the whole view at NaN).
+      const rNdc = (Math.max(w.radiusPx, 40) * zoomFactor(w.zoom)) / (viewport.h / 2);
       const dW = Math.max(1 / Math.sin(Math.atan(Math.min(rNdc, 50) * tanHalf)), 1.06);
       worldRig.position.set(...latLngToUnit(w.lat, w.lng)).multiplyScalar(dW);
       worldRig.up.set(0, 1, 0);
@@ -366,6 +367,7 @@ export function PlanetScene() {
       worldMix = reduce ? goalMix : worldMix + (goalMix - worldMix) * (1 - Math.exp(-dt * 3.2));
       if (Math.abs(goalMix - worldMix) < 1e-3) worldMix = goalMix;
       const m = worldMix * worldMix * (3 - 2 * worldMix);
+      sceneState.worldMix = m;
       // Swing around Earth rather than through it: blend the direction and the distance separately.
       dir.copy(orbitRig.position).normalize().lerp(tmp.copy(worldRig.position).normalize(), m).normalize();
       camera.position.copy(dir).multiplyScalar(mix(orbitRig.position.length(), worldRig.position.length(), m));

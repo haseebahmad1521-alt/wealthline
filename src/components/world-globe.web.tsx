@@ -85,6 +85,8 @@ export function WorldGlobe({
     // the page and the portraits, dots and gestures stay on it.
     let lastBox = '';
     const measure = (r = el.getBoundingClientRect()) => {
+      // Hidden behind another screen (a profile): no box to measure, so keep the last good place.
+      if (!r.width || !r.height) return;
       const key = `${r.left},${r.top},${r.width},${r.height}`;
       if (key === lastBox) return;
       lastBox = key;
@@ -144,6 +146,7 @@ export function WorldGlobe({
     let raf = 0;
     let last = performance.now();
     let dragging = false;
+    let away = false; // World is behind another screen
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
@@ -162,7 +165,20 @@ export function WorldGlobe({
       const project = scene.project;
       if (!project) return;
       const box = el.getBoundingClientRect();
+      if (!box.width || !box.height) {
+        away = true;
+        hits = [];
+        return;
+      }
+      if (away) {
+        // Back on World: every portrait starts on its own place again (no stale merge offsets to spring from).
+        away = false;
+        for (const n of nodes.values()) n.s.init = false;
+      }
       measure(box);
+      // Portraits stay pinned to the planet but only show once the camera has nearly swung into the World view, so
+      // coming back from another screen they fade in on the globe instead of riding the swing through space.
+      const arrive = reduce ? 1 : Math.min(Math.max((scene.worldMix - 0.75) / 0.25, 0), 1);
       const { markers: ms, sites: ss, focus: f } = live.current;
 
       // Places: one dot per real site, faded with everyone else when a person is chosen.
@@ -197,6 +213,7 @@ export function WorldGlobe({
         }
         ctx.globalAlpha = 1;
       }
+      dots.style.opacity = goo.style.opacity = faces.style.opacity = String(arrive);
 
       // Portraits: project, then cluster greedily in importance order (the chosen person first, then by rank).
       const order = f ? [...ms.filter((m) => m.key === f), ...ms.filter((m) => m.key !== f)] : ms;
@@ -329,7 +346,7 @@ export function WorldGlobe({
         if (fp && p.vis > 0) fannedHits.push({ x, y, keys: [m.key] });
         else if (isLeader) bubbleHits.push({ x, y, keys: c!.keys });
       }
-      hits = [...fannedHits, ...bubbleHits];
+      hits = arrive > 0.5 ? [...fannedHits, ...bubbleHits] : [];
     };
     raf = requestAnimationFrame(frame);
 
