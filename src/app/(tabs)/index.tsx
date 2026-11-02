@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Movers, Overtakes, Podium, Races } from '@/components/arena';
-import { BriefCard } from '@/components/news';
+import { BriefCard, TrendingCard } from '@/components/news';
 import { PageSearch } from '@/components/page-search';
 import { PersonList } from '@/components/person-row';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
@@ -11,7 +11,7 @@ import { Ticker, TickerSpace } from '@/components/ticker';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { rankMoves } from '@/lib/arena';
 import { matches, setSearch, useSearch } from '@/lib/search';
-import { useLatestBrief, usePeople } from '@/lib/data';
+import { useLatestBrief, usePeople, useXTrending } from '@/lib/data';
 import { peopleSorts, sortLabels, sortPeople, type PeopleSort } from '@/lib/view-params';
 import { color, radius, space, type } from '@/theme';
 
@@ -20,6 +20,7 @@ const MAX_COMPARE = 3;
 export default function Rankings() {
   const people = usePeople();
   const brief = useLatestBrief();
+  const trending = useXTrending();
   const query = useSearch('people');
   const setQuery = (q: string) => setSearch('people', q);
   const [sort, setSort] = useState<PeopleSort>('rank');
@@ -143,6 +144,7 @@ export default function Rankings() {
             <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} moves={moves} />
             <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
             <BriefCard brief={brief.data} people={people.data ?? []} />
+            <TrendingCard trends={trending.data} people={people.data ?? []} />
           </>
         )}
       </Screen>

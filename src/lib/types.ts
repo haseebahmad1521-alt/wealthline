@@ -81,6 +81,19 @@ export type BriefItem = {
 
 export type Brief = { id: string; brief_date: string; headline: string; model: string; brief_items: BriefItem[] };
 
+/** One topic trending on X (daily, shared). `topic` is AI-written; the post fields are X's own, word for word. */
+export type XTrend = {
+  id: string;
+  trend_date: string;
+  position: number;
+  topic: string;
+  person_id: string | null;
+  post_url: string;
+  handle: string;
+  post_text: string;
+  posted_at: string | null;
+};
+
 export type PersonNews = {
   id: string;
   person_id: string;

@@ -9,15 +9,14 @@
 // (`&debug=1` adds why items were dropped and xAI's usage). Without XAI_API_KEY it does nothing.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { fromDate, nextDue, statusId, syndicationToken, xaiCostMicros, xPostId, type XaiUsage } from '../_shared/recent.ts';
+import { fromDate, nextDue, statusId, xaiCostMicros, xPostId, type XaiUsage } from '../_shared/recent.ts';
 import { cors, json } from '../_shared/util.ts';
-import { ceilingMicros, DATA_SHARE } from '../_shared/xai.ts';
+import { ceilingMicros, DATA_SHARE, xEmbed } from '../_shared/xai.ts';
 
 const MODEL = Deno.env.get('XAI_MODEL') ?? 'grok-4.3';
 const PER_RUN = 3;
 const ESTIMATE = 50_000; // $0.05 reserved per call, corrected to xAI's reported cost after it
 const MAX_POSTS = 5;
-const UA = { 'User-Agent': 'WealthlineBot/1.0 (+https://haseebahmad1521-alt.github.io/wealthline/)' };
 
 type Person = { id: string; slug: string; name: string; forbes_rank: number | null; social: { platform?: string; handle?: string } | null };
 
@@ -77,18 +76,8 @@ async function askGrok(key: string, handle: string, from: string) {
 
 /** The post as X serves it to its own embed widget, or null if it isn't there / isn't by `handle`. */
 async function xPost(id: string, handle: string) {
-  try {
-    const r = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${syndicationToken(id)}&lang=en`, {
-      headers: UA,
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!r.ok) return null;
-    const t = await r.json();
-    if (typeof t?.text !== 'string' || String(t?.user?.screen_name ?? '').toLowerCase() !== handle.toLowerCase()) return null;
-    return { text: t.text as string, posted_at: t.created_at ? new Date(t.created_at).toISOString() : null };
-  } catch {
-    return null;
-  }
+  const t = await xEmbed(id);
+  return t && t.handle.toLowerCase() === handle.toLowerCase() ? { text: t.text, posted_at: t.posted_at } : null;
 }
 
 const xHandle = (p: Person) => (p.social?.platform === 'x' && p.social.handle ? p.social.handle : null);

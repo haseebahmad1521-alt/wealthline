@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { fromDate, MAX_GAP, nextDue, sameUrl, statusId, xaiCostMicros, xPostId } from '../../supabase/functions/_shared/recent.ts';
+import { fromDate, MAX_GAP, nextDue, sameUrl, statusId, trendTopic, xaiCostMicros, xPostId } from '../../supabase/functions/_shared/recent.ts';
 
 const H = 36e5;
 const D = 24 * H;
@@ -41,4 +41,16 @@ test('citations match by status id, with or without the handle', () => {
   assert.equal(statusId('https://x.com/i/status/2117272824830210391'), '2117272824830210391');
   assert.equal(statusId('https://x.com/elonmusk/status/2117272824830210391?s=20'), '2117272824830210391');
   assert.equal(statusId('https://electrek.co/guides/elon-musk'), null);
+});
+
+test('trending labels: short subjects only, never amounts, links or handles', () => {
+  assert.equal(trendTopic('  "Starship flight test"  '), 'Starship flight test');
+  assert.equal(trendTopic('#Tesla robotaxi launch.'), 'Tesla robotaxi launch');
+  assert.equal(trendTopic('Musk pay package worth $56bn'), null);
+  assert.equal(trendTopic('Oracle shares up 12%'), null);
+  assert.equal(trendTopic('A 3 billion deal'), null);
+  assert.equal(trendTopic('Reply from @elonmusk'), null);
+  assert.equal(trendTopic('x'.repeat(91)), null);
+  assert.equal(trendTopic('Llama 4 release'), 'Llama 4 release');
+  assert.equal(trendTopic(7), null);
 });

@@ -66,3 +66,13 @@ export function xaiCostMicros(model: string, u: XaiUsage | undefined, toolCalls:
 export function statusId(url: string): string | null {
   return /^https:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/(?:[A-Za-z0-9_]{1,15}|i(?:\/web)?)\/status\/(\d{5,25})(?:[/?#].*)?$/.exec(url.trim())?.[1] ?? null;
 }
+
+/** Grok's label for a trending topic, cleaned; null when it carries money figures, links, handles or is too long.
+ * Labels are AI-written, so they may name a subject but never state an amount. */
+export function trendTopic(s: unknown): string | null {
+  if (typeof s !== 'string') return null;
+  const t = s.trim().replace(/^["“'#]+|["”'.]+$/g, '').replace(/\s+/g, ' ');
+  if (!t || t.length > 90 || /https?:|www\.|@\w/.test(t)) return null;
+  if (/[$€£¥%]|\d\s*(?:bn|b|m|k|tn|t)\b|\b(?:billion|million|trillion)\b/i.test(t)) return null;
+  return t;
+}

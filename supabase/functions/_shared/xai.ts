@@ -3,7 +3,7 @@
 // always has room. The key stays in the function's environment.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-import { xaiCostMicros, type XaiUsage } from './recent.ts';
+import { syndicationToken, xaiCostMicros, type XaiUsage } from './recent.ts';
 
 export const DATA_SHARE = 0.7;
 
@@ -61,4 +61,23 @@ export async function xaiText({ key, model, system, input, maxTokens, schema, co
   const output = (body.output ?? []) as { content?: { type: string; text?: string }[] }[];
   const text = output.flatMap((o) => o.content ?? []).filter((c) => c.type === 'output_text').map((c) => c.text ?? '').join('');
   return { text, cost: xaiCostMicros(model, body.usage as XaiUsage, 0), status: body.status as string | undefined };
+}
+
+const UA = { 'User-Agent': 'WealthlineBot/1.0 (+https://haseebahmad1521-alt.github.io/wealthline/)' };
+
+/** A post as X serves it to its own embed widget (text word for word, author, time), or null if X doesn't return it. */
+export async function xEmbed(id: string): Promise<{ text: string; handle: string; posted_at: string | null } | null> {
+  try {
+    const r = await fetch(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${syndicationToken(id)}&lang=en`, {
+      headers: UA,
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!r.ok) return null;
+    const t = await r.json();
+    const handle = String(t?.user?.screen_name ?? '');
+    if (typeof t?.text !== 'string' || !handle) return null;
+    return { text: t.text as string, handle, posted_at: t.created_at ? new Date(t.created_at).toISOString() : null };
+  } catch {
+    return null;
+  }
 }

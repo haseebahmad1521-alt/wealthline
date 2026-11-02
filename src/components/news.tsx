@@ -7,10 +7,10 @@ import { Glass } from '@/components/glass';
 import { Body, Caption, Heading, Icon, Surface, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { formatDate, formatTime } from '@/lib/format';
-import type { Brief, BriefItem, PersonNews } from '@/lib/types';
+import type { Brief, BriefItem, PersonNews, XTrend } from '@/lib/types';
 import { color, space, type } from '@/theme';
 
-const disclosure = 'Headlines from public news feeds. Selection and notes by Claude, from headlines only. Not financial advice.';
+const disclosure = 'Headlines from public news feeds. Selection and notes by AI (Grok), from headlines only. Not financial advice.';
 
 /** Today's brief on the front page. Renders nothing until a brief exists (the feature is optional). */
 export function BriefCard({ brief, people }: { brief: Brief | null | undefined; people: Person[] }) {
@@ -28,12 +28,53 @@ export function BriefCard({ brief, people }: { brief: Brief | null | undefined; 
   );
 }
 
+/** What X is talking about around the people we track (daily). Labels are AI-written; each post is X's own text. */
+export function TrendingCard({ trends, people }: { trends: XTrend[] | undefined; people: Person[] }) {
+  if (!trends?.length) return null;
+  const byId = new Map(people.map((p) => [p.id, p]));
+  return (
+    <View style={styles.section}>
+      <Heading level={2}>Trending on X.</Heading>
+      <Caption>{formatDate(trends[0].trend_date)} · Topics picked and labelled by AI (Grok); posts as published on X.</Caption>
+      <Surface style={styles.list}>
+        {trends.map((t, i) => {
+          const person = t.person_id ? byId.get(t.person_id) : undefined;
+          return (
+            <Fragment key={t.id}>
+              {i > 0 && <View style={styles.separator} />}
+              <View style={styles.item}>
+                {person && (
+                  <Link href={`/person/${person.slug}`} style={styles.person}>
+                    {person.name}
+                  </Link>
+                )}
+                <Text style={[type.headline, styles.title]}>{t.topic}</Text>
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel={`Post by @${t.handle} on X: ${t.post_text}`}
+                  accessibilityHint="Opens the post on X"
+                  onPress={() => void WebBrowser.openBrowserAsync(t.post_url)}
+                  style={({ pressed }) => [styles.post, pressed && { opacity: 0.7 }]}>
+                  <Body secondary>
+                    <Text style={{ color: color.text }}>@{t.handle}</Text> {t.post_text}
+                  </Body>
+                  <Caption>X{t.posted_at ? ` · ${formatDate(t.posted_at)}, ${formatTime(t.posted_at)}` : ''}</Caption>
+                </Pressable>
+              </View>
+            </Fragment>
+          );
+        })}
+      </Surface>
+    </View>
+  );
+}
+
 type Item = BriefItem | PersonNews;
 type Rect = { x: number; y: number; width: number; height: number };
 
 const published = (item: Item) => `${item.source_name}${item.published_at ? ` · ${formatDate(item.published_at)}, ${formatTime(item.published_at)}` : ''}`;
 
-/** A list of sourced headlines with Claude's note; a headline opens a glass sheet that zooms from its row. */
+/** A list of sourced headlines with the AI note; a headline opens a glass sheet that zooms from its row. */
 export function NewsList({ items, personOf }: { items: Item[]; personOf?: (id: string | null) => Person | undefined }) {
   const [open, setOpen] = useState<{ item: Item; from: Rect | null } | null>(null);
   const rows = useRef(new Map<string, HostInstance | null>());
@@ -152,6 +193,7 @@ const styles = StyleSheet.create({
   person: { ...type.caption, color: color.action, alignSelf: 'flex-start' },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, minHeight: minTouch - 12 },
   title: { flex: 1, color: color.text },
+  post: { minHeight: minTouch, gap: 2, paddingVertical: 4 },
   // The page behind steps back: dimmed and softly blurred (web; native shows the dim only).
   backdrop: { backgroundColor: 'rgba(4,6,11,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } as object,
   center: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', padding: space.md },

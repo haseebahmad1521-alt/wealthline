@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { db, supabase } from './supabase';
-import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, PersonStatus, RefreshState, Summary } from './types';
+import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, PersonStatus, RefreshState, Summary, XTrend } from './types';
 
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -14,7 +14,7 @@ const client = new QueryClient({
 // time, so React Query still refetches it straight away; the screens' freshness labels come from the records' own
 // dates, not from when they were fetched. Private queries (watchlist, views, admin) are never saved.
 const PERSIST_KEY = 'wl.query-cache.v1';
-const PERSIST_ROOTS = new Set(['people', 'world', 'projects', 'brief', 'fx-rates', 'fx-currencies']);
+const PERSIST_ROOTS = new Set(['people', 'world', 'projects', 'brief', 'x-trending', 'fx-rates', 'fx-currencies']);
 const PERSIST_MAX_AGE = 7 * 86_400_000;
 const persistable = (q: Query) => q.state.status === 'success' && PERSIST_ROOTS.has(String(q.queryKey[0]));
 
@@ -225,7 +225,19 @@ export function useWatchlist() {
   return { ...query, ids: query.data ?? [], toggle, pending, actionError: error, signedIn: !!userId };
 }
 
-// Latest daily brief (optional Claude feature): null when none has been generated.
+// Latest day of "Trending on X" (optional Grok feature): empty until the job has run.
+export const useXTrending = () =>
+  useQuery({
+    queryKey: ['x-trending', 'latest'],
+    queryFn: async () => {
+      const r = await db().from('x_trending').select('*').order('trend_date', { ascending: false }).order('position').limit(10);
+      if (r.error) throw r.error;
+      const rows = r.data as XTrend[];
+      return rows.filter((t) => t.trend_date === rows[0]?.trend_date);
+    },
+  });
+
+// Latest daily brief (optional Grok feature): null when none has been generated.
 export const useLatestBrief = () =>
   useQuery({
     queryKey: ['brief', 'latest'],
