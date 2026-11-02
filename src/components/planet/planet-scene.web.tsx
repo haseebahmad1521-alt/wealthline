@@ -13,7 +13,7 @@ import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
 import { color } from '@/theme';
 import { createRocket } from './rocket';
-import { atmosphereFragment, earthFragment, quadVertex, skyFragment, sunFragment, worldVertex } from './planet-shaders';
+import { atmosphereFragment, earthFragment, quadVertex, skyFragment, starFragment, starVertex, sunFragment, worldVertex } from './planet-shaders';
 
 const BASE = process.env.EXPO_PUBLIC_BASE_URL ?? '';
 const RAD = Math.PI / 180;
@@ -205,13 +205,36 @@ export function PlanetScene() {
     );
 
     const skyUniforms = {
-      starMap: { value: null as THREE.Texture | null },
+      milkyWay: { value: null as THREE.Texture | null },
       gmst: { value: greenwichSiderealDeg(Date.now()) * RAD },
       haze: { value: HAZE[0] as number },
-      starGain: { value: 3.2 },
+      glowGain: { value: 3.2 },
       air: { value: 0 },
       sunDir: earthUniforms.sunDir,
     };
+    // Stars as points (batch S): one draw call, crisp at any zoom. The geometry arrives with the catalogue below; the
+    // Points object rides on the camera like the sky and turns by sidereal time (rotation.y = −GMST puts each star at
+    // longitude RA − GMST, matching the sky shader). Drawn after Earth, so the planet hides the stars behind it.
+    const starUniforms = {
+      haze: skyUniforms.haze,
+      air: skyUniforms.air,
+      sunDir: earthUniforms.sunDir,
+      pxRatio: { value: renderer.getPixelRatio() },
+      starGain: { value: 2 },
+    };
+    const stars = new THREE.Points(
+      new THREE.BufferGeometry(),
+      new THREE.ShaderMaterial({
+        uniforms: starUniforms,
+        vertexShader: starVertex,
+        fragmentShader: starFragment,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+      }),
+    );
+    stars.renderOrder = -0.5; // before the atmosphere's additive glow
+    stars.frustumCulled = false; // its bounds would be the empty geometry until the catalogue lands
     const sky = new THREE.Mesh(
       new THREE.SphereGeometry(200, 32, 16), // per-pixel directions: the sky needs no more facets
       new THREE.ShaderMaterial({ uniforms: skyUniforms, vertexShader: worldVertex, fragmentShader: skyFragment, side: THREE.BackSide, depthWrite: false }),
@@ -225,7 +248,7 @@ export function PlanetScene() {
     sunQuad.scale.setScalar(70);
 
     atmosphere.scale.setScalar(1.055);
-    scene.add(sky, earth, atmosphere, sunQuad);
+    scene.add(sky, stars, earth, atmosphere, sunQuad);
     // Projects' rocket hangs in camera space, so the camera joins the scene graph.
     const rocket = createRocket();
     camera.add(rocket.group);
@@ -299,18 +322,45 @@ export function PlanetScene() {
       }
     }
 
-    // Stars always come from the 4K map: at 2K each star is under a pixel and smears when magnified.
-    Promise.all([load('day'), load('night'), load('stars', true, '4k')])
-      .then(([day, night, stars]) => {
+    // The star catalogue (scripts/build-stars.mjs): Int16 quadruples of RA, Dec, V × 1000, B−V × 1000.
+    fetch(`${BASE}/planet/stars.bin`)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((buf) => {
+        if (disposed) return;
+        const q = new Int16Array(buf);
+        const n = q.length / 4;
+        const pos = new Float32Array(n * 3);
+        const mag = new Float32Array(n);
+        const bv = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+          const ra = (q[i * 4] / 32767) * 2 * Math.PI;
+          const dec = (q[i * 4 + 1] / 32767) * (Math.PI / 2);
+          // Radius 150: inside the sky sphere (200) and the far plane (400).
+          pos[i * 3] = 150 * Math.cos(dec) * Math.sin(ra);
+          pos[i * 3 + 1] = 150 * Math.sin(dec);
+          pos[i * 3 + 2] = 150 * Math.cos(dec) * Math.cos(ra);
+          mag[i] = q[i * 4 + 2] / 1000;
+          bv[i] = q[i * 4 + 3] / 1000;
+        }
+        stars.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        stars.geometry.setAttribute('mag', new THREE.BufferAttribute(mag, 1));
+        stars.geometry.setAttribute('bv', new THREE.BufferAttribute(bv, 1));
+        invalidate();
+      })
+      .catch(() => {}); // no stars is a quieter sky, not a failure
+
+    // The Milky Way is a 2K glow with the point stars filtered out (they are drawn as points above).
+    Promise.all([load('day'), load('night'), load('milkyway', true, '2k')])
+      .then(([day, night, milkyWay]) => {
         if (disposed) return;
         earthUniforms.dayMap.value = day;
         earthUniforms.nightMap.value = night;
         loaded[tier] = { day, night };
         readyAt = performance.now();
-        // Stars wrap at RA 0h; without mipmaps there's no seam line where the texture's edges meet.
-        stars.generateMipmaps = false;
-        stars.minFilter = THREE.LinearFilter;
-        skyUniforms.starMap.value = stars;
+        // The glow wraps at RA 0h; without mipmaps there's no seam line where the texture's edges meet.
+        milkyWay.generateMipmaps = false;
+        milkyWay.minFilter = THREE.LinearFilter;
+        skyUniforms.milkyWay.value = milkyWay;
         setState('ready');
         invalidate();
       })
@@ -476,6 +526,9 @@ export function PlanetScene() {
       skyUniforms.air.value = ROCKET.air * rk * (1 - mw) * (1 - v);
       skyUniforms.haze.value = mix(mix(HAZE[0], HAZE[1], e), ROCKET.haze, rk) * (1 - mw) * (1 - v);
       sky.position.copy(camera.position);
+      stars.position.copy(camera.position);
+      stars.rotation.y = -skyUniforms.gmst.value;
+      starUniforms.pxRatio.value = renderer.getPixelRatio();
       const sunDir = earthUniforms.sunDir.value;
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
       sunQuad.quaternion.copy(camera.quaternion);
