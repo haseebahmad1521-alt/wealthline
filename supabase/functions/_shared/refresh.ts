@@ -179,53 +179,112 @@ async function news(db: SupabaseClient, p: Person) {
   await db.from('person_news').delete().eq('person_id', p.id).lt('fetched_at', new Date(Date.now() - 30 * 86_400_000).toISOString());
 }
 
-type Post = { text: string; post_url: string | null; posted_at: string | null };
+type Post = { text: string; post_url: string; posted_at: string | null };
 
-// Only platforms with a usable public API. X needs the owner's X API bearer token (X_BEARER_TOKEN);
-// Instagram, Facebook, LinkedIn and Threads offer no API for other people's posts, so those show a profile link only.
-function socialFetcher(p: Person): (() => Promise<Post | null>) | null {
+// Named and honest, as the owner asked for X's public web endpoints: who we are and where to reach us.
+const BOT = { 'User-Agent': 'WealthlineBot/1.0 (+https://haseebahmad1521-alt.github.io/wealthline/)' };
+// X's free endpoints rate-limit hard; at most one read per person in this window, whatever the refresh schedule says.
+const X_FREE_EVERY_MS = 12 * 3600_000;
+
+// X's public embed timeline (the one news sites embed): no login, no key. The page carries the posts as JSON in
+// __NEXT_DATA__; if X changes that shape this throws, and the error shows in source_health.
+async function xEmbedTimeline(handle: string): Promise<Post[]> {
+  const res = await fetch(`https://syndication.twitter.com/srv/timeline-profile/screen-name/${encodeURIComponent(handle)}`, {
+    headers: BOT,
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) throw new Error(`syndication.twitter.com answered ${res.status}`);
+  const json = (await res.text()).match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)?.[1];
+  const entries = json ? JSON.parse(json)?.props?.pageProps?.timeline?.entries : null;
+  if (!Array.isArray(entries)) throw new Error('syndication.twitter.com: timeline not found in page');
+  return entries
+    .map((e: { content?: { tweet?: Record<string, any> } }) => e.content?.tweet)
+    .filter((t: Record<string, any> | undefined): t is Record<string, any> => !!t?.id_str && !t.retweeted_status && !t.in_reply_to_status_id_str)
+    .map((t: Record<string, any>) => ({
+      text: String(t.full_text ?? t.text ?? ''),
+      post_url: `https://x.com/${handle}/status/${t.id_str}`,
+      posted_at: t.created_at ? new Date(t.created_at).toISOString() : null,
+    }));
+}
+
+// Self-hosted FxTwitter (MIT), if the owner deploys one and sets FXTWITTER_URL: same free guest access, other route.
+async function xFxTwitter(base: string, handle: string): Promise<Post[]> {
+  const r = await getJson(`${base.replace(/\/$/, '')}/2/profile/${encodeURIComponent(handle)}/statuses`, BOT);
+  const list = r?.results ?? r?.statuses ?? [];
+  return list
+    .filter((t: Record<string, any>) => t?.id && !t.replying_to)
+    .map((t: Record<string, any>) => ({
+      text: String(t.raw_text?.text ?? t.text ?? ''),
+      post_url: `https://x.com/${handle}/status/${t.id}`,
+      posted_at: t.created_timestamp ? new Date(t.created_timestamp * 1000).toISOString() : (t.created_at ?? null),
+    }));
+}
+
+// Platforms with a usable public read: Bluesky; X via the owner's paid token (X_BEARER_TOKEN) or, without it, X's free
+// web endpoints (owner decision, Nov 2). Instagram, Facebook, LinkedIn and Threads offer no API for other people's
+// posts, so those show a profile link only. Returns newest first.
+function socialFetcher(p: Person): (() => Promise<Post[]>) | null {
   const s = p.social;
   if (!s?.handle) return null;
   if (s.platform === 'bluesky') {
     return async () => {
       const r = await getJson(
-        `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(s.handle)}&limit=5&filter=posts_no_replies`,
+        `https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(s.handle)}&limit=20&filter=posts_no_replies`,
       );
-      const post = r?.feed?.find((f: { reason?: unknown }) => !f.reason)?.post;
-      if (!post) return null;
-      const rkey = String(post.uri).split('/').pop();
-      return { text: post.record?.text ?? '', post_url: `https://bsky.app/profile/${s.handle}/post/${rkey}`, posted_at: post.record?.createdAt ?? null };
+      return (r?.feed ?? [])
+        .filter((f: { reason?: unknown }) => !f.reason)
+        .map(({ post }: { post: Record<string, any> }) => ({
+          text: post.record?.text ?? '',
+          post_url: `https://bsky.app/profile/${s.handle}/post/${String(post.uri).split('/').pop()}`,
+          posted_at: post.record?.createdAt ?? null,
+        }));
     };
   }
+  if (s.platform !== 'x') return null;
   const token = Deno.env.get('X_BEARER_TOKEN');
-  if (s.platform === 'x' && token) {
+  if (token) {
     return async () => {
       const auth = { Authorization: `Bearer ${token}` };
       const user = await getJson(`https://api.x.com/2/users/by/username/${encodeURIComponent(s.handle)}`, auth);
       const id = user?.data?.id;
-      if (!id) return null;
+      if (!id) return [];
       const r = await getJson(
-        `https://api.x.com/2/users/${id}/tweets?max_results=5&exclude=retweets,replies&tweet.fields=created_at,note_tweet`,
+        `https://api.x.com/2/users/${id}/tweets?max_results=20&exclude=retweets,replies&tweet.fields=created_at,note_tweet`,
         auth,
       );
-      const t = r?.data?.[0];
-      if (!t) return null;
-      return { text: t.note_tweet?.text ?? t.text, post_url: `https://x.com/${s.handle}/status/${t.id}`, posted_at: t.created_at ?? null };
+      return (r?.data ?? []).map((t: Record<string, any>) => ({
+        text: t.note_tweet?.text ?? t.text,
+        post_url: `https://x.com/${s.handle}/status/${t.id}`,
+        posted_at: t.created_at ?? null,
+      }));
     };
   }
-  return null;
+  const fx = Deno.env.get('FXTWITTER_URL');
+  return async () => {
+    try {
+      return await xEmbedTimeline(s.handle);
+    } catch (e) {
+      if (!fx) throw e;
+      return xFxTwitter(fx, s.handle);
+    }
+  };
 }
 
 async function social(db: SupabaseClient, p: Person) {
-  const post = await socialFetcher(p)?.();
-  if (!post?.text) return;
-  const { error } = await db.from('social_posts').upsert({
-    person_id: p.id,
-    platform: p.social!.platform,
-    handle: p.social!.handle,
-    ...post,
-    fetched_at: new Date().toISOString(),
-  });
+  const s = p.social!;
+  if (s.platform === 'x' && !Deno.env.get('X_BEARER_TOKEN')) {
+    const { data } = await db.from('social_posts').select('fetched_at').eq('person_id', p.id).eq('platform', 'x').maybeSingle();
+    if (data && Date.now() - Date.parse(data.fetched_at) < X_FREE_EVERY_MS) return;
+  }
+  const posts = (await socialFetcher(p)?.() ?? []).filter((x) => x.text)
+    .sort((a, b) => Date.parse(b.posted_at ?? '0') - Date.parse(a.posted_at ?? '0'));
+  if (!posts.length) return;
+  const fetched_at = new Date().toISOString();
+  const rows = posts.map((x) => ({ person_id: p.id, platform: s.platform, handle: s.handle, ...x, fetched_at }));
+  // The archive keeps every post (first copy wins); social_posts keeps the latest for the profile.
+  const archive = await db.from('person_posts').upsert(rows, { onConflict: 'post_url', ignoreDuplicates: true });
+  if (archive.error) throw new Error(archive.error.message);
+  const { error } = await db.from('social_posts').upsert(rows[0]);
   if (error) throw new Error(error.message);
 }
 
