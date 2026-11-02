@@ -21,15 +21,16 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 (17:40 UTC): owner answers applied; Batch S mount-cost item measured and closed; a chart data bug found and fixed in code (cleanup migration awaiting the owner's OK)._
+_Updated Nov 2, 2026 (17:40 UTC): owner answers applied; Batch S mount-cost item measured and closed; a chart data bug found and fixed in code (cleanup **applied with the owner's OK**); chat replies now start after a 1–3 s pause._
 
 - **Owner answers (Nov 2):** (1) Brief and "Trending on X." move up → done: on the default Rankings view they sit right after the podium and movers (`feeds` in `src/app/(tabs)/index.tsx`); when searching/sorting/comparing they stay after the list. (2) Conversation-opener lines may end with a question **sometimes** → rule added in `status` ("about one line in four at most"). `RULES_VERSION` deliberately **not** bumped (it's a mild refinement; lines pick it up as their material changes, no ≈$2 full rewrite).
 - **Data bug (fixed in code, cleanup pending):** `finance()` in `supabase/functions/_shared/refresh.ts` stored every Forbes profile's real-time list entry (`year` 0, placeholder date → **1993-01-01**) as an `estimate`: 300 rows (289 "Forbes Real-Time Billionaires 0", 11 "Forbes RTRL 0"), i.e. today's value placed in 1993 on every all-time chart (charts open on all time). The writer now skips entries without a real year. Migration `20261106000000_drop_misdated_realtime.sql` deletes exactly those rows (narrow `where`: kind, date, both labels). Batch D's "+876% for Marc Andreessen since Mar 10" is **not** a math bug: Forbes's March 2026 list had him at $1.9 B and Forbes's real-time list now says $18.55 B (both sourced); with ≥2 real-time values the 20-hour baseline is now the previous real-time value.
-- **Owner-run (with `!`, after OK on the delete):**
-  1. `npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261106000000_drop_misdated_realtime.sql`
-  2. `for f in refresh refresh-due status; do npx supabase@latest functions deploy $f --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes; done` (Claude's deploys are refused by auto mode as production deploys)
+- **Cleanup applied (owner OK, Nov 2 17:35 UTC):** 0 rows left at 1993-01-01.
+- **Chat pacing (owner, Nov 2):** a random 1–3 s pause (`readingMs` in `src/lib/chat.ts`) before seen + typing starts, replacing the fixed 0.6 s; a fast server reply still waits it out, then the typing time (`typingMs`). The composer stays disabled while sending, so it also paces how often anyone can send (owner: pads usage time, trims tokens). Typechecked only; not yet seen in a browser.
+- **Owner-run (with `!`):**
+  1. `for f in refresh refresh-due status; do npx supabase@latest functions deploy $f --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes; done` (Claude's deploys are refused by auto mode as production deploys)
 - **Status lines, live check (17:31 UTC):** only the 10 lines from 16:46–16:48 exist (old rules: Ellison's "I've said…", Bezos/Page/Zuckerberg/Huang/Ballmer/Buffett SKIP). The first v4 run is 17:47; re-read then (`person_status` join `people` order by `generated_at desc`, read-only query works).
-- **Ask the owner (after "continue"):** (1) OK to delete the 300 misdated 1993 rows (migration above)? Nothing else is touched.
+- **Ask the owner (after "continue"):** nothing new.
 
 _Updated Nov 2, 2026 (17:30 UTC; earlier entries say "Nov 5", read them as earlier the same days): status-line rules reworked after the owner read the live lines; **Trending on X** written. Migration `x_trending` and functions `status`, `trending`, `recent` **deployed by the owner** (Nov 2, ≈17:45 UTC)._
 

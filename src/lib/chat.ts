@@ -16,6 +16,11 @@ export const localChat = !!bridgePort;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** A 1–3 s pause before they read and start typing: feels human and paces the thread (the composer waits too). */
+export function readingMs(random = Math.random) {
+  return 1000 + Math.round(random() * 2000);
+}
+
 /** How long a person would take to type `reply` once they've read the message: ~22 characters a second, 1.2–7 s. */
 export function typingMs(reply: string) {
   return Math.min(7000, Math.max(1200, reply.length * 45));
@@ -138,8 +143,9 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
     const history = (query.data ?? []).filter((m) => m.role !== 'notice').map((m) => ({ role: m.role, text: m.text }));
     put((old) => [...old, temp]);
     const started = Date.now();
-    // They "read" it a beat later and start typing while the reply is written.
-    const reading = setTimeout(() => setTyping(true), 600);
+    // They "read" it after a 1–3 s pause and start typing while the reply is written.
+    const pause = readingMs();
+    const reading = setTimeout(() => setTyping(true), pause);
 
     let status = 0;
     let j: Record<string, unknown> = {};
@@ -192,12 +198,13 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
     const message = (localChat
       ? { id: `reply-${Date.now()}`, role: 'assistant', text: String(j.reply ?? ''), sources: (j.sources as ChatSource[])?.length ? j.sources : null, created_at: '', seen_at: null }
       : j.message) as ChatMessage | undefined;
+    // A fast reply still waits out the pause; then seen, with their reaction, and the rest of a human typing time.
+    await wait(pause - (Date.now() - started));
     clearTimeout(reading);
-    // Seen, with their reaction, then the rest of a human typing time before the whole reply appears.
     setTyping(true);
     put((old) => old.map((m) => (m.id === temp.id ? { ...m, pending: false, seen_at: m.seen_at ?? now(), reaction: (j.reaction as string) ?? null } : m)));
     const reply = message?.text ?? '';
-    await wait(Math.max(400, 600 + typingMs(reply) - (Date.now() - started)));
+    await wait(Math.max(400, pause + typingMs(reply) - (Date.now() - started)));
     if (message && reply) put((old) => [...old, { ...message, created_at: localChat ? now() : message.created_at }]);
     setTyping(false);
     if (!localChat) await cache.invalidateQueries({ queryKey: key });
