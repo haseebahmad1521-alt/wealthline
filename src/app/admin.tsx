@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { ChatReview } from '@/components/admin/chat-review';
 import { Crud, RecordForm, type Field, type Row } from '@/components/admin/crud';
 import { Body, Button, Caption, Heading, Icon, icons, minTouch, Screen, StateView, Surface } from '@/components/ui';
 import { useAuth, useEvents, useHoldings, usePeople, useProjects } from '@/lib/data';
@@ -240,6 +241,7 @@ function AdminApp() {
   return (
     <View style={styles.editor}>
       <SystemHealth />
+      <ChatReview />
       <View style={[styles.layout, wide && styles.layoutWide]}>
         {list}
       <View style={styles.editorCol}>

@@ -104,3 +104,55 @@ language sql security definer set search_path = '' as $$
     where day = (now() at time zone 'utc')::date;
 $$;
 revoke execute on function public.settle_chat_spend(uuid, bigint) from public, anon, authenticated;
+
+-- Admin: accounts on hold or paused, with their email (auth.users isn't readable from the client).
+create function public.admin_chat_standing() returns table (
+  user_id uuid, email text, strikes int, paused_until timestamptz, on_hold boolean, held_at timestamptz, plan text
+)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not public.is_admin() then raise exception 'admins only' using errcode = '42501'; end if;
+  return query
+    select m.user_id, u.email::text, coalesce(array_length(m.strikes, 1), 0), m.paused_until, m.on_hold, m.held_at, public.chat_plan(m.user_id)
+    from public.chat_moderation m join auth.users u on u.id = m.user_id
+    where m.on_hold or m.paused_until > now()
+    order by m.on_hold desc, m.held_at desc nulls last;
+end $$;
+revoke execute on function public.admin_chat_standing() from public, anon;
+grant execute on function public.admin_chat_standing() to authenticated;
+
+-- Admin decides a hold: lift it (strikes and cooldown history cleared, a fresh start) or keep it, with a note.
+create function public.admin_review_hold(p_user uuid, p_lift boolean, p_note text default null) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_admin() then raise exception 'admins only' using errcode = '42501'; end if;
+  update public.chat_moderation set
+    on_hold = case when p_lift then false else on_hold end,
+    strikes = case when p_lift then '{}' else strikes end,
+    paused_before = case when p_lift then false else paused_before end,
+    paused_until = case when p_lift then null else paused_until end,
+    reviewed_by = auth.uid(), reviewed_at = now(), review_note = left(p_note, 2000)
+  where user_id = p_user;
+end $$;
+revoke execute on function public.admin_review_hold(uuid, boolean, text) from public, anon;
+grant execute on function public.admin_review_hold(uuid, boolean, text) to authenticated;
+
+-- Admin sets a plan by email (null removes it: back to Free). Payments will write entitlements themselves later.
+create function public.admin_set_plan(p_email text, p_plan text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare
+  uid uuid;
+begin
+  if not public.is_admin() then raise exception 'admins only' using errcode = '42501'; end if;
+  select id into uid from auth.users where lower(email) = lower(trim(p_email));
+  if uid is null then return false; end if;
+  if p_plan is null then
+    delete from public.entitlements where user_id = uid;
+  else
+    insert into public.entitlements (user_id, plan, source) values (uid, p_plan, 'admin')
+    on conflict (user_id) do update set plan = excluded.plan, source = 'admin', expires_at = null, updated_at = now();
+  end if;
+  return true;
+end $$;
+revoke execute on function public.admin_set_plan(text, text) from public, anon;
+grant execute on function public.admin_set_plan(text, text) to authenticated;
