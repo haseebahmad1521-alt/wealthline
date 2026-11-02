@@ -30,7 +30,9 @@ const HAZE = [0.0, 1.3] as const;
 // surface, which stretches back to a near-flat horizon below the middle of the view; the sky above is bright blue air
 // that thins to faint stars at the top. Scrolling climbs a little. Distance (Earth radii), horizon (NDC), haze, and
 // `air`: how much sky glow the camera sees from inside the atmosphere. The planet turns very slowly (SPIN, °/s).
-const ROCKET = { dist: [1.028, 1.045], limbY: [-0.22, -0.3], haze: 0.75, air: 1, spin: 0.06 } as const;
+// Owner, Nov 2: 25% back toward the earlier, higher pose (1.18–1.28, horizon 0.04/−0.12, no air): skimming lower read
+// as grey overcast; from here the haze blends into the surface.
+const ROCKET = { dist: [1.066, 1.104], limbY: [-0.155, -0.255], haze: 0.75, air: 0.75, spin: 0.06 } as const;
 // Where the camera hangs comes from the page in view (ANGLES in scene.ts); switching pages eases from one angle to the next.
 const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;

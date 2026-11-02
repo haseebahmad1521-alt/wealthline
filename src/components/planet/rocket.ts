@@ -257,8 +257,8 @@ export function createRocket(): Rocket {
   const hide = () => m4.makeScale(0, 0, 0);
 
   // The rocket sits this far in front of the camera (scene units). Close, because the camera skims the surface: the
-  // ground below the rocket is ≥0.06 away. Its size on screen does not depend on this.
-  const DEPTH = 0.035;
+  // ground below the rocket is ≥0.15 away. Its size on screen does not depend on this.
+  const DEPTH = 0.056;
   const LEAN = -0.32; // radians: nose up and to the right
 
   function update(dt: number, now: number, mix: number, aspect: number, fovDeg: number, sunDirView: THREE.Vector3, reduce: boolean) {
