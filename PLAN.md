@@ -21,20 +21,32 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026: Projects content layout landed; rocket view reworked from owner feedback (pushed; see `git log`). Next: the rest of batch C._
+_Updated Nov 2, 2026 (late): glass-clear on Rankings reverted; first smoothness pass landed (pushed; see `git log`). Next: batch S (rest), then batch C._
 
 - **Just landed:**
-  - **Projects content (owner chose "build the layout now"):** `src/lib/projects.ts` (+ tests) and `src/components/project-arena.tsx`. Top projects podium (each builder's latest project, top 3 by the builder's rank; shown only with ≥3 ranked builders), Project news (cached `person_news` headlines of builders whose title contains a project title; `useNewsFor` in `data.tsx`), Builders' wealth moves (recorded change since the previous value, captioned "Not attributed to any project"), then "All projects." with the filter and list. With no projects: "Nothing on the launch pad yet." Checked headless at 390 px with test-only rows injected in the browser (nothing written to the database).
-  - **Rocket view (owner feedback):** camera skims the atmosphere (1.028–1.045 Earth radii) looking along the surface, horizon below the middle; the sky shader's new `air` uniform paints bright blue air at the horizon that thins to black with stars only in the top part of the view. The planet turns slowly and steadily (0.06°/s); the camera float, scroll spin and big drift are off in this view. The rocket stays in the lower right with a slow wander of a few percent of the view; its yaw sway is smaller. Rocket now sits 0.035 units from the camera so the nearby ground never cuts it.
+  - **Reverted (owner):** Rankings glass no longer clears/unblurs on fast scroll (`8101359` reverts `f0505a2`).
+  - **Smoothness rule (owner, Nov 2):** data and images a view needs are fetched and decoded ahead of time, off the interaction path; changing views must never stall on the network or a decode. Applies app-wide.
+  - **Portraits** (`src/lib/portrait.ts` + tests): every view asks Wikimedia Commons for a 250 px thumbnail (500/960 only for big draws) instead of the stored original or 960 px thumb (≈20 KB instead of 200–750 KB each; both `upload.` and `thumb.wikimedia.org`). `Portrait` falls back to the stored URL on error. Globe bubbles decode async.
+  - **Warm-up** (`src/lib/warmup.ts`, mounted in `src/app/_layout.tsx`): in idle time after first paint, prefetches the World and Projects queries and every portrait thumbnail.
+  - **World:** `useWorld` memoizes empires (it rebuilt them, and so the globe markers/arcs, on every render); country shading is painted in idle time instead of inside a render frame.
+  - **Planet textures:** `ImageBitmapLoader` decodes off the main thread (bitmaps closed on a tier drop). The GPU upload of a big tier still happens in one frame (see batch S).
+  - Checked headless (Chromium, 390 px @3x): Rankings and World render, no console errors, 298 portrait requests all 250 px except 4 SVG logos stored as portraits.
 - **Half-done:** nothing uncommitted.
-- **Default chosen (tell the owner if asked):** the podium ranks projects by their builder's rank; switch to announcement date in `podiumProjects` if the owner prefers.
+- **Data note:** a few `portrait_url`s are SVG logos/coats of arms (e.g. Amancio Ortega, Friedhelm Loh), not portraits. Owner/admin should review; not changed.
+- **Default chosen (tell the owner if asked):** the projects podium ranks projects by their builder's rank; switch to announcement date in `podiumProjects` if the owner prefers.
 - **Legibility note for batch D:** the brighter rocket sky lowers contrast for secondary text and the inactive filter labels on Projects (e.g. the empty-state body). Measure and adapt tint there first.
-- **Not verified on a device yet:** the rocket's frame time on a mid phone; the keyboard fix and the World drag fix on a real iPhone; plus the earlier list (globe feel, 8K swap, Safari pinch, fan at 320 px, news sheet, profile fly-in).
+- **Not verified on a device yet:** World opening smoothness after this pass; the rocket's frame time on a mid phone; the keyboard fix and the World drag fix on a real iPhone; plus the earlier list (globe feel, 8K swap, Safari pinch, fan at 320 px, news sheet, profile fly-in).
 - **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain`, or `npm run preview:phone` → http://localhost:8090. Also `npm run typecheck`, `npm test`, `npm run build:pages` before a push. (Don't run `npx expo lint`: it installs and configures ESLint on its own.)
 
 ## Next up (work queue, priority order)
 
 When the owner writes "continue", take the first unchecked batch, do it, tick it, refresh "Resume here", commit and push.
+
+**Batch S — smoothness (owner, Nov 2, 2026): no lag spikes anywhere**
+- [x] Portrait thumbnails sized to the display; idle warm-up of World/Projects data and portraits; empires memoized; country shading in idle time; off-thread texture decode
+- [ ] Stars as points: Yale Bright Star Catalogue (public domain, ≈9k stars to mag 6.5) as one `THREE.Points` (size from magnitude, colour from B−V, sidereal rotation as now), with the same haze/air fade as `skyFragment`; the sky shader keeps haze/air only. Drops the 1.6 MB download and ≈32 MB of GPU memory, crisp at any zoom, no shimmer. Keep the Milky Way as a faint 1K glow (stars removed) or drop it: show the owner both.
+- [ ] Compressed planet textures: KTX2/Basis (`KTX2Loader`, transcoder in a worker) for day/night tiers, cutting GPU memory ≈4–8× and the one-frame upload stall when a bigger tier swaps in. Then, if 8K is still worth it, stream it as tiles (only tiles in view, uploaded a few per frame) for close World zoom.
+- [ ] Measure: long tasks (PerformanceObserver) on app start, opening World, opening a profile, switching tabs; target none over 50 ms. Persist the React Query cache (localStorage) so a cold start shows last data instantly.
 
 **Batch A — globe feel, performance, chrome (done Nov 2)**
 - [x] Globe: turning never scrolls the page or taps a portrait (touch-action none, drag threshold, cancelled pointer ≠ tap)
