@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Fragment } from 'react';
+import { Fragment, useDeferredValue } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions, type PressableStateCallbackType } from 'react-native';
 
 import { MEDAL, RankMove } from '@/components/arena';
@@ -132,9 +132,12 @@ export function PersonList({
   onToggle?: (id: string) => void;
 }) {
   const inset = useDividerInset();
+  // First screenful now, the rest as a deferred (time-sliced, interruptible) render: 100 rows in one go was a 345 ms
+  // task at 4× throttle on cold start. Later changes (search, sort) also render in the background, keeping input quick.
+  const rows = useDeferredValue(people, people.slice(0, FIRST_ROWS));
   return (
     <Surface style={styles.list}>
-      {people.map((p, i) => (
+      {rows.map((p, i) => (
         <Fragment key={p.id}>
           {i > 0 && <View style={[styles.separator, { marginLeft: inset }]} />}
           <PersonRow
@@ -148,6 +151,9 @@ export function PersonList({
     </Surface>
   );
 }
+
+/** Rows rendered before the deferred pass: more than any phone or desktop shows above the fold. */
+const FIRST_ROWS = 14;
 
 const styles = StyleSheet.create({
   list: { overflow: 'hidden', paddingVertical: 4 },

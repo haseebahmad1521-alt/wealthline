@@ -235,8 +235,10 @@ export function WorldGlobe({
       }
       const project = scene.project;
       if (!project) return;
-      const box = el.getBoundingClientRect();
-      if (!box.width || !box.height) {
+      // Another screen is in front (World sets the preset while focused): don't read the box, which would force the
+      // incoming screen's layout inside this frame (≈60 ms of a 110 ms task switching to Rankings at 4× throttle).
+      const box = scene.preset === 'world' ? el.getBoundingClientRect() : null;
+      if (!box || !box.width || !box.height) {
         away = true;
         hits = [];
         return;
