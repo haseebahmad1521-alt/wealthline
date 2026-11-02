@@ -3,15 +3,16 @@
 // they slide into one joined bubble (an SVG "goo" filter fuses their glass circles, springs give the elastic overshoot)
 // and split apart again as you zoom in. Tapping a "+N" bubble leans in a little and fans its people out around it, even
 // when they share a city; tapping a portrait opens that person's profile. Company places are small dots: every one is
-// a real site. Money flows (Money, What if) are lines along great circles with dashes travelling toward headquarters;
+// a real site. Money flows (Money, What if) are arches rising off the globe toward headquarters, leaning to one side of
+// their route (so a flow each way between two places never overlaps), with travelling dashes and an arrowhead;
 // shaded countries (Economies, What if) are painted on the planet itself. Choosing a person fades everyone else to 5%. Pinch, ctrl+wheel (trackpad pinch) and Safari gestures zoom the globe, never the page.
-import { geoInterpolate } from 'd3-geo';
 import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Glass } from '@/components/glass';
 import type { GlobeArc, GlobeFill, GlobeMarker, GlobeSite } from '@/components/globe';
 import { portraitAt, portraitPx } from '@/lib/portrait';
+import { latLngToUnit } from '@/lib/sun';
 import { clampZoom, scene, zoomFactor } from '@/lib/scene';
 import { color, font, radius, space } from '@/theme';
 
@@ -63,6 +64,40 @@ function packFan(sizes: number[], gap: number) {
 let openedFocus: string | null = null;
 
 const ARC_STEPS = 48;
+const ARC_LEAN = 0.45; // radians off vertical, to the right of the direction of travel
+
+/**
+ * An arch from `from` to `to` in Earth-radius units: the great circle between them, lifted by a sine bump (taller for
+ * longer routes) and leaned to the right of travel. The lean flips with direction, so A→B and B→A arch on opposite
+ * sides instead of overlapping. Presentation only: height and lean carry no data.
+ */
+function arch(from: { lat: number; lng: number }, to: { lat: number; lng: number }, scale = 1) {
+  const a = latLngToUnit(from.lat, from.lng);
+  const b = latLngToUnit(to.lat, to.lng);
+  const dot = Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+  const omega = Math.acos(dot);
+  const h = (0.035 + 0.17 * (omega / Math.PI)) * scale;
+  const pts: [number, number, number][] = [];
+  for (let i = 0; i <= ARC_STEPS; i++) {
+    const t = i / ARC_STEPS;
+    // Slerp along the great circle (straight lerp for a zero-length route).
+    const sa = omega > 1e-6 ? Math.sin((1 - t) * omega) / Math.sin(omega) : 1 - t;
+    const sb = omega > 1e-6 ? Math.sin(t * omega) / Math.sin(omega) : t;
+    const p = [a[0] * sa + b[0] * sb, a[1] * sa + b[1] * sb, a[2] * sa + b[2] * sb];
+    const n = Math.hypot(p[0], p[1], p[2]) || 1;
+    const u = [p[0] / n, p[1] / n, p[2] / n];
+    // Direction of travel ≈ b − a projected flat; its cross with "up" points to the side.
+    const tx = b[0] - a[0], ty = b[1] - a[1], tz = b[2] - a[2];
+    let sx = ty * u[2] - tz * u[1], sy = tz * u[0] - tx * u[2], sz = tx * u[1] - ty * u[0];
+    const sl = Math.hypot(sx, sy, sz) || 1;
+    sx /= sl; sy /= sl; sz /= sl;
+    const lift = h * Math.sin(Math.PI * t);
+    const up = lift * Math.cos(ARC_LEAN);
+    const side = lift * Math.sin(ARC_LEAN);
+    pts.push([u[0] * (1 + up) + sx * side, u[1] * (1 + up) + sy * side, u[2] * (1 + up) + sz * side]);
+  }
+  return pts;
+}
 const ARC_TINT = '#9CCBFF';
 
 const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -97,11 +132,16 @@ export function WorldGlobe({
   // Each flow sampled once along its great circle (the frame loop only projects the points).
   const arcKey = arcs.map((a) => `${a.key}:${a.weight}:${a.risk ? 1 : 0}`).join('|');
   const paths = useMemo(
-    () =>
-      arcs.map((a) => {
-        const at = geoInterpolate([a.from.lng, a.from.lat], [a.to.lng, a.to.lat]);
-        return { arc: a, points: Array.from({ length: ARC_STEPS + 1 }, (_, i) => at(i / ARC_STEPS)) };
-      }),
+    () => {
+      const seen = new Map<string, number>();
+      return arcs.map((a) => {
+        // Several flows between the same two places: each a little lower than the last, in the same leaning plane.
+        const pair = `${a.from.lat},${a.from.lng}>${a.to.lat},${a.to.lng}`;
+        const k = seen.get(pair) ?? 0;
+        seen.set(pair, k + 1);
+        return { arc: a, points: arch(a.from, a.to, 1 - Math.min(k, 3) * 0.2) };
+      });
+    },
     [arcKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const live = useRef({ markers, sites, paths, focus, onSelect, onOpen });
@@ -288,14 +328,17 @@ export function WorldGlobe({
         // segment by segment so each fades out at the horizon instead of crossing the planet's back.
         ctx.lineCap = 'round';
         const dash = reduce ? 0 : (now / 40) % 22;
-        for (const { arc, points } of ps) {
+        const projectPoint = scene.projectPoint;
+        for (const { arc, points } of projectPoint ? ps : []) {
           const faded = !!f && arc.group !== f;
-          ctx.strokeStyle = arc.risk ? color.loss : f && !faded ? color.action : ARC_TINT;
+          const tint = arc.risk ? color.loss : f && !faded ? color.action : ARC_TINT;
+          ctx.strokeStyle = tint;
           ctx.lineWidth = 1 + 3 * Math.sqrt(arc.weight);
           let prev: ReturnType<typeof project> | null = null;
+          let last: ReturnType<typeof project> | null = null;
           let along = 0;
-          for (const [lng, lat] of points) {
-            const p = project(lat, lng);
+          for (const [x, y, z] of points) {
+            const p = projectPoint!(x, y, z);
             if (prev && prev.facing > 0 && p.facing > 0) {
               const vis = Math.min(Math.min(prev.facing, p.facing) / 0.08, 1) * (faded ? FADED * 2 : 1);
               ctx.beginPath();
@@ -311,8 +354,23 @@ export function WorldGlobe({
                 ctx.stroke();
               }
               along += Math.hypot(p.x - prev.x, p.y - prev.y); // keeps the dash pattern continuous across segments
+              last = prev;
             }
             prev = p;
+          }
+          // Arrowhead where it lands (the last visible segment ends at headquarters).
+          if (last && prev && prev.facing > 0) {
+            const ang = Math.atan2(prev.y - last.y, prev.x - last.x);
+            const len = 5 + 4 * Math.sqrt(arc.weight);
+            ctx.setLineDash([]);
+            ctx.globalAlpha = Math.min(prev.facing / 0.08, 1) * (faded ? FADED * 2 : 0.95);
+            ctx.fillStyle = tint;
+            ctx.beginPath();
+            ctx.moveTo(prev.x, prev.y);
+            ctx.lineTo(prev.x - len * Math.cos(ang - 0.45), prev.y - len * Math.sin(ang - 0.45));
+            ctx.lineTo(prev.x - len * Math.cos(ang + 0.45), prev.y - len * Math.sin(ang + 0.45));
+            ctx.closePath();
+            ctx.fill();
           }
         }
         ctx.setLineDash([]);

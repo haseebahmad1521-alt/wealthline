@@ -61,7 +61,7 @@ export default function Compare() {
               </View>
             </View>
             <View style={styles.identity}>
-              <Link href={`/person/${s.person.slug}`} style={styles.cardName} numberOfLines={1}>
+              <Link href={`/person/${s.person.slug}`} style={[styles.cardName, { color: s.color }]} numberOfLines={1}>
                 {s.person.name}
               </Link>
               <Caption numberOfLines={1}>{s.person.as_of ? `Estimate as of ${formatDate(s.person.as_of)}` : 'No estimate yet'}</Caption>
@@ -163,7 +163,7 @@ function HoldingsCard({ series }: { series: Series }) {
   return (
     <Surface style={styles.card}>
       <View style={styles.cardHead}>
-        <Text style={[type.headline, { color: color.text, flex: 1 }]} numberOfLines={1}>{series.person.name}</Text>
+        <Text style={[type.headline, { color: series.color, flex: 1 }]} numberOfLines={1}>{series.person.name}</Text>
       </View>
       {holdings.data?.length ? (
         holdings.data.map((h) => (
@@ -188,7 +188,7 @@ function DataTable({ series, format }: { series: Series[]; format: (v: number) =
       <View style={[styles.tableRow, styles.tableHead]} accessibilityRole="header">
         <Caption style={styles.dateCol}>Date</Caption>
         {series.map((s) => (
-          <Caption key={s.person.id} style={styles.valueCol} numberOfLines={1}>{s.person.name.split(' ').at(-1)}</Caption>
+          <Caption key={s.person.id} style={[styles.valueCol, { color: s.color }]} numberOfLines={1}>{s.person.name.split(' ').at(-1)}</Caption>
         ))}
       </View>
       {times.map((t) => (
@@ -272,7 +272,7 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
             <View key={s.person.id} style={styles.readoutItem}>
               <View style={[styles.legendLine, { backgroundColor: s.color }]} />
               <Text style={[type.number, { color: color.text, fontSize: 15 }]}>{v == null ? '—' : format(v)}</Text>
-              <Caption>{s.person.name.split(' ').at(-1)}</Caption>
+              <Caption style={{ color: s.color }}>{s.person.name.split(' ').at(-1)}</Caption>
             </View>
           );
         })}
@@ -324,7 +324,7 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
             ))}
             </G>
             {!narrow && ends.map(({ s, y: ly }) => (
-              <SvgText key={s.person.id} x={x(s.pts[s.pts.length - 1].t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={color.text}>
+              <SvgText key={s.person.id} x={x(s.pts[s.pts.length - 1].t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={s.color}>
                 {s.person.name.split(' ').at(-1)}
               </SvgText>
             ))}

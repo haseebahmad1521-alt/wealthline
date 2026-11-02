@@ -51,6 +51,9 @@ type SceneState = {
   fillsVersion: number;
   /** Screen position (px, viewport coordinates) of a point on Earth's surface; set by the planet scene each frame. */
   project: ((lat: number, lng: number) => Projected) | null;
+  /** The same for any point in Earth-radius units (`latLngToUnit` axes), e.g. above the surface. `facing` < 0 when
+   * Earth hides it, fading through 0 at the limb. */
+  projectPoint: ((x: number, y: number, z: number) => Projected) | null;
   /** Ask for a frame now (the loop pauses under reduced motion); set by the planet scene. */
   invalidate: (() => void) | null;
 };
@@ -67,6 +70,7 @@ export const scene: SceneState = {
   fills: [],
   fillsVersion: 0,
   project: null,
+  projectPoint: null,
   invalidate: null,
 };
 

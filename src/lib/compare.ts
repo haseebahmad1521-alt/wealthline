@@ -2,7 +2,9 @@
 import type { Point } from './live.ts';
 
 /** Validated categorical palette (dataviz validator, light surface, all pairs incl. CVD): max 3 series. */
-export const SERIES_COLORS = ['#1F5FBF', '#EB6834', '#0F9D8A'] as const;
+// Each person's line colour, also used for their name (owner, Nov 3). Blue brightened from #1F5FBF so it reads as
+// text on the dark glass (≈5.5:1, like the other two).
+export const SERIES_COLORS = ['#4C8DF0', '#EB6834', '#0F9D8A'] as const;
 export const MAX_COMPARE = SERIES_COLORS.length;
 
 /** How much larger (+) or smaller (−) a is than b, in percent of b. */

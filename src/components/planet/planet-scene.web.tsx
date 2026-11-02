@@ -446,6 +446,19 @@ export function PlanetScene() {
       tmp.project(camera);
       return { x: ((tmp.x + 1) / 2) * viewport.w, y: ((1 - tmp.y) / 2) * viewport.h, facing };
     };
+    // Points off the surface (World's arches): hidden when the sight line from the camera passes through Earth first.
+    // Soft near the limb: `facing` is how far (×25) the sight line's closest approach clears the surface.
+    sceneState.projectPoint = (x, y, z) => {
+      tmp.set(x, y, z);
+      toCam.copy(tmp).sub(camera.position); // camera → point
+      const len2 = toCam.lengthSq();
+      const t = -camera.position.dot(toCam) / len2; // closest approach to Earth's centre along the sight line
+      let facing: number;
+      if (t > 0 && t < 1) facing = (Math.sqrt(camera.position.lengthSq() - t * t * len2) - 1) * 25;
+      else facing = tmp.length() > 1.0005 ? 1 : -tmp.dot(toCam) / Math.sqrt(len2); // at the surface: the usual test
+      tmp.project(camera);
+      return { x: ((tmp.x + 1) / 2) * viewport.w, y: ((1 - tmp.y) / 2) * viewport.h, facing };
+    };
 
     function place(now: number, dt: number) {
       if (now - sunAt > 30_000) {
@@ -628,6 +641,7 @@ export function PlanetScene() {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       sceneState.project = null;
+      sceneState.projectPoint = null;
       sceneState.invalidate = null;
       glow.remove();
       camera.remove(rocket.group);
