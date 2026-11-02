@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 
 import { InstallCard } from '@/components/install-card';
 import { Body, Button, Caption, Heading, Icon, Screen, Surface, icons, minTouch } from '@/components/ui';
-import { activate, resetPassword, passwordRules, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
+import { activate, resetPassword, passwordRules, setFirstName, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
 import { useCurrencyChoice } from '@/lib/currency';
 import { useAuth } from '@/lib/data';
 import { color, font, radius, space, type } from '@/theme';
@@ -86,6 +86,45 @@ function CurrencyPicker() {
           <Text style={[type.headline, { color: color.action }]}>{all ? 'Show fewer' : 'Show all currencies'}</Text>
         </Pressable>
       )}
+    </Surface>
+  );
+}
+
+// The name chat greetings use ("Hi, Kim!"); without one they fall back to the start of the email.
+function NameCard({ saved }: { saved: string }) {
+  const [name, setName] = useState(saved);
+  const [state, setState] = useState<'idle' | 'busy' | 'saved' | 'error'>('idle');
+  useEffect(() => setName(saved), [saved]);
+  const dirty = name.trim() !== saved;
+  const save = async () => {
+    setState('busy');
+    try {
+      await setFirstName(name);
+      setState('saved');
+    } catch {
+      setState('error');
+    }
+  };
+  return (
+    <Surface style={styles.card}>
+      <Heading level={2}>Your name.</Heading>
+      <Caption>Used when someone greets you in chat.</Caption>
+      <Field
+        label="First name"
+        value={name}
+        onChangeText={(v) => {
+          setName(v);
+          setState('idle');
+        }}
+        onSubmit={() => dirty && void save()}
+        last
+        extra={{ autoCapitalize: 'words', autoComplete: 'given-name', textContentType: 'givenName', maxLength: 40 }}
+      />
+      <View accessibilityLiveRegion="polite">
+        {state === 'saved' && <Caption>Saved.</Caption>}
+        {state === 'error' && <Text accessibilityRole="alert" style={[type.body, { color: color.loss }]}>Couldn’t save. Try again.</Text>}
+      </View>
+      <Button label="Save name" variant="secondary" onPress={() => void save()} disabled={!dirty} loading={state === 'busy'} />
     </Surface>
   );
 }
@@ -184,6 +223,7 @@ export default function Account() {
           {isAdmin && <Button label="Open admin" variant="secondary" onPress={() => router.push('/admin')} />}
           <Button label="Sign out" variant="secondary" onPress={() => void signOut()} />
         </Surface>
+        <NameCard saved={typeof session.user.user_metadata?.first_name === 'string' ? session.user.user_metadata.first_name : ''} />
         <InstallCard />
       </>
     );

@@ -59,14 +59,12 @@ export function ChatEntry({
   measureCard: (done: (r: Rect | null) => void) => void;
 }) {
   const access = useChatAccess();
-  const plan = useStatusInterest(person.id, person.slug);
+  useStatusInterest(person.id, person.slug);
   const { session } = useAuth();
   const [open, setOpen] = useState<{ from: Rect | null } | null>(null);
-  const opener: Opener | null = status?.text
+  const opener: Opener = status?.text
     ? statusOpener(person, status.text, status.generated_at)
-    : plan
-      ? greeting(person, memberName(session?.user))
-      : null;
+    : greeting(person, memberName(session?.user));
   // iOS Safari only raises the keyboard for a focus() inside the tap itself, and the chat's field isn't mounted yet:
   // focus this invisible field now, then hand focus to the real one (the keyboard stays up across the hand-off).
   const proxy = useRef<ComponentRef<typeof TextInput>>(null);

@@ -120,6 +120,12 @@ export async function resetPassword(email: string): Promise<void> {
   await db().auth.resetPasswordForEmail(email, { redirectTo: appUrl('/account') });
 }
 
+/** The name chat greetings use (stored in the user's own metadata; empty clears it). */
+export async function setFirstName(name: string): Promise<void> {
+  const { error } = await db().auth.updateUser({ data: { first_name: name.trim().slice(0, 40) || null } });
+  if (error) throw error;
+}
+
 export async function signOut(): Promise<void> {
   await db().auth.signOut();
 }

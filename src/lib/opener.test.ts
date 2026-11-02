@@ -8,6 +8,8 @@ const elon = { id: 'e', name: 'Elon Musk', main_source: 'Tesla, SpaceX', rank: 1
 
 test('memberName prefers a profile name, then a name-like email start', () => {
   assert.equal(memberName({ email: 'x@y.z', user_metadata: { full_name: 'kim ruben' } }), 'Kim');
+  assert.equal(memberName({ email: 'kimruben@gmail.com', user_metadata: { first_name: ' McKenzie Lee', full_name: 'Kim' } }), 'McKenzie');
+  assert.equal(memberName({ email: 'kimruben@gmail.com', user_metadata: { first_name: '  ' } }), 'Kimruben');
   assert.equal(memberName({ email: 'kimruben@gmail.com' }), 'Kimruben');
   assert.equal(memberName({ email: '1234@gmail.com' }), null);
   assert.equal(memberName(null), null);
