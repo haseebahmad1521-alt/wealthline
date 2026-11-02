@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -19,7 +19,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Icon, Portrait, icons, minTouch } from '@/components/ui';
+import { AiAvatar } from '@/components/ai-avatar';
+import { Button, Icon, icons, minTouch } from '@/components/ui';
 import { useChat, useChatAccess, type ChatMessage } from '@/lib/chat';
 import type { Person } from '@/lib/data';
 import { formatDate, formatTime } from '@/lib/format';
@@ -179,7 +180,7 @@ function Header({ person, onClose }: { person: Person; onClose: () => void }) {
       <Pressable accessibilityRole="button" accessibilityLabel="Close chat" onPress={onClose} hitSlop={4} style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}>
         <Icon name={icons.close} size={20} tint={color.text} />
       </Pressable>
-      <Portrait uri={person.portrait_url} name={person.name} size={40} />
+      <AiAvatar uri={person.portrait_url} name={person.name} size={40} />
       <View style={styles.headerText}>
         <View style={styles.nameRow}>
           <Text accessibilityRole="header" style={[type.headline, { color: color.text, flexShrink: 1 }]} numberOfLines={1}>
@@ -271,10 +272,11 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
               name={first(person)}
               dayBreak={i === 0 || day(chat.messages[i - 1].created_at) !== day(m.created_at)}
               seen={!!m.seen_at || (typing && i === chat.messages.length - 1)}
+              avatar={chat.messages[i - 1]?.role !== 'assistant' ? person : null}
             />
           ))
         )}
-        {typing && <Typing name={first(person)} />}
+        {typing && <Typing name={first(person)} person={person} />}
         {chat.error && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
       </ScrollView>
       <View style={styles.composer}>
@@ -317,13 +319,14 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
 
 const day = (iso: string) => iso.slice(0, 10);
 
-function Bubble({ m, name, dayBreak, seen }: { m: ChatMessage; name: string; dayBreak: boolean; seen: boolean }) {
+function Bubble({ m, name, dayBreak, seen, avatar }: { m: ChatMessage; name: string; dayBreak: boolean; seen: boolean; avatar: Person | null }) {
   const mine = m.role === 'user';
   const status = mine ? (m.pending && !seen ? 'Sending' : seen ? 'Seen' : 'Sent') : null;
   return (
     <>
       {dayBreak && <Text style={styles.day}>{formatDate(m.created_at)}</Text>}
-      <View style={[styles.bubbleWrap, mine ? styles.right : styles.left]}>
+      <Theirs person={mine ? undefined : avatar}>
+        <View style={[styles.bubbleWrap, mine ? styles.right : styles.left]}>
         <View
           accessible
           accessibilityLabel={`${mine ? 'You' : `${name}, AI simulation`}: ${m.text}. ${formatTime(m.created_at)}${status ? `, ${status}` : ''}`}
@@ -355,8 +358,22 @@ function Bubble({ m, name, dayBreak, seen }: { m: ChatMessage; name: string; day
             ))}
           </View>
         )}
-      </View>
+        </View>
+      </Theirs>
     </>
+  );
+}
+
+const AVATAR = 28;
+
+/** Their side of the thread: the stylised AI avatar beside the first bubble of each run, a same-width gap beside the rest. */
+function Theirs({ person, children }: { person: Person | null | undefined; children: ReactNode }) {
+  if (person === undefined) return <>{children}</>;
+  return (
+    <View style={styles.theirsRow}>
+      {person ? <AiAvatar uri={person.portrait_url} name={person.name} size={AVATAR} /> : <View style={{ width: AVATAR }} />}
+      {children}
+    </View>
   );
 }
 
@@ -376,7 +393,7 @@ function Ticks({ seen, pending }: { seen: boolean; pending: boolean }) {
   );
 }
 
-function Typing({ name }: { name: string }) {
+function Typing({ name, person }: { name: string; person: Person }) {
   const [reduce, setReduce] = useState(false);
   const dots = useRef([0, 1, 2].map(() => new Animated.Value(0.35))).current;
   useEffect(() => {
@@ -394,6 +411,7 @@ function Typing({ name }: { name: string }) {
     return () => loop.stop();
   }, [dots, reduce]);
   return (
+    <Theirs person={person}>
     <View style={[styles.bubbleWrap, styles.left]} accessibilityLiveRegion="polite" aria-live="polite" accessibilityLabel={`${name} is typing`}>
       <View style={[styles.bubble, styles.theirs, styles.typing]}>
         {reduce ? (
@@ -403,6 +421,7 @@ function Typing({ name }: { name: string }) {
         )}
       </View>
     </View>
+    </Theirs>
   );
 }
 
@@ -469,10 +488,11 @@ const styles = StyleSheet.create({
   day: { ...type.caption, color: color.textSecondary, textAlign: 'center', marginVertical: space.xs },
   bubbleWrap: { maxWidth: '82%', gap: 3 },
   left: { alignSelf: 'flex-start' },
+  theirsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, alignSelf: 'flex-start', maxWidth: '90%' },
   right: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   bubble: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20 },
   mine: { backgroundColor: color.action, borderBottomRightRadius: 6 },
-  theirs: { backgroundColor: 'rgba(255,255,255,0.11)', borderBottomLeftRadius: 6 },
+  theirs: { backgroundColor: 'rgba(255,255,255,0.11)', borderTopLeftRadius: 6 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6 },
   metaText: { fontFamily: font.medium, fontSize: 11, color: color.textSecondary, fontVariant: ['tabular-nums'] },
   sources: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },

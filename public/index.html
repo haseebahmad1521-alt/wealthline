@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <!-- interactive-widget: Android Chrome shrinks the page for the on-screen keyboard, so fields at the bottom land above it (iOS ignores it; useKeyboardInset lifts them there). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>%WEB_TITLE%</title>
     <!-- Root-relative URLs below work in dev (base ""); scripts/build-pages.mjs prefixes them with EXPO_BASE_URL. -->
     <link rel="manifest" href="/manifest.json" />

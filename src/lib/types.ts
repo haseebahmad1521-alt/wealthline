@@ -101,6 +101,13 @@ export type SocialPost = {
   fetched_at: string;
 };
 
+/** The AI "lately" line on a profile; text null when the model found nothing they did themselves. */
+export type PersonStatus = {
+  person_id: string;
+  text: string | null;
+  generated_at: string;
+};
+
 export type RefreshState = {
   person_id: string;
   kind: 'finance' | 'news' | 'social';

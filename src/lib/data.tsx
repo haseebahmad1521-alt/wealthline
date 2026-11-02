@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { db, supabase } from './supabase';
-import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, RefreshState, SocialPost, Summary } from './types';
+import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, PersonStatus, RefreshState, Summary } from './types';
 
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -277,14 +277,15 @@ export const useNewsFor = (personIds: string[]) =>
     },
   });
 
-export const useSocialPost = (personId?: string) =>
+export const usePersonStatus = (personId?: string) =>
   useQuery({
-    queryKey: ['social', personId],
+    queryKey: ['status', personId],
     enabled: !!personId,
     queryFn: async () => {
-      const r = await db().from('social_posts').select('*').eq('person_id', personId!).maybeSingle();
-      if (r.error) throw r.error;
-      return r.data as SocialPost | null;
+      const r = await db().from('person_status').select('person_id, text, generated_at').eq('person_id', personId!).maybeSingle();
+      // Before the status migration is deployed the table doesn't exist: no line, not an error.
+      if (r.error) return null;
+      return r.data as PersonStatus | null;
     },
   });
 
@@ -328,7 +329,7 @@ export function useLiveRefresh(personId?: string) {
         soon(['people']);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'person_news', filter }, () => soon(['news', personId]))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'social_posts', filter }, () => soon(['social', personId]))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'person_status', filter }, () => soon(['status', personId]))
       .subscribe((status) => {
         if (status !== 'SUBSCRIBED') return;
         // Subscribed first, so nothing written by the refresh is missed.

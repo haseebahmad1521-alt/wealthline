@@ -4,11 +4,11 @@ import { useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ChatEntry } from '@/components/chat';
-import { SocialBubble } from '@/components/chat-bubble';
+import { StatusBubble } from '@/components/status-bubble';
 import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { portraitAt } from '@/lib/portrait';
-import type { SocialPost } from '@/lib/types';
+import type { PersonStatus } from '@/lib/types';
 import { color, desktopBreakpoint, font, radius, shadow, space, type } from '@/theme';
 
 /**
@@ -22,15 +22,13 @@ export function ProfileHero({
   watched,
   onToggleWatch,
   watchPending,
-  post,
-  postUpdating,
+  status,
 }: {
   person: Person;
   watched: boolean;
   onToggleWatch: () => void;
   watchPending: boolean;
-  post?: SocialPost | null;
-  postUpdating: boolean;
+  status?: PersonStatus | null;
 }) {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const size = desktop ? 200 : 88;
@@ -73,9 +71,9 @@ export function ProfileHero({
         </Pressable>
       </View>
 
-      {person.social && (
+      {!!status?.text && (
         <View style={desktop && styles.bubbleDesktop}>
-          <SocialBubble person={person} post={post} updating={postUpdating} tailX={size / 2} />
+          <StatusBubble person={person} status={status} />
         </View>
       )}
 

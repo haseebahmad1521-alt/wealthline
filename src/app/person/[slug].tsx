@@ -16,7 +16,7 @@ import {
   usePersonNews,
   useProjects,
   useRefreshState,
-  useSocialPost,
+  usePersonStatus,
   useValues,
   useWatchlist,
 } from '@/lib/data';
@@ -37,7 +37,7 @@ export default function Profile() {
   const events = useEvents(p?.id);
   const projects = useProjects();
   const news = usePersonNews(p?.id);
-  const post = useSocialPost(p?.id);
+  const status = usePersonStatus(p?.id);
   const refresh = useRefreshState(p?.id);
   useLiveRefresh(p?.id);
   const watch = useWatchlist();
@@ -103,8 +103,7 @@ export default function Profile() {
         watched={watch.ids.includes(p.id)}
         watchPending={watch.pending === p.id}
         onToggleWatch={() => (watch.signedIn ? void watch.toggle(p.id) : router.push('/account'))}
-        post={post.data}
-        postUpdating={refresh.running('social')}
+        status={status.data}
       />
       {watch.actionError && <Caption style={{ color: color.loss }}>{watch.actionError}</Caption>}
 
