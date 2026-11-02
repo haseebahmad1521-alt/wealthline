@@ -21,10 +21,10 @@ import {
   type Plan,
   type PersonaReply,
   type StrikeState,
+  addMemory,
 } from '../_shared/persona.ts';
 import { cors, json } from '../_shared/util.ts';
 
-const HISTORY = 30;
 const MAX_TEXT = 1000;
 
 Deno.serve(async (req) => {
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
   };
   if (screen(text)) return strike();
 
-  const { model, dailyMicros, estimate } = PLANS[plan];
+  const { model, dailyMicros, estimate, history: keep, memory: maxFacts } = PLANS[plan];
   const globalMicros = Number(Deno.env.get('CHAT_GLOBAL_DAILY_USD') ?? '') * 1e6 || GLOBAL_DAILY_MICROS;
   const took = await db.rpc('take_chat_budget', { p_user: userId, p_limit: dailyMicros, p_global: globalMicros, p_estimate: estimate });
   if (took.error) return json({ error: took.error.message }, 500);
@@ -105,18 +105,22 @@ Deno.serve(async (req) => {
 
   const thread = await db.from('chat_threads')
     .upsert({ owner: userId, person_id: person.data.id, updated_at: new Date().toISOString() }, { onConflict: 'owner,person_id' })
-    .select('id').single();
+    .select('id, memory').single();
   if (thread.error) return (await refund(0), json({ error: thread.error.message }, 500));
   const mine = await db.from('chat_messages').insert({ thread_id: thread.data.id, role: 'user', text }).select('id').single();
   if (mine.error) return (await refund(0), json({ error: mine.error.message }, 500));
 
   const [history, ctx] = await Promise.all([
-    db.from('chat_messages').select('role, text').eq('thread_id', thread.data.id).order('created_at', { ascending: false }).limit(HISTORY),
+    db.from('chat_messages').select('role, text').eq('thread_id', thread.data.id).order('created_at', { ascending: false }).limit(keep),
     personaContext(db, person.data.id, text),
   ]);
   const messages: Anthropic.Beta.Messages.BetaMessageParam[] = (history.data ?? []).reverse()
     .map((x) => ({ role: x.role as 'user' | 'assistant', content: x.text }));
   while (messages.length && messages[0].role !== 'user') messages.shift();
+  // Cache the conversation so far: the next reply reads it at a tenth of the price (that's what pays for longer memory).
+  const last = messages.at(-1);
+  if (last) last.content = [{ type: 'text', text: last.content as string, cache_control: { type: 'ephemeral' } }];
+  const facts: string[] = thread.data.memory ?? [];
   // seen_at drives the simulated ✓✓: "read" once the reply starts being written.
   await db.from('chat_messages').update({ seen_at: new Date().toISOString() }).eq('id', mine.data.id);
 
@@ -128,6 +132,8 @@ Deno.serve(async (req) => {
       system: [
         { type: 'text', text: RULES },
         { type: 'text', text: `Material about ${ctx.name} (as of ${new Date().toISOString().slice(0, 10)}):\n\n${ctx.text}`, cache_control: { type: 'ephemeral' } },
+        // Per user, after the shared cached prefix so every user still shares the persona cache.
+        ...(facts.length ? [{ type: 'text' as const, text: `What you know about this user from earlier chats:\n${facts.map((f) => `- ${f}`).join('\n')}` }] : []),
       ],
       output_config: { format: { type: 'json_schema', schema: REPLY_SCHEMA } },
       messages,
@@ -150,6 +156,8 @@ Deno.serve(async (req) => {
     return strike();
   }
   if (out.reaction) await db.from('chat_messages').update({ reaction: out.reaction }).eq('id', mine.data.id);
+  const remembered = addMemory(facts, out.remember, maxFacts);
+  if (out.remember && remembered.at(-1) === out.remember) await db.from('chat_threads').update({ memory: remembered }).eq('id', thread.data.id);
   const reply = out.reply || 'Let me get back to you on that.';
   const sources = ctx.matches.slice(0, 3);
   const saved = await db.from('chat_messages')

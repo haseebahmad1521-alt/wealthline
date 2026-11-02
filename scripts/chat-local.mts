@@ -23,6 +23,7 @@ import {
   screen,
   settle,
   strikeNotice,
+  addMemory,
   addStrike,
   type StrikeState,
   costMicros,
@@ -43,7 +44,7 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 // An empty folder, so the CLI picks up no project instructions, hooks or memory.
 const cwd = mkdtempSync(join(tmpdir(), 'wealthline-chat-'));
 
-const state = { mod: { strikes: [], pausedBefore: false, pausedUntil: 0, onHold: false } as StrikeState, day: '', used: 0 };
+const state = { mod: { strikes: [], pausedBefore: false, pausedUntil: 0, onHold: false } as StrikeState, day: '', used: 0, memory: {} as Record<string, string[]> };
 
 type Turn = { role: 'user' | 'assistant'; text: string };
 
@@ -107,10 +108,12 @@ async function chat(body: { person?: unknown; text?: unknown; history?: unknown 
   const early: Flag | null = screen(text);
   if (early) return [200, { reply: '', reaction: null, flag: early, sources: [], ...strike(first) }] as const;
 
-  const history = (Array.isArray(body.history) ? (body.history as Turn[]) : []).slice(-30)
+  const history = (Array.isArray(body.history) ? (body.history as Turn[]) : []).slice(-PLANS[plan].history)
     .filter((t) => (t.role === 'user' || t.role === 'assistant') && typeof t.text === 'string');
   const ctx = await personaContext(db, person.data.id, text);
-  const system = `${RULES}\n\nMaterial about ${ctx.name} (as of ${today}):\n\n${ctx.text}`;
+  const facts = (state.memory[person.data.id] ??= []);
+  const system = `${RULES}\n\nMaterial about ${ctx.name} (as of ${today}):\n\n${ctx.text}${
+    facts.length ? `\n\nWhat you know about this user from earlier chats:\n${facts.map((f) => `- ${f}`).join('\n')}` : ''}`;
   const prompt = [
     history.length ? `Conversation so far:\n${history.map((t) => `${t.role === 'user' ? 'User' : 'You'}: ${t.text}`).join('\n')}\n` : '',
     `Latest message from the user:\n${text}`,
@@ -120,6 +123,7 @@ async function chat(body: { person?: unknown; text?: unknown; history?: unknown 
   const { reply, weight } = await ask(system, prompt, PLANS[plan].localModel);
   state.used += weight;
   const settled = settle(reply);
+  state.memory[person.data.id] = addMemory(facts, settled.remember, PLANS[plan].memory);
   console.log(`${first}: ${Date.now() - started} ms, ${weight} µ$ (${state.used}/${limit} today)${settled.flag ? `, flag ${settled.flag}` : ''}`);
   if (settled.flag) return [200, { ...settled, sources: [], ...strike(first) }] as const;
   return [200, { ...settled, sources: ctx.matches.slice(0, 3), used: state.used, limit }] as const;

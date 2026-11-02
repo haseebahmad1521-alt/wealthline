@@ -40,7 +40,15 @@ export function ChatReview() {
     setBusy('plan');
     const r = await db().rpc('admin_set_plan', { p_email: email, p_plan: plan === 'none' ? null : plan });
     setBusy(null);
-    setPlanMsg(r.error ? r.error.message : r.data ? `Saved: ${email.trim()} is now ${plan === 'none' ? 'Free' : plan}.` : 'No account with that email.');
+    setPlanMsg(
+      r.error
+        ? r.error.message
+        : r.data
+          ? `Saved: ${email.trim()} is now ${plan === 'none' ? 'Free' : plan}.`
+          : r.data === null
+            ? `No account yet: ${email.trim()} gets ${plan} when they sign up.`
+            : 'No account with that email.',
+    );
     if (!r.error && r.data) void standing.refetch();
   };
 

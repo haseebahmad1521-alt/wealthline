@@ -45,3 +45,6 @@ verify_jwt = false # cron calls it with x-cron-secret, not a user token
 
 [functions.sources]
 verify_jwt = false # cron calls it with x-cron-secret, not a user token
+
+[functions.recent]
+verify_jwt = false # cron calls it with x-cron-secret, not a user token

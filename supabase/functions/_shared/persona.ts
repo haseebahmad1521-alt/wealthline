@@ -11,16 +11,20 @@ export type Reaction = (typeof REACTIONS)[number];
 export const FLAGS = ['abuse', 'threat', 'sexual', 'hate'] as const;
 export type Flag = (typeof FLAGS)[number];
 
-export type PersonaReply = { reply: string; reaction: Reaction | null; flag: Flag | null };
+export type PersonaReply = { reply: string; reaction: Reaction | null; flag: Flag | null; remember?: string | null };
 
 export const REPLY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['reply', 'reaction', 'flag'],
+  required: ['reply', 'reaction', 'flag', 'remember'],
   properties: {
     reply: { type: 'string', description: 'The chat reply, in their voice. Empty when flag is set.' },
     reaction: { type: ['string', 'null'], enum: [...REACTIONS, null] },
     flag: { type: ['string', 'null'], enum: [...FLAGS, null] },
+    remember: {
+      type: ['string', 'null'],
+      description: 'A new fact the user just shared about themselves, under 15 words, third person ("Works as a nurse in Leeds"). Null if none or already known.',
+    },
   },
 } as const;
 
@@ -51,7 +55,12 @@ use 😕 or no reaction. Most messages get no reaction.
 
 Flag: set it only when the latest user message insults, swears at or demeans the person you are playing or anyone \
 else ("abuse"), threatens violence ("threat"), is sexual about a real person ("sexual"), or attacks a group ("hate"). \
-Casual swearing that isn't aimed at anyone is not a flag. When you flag, leave reply empty and reaction null.`;
+Casual swearing that isn't aimed at anyone is not a flag. When you flag, leave reply empty and reaction null.
+
+Remember: when the user tells you something about themselves worth knowing next time (their name, work, city, \
+interests, plans), put it in "remember" as one short third-person fact. Never health, religion, politics, sexuality, \
+money they have, or anything secret. If facts about the user are listed below, use one only when it fits, the way a \
+friend remembers; never recite them.`;
 
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : 'undated');
 
@@ -123,7 +132,14 @@ export function screen(text: string): Flag | null {
 /** A flagged message never gets a friendly tapback. */
 export function settle(r: PersonaReply): PersonaReply {
   if (r.flag) return { reply: '', reaction: null, flag: r.flag };
-  return { reply: r.reply.trim(), reaction: REACTIONS.includes(r.reaction as Reaction) ? r.reaction : null, flag: null };
+  const remember = typeof r.remember === 'string' ? r.remember.trim().slice(0, 120) : '';
+  return { reply: r.reply.trim(), reaction: REACTIONS.includes(r.reaction as Reaction) ? r.reaction : null, flag: null, remember: remember || null };
+}
+
+/** Adds a fact to a thread's memory: skips repeats (ignoring case), keeps the newest `max`. */
+export function addMemory(facts: readonly string[], fact: string | null | undefined, max: number): string[] {
+  if (!fact || facts.some((f) => f.toLowerCase() === fact.toLowerCase())) return [...facts];
+  return [...facts, fact].slice(-max);
 }
 
 /** Strike policy (owner, Nov 2, 2026): STRIKES_TO_PAUSE strikes inside STRIKE_WINDOW_DAYS → a PAUSE_HOURS cooldown.
@@ -159,9 +175,11 @@ export function strikeNotice(outcome: StrikeOutcome, strikes: number, name: stri
  * go further. Budgets are in micro-dollars at list API prices; tune them once real usage is measured. */
 export const PLANS = {
   // `estimate`: reserved before each reply, corrected to the real cost after it.
-  pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000, estimate: 6_000 }, // ≈ 20 typical replies ($0.08/day at most)
+  // `history`: messages of the thread sent with each reply; `memory`: facts about the user kept per thread.
+  pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000, estimate: 6_000, history: 30, memory: 8 }, // ≈ 20 typical replies ($0.08/day at most)
   // $14.99/month: the worst case (every day at the cap, $9/month) stays under what's left after a 30% store fee.
-  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000, estimate: 12_000 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
+  // Premium extras (owner, Nov 3): longer memory (60 messages, 24 facts) and early access to new people and features.
+  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000, estimate: 12_000, history: 60, memory: 24 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
 } as const;
 export type Plan = keyof typeof PLANS;
 /** All users together, per UTC day: the circuit breaker's default ($25), overridable with CHAT_GLOBAL_DAILY_USD. */

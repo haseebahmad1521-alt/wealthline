@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { addStrike, keywords, screen, settle, strikeNotice, costMicros } from '../../supabase/functions/_shared/persona.ts';
+import { addMemory, addStrike, keywords, screen, settle, strikeNotice, costMicros } from '../../supabase/functions/_shared/persona.ts';
 
 test('screen catches insults and threats aimed at someone, not casual swearing', () => {
   assert.equal(screen('you are such an idiot'), 'abuse');
@@ -44,4 +44,12 @@ test('strikes: three in the window → 24 h cooldown; any strike after a cooldow
   r = addStrike(s, 200 * day);
   assert.equal(r.outcome, 'hold');
   assert.equal(r.state.onHold, true);
+});
+
+test('memory: keeps the newest facts, skips repeats and nothing-to-remember', () => {
+  assert.deepEqual(addMemory(['Lives in Oslo'], null, 3), ['Lives in Oslo']);
+  assert.deepEqual(addMemory(['Lives in Oslo'], 'lives in oslo', 3), ['Lives in Oslo']);
+  assert.deepEqual(addMemory(['a', 'b', 'c'], 'd', 3), ['b', 'c', 'd']);
+  assert.equal(settle({ reply: 'hi', reaction: null, flag: null, remember: '  Named Sam ' }).remember, 'Named Sam');
+  assert.equal(settle({ reply: 'hi', reaction: null, flag: null }).remember, null);
 });

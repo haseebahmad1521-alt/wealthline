@@ -78,7 +78,7 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
       if (!thread.data) return [] as ChatMessage[];
       const r = await db()
         .from('chat_messages')
-        .select('id, role, text, sources, created_at, seen_at')
+        .select('id, role, text, sources, created_at, seen_at, reaction')
         .eq('thread_id', thread.data.id)
         .order('created_at', { ascending: true })
         .limit(200);
