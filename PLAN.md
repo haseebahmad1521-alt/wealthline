@@ -21,15 +21,20 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 after the World return fix (commit: see `git log -1`, pushed and deployed)._
+_Updated Nov 2, 2026, batch B mostly done (pushed; see `git log`)._
 
-- **Just landed (owner's report on "continue"):** coming back to World from a profile no longer breaks the globe. Cause: while a profile covers World, World's globe area measures 0×0 and wrote a zero radius and a 0,0 centre into the shared scene, which put the camera at NaN (blank planet behind the profile) and left every portrait's merge spring at NaN for good (bubbles and fans dead on return). Now the hidden area keeps its last good place, the planet never uses a zero radius, springs restart from each portrait's own place on return, and portraits/dots stay hidden during the camera swing and fade in once it has nearly arrived (`scene.worldMix`), pinned to the planet. Verified in the browser at 390×844: fan open → profile → Back keeps the fan, no NaN, taps and drags work.
-- **Earlier (batch A2):** "+N" bubbles fan out at any depth; a portrait tap opens the profile; Back keeps World as it was; no-history Back goes to the last tab (`src/lib/last-tab.ts`).
-- **Next:** batch B below (one scene for the remaining views), then P.
+- **Just landed (batch B):**
+  - **World views on the planet:** Money, Economies and What if now draw on the real planet. Flows are great-circle lines on the overlay canvas, with dashes travelling to HQ (`world-globe.web.tsx`). Shaded countries are painted into an equirectangular `fillMap` that the Earth shader blends, and they fade with `worldMix` (`planet-scene.web.tsx`, `scene.fills`/`fillsVersion`). What if defaults to a region (e.g. "Rest of world"), which has no country shape, so nothing is shaded until a country is picked. That's the same as the old SVG globe.
+  - **Profiles zoom in:** `scene.visit` = HQ, a third camera pose blended after World. `scene.worldMix` now means World's share of the view, so portraits still wait on the way back.
+  - **Per-page camera angles:** `ANGLES` in `scene.ts`; `Screen angle="projects" | "watchlist"`.
+  - **News sheet:** tapping a headline opens a glass sheet (RN `Modal`) that grows from its row. "Read on <source>" opens the article. Escape, the backdrop or Done closes it.
+  - **Phone QR:** `npm run phone:qr -- --plain` prints a QR that can be pasted into chat (checked to decode).
+- **Next:** the last batch B item, one persistent search field. Then batch P (rocket, built in code, owner Nov 2), then C.
+  - Suggested shape for the search field: one glass search field in the top chrome (under the ticker on phones, in the desktop nav) whose placeholder and results follow the tab: people on Rankings, places/companies on World, projects on Projects, watchlist on Watchlist. Rankings' own search moves into it. Run Impeccable `shape` first.
 - **Half-done:** nothing uncommitted.
-- **Ask the owner:** nothing open. (Rocket source decided Nov 2: built in code.)
-- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation, the fan on a 320 px phone.
-- **Verify:** `npm run preview:phone` → http://localhost:8090 (phone frame) or http://localhost:8081 directly; `npm run typecheck`, `npm test`; `npm run build:pages` before a push.
+- **Ask the owner:** nothing open.
+- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation, the fan on a 320 px phone, the news-sheet zoom and the profile fly-in on a phone.
+- **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain` for a phone, or `npm run preview:phone` → http://localhost:8090 (phone frame). Also `npm run typecheck`, `npm test`, and `npm run build:pages` before a push.
 
 ## Next up (work queue, priority order)
 
@@ -59,7 +64,7 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
 - [x] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
 - [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
-- [ ] News items open as a glass sheet that zooms from the row
+- [x] News items open as a glass sheet that zooms from the row
 
 **Batch P — Projects: the ascent (owner, Nov 2, 2026; planned, not started)**
 The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
