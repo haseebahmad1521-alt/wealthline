@@ -55,6 +55,7 @@ _project_metadata.jsonl
 .env
 .env.local
 .env.*.local
+.env.secrets
 
 # Claude Code: per-machine settings and the Impeccable engine binary
 # (re-downloaded on first run; reinstall with `npx impeccable install`)

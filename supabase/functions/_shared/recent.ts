@@ -61,3 +61,8 @@ export function xaiCostMicros(model: string, u: XaiUsage | undefined, toolCalls:
   const theirs = (u?.cost_in_usd_ticks ?? 0) / 1e4;
   return Math.round(Math.max(ours, theirs));
 }
+
+/** The status id of any X post link, with or without the handle (Grok cites `x.com/i/status/<id>`). */
+export function statusId(url: string): string | null {
+  return /^https:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/(?:[A-Za-z0-9_]{1,15}|i(?:\/web)?)\/status\/(\d{5,25})(?:[/?#].*)?$/.exec(url.trim())?.[1] ?? null;
+}

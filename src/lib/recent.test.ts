@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { fromDate, MAX_GAP, nextDue, sameUrl, xaiCostMicros, xPostId } from '../../supabase/functions/_shared/recent.ts';
+import { fromDate, MAX_GAP, nextDue, sameUrl, statusId, xaiCostMicros, xPostId } from '../../supabase/functions/_shared/recent.ts';
 
 const H = 36e5;
 const D = 24 * H;
@@ -35,4 +35,10 @@ test('only posts by the person themselves count', () => {
 test('cost: tokens plus $5 per 1,000 searches, or xAI’s own figure when higher', () => {
   assert.equal(xaiCostMicros('grok-4.3', { input_tokens: 10_000, output_tokens: 1000, input_tokens_details: { cached_tokens: 2000 } }, 2), 10_000 + 400 + 2500 + 10_000);
   assert.equal(xaiCostMicros('grok-4.3', { cost_in_usd_ticks: 5e8 }, 0), 50_000);
+});
+
+test('citations match by status id, with or without the handle', () => {
+  assert.equal(statusId('https://x.com/i/status/2117272824830210391'), '2117272824830210391');
+  assert.equal(statusId('https://x.com/elonmusk/status/2117272824830210391?s=20'), '2117272824830210391');
+  assert.equal(statusId('https://electrek.co/guides/elon-musk'), null);
 });
