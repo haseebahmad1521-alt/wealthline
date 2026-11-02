@@ -66,7 +66,8 @@
     "export:web": "expo export -p web",
     "build:pages": "node scripts/build-pages.mjs",
     "preview:qr": "node scripts/preview-qr.mjs",
-    "preview:phone": "node scripts/preview-phone.mjs"
+    "preview:phone": "node scripts/preview-phone.mjs",
+    "phone:qr": "node scripts/phone-qr.mjs"
   },
   "private": true,
   "engines": {
