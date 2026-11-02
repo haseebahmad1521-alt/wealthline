@@ -4,12 +4,11 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 
 import { InstallCard } from '@/components/install-card';
 import { Body, Button, Caption, Heading, Icon, Screen, Surface, icons, minTouch } from '@/components/ui';
-import { activate, resetPassword, passwordRules, setFirstName, signIn, signOut, signUp, verifyDevice } from '@/lib/auth';
+import { activate, confirm, resetPassword, passwordRules, setFirstName, signOut, verifyDevice } from '@/lib/auth';
 import { useCurrencyChoice } from '@/lib/currency';
 import { useAuth } from '@/lib/data';
 import { color, font, radius, space, type } from '@/theme';
 
-type Mode = 'in' | 'up';
 type Step = 'form' | 'code' | 'inbox';
 
 function Field(props: {
@@ -133,7 +132,6 @@ export default function Account() {
   const { session, isAdmin } = useAuth();
   const router = useRouter();
   const { activated } = useLocalSearchParams<{ activated?: string }>();
-  const [mode, setMode] = useState<Mode>('in');
   const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -168,26 +166,21 @@ export default function Account() {
   const welcome = activated === 'welcome';
 
   const rules = passwordRules(password);
-  const strong = rules.every((r) => r.met);
   const cleanEmail = email.trim();
   const emailOk = /^[^\s@]+@[^\s@]+$/.test(cleanEmail);
 
   const submit = () =>
     run(async () => {
       if (!emailOk) throw new Error('Enter a valid email address.');
-      if (mode === 'up') {
-        if (!strong) throw new Error('Choose a password that meets every requirement.');
-        await signUp(cleanEmail, password);
-        setStep('inbox');
-      } else {
-        if (!password) throw new Error('Enter your password.');
-        if ((await signIn(cleanEmail, password)) === 'mfa') setStep('code');
-      }
+      if (!password) throw new Error('Enter a password.');
+      const r = await confirm(cleanEmail, password);
+      if (r === 'mfa') setStep('code');
+      if (r === 'check-email') setStep('inbox');
     });
 
   const resend = () =>
     run(async () => {
-      await signIn(cleanEmail, password);
+      await confirm(cleanEmail, password);
       setNotice('We sent a new email.');
     });
 
@@ -232,17 +225,19 @@ export default function Account() {
       <Surface style={styles.card}>
         <Heading level={2}>Check your inbox.</Heading>
         <Body secondary>
-          We sent an activation link to {cleanEmail}. Open it, then come back here to sign in.
+          If {cleanEmail} is new to Wealthline, we sent it a link to activate your account. Open it, then come back
+          here.
         </Body>
+        <Body secondary>Already have an account? Then the password didn’t match. Try again or reset it.</Body>
+        {messages}
         <Button
-          label="Back to sign in"
-          variant="secondary"
+          label="Try again"
           onPress={() => {
             setStep('form');
-            setMode('in');
             setPassword('');
           }}
         />
+        <Button label="Forgot password?" variant="secondary" onPress={() => void forgot()} disabled={busy} />
       </Surface>
     );
   } else if (step === 'code') {
@@ -270,26 +265,14 @@ export default function Account() {
   } else {
     content = (
       <Surface style={styles.card}>
-        <View accessibilityRole="tablist" style={styles.segment}>
-          {(['in', 'up'] as const).map((m) => (
-            <Pressable
-              key={m}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === m }}
-              onPress={() => { setMode(m); setError(null); setNotice(null); }}
-              style={[styles.segmentItem, mode === m && styles.segmentOn]}>
-              <Text numberOfLines={1} style={[type.headline, styles.segmentLabel, { color: mode === m ? color.text : color.textSecondary }]}>
-                {m === 'in' ? 'Sign in' : 'Sign up'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        {activated === '1' && mode === 'in' && <Body>Email confirmed. Sign in to continue.</Body>}
-          {activated === 'failed' && mode === 'in' && (
-            <Text accessibilityRole="alert" style={[type.body, { color: color.loss }]}>
-              That link was already used, has expired, or was opened on another device. Sign in to continue.
-            </Text>
-          )}
+        <Heading level={2}>Sign in or create an account.</Heading>
+        <Body secondary>Enter your email and a password. New here? Confirm creates your account.</Body>
+        {activated === '1' && <Body>Email confirmed. Sign in to continue.</Body>}
+        {activated === 'failed' && (
+          <Text accessibilityRole="alert" style={[type.body, { color: color.loss }]}>
+            That link was already used, has expired, or was opened on another device. Sign in to continue.
+          </Text>
+        )}
         <Field
           label="Email"
           value={email}
@@ -304,13 +287,14 @@ export default function Account() {
           last
           onSubmit={() => void submit()}
           extra={{
-            textContentType: mode === 'up' ? 'newPassword' : 'password',
-            autoComplete: mode === 'up' ? 'new-password' : 'current-password',
+            textContentType: 'password',
+            autoComplete: 'current-password',
           }}
           trailing={{ label: show ? 'Hide' : 'Show', a11y: show ? 'Hide password' : 'Show password', onPress: () => setShow(!show) }}
         />
-        {mode === 'up' && (
-          <View style={{ gap: 2 }} accessibilityLabel="Password requirements">
+        {password.length > 0 && (
+          <View style={{ gap: 2 }} accessibilityLabel="Password requirements for a new account">
+            <Caption>For a new account, the password needs:</Caption>
             {rules.map((r) => (
               <Caption key={r.label} style={{ color: r.met ? color.gain : color.textSecondary }}>
                 {r.met ? 'Met' : 'Needed'}: {r.label}
@@ -319,8 +303,8 @@ export default function Account() {
           </View>
         )}
         {messages}
-        <Button label={mode === 'up' ? 'Create account' : 'Sign in'} onPress={() => void submit()} loading={busy} />
-        {mode === 'in' && <Button label="Forgot password?" variant="secondary" onPress={() => void forgot()} disabled={busy} />}
+        <Button label="Confirm" onPress={() => void submit()} loading={busy} />
+        <Button label="Forgot password?" variant="secondary" onPress={() => void forgot()} disabled={busy} />
       </Surface>
     );
   }
@@ -355,8 +339,4 @@ const styles = StyleSheet.create({
   // minWidth 0: web inputs otherwise keep an intrinsic width and push the trailing button out.
   input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
   trailing: { minHeight: minTouch, minWidth: minTouch, paddingHorizontal: space.sm, flexShrink: 0, justifyContent: 'center', alignItems: 'center' },
-  segment: { flexDirection: 'row', backgroundColor: color.fill, borderRadius: radius.pill, padding: 3 },
-  segmentItem: { flex: 1, minHeight: minTouch, paddingHorizontal: space.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
-  segmentLabel: { fontSize: 15 },
-  segmentOn: { backgroundColor: color.surface },
 });

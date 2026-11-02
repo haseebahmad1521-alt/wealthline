@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { cors, isEmail, isStr, json, sessionIdOf, sha256Hex } from '../_shared/util.ts';
 
 const url = Deno.env.get('SUPABASE_URL')!;
@@ -16,10 +16,11 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'Invalid request.' }, 400);
   }
-  const { email, password, device_id, device_token, redirect_to } = body;
+  const { email, password, device_id, device_token, redirect_to, activate_to } = body;
   if (
     !isEmail(email) || !isStr(password, 256) || !isStr(device_id, 100) ||
-    (device_token != null && !isStr(device_token, 200)) || (redirect_to != null && !isStr(redirect_to, 500))
+    (device_token != null && !isStr(device_token, 200)) || (redirect_to != null && !isStr(redirect_to, 500)) ||
+    (activate_to != null && !isStr(activate_to, 500))
   ) {
     return json({ error: 'Invalid request.' }, 400);
   }
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
     if (error?.code === 'email_not_confirmed') {
       return json({ error: 'Confirm your email first. Check your inbox for the activation link.' }, 403);
     }
-    return json({ error: 'Email or password is incorrect.' }, 401);
+    return await signUpOrNeutral(anon, email, password, activate_to as string | undefined);
   }
   const { session, user } = data;
   const sessionId = sessionIdOf(session.access_token);
@@ -78,3 +79,17 @@ Deno.serve(async (req) => {
   }
   return json({ mfa_required: true });
 });
+
+// One "Confirm" for sign-in and sign-up. A wrong password and a new email get the same answer, so the form never
+// says whether an account exists: with confirmations on, Auth's signUp returns an obfuscated user for a confirmed
+// email and sends nothing, and for a new (or still unconfirmed) one it sends the activation link.
+async function signUpOrNeutral(anon: SupabaseClient, email: string, password: string, activateTo?: string) {
+  const { error } = await anon.auth.signUp({ email, password, options: { emailRedirectTo: activateTo } });
+  if (error?.code === 'weak_password') {
+    // Checked before Auth looks the email up, so this is the same for existing and new emails.
+    return json({ error: 'Email or password is incorrect. A new account needs a password that meets every requirement.' }, 401);
+  }
+  if (error?.status === 429) return json({ error: 'Too many attempts. Try again in a few minutes.' }, 429);
+  if (error) return json({ error: 'Could not finish. Try again.' }, 500);
+  return json({ check_email: true });
+}

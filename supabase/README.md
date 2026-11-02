@@ -53,6 +53,10 @@ as verified, otherwise it revokes the password session and emails a 6-digit code
 attempts per 10-minute challenge, verifies the code, records the new session, and issues a device token. The same email's link also works
 (the only option with the built-in sender, which can't show the code): opened on the device holding the live
 challenge, `activate` accepts the link session (amr `otp`/`magiclink`, ≤15 min), removes the challenge and trusts the device.
+Sign-in and sign-up are one form with one "Confirm" button: when the password doesn't match, `sign-in` calls `signUp`
+server side and answers `{check_email: true}` either way (Auth sends a confirmed email nothing and a new one its
+activation link), so the form never reveals whether an account exists. Only `weak_password` (checked before the
+email lookup) and rate limits get their own messages.
 
 ## Designating an admin
 

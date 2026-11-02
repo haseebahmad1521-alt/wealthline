@@ -60,20 +60,25 @@ async function adopt(session: Tokens) {
   if (r.error) throw new Error('Sign-in failed. Try again.');
 }
 
-/** Returns 'mfa' when an emailed code is needed on this device. */
-export async function signIn(email: string, password: string): Promise<'signed-in' | 'mfa'> {
-  const r = await call<{ session?: Tokens; mfa_required?: boolean }>('sign-in', {
+/**
+ * Signs in, or creates the account when the email is new. 'mfa': an emailed code is needed on this device.
+ * 'check-email': either a new account's activation link was sent or the password didn't match; the server
+ * answers both the same way so the form never reveals whether an account exists.
+ */
+export async function confirm(email: string, password: string): Promise<'signed-in' | 'mfa' | 'check-email'> {
+  const r = await call<{ session?: Tokens; mfa_required?: boolean; check_email?: boolean }>('sign-in', {
     email,
     password,
     device_id: await deviceId(),
     device_token: await tokenFor(email),
     redirect_to: appUrl('/account'),
+    activate_to: appUrl('/account?activated=1'),
   });
   if (r.session) {
     await adopt(r.session);
     return 'signed-in';
   }
-  return 'mfa';
+  return r.mfa_required ? 'mfa' : 'check-email';
 }
 
 export async function verifyDevice(email: string, code: string): Promise<void> {
@@ -104,15 +109,6 @@ export async function activate(): Promise<'activated' | 'signed-in' | null> {
   await saveToken(r.email, r.device_token);
   await adopt(session);
   return r.activated ? 'activated' : 'signed-in';
-}
-
-export async function signUp(email: string, password: string): Promise<void> {
-  const r = await db().auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: appUrl('/account?activated=1') },
-  });
-  if (r.error) throw new Error(r.error.message);
 }
 
 export async function resetPassword(email: string): Promise<void> {
