@@ -1,7 +1,7 @@
-import { Link, usePathname } from 'expo-router';
+import { Link, useGlobalSearchParams, usePathname } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
 import { Image } from 'expo-image';
-import type { ComponentRef, Ref } from 'react';
+import { useEffect, type ComponentRef, type Ref } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/ui';
 import { useChromeHidden } from '@/lib/scene';
 import { useAuth } from '@/lib/data';
+import { rememberTab } from '@/lib/last-tab';
 import { color, contentWidth, desktopBreakpoint, font, glass, radius, scrim, space, type } from '@/theme';
 
 const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; label: string; icon: IconName }[] = [
@@ -63,8 +64,15 @@ export default function AppTabs() {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const current = Math.max(0, tabs.findIndex((t) => (t.href === '/' ? pathname === '/' : pathname.startsWith(t.href))));
+  const params = useGlobalSearchParams();
+  const index = tabs.findIndex((t) => (t.href === '/' ? pathname === '/' : pathname.startsWith(t.href)));
+  const current = Math.max(0, index);
   const hidden = useChromeHidden();
+  // Remember the tab (with its view, e.g. World's chosen person) for a Back that has no history to pop.
+  const query = new URLSearchParams(Object.entries(params).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString();
+  useEffect(() => {
+    if (index >= 0) rememberTab(query ? `${pathname}?${query}` : pathname);
+  }, [index, pathname, query]);
 
   // On desktop the triggers stay mounted (Tabs needs them for routing) but hidden; TopNav is the visible bar.
   // Phones: a floating rounded glass bar (owner, Nov 2, 2026) that slides away while you scroll down a page. The glass

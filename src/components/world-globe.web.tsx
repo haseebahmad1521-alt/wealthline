@@ -1,8 +1,9 @@
 // World on the real planet (owner, Nov 1, 2026): the planet scene turns to look straight at the globe, and this layer
 // sits over World's globe area. Portraits sit at each person's main headquarters; when they crowd together on screen
 // they slide into one joined bubble (an SVG "goo" filter fuses their glass circles, springs give the elastic overshoot)
-// and split apart again as you zoom in. Company places are small dots: every one is a real site. Choosing a person
-// fades everyone else to 5%. Pinch, ctrl+wheel (trackpad pinch) and Safari gestures zoom the globe, never the page.
+// and split apart again as you zoom in. Tapping a "+N" bubble leans in a little and fans its people out around it, even
+// when they share a city; tapping a portrait opens that person's profile. Company places are small dots: every one is
+// a real site. Choosing a person fades everyone else to 5%. Pinch, ctrl+wheel (trackpad pinch) and Safari gestures zoom the globe, never the page.
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +30,10 @@ if (typeof document !== 'undefined' && !document.getElementById(GOO_ID)) {
 
 type Spring = { x: number; y: number; vx: number; vy: number; op: number; scale: number; init: boolean };
 
+// The bubble fanned open, kept outside the component so it is still open when Back returns from a profile.
+let opened: { keys: Set<string>; zoom: number } | null = null;
+let openedFocus: string | null = null;
+
 const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const wrap180 = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180;
 
@@ -39,6 +44,7 @@ export function WorldGlobe({
   focus,
   center,
   onSelect,
+  onOpen,
   label,
 }: {
   height: number;
@@ -47,16 +53,21 @@ export function WorldGlobe({
   focus: string | null;
   center: { lat: number; lng: number } | null;
   onSelect: (id: string | null) => void;
+  /** Open a person's profile (a tap on their portrait). */
+  onOpen: (id: string) => void;
   label: string;
 }) {
   const host = useRef<HTMLElement | null>(null);
   // Props the frame loop reads without re-subscribing.
-  const live = useRef({ markers, sites, focus, onSelect });
-  live.current = { markers, sites, focus, onSelect };
+  const live = useRef({ markers, sites, focus, onSelect, onOpen });
+  live.current = { markers, sites, focus, onSelect, onOpen };
   const tween = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
 
   // Turn toward the chosen person (or the place in question) and lean in a little.
   useEffect(() => {
+    // Choosing someone else closes the fanned bubble (coming back from a profile keeps it).
+    if (focus !== openedFocus) opened = null;
+    openedFocus = focus;
     // Choosing a person flies in close over their headquarters; "Everyone" eases back out to the whole globe.
     if (center) tween.current = { lat: center.lat, lng: center.lng, zoom: focus ? 0.78 : scene.world.zoom };
     else if (!focus && scene.world.zoom > 0.3) tween.current = { lat: scene.world.lat, lng: scene.world.lng, zoom: 0 };
@@ -128,7 +139,8 @@ export function WorldGlobe({
       return n;
     };
 
-    let clusters: { x: number; y: number; keys: string[]; lat: number; lng: number }[] = [];
+    // What a tap can hit, where it is drawn this frame: fanned people first (they sit on top), then bubbles.
+    let hits: { x: number; y: number; keys: string[] }[] = [];
     let raf = 0;
     let last = performance.now();
     let dragging = false;
@@ -189,7 +201,7 @@ export function WorldGlobe({
       // Portraits: project, then cluster greedily in importance order (the chosen person first, then by rank).
       const order = f ? [...ms.filter((m) => m.key === f), ...ms.filter((m) => m.key !== f)] : ms;
       const R = S * 0.9;
-      const next: typeof clusters = [];
+      const next: { x: number; y: number; keys: string[] }[] = [];
       // Screen-space grid (cell = merge radius): each portrait only checks its own and neighbouring cells.
       const grid = new Map<number, (typeof next)[number][]>();
       const cell = (x: number, y: number) => Math.floor(x / R) * 4096 + Math.floor(y / R);
@@ -202,7 +214,7 @@ export function WorldGlobe({
         const y = p.y;
         pos.set(m.key, { x, y, vis });
         // Faded people (someone else is chosen) never merge: they stay where they are at 5%.
-        if (vis <= 0 || (f && m.key !== f)) continue;
+        if (vis <= 0 || (f && m.key !== f) || opened?.keys.has(m.key)) continue;
         const gx = Math.floor(x / R);
         const gy = Math.floor(y / R);
         let c: (typeof next)[number] | undefined;
@@ -210,15 +222,66 @@ export function WorldGlobe({
           for (let j = -1; j <= 1 && !c; j++) c = grid.get((gx + i) * 4096 + gy + j)?.find((k) => (k.x - x) ** 2 + (k.y - y) ** 2 < R * R);
         if (c) c.keys.push(m.key);
         else {
-          const nc = { x, y, keys: [m.key], lat: m.lat, lng: m.lng };
+          const nc = { x, y, keys: [m.key] };
           next.push(nc);
           const key = cell(x, y);
           grid.set(key, [...(grid.get(key) ?? []), nc]);
         }
       }
-      clusters = next;
       const leaderOf = new Map<string, (typeof next)[number]>();
       for (const c of next) for (const k of c.keys) leaderOf.set(k, c);
+
+      // The fanned bubble: its people still crowd by distance, but each crowd is spread around its centre (a ring, or
+      // a sunflower spiral past six) with a clear gap, so every portrait can be tapped however close their HQs are.
+      // Zooming in splits them further on their own; zooming back out past where it opened closes it.
+      if (opened && w.zoom < opened.zoom - 0.15) opened = null;
+      const fan = new Map<string, { x: number; y: number }>();
+      if (opened) {
+        const crowds: { x: number; y: number; keys: string[] }[] = [];
+        for (const m of order) {
+          const p = pos.get(m.key)!;
+          if (!opened.keys.has(m.key) || p.vis <= 0) continue;
+          const g = crowds.find((k) => (k.x / k.keys.length - p.x) ** 2 + (k.y / k.keys.length - p.y) ** 2 < R * R);
+          if (g) {
+            g.x += p.x;
+            g.y += p.y;
+            g.keys.push(m.key);
+          } else crowds.push({ x: p.x, y: p.y, keys: [m.key] });
+        }
+        const gap = S + 14;
+        // How far a crowd of n reaches once spread; crowds whose spreads would touch become one crowd.
+        const reach = (n: number) => (n <= 1 ? S / 2 : n <= 6 ? gap / (2 * Math.sin(Math.PI / n)) : (gap / 1.75) * Math.sqrt(n - 0.5)) + S / 2;
+        for (let merged = true; merged; ) {
+          merged = false;
+          for (let i = 0; i < crowds.length && !merged; i++)
+            for (let j = i + 1; j < crowds.length && !merged; j++) {
+              const a = crowds[i];
+              const b = crowds[j];
+              const d = Math.hypot(a.x / a.keys.length - b.x / b.keys.length, a.y / a.keys.length - b.y / b.keys.length);
+              if (d < reach(a.keys.length) + reach(b.keys.length) + 6) {
+                a.x += b.x;
+                a.y += b.y;
+                a.keys.push(...b.keys);
+                crowds.splice(j, 1);
+                merged = true;
+              }
+            }
+        }
+        for (const g of crowds) {
+          const n = g.keys.length;
+          const cx = g.x / n;
+          const cy = g.y / n;
+          g.keys.forEach((k, i) => {
+            if (n === 1) return fan.set(k, pos.get(k)!);
+            const ring = n <= 6;
+            const r = ring ? gap / (2 * Math.sin(Math.PI / n)) : (gap / 1.75) * Math.sqrt(i + 0.5);
+            const a = ring ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n) + (i * 2 * Math.PI) / n : i * 2.39996;
+            fan.set(k, { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+          });
+        }
+      }
+      const fannedHits: typeof hits = [];
+      const bubbleHits: typeof hits = [];
 
       // Portraits are pinned to their place on the globe every frame (no lag while it turns). Only the merge/split
       // offset, from the portrait's own place to its cluster's centre, is sprung, with a slight overshoot.
@@ -227,10 +290,13 @@ export function WorldGlobe({
         const p = pos.get(m.key)!;
         const c = leaderOf.get(m.key);
         const isLeader = !!c && c.keys[0] === m.key;
-        const tx = c ? c.x : p.x;
-        const ty = c ? c.y : p.y;
+        const fp = fan.get(m.key);
+        const tx = fp ? fp.x : c ? c.x : p.x;
+        const ty = fp ? fp.y : c ? c.y : p.y;
         const faded = !!f && m.key !== f;
-        const targetOp = p.vis * (faded ? FADED : c && !isLeader ? 0 : 1);
+        // While a bubble is fanned open, everyone outside it steps back so the fan reads clearly.
+        const behind = !!opened && !fp ? 0.3 : 1;
+        const targetOp = p.vis * behind * (faded ? FADED : c && !isLeader ? 0 : 1);
         const s = n.s; // s.x / s.y: the sprung offset from the portrait's own place
         const ox = tx - p.x;
         const oy = ty - p.y;
@@ -251,16 +317,19 @@ export function WorldGlobe({
         const x = p.x + s.x;
         const y = p.y + s.y;
         s.op += (targetOp - s.op) * (reduce ? 1 : 1 - Math.exp(-dt * 10));
-        const blobOp = faded ? 0 : p.vis;
+        const blobOp = faded ? 0 : p.vis * behind;
         n.blob.style.transform = `translate3d(${x - (S + 8) / 2}px,${y - (S + 8) / 2}px,0)`;
         n.blob.style.opacity = String(blobOp);
         n.face.style.transform = `translate3d(${x - S / 2}px,${y - S / 2}px,0) scale(${c && !isLeader ? 0.7 : 1})`;
         n.face.style.opacity = String(s.op);
-        n.face.style.zIndex = isLeader ? '2' : '1';
+        n.face.style.zIndex = fp ? '3' : isLeader ? '2' : '1';
         const more = isLeader && c!.keys.length > 1 ? c!.keys.length - 1 : 0;
         n.count.style.display = more ? 'block' : 'none';
         if (more) n.count.textContent = `+${more}`;
+        if (fp && p.vis > 0) fannedHits.push({ x, y, keys: [m.key] });
+        else if (isLeader) bubbleHits.push({ x, y, keys: c!.keys });
       }
+      hits = [...fannedHits, ...bubbleHits];
     };
     raf = requestAnimationFrame(frame);
 
@@ -311,14 +380,22 @@ export function WorldGlobe({
       if (pointers.size < 2) pinch = null;
       if (pointers.size) return;
       dragging = false;
-      // A tap: open the person, or zoom into a joined bubble so it splits.
+      // A tap: a portrait opens the profile; a "+N" bubble leans in a little and fans its people out; open space closes
+      // the fanned bubble, then the chosen person.
       if (down && !moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
         const x = e.clientX;
         const y = e.clientY;
-        const hit = clusters.find((c) => Math.hypot(c.x - x, c.y - y) < S / 2 + 4);
-        const { focus: f, onSelect: select } = live.current;
-        if (hit && hit.keys.length > 1) tween.current = { lat: hit.lat, lng: hit.lng, zoom: clampZoom(scene.world.zoom + 0.35) };
-        else if (hit) select(hit.keys[0] === f ? null : hit.keys[0]);
+        const hit = hits.find((h) => Math.hypot(h.x - x, h.y - y) < S / 2 + 4);
+        const { focus: f, onSelect: select, onOpen: openProfile, markers: ms } = live.current;
+        if (hit && hit.keys.length > 1) {
+          const inside = ms.filter((m) => hit.keys.includes(m.key));
+          const lat = inside.reduce((a, m) => a + m.lat, 0) / inside.length;
+          const lng = inside[0].lng + inside.reduce((a, m) => a + wrap180(m.lng - inside[0].lng), 0) / inside.length;
+          const zoom = clampZoom(scene.world.zoom + 0.12);
+          opened = { keys: new Set(hit.keys), zoom };
+          tween.current = { lat, lng, zoom };
+        } else if (hit) openProfile(hit.keys[0]);
+        else if (opened) opened = null;
         else if (f) select(null);
         scene.invalidate?.();
       }

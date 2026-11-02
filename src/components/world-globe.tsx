@@ -16,6 +16,8 @@ export function WorldGlobe({
   focus: string | null;
   center: { lat: number; lng: number } | null;
   onSelect: (id: string | null) => void;
+  /** Web only for now: a portrait tap opens the profile there; the SVG globe keeps tap-to-choose. */
+  onOpen: (id: string) => void;
   label: string;
 }) {
   return <Globe size={height} sites={sites} markers={markers} focus={focus} center={center} onSelect={onSelect} label={label} />;

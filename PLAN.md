@@ -21,13 +21,14 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026 at the end of batch A (commit: see `git log -1`, pushed and deployed)._
+_Updated Nov 2, 2026 at the end of batch A2 (commit: see `git log -1`, pushed and deployed)._
 
-- **Just landed (batch A):** globe gestures (no scroll/tap conflict), portraits pinned with springs only on merge/split, close-up on a chosen person, night side lifts when close, performance pass (sphere LOD, cheaper atmosphere, no per-frame allocations, grid clustering), floating glass tab bar, ticker + tab bar hide on scroll, glass bevel on every panel, edge scrims behind the ticker and tab bar, portraits reach the screen edges and fade only at the horizon, adaptive 8K textures.
-- **Next:** batch B below (one scene for the remaining views).
+- **Just landed (batch A2, owner's request on "continue"):** World "+N" bubbles fan their people out (ring up to 6, sunflower beyond; touching crowds merge; everyone else dims to 30%) with only a small lean-in (+0.12 zoom), so people sharing a city are reachable; tapping open space or zooming out closes it. A portrait tap now opens the profile (chips still choose a person). Back from a profile keeps World as it was (the open fan survives); with no history (refresh, shared link, relaunched PWA) Back goes to the last tab visited instead of Rankings (`src/lib/last-tab.ts`). Projects "ascent" scene planned as batch P.
+- **Back bug note:** with history, Back already returned correctly on localhost and the live site (World, Projects, Rankings with scroll kept); the Rankings jump only reproduced with no history, which is what was fixed. If the owner still sees it, ask which screen and how the profile was opened.
+- **Next:** batch B below (one scene for the remaining views), then P.
 - **Half-done:** nothing uncommitted.
-- **Ask the owner:** nothing open.
-- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation.
+- **Ask the owner:** rocket source for batch P: (a) build our own low-poly rocket in code (recommended: no licence risk, tiny, "Falcon-like but not quite" by design), or (b) a NASA 3D Resources model (US-government work, free; SLS/Saturn V/Ares glb, heavier and needs decimating), or (c) a CC0 model the owner picks.
+- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation, the fan on a 320 px phone.
 - **Verify:** `npm run preview:phone` → http://localhost:8090 (phone frame) or http://localhost:8081 directly; `npm run typecheck`, `npm test`; `npm run build:pages` before a push.
 
 ## Next up (work queue, priority order)
@@ -47,12 +48,29 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] Portraits not clipped at the globe area; fade only at the horizon
 - [x] Adaptive texture tiers incl. 8K (`src/lib/texture-tier.ts`)
 
+**Batch A2 — World drill-down and Back (done Nov 2)**
+- [x] "+N" bubbles fan out at any depth with a small lean-in; shared-city people reachable
+- [x] Tapping a portrait (fanned or single) opens the profile
+- [x] Back from a profile returns to where you were; no-history Back goes to the last tab
+
 **Batch B — one scene for every view**
 - [ ] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
 - [ ] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
 - [ ] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
 - [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
 - [ ] News items open as a glass sheet that zooms from the row
+
+**Batch P — Projects: the ascent (owner, Nov 2, 2026; planned, not started)**
+The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
+- Layout: rocket in the bottom-right third, angled up and to the right, exhaust trailing to the bottom right. Content weighted to the top left: a "top 3 projects" glass podium like Rankings, then project news and the latest recorded wealth jumps or drops tied to projects (from existing records only; no invented moves), then the rest of the list below.
+- Rocket: low poly (≈2–5k triangles), one texture atlas or flat PBR materials, white body with a dark interstage, grid fins and landing legs folded. Generic, not SpaceX: no logos, flag or name. Source is the open owner question in "Resume here" (default: built in code from a LatheGeometry body plus fins).
+- Engine: an additive glowing plume (a cone with a shader, hot white core fading to orange), a soft point light on the hull, and a bloom-like sprite at the nozzle.
+- Smoke: white, soft billboard puffs (one instanced mesh, ~60–120 particles) spawned at the nozzle, drifting back and expanding, fading out. Fluffy from a noise-shaded sprite texture, not a photo.
+- Speed cues: a few thin diagonal motion lines (screen-space, 3–6 at a time, top-right to bottom-left, low opacity); every 6–12 s a very faint cloud sprite sweeps fast across in front of the rocket.
+- Camera: slow floaty drift (two summed sines, a few degrees of orbit and roll) so the rocket parallaxes against the Earth and stars; scroll eases the camera a little higher.
+- Reduced motion: still rocket with a steady plume; no motion lines, cloud sweeps or drift.
+- Performance: render the rocket in the existing planet scene (no second WebGL context); particles and lines pause when the tab is hidden; check frame time on a mid phone.
+- Web first (three.js in `src/components/planet/`); native follows in batch F.
 
 **Batch C — Rankings over the planet**
 - [ ] Glass podium: bars fade toward Earth, side bars lean in at the bottom (flat 2D, not 3D)

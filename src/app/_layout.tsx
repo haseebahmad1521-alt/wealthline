@@ -18,6 +18,7 @@ import { TopNav } from '@/components/app-tabs';
 import { PlanetScene } from '@/components/planet/planet-scene';
 
 import { CurrencyProvider } from '@/lib/currency';
+import { lastTab } from '@/lib/last-tab';
 import { DataProvider } from '@/lib/data';
 // Web: capture the browser's install prompt at start-up, before the Account screen exists.
 import '@/lib/install';
@@ -67,7 +68,7 @@ export default function RootLayout() {
           name="person/[slug]"
           options={{ title: '', headerLeft: (p) =>
             // Native keeps the system back button (and edge swipe); web has none, so it gets ours.
-            Platform.OS === 'web' || !p.canGoBack ? <HeaderLink label={p.canGoBack ? 'Back' : 'Rankings'} /> : undefined,
+            Platform.OS === 'web' || !p.canGoBack ? <HeaderLink label={p.canGoBack || lastTab() !== '/' ? 'Back' : 'Rankings'} /> : undefined,
           ...topNav,
         }}
         />
@@ -96,7 +97,7 @@ function HeaderLink({ label }: { label: string }) {
     <Pressable
       accessibilityRole="button"
       hitSlop={10}
-      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace(lastTab() as '/'))}
       style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, marginHorizontal: 8 }}>
       <Text style={{ fontFamily: font.semibold, fontSize: 17, color: color.action }}>{label}</Text>
     </Pressable>

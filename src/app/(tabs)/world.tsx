@@ -152,6 +152,10 @@ export default function World() {
                   focus={focused?.person.id ?? null}
                   center={focused?.hq ?? null}
                   onSelect={(id) => select(id)}
+                  onOpen={(id) => {
+                    const e = empires.find((x) => x.person.id === id);
+                    if (e) router.push(`/person/${e.person.slug}`);
+                  }}
                   label={
                     focused
                       ? `Globe turned to ${focused.person.name}'s companies: ${focused.companies.reduce((n, c) => n + c.sites.length, 0)} places. Details follow.`
@@ -159,7 +163,7 @@ export default function World() {
                   }
                 />
                 <Caption style={styles.globeNote}>
-                  Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd and split as you zoom in. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.
+                  Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.
                 </Caption>
               </View>
             ) : (
