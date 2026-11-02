@@ -4,9 +4,10 @@ import { Fragment, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PageSearch } from '@/components/page-search';
+import { BuilderMoves, ProjectNews, ProjectPodium } from '@/components/project-arena';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
 import { Body, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
-import { usePeople, useProjects } from '@/lib/data';
+import { useNewsFor, usePeople, useProjects } from '@/lib/data';
 import { formatDate } from '@/lib/format';
 import { matches, useSearch } from '@/lib/search';
 import type { ProjectStatus } from '@/lib/view-params';
@@ -34,6 +35,8 @@ export default function Projects() {
   const shown = (projects.data ?? []).filter(
     (p) => (filter === 'all' || p.status === filter) && matches(query, p.title, p.description, byId.get(p.person_id)?.name),
   );
+  const all = projects.data ?? [];
+  const news = useNewsFor([...new Set(all.map((p) => p.person_id))]);
   const pending = projects.isPending || people.isPending;
   const error = projects.error ?? people.error;
 
@@ -44,6 +47,14 @@ export default function Projects() {
         <Body secondary>What the world’s biggest fortunes are building next.</Body>
       </View>
       <PageSearch context="projects" />
+      {!pending && !error && !query && all.length > 0 && (
+        <>
+          <ProjectPodium projects={all} byId={byId} />
+          <ProjectNews news={news.data ?? []} projects={all} byId={byId} />
+          <BuilderMoves projects={all} byId={byId} />
+          <Heading level={2}>All projects.</Heading>
+        </>
+      )}
       <View accessibilityRole="tablist" style={styles.segments}>
         {filters.map((f) => {
           const selected = filter === f.key;
@@ -76,8 +87,10 @@ export default function Projects() {
         />
       ) : shown.length === 0 && query ? (
         <StateView empty={{ title: `No projects match “${query}”.`, body: 'Try a title, a person, or a word from the description.' }} />
+      ) : all.length === 0 ? (
+        <StateView empty={{ title: 'Nothing on the launch pad yet.', body: 'Once sourced projects are recorded, the top three by their builder’s rank, headlines that name them and their builders’ recorded wealth moves appear here.' }} />
       ) : shown.length === 0 ? (
-        <StateView empty={{ title: 'No projects here yet.', body: 'Sourced announcements appear once they’re entered.' }} />
+        <StateView empty={{ title: `No ${filter} projects.`, body: 'Try All to see every recorded project.' }} />
       ) : (
         <Surface style={styles.list}>
           {shown.map((p, i) => {

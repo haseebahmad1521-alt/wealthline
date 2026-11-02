@@ -224,6 +224,23 @@ export const usePersonNews = (personId?: string) =>
     },
   });
 
+// Cached headlines for several people at once (the Projects page filters them to ones naming a project).
+export const useNewsFor = (personIds: string[]) =>
+  useQuery({
+    queryKey: ['news', 'for', [...personIds].sort().join(',')],
+    enabled: personIds.length > 0,
+    queryFn: async () => {
+      const r = await db()
+        .from('person_news')
+        .select('*')
+        .in('person_id', personIds)
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .limit(60);
+      if (r.error) throw r.error;
+      return r.data as PersonNews[];
+    },
+  });
+
 export const useSocialPost = (personId?: string) =>
   useQuery({
     queryKey: ['social', personId],

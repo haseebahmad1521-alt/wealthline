@@ -20,7 +20,7 @@ export const MEDAL = ['#C9971C', '#8A96A3', '#A8653A'] as const;
  * Entrance: rises and fades in once, staggered by `i`. React Native's Animated (Reanimated's layout animations stayed
  * stuck at their start state on web). Already visible when reduced motion is on.
  */
-function Rise({ i = 0, children, style, from = 24 }: { i?: number; children: ReactNode; style?: StyleProp<ViewStyle>; from?: number }) {
+export function Rise({ i = 0, children, style, from = 24 }: { i?: number; children: ReactNode; style?: StyleProp<ViewStyle>; from?: number }) {
   const [reduce, setReduce] = useState(false);
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
