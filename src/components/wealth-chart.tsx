@@ -42,25 +42,30 @@ type Props = {
 /**
  * Scrub (hover, or one-finger drag on touch) reads the value at any moment. Pan (mouse drag, two fingers,
  * horizontal wheel) and zoom (pinch, ctrl/⌘-wheel, or +/−) from 30 seconds to all-time.
- * Solid line = interpolation between real values (dots mark the values themselves when sparse);
+ * Solid line = interpolation between real values (dots mark the values themselves; rings mark estimates);
  * dashed grey = projection from the latest observed trend. Nothing else is drawn.
+ * Every chart (profile, Compare) follows the same rules (owner, Nov 4, 2026): opens on 7D, ends at the latest value
+ * (or the projection's end) rather than at an empty "now", and always marks the values themselves.
  */
 export function WealthChart({ points, live, now }: Props) {
   const money = useMoney();
   const first = points[0]?.t ?? now - presets[0].span;
   const fullSpan = Math.max(now - first, MIN_SPAN);
-  // Opens on all time (owner, Nov 1, 2026); 3H stays one tap away for intraday moves.
-  const [span, setSpan] = useState<number>(Infinity);
+  // Opens on 7D, the middle of the ranges (owner, Nov 4, 2026).
+  const [span, setSpan] = useState<number>(DEFAULT_SPAN);
   const [end, setEnd] = useState<number | null>(null); // null = follow now
   const [width, setWidth] = useState(0);
   const [cursor, setCursor] = useState<number | null>(null); // scrubbed time
   const effSpan = Math.min(span, fullSpan * 1.05);
-  const right = end ?? now;
+  // Following live, the window ends at the newest thing drawn, so the line reaches the right edge.
+  const latestT = Math.max(points.at(-1)?.t ?? now, live.projection?.to.t ?? -Infinity);
+  const head = Math.min(now, latestT);
+  const right = end ?? head;
   const left = right - effSpan;
 
   // Gesture state lives in refs so the responder doesn't need recreating.
-  const view = useRef({ span: effSpan, right, now, width, fullSpan, first });
-  view.current = { span: effSpan, right, now, width, fullSpan, first };
+  const view = useRef({ span: effSpan, right, now: head, width, fullSpan, first });
+  view.current = { span: effSpan, right, now: head, width, fullSpan, first };
   const start = useRef<{ right: number; span: number; dist: number | null; mid: number | null }>({ right, span: effSpan, dist: null, mid: null });
   // Web: the last pointer type, so a mouse drag pans while a finger drag scrubs.
   const pointer = useRef<string>(Platform.OS === 'web' ? 'mouse' : 'touch');
@@ -158,7 +163,7 @@ export function WealthChart({ points, live, now }: Props) {
   const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (HEIGHT - PAD.top - PAD.bottom);
 
   const linePath = visible.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
-  const showDots = inWindow.length > 0 && inWindow.length <= 60;
+  const dots = markers(inWindow);
   const latest = inWindow.at(-1);
   const trend = latest && inWindow[0] ? latest.v - inWindow[0].v : 0;
   const lineColor = trend > 0 ? color.gain : trend < 0 ? color.loss : color.text;
@@ -232,8 +237,7 @@ export function WealthChart({ points, live, now }: Props) {
               />
             ))}
             {visible.length > 1 && <Path d={linePath} stroke={lineColor} strokeWidth={2} fill="none" strokeLinejoin="round" />}
-            {showDots &&
-              inWindow.map((p) => (
+            {dots.map((p) => (
                 <Circle
                   key={p.t}
                   cx={x(p.t)}
@@ -275,7 +279,7 @@ export function WealthChart({ points, live, now }: Props) {
               {describe(left)}
             </SvgText>
             <SvgText x={width - PAD.right} y={HEIGHT - 6} textAnchor="end" fontSize={11} fontFamily={font.regular} fill={color.textSecondary}>
-              {end == null ? 'Now' : describe(right)}
+              {end == null && right >= now - 60_000 ? 'Now' : describe(right)}
             </SvgText>
           </Svg>
         )}
@@ -320,6 +324,15 @@ export function WealthChart({ points, live, now }: Props) {
       </View>
     </View>
   );
+}
+
+export const DEFAULT_SPAN = 7 * DAY;
+
+/** The values to mark on a line: every estimate, and recorded values thinned evenly to at most `max`. */
+export function markers<T extends { t: number; estimate?: boolean }>(pts: T[], max = 48): T[] {
+  const step = Math.max(1, Math.ceil(pts.filter((p) => !p.estimate).length / max));
+  let n = 0;
+  return pts.filter((p) => p.estimate || n++ % step === 0 || p === pts.at(-1));
 }
 
 /** Range buttons (3H … All), shared by every chart. */

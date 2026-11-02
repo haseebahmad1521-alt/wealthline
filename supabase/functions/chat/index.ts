@@ -22,6 +22,8 @@ import {
   type PersonaReply,
   type StrikeState,
   addMemory,
+  openerNote,
+  openerText,
 } from '../_shared/persona.ts';
 import { cors, json } from '../_shared/util.ts';
 
@@ -42,13 +44,14 @@ Deno.serve(async (req) => {
   if (verified.data !== true) return json({ error: 'Verify this device to chat.' }, 403);
   const userId = who.user.id;
 
-  let body: { person?: unknown; text?: unknown };
+  let body: { person?: unknown; text?: unknown; opener?: unknown };
   try {
     body = await req.json();
   } catch {
     return json({ error: 'Bad request.' }, 400);
   }
   const text = typeof body.text === 'string' ? body.text.trim() : '';
+  const opener = openerText(body.opener);
   if (!text || text.length > MAX_TEXT || typeof body.person !== 'string') return json({ error: `Write 1–${MAX_TEXT} characters.` }, 400);
 
   const db = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
@@ -134,6 +137,7 @@ Deno.serve(async (req) => {
         { type: 'text', text: `Material about ${ctx.name} (as of ${new Date().toISOString().slice(0, 10)}):\n\n${ctx.text}`, cache_control: { type: 'ephemeral' } },
         // Per user, after the shared cached prefix so every user still shares the persona cache.
         ...(facts.length ? [{ type: 'text' as const, text: `What you know about this user from earlier chats:\n${facts.map((f) => `- ${f}`).join('\n')}` }] : []),
+        ...(opener ? [{ type: 'text' as const, text: openerNote(opener) }] : []),
       ],
       output_config: { format: { type: 'json_schema', schema: REPLY_SCHEMA } },
       messages,

@@ -1,10 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { AiAvatar } from '@/components/ai-avatar';
-import type { Person } from '@/lib/data';
 import { formatDate } from '@/lib/format';
-import type { PersonStatus } from '@/lib/types';
-import { color, font, space, type } from '@/theme';
+import { firstName, type Opener } from '@/lib/opener';
+import { color, font, type } from '@/theme';
 
 function ago(iso: string) {
   const m = Math.round((Date.now() - Date.parse(iso)) / 60_000);
@@ -14,34 +12,32 @@ function ago(iso: string) {
   return formatDate(iso);
 }
 
-const first = (p: Person) => p.name.replace(/ & family$/, '').split(/\s+/)[0];
-
 /**
- * "Lately": an AI paraphrase, in their voice, of what they've been doing (written server side from their latest posts and
- * headlines). Shown as a chat bubble from the stylised AI avatar, never as a quote and without a platform name.
+ * The profile's one message from "AI <first name>" (owner, Nov 4): the AI "lately" line, or a members' greeting. A chat
+ * bubble with no avatar (the portrait is right above it); tapping it opens the chat with this message at the top.
  */
-export function StatusBubble({ person, status }: { person: Person; status: PersonStatus | null | undefined }) {
-  if (!status?.text) return null;
+export function StatusBubble({ name, opener, at, onPress }: { name: string; opener: Opener; at?: string; onPress: () => void }) {
+  const who = `AI ${firstName(name)}`;
   return (
-    <View style={styles.row}>
-      <AiAvatar uri={person.portrait_url} name={first(person)} size={40} />
-      <View
-        accessible
-        accessibilityLabel={`${first(person)}, AI simulation, lately: ${status.text}. Written ${ago(status.generated_at)} ago.`}
-        style={styles.bubble}>
-        <Text style={styles.meta} numberOfLines={1}>
-          {first(person)} · AI simulation · {ago(status.generated_at)}
-        </Text>
-        <Text style={styles.text}>{status.text}</Text>
-      </View>
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${who}: ${opener.text}${at ? `. Written ${ago(at)} ago` : ''}.`}
+      accessibilityHint="Opens the chat to reply"
+      onPress={onPress}
+      style={({ pressed }) => [styles.bubble, pressed && { opacity: 0.75 }]}>
+      <Text style={styles.meta} numberOfLines={1}>
+        {who}
+        {at ? ` · ${ago(at)}` : ''}
+      </Text>
+      <Text style={styles.text}>{opener.text}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingTop: 4 },
   bubble: {
-    flexShrink: 1,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     gap: 2,
     paddingHorizontal: 14,
     paddingVertical: 9,

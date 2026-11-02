@@ -4,7 +4,6 @@ import { useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ChatEntry } from '@/components/chat';
-import { StatusBubble } from '@/components/status-bubble';
 import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { portraitAt } from '@/lib/portrait';
@@ -71,15 +70,10 @@ export function ProfileHero({
         </Pressable>
       </View>
 
-      {!!status?.text && (
-        <View style={desktop && styles.bubbleDesktop}>
-          <StatusBubble person={person} status={status} />
-        </View>
-      )}
-
       <View style={desktop && styles.bubbleDesktop}>
         <ChatEntry
           person={person}
+          status={status}
           measureCard={(done) =>
             card.current ? card.current.measureInWindow((x, y, width, height) => done(width ? { x, y, width, height } : null)) : done(null)
           }

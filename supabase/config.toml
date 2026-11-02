@@ -48,3 +48,6 @@ verify_jwt = false # cron calls it with x-cron-secret, not a user token
 
 [functions.recent]
 verify_jwt = false # cron calls it with x-cron-secret, not a user token
+
+[functions.status]
+verify_jwt = false # cron calls it with x-cron-secret; members POST with their own token, checked inside

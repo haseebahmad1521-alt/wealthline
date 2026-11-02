@@ -20,12 +20,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AiAvatar } from '@/components/ai-avatar';
+import { StatusBubble } from '@/components/status-bubble';
 import { Button, Icon, icons, minTouch } from '@/components/ui';
-import { useChat, useChatAccess, type ChatMessage } from '@/lib/chat';
-import type { Person } from '@/lib/data';
+import { useChat, useChatAccess, useStatusInterest, type ChatMessage } from '@/lib/chat';
+import { useAuth, type Person } from '@/lib/data';
 import { formatDate, formatTime } from '@/lib/format';
 import { useKeyboardInset } from '@/lib/keyboard';
+import { greeting, memberName, statusOpener, type Opener } from '@/lib/opener';
 import { portraitAt } from '@/lib/portrait';
+import type { PersonStatus } from '@/lib/types';
 import { color, desktopBreakpoint, font, radius, space, type } from '@/theme';
 
 // Chat with a person's AI simulation (batch K; owner, Nov 2, 2026). The profile card ends in what looks like a
@@ -42,10 +45,28 @@ function focusStill(field: ComponentRef<typeof TextInput> | null) {
   else field.focus();
 }
 
-/** The card's facade: a message field and a send button that both open the chat. */
-export function ChatEntry({ person, measureCard }: { person: Person; measureCard: (done: (r: Rect | null) => void) => void }) {
+/**
+ * The card's facade: the one message from "AI <name>" (the AI "lately" line, or a greeting for members when there is
+ * none), then a message field and a send button. All of them open the chat, which starts with that message.
+ */
+export function ChatEntry({
+  person,
+  status,
+  measureCard,
+}: {
+  person: Person;
+  status: PersonStatus | null | undefined;
+  measureCard: (done: (r: Rect | null) => void) => void;
+}) {
   const access = useChatAccess();
+  const plan = useStatusInterest(person.id, person.slug);
+  const { session } = useAuth();
   const [open, setOpen] = useState<{ from: Rect | null } | null>(null);
+  const opener: Opener | null = status?.text
+    ? statusOpener(person, status.text, status.generated_at)
+    : plan
+      ? greeting(person, memberName(session?.user))
+      : null;
   // iOS Safari only raises the keyboard for a focus() inside the tap itself, and the chat's field isn't mounted yet:
   // focus this invisible field now, then hand focus to the real one (the keyboard stays up across the hand-off).
   const proxy = useRef<ComponentRef<typeof TextInput>>(null);
@@ -56,7 +77,8 @@ export function ChatEntry({ person, measureCard }: { person: Person; measureCard
   };
 
   return (
-    <>
+    <View style={styles.entryStack}>
+      {opener && <StatusBubble name={person.name} opener={opener} at={opener.at} onPress={show} />}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Message ${person.name}, AI simulation`}
@@ -74,18 +96,20 @@ export function ChatEntry({ person, measureCard }: { person: Person; measureCard
         </View>
       </Pressable>
       {web && <TextInput ref={proxy} style={styles.proxy} accessible={false} tabIndex={-1} aria-hidden />}
-      {open && <ChatSheet person={person} from={open.from} access={access} onClose={() => setOpen(null)} />}
-    </>
+      {open && <ChatSheet person={person} opener={opener} from={open.from} access={access} onClose={() => setOpen(null)} />}
+    </View>
   );
 }
 
 function ChatSheet({
   person,
+  opener,
   from,
   access,
   onClose,
 }: {
   person: Person;
+  opener: Opener | null;
   from: Rect | null;
   access: ReturnType<typeof useChatAccess>;
   onClose: () => void;
@@ -164,7 +188,7 @@ function ChatSheet({
               <ActivityIndicator color={color.textSecondary} />
             </View>
           ) : ready ? (
-            <Thread person={person} input={input} />
+            <Thread person={person} opener={opener} input={input} />
           ) : (
             <Gate person={person} unverified={access === 'unverified'} onGo={() => (close(), router.push('/account'))} />
           )}
@@ -214,8 +238,18 @@ function Gate({ person, unverified, onGo }: { person: Person; unverified: boolea
   );
 }
 
-function Thread({ person, input }: { person: Person; input: React.RefObject<ComponentRef<typeof TextInput> | null> }) {
+function Thread({
+  person,
+  opener,
+  input,
+}: {
+  person: Person;
+  opener: Opener | null;
+  input: React.RefObject<ComponentRef<typeof TextInput> | null>;
+}) {
   const chat = useChat(person.id, person.slug, true);
+  // The opener sits after the earlier history and before what's said in this sitting.
+  const [openedAt] = useState(() => new Date().toISOString());
   const [draft, setDraft] = useState('');
   const typing = chat.typing;
   const paused = chat.pausedUntil && new Date(chat.pausedUntil).getTime() > Date.now() ? chat.pausedUntil : null;
@@ -224,15 +258,23 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
   const send = async (text = draft) => {
     if (!text.trim() || chat.sending || paused || chat.onHold) return;
     setDraft('');
-    const ok = await chat.send(text);
+    // Until they've answered in this sitting, the reply model is told what the chat opened with.
+    const answered = chat.messages.some((m) => m.role === 'assistant' && m.created_at > openedAt);
+    const ok = await chat.send(text, opener && !answered ? opener.text : undefined);
     if (!ok) setDraft((d) => d || text);
   };
 
-  const starters = [
+  const starters = opener?.starters ?? [
     'What are you working on right now?',
     person.main_source ? `How did ${person.main_source} get started?` : 'How did you get started?',
     'What would you tell someone starting out?',
   ];
+  const before = chat.messages.filter((m) => m.created_at <= openedAt);
+  const after = chat.messages.filter((m) => m.created_at > openedAt);
+  const openerMessage: ChatMessage | null = opener
+    ? { id: 'opener', role: 'assistant', text: opener.text, sources: null, created_at: opener.at ?? openedAt, seen_at: null }
+    : null;
+  const shown = openerMessage ? [...before, openerMessage, ...after] : chat.messages;
 
   return (
     <>
@@ -249,17 +291,8 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
           <ActivityIndicator color={color.textSecondary} style={{ marginTop: space.lg }} />
         ) : chat.loadError ? (
           <Text style={[styles.inline, { color: color.loss }]}>Couldn’t load this chat. Close it and try again.</Text>
-        ) : chat.messages.length === 0 && !chat.sending ? (
-          <View style={styles.starters}>
-            <Text style={[styles.inline, { marginBottom: space.xs }]}>Start with a question.</Text>
-            {starters.map((s) => (
-              <Pressable key={s} accessibilityRole="button" onPress={() => void send(s)} style={({ pressed }) => [styles.starter, pressed && { opacity: 0.7 }]}>
-                <Text style={[type.body, { color: color.action }]}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
         ) : (
-          chat.messages.map((m, i) =>
+          shown.map((m, i) =>
             m.role === 'notice' ? (
               <Notice key={m.id} text={m.text} />
             ) : (
@@ -267,12 +300,22 @@ function Thread({ person, input }: { person: Person; input: React.RefObject<Comp
               key={m.id}
               m={m}
               name={first(person)}
-              dayBreak={i === 0 || day(chat.messages[i - 1].created_at) !== day(m.created_at)}
-              seen={!!m.seen_at || (typing && i === chat.messages.length - 1)}
-              avatar={chat.messages[i - 1]?.role !== 'assistant' ? person : null}
+              dayBreak={i === 0 || day(shown[i - 1].created_at) !== day(m.created_at)}
+              seen={!!m.seen_at || (typing && i === shown.length - 1)}
+              avatar={shown[i - 1]?.role !== 'assistant' ? person : null}
             />
             ),
           )
+        )}
+        {!chat.loading && !chat.loadError && after.length === 0 && !chat.sending && (before.length === 0 || opener) && (
+          <View style={styles.starters}>
+            {!opener && <Text style={[styles.inline, { marginBottom: space.xs }]}>Start with a question.</Text>}
+            {starters.map((s) => (
+              <Pressable key={s} accessibilityRole="button" onPress={() => void send(s)} style={({ pressed }) => [styles.starter, pressed && { opacity: 0.7 }]}>
+                <Text style={[type.body, { color: color.action }]}>{s}</Text>
+              </Pressable>
+            ))}
+          </View>
         )}
         {typing && <Typing name={first(person)} person={person} />}
         {chat.error && !paused && !chat.onHold && <Text style={[styles.inline, !chat.error.limit && { color: color.loss }]}>{chat.error.text}</Text>}
@@ -471,6 +514,7 @@ function Typing({ name, person }: { name: string; person: Person }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  entryStack: { gap: space.sm },
   entry: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   entryField: {
     flex: 1,

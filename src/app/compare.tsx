@@ -4,16 +4,16 @@ import { Fragment, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 
-import { presets, RangePicker } from '@/components/wealth-chart';
+import { DEFAULT_SPAN, markers, presets, RangePicker } from '@/components/wealth-chart';
 import { Body, Caption, Change, Heading, Icon, Portrait, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { growth, indexed, MAX_COMPARE, pctDiff, recordedTimes, SERIES_COLORS, valueAt } from '@/lib/compare';
 import { useMoney } from '@/lib/currency';
 import { useHoldings, usePeople, useValuesFor, type Person } from '@/lib/data';
 import { formatDate } from '@/lib/format';
-import type { Point } from '@/lib/live';
+import { live, type Point } from '@/lib/live';
 import { color, font, radius, space, type } from '@/theme';
 
-type Series = { person: Person; color: string; points: Point[] };
+type Series = { person: Person; color: string; points: (Point & { estimate: boolean })[] };
 type Mode = 'value' | 'growth';
 
 export default function Compare() {
@@ -40,7 +40,7 @@ export default function Compare() {
   const series: Series[] = chosen.map((person, i) => ({
     person,
     color: SERIES_COLORS[i],
-    points: (values[ids.indexOf(person.id)]?.data ?? []).map((v) => ({ t: Date.parse(v.as_of), v: Number(v.net_worth_usd) })),
+    points: (values[ids.indexOf(person.id)]?.data ?? []).map((v) => ({ t: Date.parse(v.as_of), v: Number(v.net_worth_usd), estimate: v.kind === 'estimate' })),
   }));
   const pct = (n: number | null) => (n == null ? '—' : `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(1)}%`);
 
@@ -48,7 +48,7 @@ export default function Compare() {
     <Screen>
       <View>
         <Heading>Compare.</Heading>
-        <Body secondary>Dated estimates only. Lines join recorded values; nothing is filled in or projected.</Body>
+        <Body secondary>Lines join recorded values: dots are observations, rings estimates. A dashed end is a short projection from the latest trend.</Body>
       </View>
 
       <Surface style={styles.list}>
@@ -212,32 +212,42 @@ const H = 240;
 const WIDE_PAD = { top: 16, bottom: 24, left: 60, right: 92 };
 const NARROW_PAD = { top: 16, bottom: 24, left: 44, right: 12 };
 
-/** One axis, 2px lines, recorded values marked, direct end labels, scrub readout snapped to recorded dates. */
+/**
+ * One axis, 2px lines, values marked like the profile chart (dots recorded, rings estimates), each line's projection
+ * dashed, direct end labels, scrub readout snapped to recorded dates. Opens on 7D and ends at the latest value.
+ */
 function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; format: (v: number) => string }) {
   const [width, setWidth] = useState(0);
   const [cursor, setCursor] = useState<number | null>(null);
-  const [span, setSpan] = useState<number>(Infinity);
+  const [span, setSpan] = useState<number>(DEFAULT_SPAN);
   const narrow = width > 0 && width < 420;
   const PAD = narrow ? NARROW_PAD : WIDE_PAD;
   const axis = (v: number) => (narrow && mode === 'value' ? format(v).replace(/\.\d(?=[BTM]$)/, '') : format(v));
-  const plotted = series.map((s) => ({ ...s, pts: mode === 'growth' ? indexed(s.points) : s.points }));
+  const now = Date.now();
+  const plotted = series.map((s) => {
+    const proj = live(s.points.filter((p) => !p.estimate), s.points.at(-1) ?? null, now).projection;
+    const pts = mode === 'growth' ? indexed(s.points) : s.points;
+    const ends = proj ? [proj.from, proj.to] : null;
+    return { ...s, pts, proj: ends && (mode === 'growth' ? (pts.length ? indexed(ends, s.points[0].v) : null) : ends) };
+  });
   const all = plotted.flatMap((s) => s.pts);
   if (!all.length) return <StateView empty={{ title: 'No recorded values.', body: 'These people have no dated estimates yet.' }} />;
 
   const allTimes = recordedTimes(plotted.map((s) => s.pts));
-  // All = first to last recorded value; a range ends now, so recent windows can be empty (values are never filled in).
-  const t1 = span === Infinity ? (allTimes.length > 1 ? allTimes[allTimes.length - 1] : allTimes[0] + 1) : Math.max(Date.now(), allTimes[allTimes.length - 1]);
+  // Every range ends at the latest value or projection (owner, Nov 4: the lines reach the right edge).
+  const lastT = Math.max(allTimes[allTimes.length - 1], ...plotted.map((s) => s.proj?.[1].t ?? -Infinity));
+  const t1 = span === Infinity && allTimes.length < 2 && lastT === allTimes[0] ? allTimes[0] + 1 : lastT;
   const t0 = span === Infinity ? allTimes[0] : t1 - span;
   const times = allTimes.filter((t) => t >= t0 && t <= t1);
   // Each line keeps one neighbour outside the window so it runs to the edge (clipped).
-  const near = (pts: Point[]) => {
+  const near = <T extends Point>(pts: T[]): T[] => {
     const a = pts.findIndex((p) => p.t >= t0);
     const b = pts.findLastIndex((p) => p.t <= t1);
     if (a === -1 || b === -1) return a === -1 ? [] : pts.slice(Math.max(0, a - 1), a + 1); // window after/before all values
     return pts.slice(Math.max(0, a - 1), b + 2);
   };
   const shown = plotted.map((s) => ({ ...s, near: near(s.pts) }));
-  const vs = (times.length ? shown.flatMap((s) => s.near) : all).map((p) => p.v);
+  const vs = [...(times.length ? shown.flatMap((s) => s.near) : all), ...plotted.flatMap((s) => s.proj ?? [])].map((p) => p.v);
   const lo = Math.min(...vs, mode === 'growth' ? 0 : Infinity);
   const hi = Math.max(...vs, mode === 'growth' ? 0 : -Infinity);
   const pad = (hi - lo || Math.abs(hi) || 1) * 0.12;
@@ -248,9 +258,10 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
   const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
 
   // Direct labels at each line's end, nudged apart so they never collide.
+  const tip = (s: (typeof plotted)[number]) => s.proj?.[1] ?? s.pts[s.pts.length - 1];
   const ends = plotted
-    .filter((s) => s.pts.length && s.pts[s.pts.length - 1].t >= t0 && s.pts[s.pts.length - 1].t <= t1)
-    .map((s) => ({ s, y: y(s.pts[s.pts.length - 1].v) }))
+    .filter((s) => s.pts.length && tip(s).t >= t0 && tip(s).t <= t1)
+    .map((s) => ({ s, y: y(tip(s).v) }))
     .sort((a, b) => a.y - b.y);
   for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 16);
 
@@ -317,14 +328,28 @@ function CompareChart({ series, mode, format }: { series: Series[]; mode: Mode; 
                     strokeLinejoin="round"
                   />
                 )}
-                {s.near.map((p) => (
-                  <Circle key={p.t} cx={x(p.t)} cy={y(p.v)} r={4} fill={s.color} stroke={color.surface} strokeWidth={2} />
+                {s.proj && (
+                  <>
+                    <Path d={`M${x(s.proj[0].t)},${y(s.proj[0].v)}L${x(s.proj[1].t)},${y(s.proj[1].v)}`} stroke={s.color} strokeOpacity={0.75} strokeWidth={2} strokeDasharray="4 4" fill="none" />
+                    <Circle cx={x(s.proj[1].t)} cy={y(s.proj[1].v)} r={3.5} fill={color.surface} stroke={s.color} strokeWidth={1.5} />
+                  </>
+                )}
+                {markers(s.near).map((p) => (
+                  <Circle
+                    key={p.t}
+                    cx={x(p.t)}
+                    cy={y(p.v)}
+                    r={p.estimate ? 4 : 2.5}
+                    fill={p.estimate ? color.surface : s.color}
+                    stroke={s.color}
+                    strokeWidth={p.estimate ? 2 : 0}
+                  />
                 ))}
               </Fragment>
             ))}
             </G>
             {!narrow && ends.map(({ s, y: ly }) => (
-              <SvgText key={s.person.id} x={x(s.pts[s.pts.length - 1].t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={s.color}>
+              <SvgText key={s.person.id} x={x(tip(s).t) + 8} y={ly + 4} fontSize={12} fontFamily={font.medium} fill={s.color}>
                 {s.person.name.split(' ').at(-1)}
               </SvgText>
             ))}

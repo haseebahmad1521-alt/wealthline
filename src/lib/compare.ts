@@ -17,8 +17,8 @@ export function growth(points: Point[]) {
 }
 
 /** Index a series to 0% at its first recorded value (for comparing growth across sizes). */
-export const indexed = (points: Point[]): Point[] =>
-  points.length && points[0].v !== 0 ? points.map((p) => ({ t: p.t, v: ((p.v - points[0].v) / points[0].v) * 100 })) : [];
+export const indexed = <T extends Point>(points: T[], base = points[0]?.v): T[] =>
+  points.length && base ? points.map((p) => ({ ...p, v: ((p.v - base) / base) * 100 })) : [];
 
 /** The recorded value at or before t (no interpolation), or null if the series has not started. */
 export function valueAt(points: Point[], t: number) {

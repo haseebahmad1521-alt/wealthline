@@ -30,6 +30,8 @@ import {
   type Flag,
   type PersonaReply,
   type Plan,
+  openerNote,
+  openerText,
 } from '../supabase/functions/_shared/persona.ts';
 
 process.loadEnvFile?.('.env');
@@ -90,7 +92,7 @@ function strike(name: string) {
   };
 }
 
-async function chat(body: { person?: unknown; text?: unknown; history?: unknown }) {
+async function chat(body: { person?: unknown; text?: unknown; history?: unknown; opener?: unknown }) {
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if (!text || text.length > 1000 || typeof body.person !== 'string') return [400, { error: 'Write 1–1000 characters.' }] as const;
   if (state.mod.onHold) return [403, { error: 'Your account is on hold until a person reviews it.', on_hold: true }] as const;
@@ -113,7 +115,8 @@ async function chat(body: { person?: unknown; text?: unknown; history?: unknown 
   const ctx = await personaContext(db, person.data.id, text);
   const facts = (state.memory[person.data.id] ??= []);
   const system = `${RULES}\n\nMaterial about ${ctx.name} (as of ${today}):\n\n${ctx.text}${
-    facts.length ? `\n\nWhat you know about this user from earlier chats:\n${facts.map((f) => `- ${f}`).join('\n')}` : ''}`;
+    facts.length ? `\n\nWhat you know about this user from earlier chats:\n${facts.map((f) => `- ${f}`).join('\n')}` : ''}${
+    openerText(body.opener) ? `\n\n${openerNote(openerText(body.opener)!)}` : ''}`;
   const prompt = [
     history.length ? `Conversation so far:\n${history.map((t) => `${t.role === 'user' ? 'User' : 'You'}: ${t.text}`).join('\n')}\n` : '',
     `Latest message from the user:\n${text}`,

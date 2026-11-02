@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { useAuth } from './data';
@@ -56,6 +56,44 @@ export function useChatAccess() {
   return verified.data ? ('ready' as const) : ('unverified' as const);
 }
 
+/** The member's plan (`pro` | `premium`), or null for Free / signed out / unverified device. */
+export function usePlan() {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const q = useQuery({
+    queryKey: ['plan', userId],
+    enabled: !!userId && !localChat,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      // RLS returns the row only from a verified session; anything else reads as Free.
+      const r = await db().from('entitlements').select('plan, expires_at').maybeSingle();
+      if (r.error || !r.data) return null;
+      return r.data.expires_at && Date.parse(r.data.expires_at) < Date.now() ? null : (r.data.plan as 'pro' | 'premium');
+    },
+  });
+  return localChat ? ('premium' as const) : (q.data ?? null);
+}
+
+const asked = new Set<string>();
+
+/**
+ * Members opening a profile tell the `status` function there's interest (owner, Nov 4): that person's "lately" line is
+ * written first next hour and becomes the longer one; for Premium it may be written right away. Once per person per
+ * app session.
+ */
+export function useStatusInterest(personId: string, slug: string) {
+  const plan = usePlan();
+  const cache = useQueryClient();
+  useEffect(() => {
+    if (!plan || localChat || asked.has(slug)) return;
+    asked.add(slug);
+    void db().functions.invoke('status', { body: { person: slug } }).then(({ data }) => {
+      if ((data as { outcome?: string } | null)?.outcome === 'written') void cache.invalidateQueries({ queryKey: ['status', personId] });
+    }, () => {});
+  }, [plan, slug, personId, cache]);
+  return plan;
+}
+
 export function useChat(personId: string, slug: string, enabled: boolean) {
   const { session } = useAuth();
   const userId = session?.user.id;
@@ -89,7 +127,8 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
 
   const put = (fn: (old: ChatMessage[]) => ChatMessage[]) => cache.setQueryData<ChatMessage[]>(key, (old) => fn(old ?? []));
 
-  async function send(text: string) {
+  /** `opener`: the line the chat opened with, when the user is answering it (context for the reply only). */
+  async function send(text: string, opener?: string) {
     const body = text.trim();
     if (!body || sending) return false;
     setSending(true);
@@ -106,11 +145,11 @@ export function useChat(personId: string, slug: string, enabled: boolean) {
     let j: Record<string, unknown> = {};
     try {
       if (localChat) {
-        const res = await fetch(bridgeUrl(), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ person: slug, text: body, history }) });
+        const res = await fetch(bridgeUrl(), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ person: slug, text: body, history, opener }) });
         status = res.status;
         j = await res.json();
       } else {
-        const { data, error: failed } = await db().functions.invoke('chat', { body: { person: slug, text: body } });
+        const { data, error: failed } = await db().functions.invoke('chat', { body: { person: slug, text: body, opener } });
         if (failed) {
           const res = (failed as { context?: Response }).context;
           status = res?.status ?? 0;
