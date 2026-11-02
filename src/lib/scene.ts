@@ -16,6 +16,8 @@ type SceneState = {
   preset: CameraPreset;
   /** How far the camera has swung into the World view (0 orbit … 1 world, eased); set by the planet scene each frame. */
   worldMix: number;
+  /** A place the camera flies down to and holds while a screen is open (a profile: the person's headquarters). */
+  visit: { lat: number; lng: number } | null;
   world: {
     /** The point turned toward the camera. */
     lat: number;
@@ -41,6 +43,7 @@ export const scene: SceneState = {
   velocity: 0,
   preset: 'orbit',
   worldMix: 0,
+  visit: null,
   // Opens over the North Atlantic: the Americas, Europe and Africa (where most tracked headquarters are) in view.
   world: { lat: 32, lng: -45, zoom: 0, centerX: 0.5, centerY: 0.5, radiusPx: 160 },
   fills: [],

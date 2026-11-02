@@ -32,6 +32,10 @@ const CAMERA_EAST_OF_SUN = 78;
 const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;
 
+// A visit (a profile): the place sits in the upper part of the view, close enough to read its coastline, under the
+// glass page.
+const VISIT = { zoom: 0.62, centerX: 0.5, centerY: 0.3 } as const;
+
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
 function useReducedMotion() {
@@ -326,7 +330,14 @@ export function PlanetScene() {
     // Two poses, blended: the scroll-driven orbit view and the World view straight at the globe.
     const orbitRig = new THREE.PerspectiveCamera();
     const worldRig = new THREE.PerspectiveCamera();
+    const visitRig = new THREE.PerspectiveCamera();
     let worldMix = sceneState.preset === 'world' ? 1 : 0;
+    let visitMix = sceneState.visit ? 1 : 0;
+    let visitAt = { lat: 0, lng: 0 }; // the last place visited: flying back out keeps aiming at it
+    const easeTo = (v: number, goal: number, dt: number, rate: number) => {
+      const next = reduce ? goal : v + (goal - v) * (1 - Math.exp(-dt * rate));
+      return Math.abs(goal - next) < 1e-3 ? goal : next;
+    };
     const dir = new THREE.Vector3();
     const tmp = new THREE.Vector3();
     const toCam = new THREE.Vector3();
@@ -386,30 +397,41 @@ export function PlanetScene() {
       // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
       const w = sceneState.world;
       const tanHalf = Math.tan((FOV / 2) * RAD);
-      // Never a zero radius (an unmeasured globe area would put the camera at infinity and the whole view at NaN).
-      const rNdc = (Math.max(w.radiusPx, 40) * zoomFactor(w.zoom)) / (viewport.h / 2);
-      const dW = Math.max(1 / Math.sin(Math.atan(Math.min(rNdc, 50) * tanHalf)), 1.06);
-      worldRig.position.set(...latLngToUnit(w.lat, w.lng)).multiplyScalar(dW);
-      worldRig.up.set(0, 1, 0);
-      worldRig.lookAt(0, 0, 0);
+      const aim = (rig: THREE.PerspectiveCamera, lat: number, lng: number, zoom: number, radiusPx: number) => {
+        // Never a zero radius (an unmeasured globe area would put the camera at infinity and the whole view at NaN).
+        const rNdc = (Math.max(radiusPx, 40) * zoomFactor(zoom)) / (viewport.h / 2);
+        const dist = Math.max(1 / Math.sin(Math.atan(Math.min(rNdc, 50) * tanHalf)), 1.06);
+        rig.position.set(...latLngToUnit(lat, lng)).multiplyScalar(dist);
+        rig.up.set(0, 1, 0);
+        rig.lookAt(0, 0, 0);
+      };
+      aim(worldRig, w.lat, w.lng, w.zoom, w.radiusPx);
+      if (sceneState.visit) visitAt = sceneState.visit;
+      aim(visitRig, visitAt.lat, visitAt.lng, VISIT.zoom, Math.min(viewport.w, viewport.h) * 0.42);
 
-      const goalMix = sceneState.preset === 'world' ? 1 : 0;
-      worldMix = reduce ? goalMix : worldMix + (goalMix - worldMix) * (1 - Math.exp(-dt * 3.2));
-      if (Math.abs(goalMix - worldMix) < 1e-3) worldMix = goalMix;
-      const m = worldMix * worldMix * (3 - 2 * worldMix);
+      worldMix = easeTo(worldMix, sceneState.preset === 'world' ? 1 : 0, dt, 3.2);
+      visitMix = easeTo(visitMix, sceneState.visit ? 1 : 0, dt, 2.6);
+      const mw = worldMix * worldMix * (3 - 2 * worldMix);
+      const v = visitMix * visitMix * (3 - 2 * visitMix);
+      // How much of the view is World's: what its overlays (portraits, dots, shading) follow.
+      const m = mw * (1 - v);
       sceneState.worldMix = m;
-      // Swing around Earth rather than through it: blend the direction and the distance separately.
-      dir.copy(orbitRig.position).normalize().lerp(tmp.copy(worldRig.position).normalize(), m).normalize();
-      camera.position.copy(dir).multiplyScalar(mix(orbitRig.position.length(), worldRig.position.length(), m));
-      camera.quaternion.slerpQuaternions(orbitRig.quaternion, worldRig.quaternion, m);
-      // Off-axis shift so the World globe sits in World's globe area instead of mid-screen.
+      // Swing around Earth rather than through it: blend the direction and the distance separately. Orbit → World
+      // first, then that → the visited place.
+      dir.copy(orbitRig.position).normalize().lerp(tmp.copy(worldRig.position).normalize(), mw).normalize();
+      const dist = mix(orbitRig.position.length(), worldRig.position.length(), mw);
+      camera.quaternion.slerpQuaternions(orbitRig.quaternion, worldRig.quaternion, mw);
+      dir.lerp(tmp.copy(visitRig.position).normalize(), v).normalize();
+      camera.position.copy(dir).multiplyScalar(mix(dist, visitRig.position.length(), v));
+      camera.quaternion.slerp(visitRig.quaternion, v);
+      // Off-axis shift so the globe sits in World's globe area (or the visit's spot) instead of mid-screen.
       camera.updateProjectionMatrix();
-      camera.projectionMatrix.elements[8] = (1 - 2 * w.centerX) * m;
-      camera.projectionMatrix.elements[9] = -(1 - 2 * w.centerY) * m;
+      camera.projectionMatrix.elements[8] = mix((1 - 2 * w.centerX) * mw, 1 - 2 * VISIT.centerX, v);
+      camera.projectionMatrix.elements[9] = -mix((1 - 2 * w.centerY) * mw, 1 - 2 * VISIT.centerY, v);
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       camera.updateMatrixWorld();
 
-      skyUniforms.haze.value = mix(HAZE[0], HAZE[1], e) * (1 - m);
+      skyUniforms.haze.value = mix(HAZE[0], HAZE[1], e) * (1 - mw) * (1 - v);
       sky.position.copy(camera.position);
       const sunDir = earthUniforms.sunDir.value;
       sunQuad.position.copy(camera.position).addScaledVector(sunDir, 150);
@@ -428,7 +450,7 @@ export function PlanetScene() {
       // Shading belongs to World: it fades with the swing out (a profile on top, another tab).
       earthUniforms.fillMix.value = sceneState.fills.length ? m : 0;
       // Cheap HDR: the closer we look (World zoom, or the bottom of a page), the more the night side opens up.
-      earthUniforms.nightLift.value = Math.max(m * w.zoom, (1 - m) * e * 0.35);
+      earthUniforms.nightLift.value = Math.max(m * w.zoom, v * VISIT.zoom, (1 - mw) * (1 - v) * e * 0.35);
     }
 
     function placeGlow(sunDir: THREE.Vector3) {

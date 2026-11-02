@@ -1,6 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { EmpireCard } from '@/components/empire-card';
@@ -23,6 +23,8 @@ import {
 import { rateCaption, useMoney } from '@/lib/currency';
 import { formatDate } from '@/lib/format';
 import { live as computeLive } from '@/lib/live';
+import { scene } from '@/lib/scene';
+import { useWorld } from '@/lib/world';
 import { color, desktopBreakpoint, space, type } from '@/theme';
 
 export default function Profile() {
@@ -40,6 +42,22 @@ export default function Profile() {
   useLiveRefresh(p?.id);
   const watch = useWatchlist();
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
+
+  // The profile is a zoom-in: while it's open the planet camera flies down to the person's main headquarters, and
+  // leaving flies back out. No recorded headquarters: the camera stays where it is.
+  const hq = useWorld().data?.find((e) => e.person.id === p?.id)?.hq ?? null;
+  useFocusEffect(
+    useCallback(() => {
+      if (hq?.lat == null || hq?.lng == null) return;
+      const at = { lat: hq.lat, lng: hq.lng };
+      scene.visit = at;
+      scene.invalidate?.();
+      return () => {
+        if (scene.visit === at) scene.visit = null;
+        scene.invalidate?.();
+      };
+    }, [hq?.lat, hq?.lng]), // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const points = (values.data ?? []).map((v) => ({
     t: Date.parse(v.as_of),
