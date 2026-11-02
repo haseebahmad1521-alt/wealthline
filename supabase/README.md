@@ -60,17 +60,22 @@ challenge, `activate` accepts the link session (amr `otp`/`magiclink`, ≤15 min
 insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
 ```
 
-## Daily brief (optional, uses Claude)
+## AI features (Grok / xAI)
 
-Once a day `daily-brief` reads public Google News RSS headlines about each tracked person, asks Claude
-(`claude-opus-5-5`) to pick at most 8 that may affect their wealth and add a short note, and stores the result in
-`briefs` / `brief_items`. Claude only returns indexes into the fetched list plus notes; titles, links, outlets and
-dates are copied from the feed. Without `ANTHROPIC_API_KEY` the function does nothing and the app hides the card.
+All model calls go to xAI's Responses API through `functions/_shared/xai.ts` (owner decision, Nov 2026: Grok replaces
+Anthropic everywhere). One monthly ceiling covers them all (`XAI_MONTHLY_USD`, default $20, tracked in `xai_spend`):
+chat may use all of it, background jobs stop at 70%. Callers: `chat` (Pro `grok-4.3`, Premium `grok-4.7`), `status`,
+`recent` (X search), `sources` (every 6 hours, 2 articles), `daily-brief` and `project-scout` (daily); the background
+jobs use `XAI_MODEL` (default `grok-4.3`). Without `XAI_API_KEY` each one does nothing.
+
+Daily brief: once a day `daily-brief` reads public Google News RSS headlines about each tracked person, asks Grok to
+pick at most 8 that may affect their wealth and add a short note, and stores the result in `briefs` / `brief_items`.
+Grok only returns indexes into the fetched list plus notes; titles, links, outlets and dates are copied from the feed.
 
 1. Run `migrations/20261024000200_briefs.sql` in the SQL Editor.
-2. Create an API key at https://platform.claude.com (billed per use; roughly a few dollars a month at one run a day).
+2. Create an xAI key at console.x.ai (Responses endpoint, the two models above only) and set a spending limit there.
 3. Generate a scheduler secret (`openssl rand -hex 32`) and set both secrets yourself:
-   `npx supabase secrets set ANTHROPIC_API_KEY=<key> CRON_SECRET=<secret> --project-ref <ref>`
+   `npx supabase secrets set XAI_API_KEY=<key> CRON_SECRET=<secret> --project-ref <ref>`
 4. Dashboard → Integrations → Cron → new job, daily (e.g. `0 7 * * *`), type Supabase Edge Function `daily-brief`,
    method POST, header `x-cron-secret: <secret>`.
 

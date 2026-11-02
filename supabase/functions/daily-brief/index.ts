@@ -1,12 +1,14 @@
-// Daily brief: fetch public headlines (Google News RSS, keyless) about each tracked person, let Claude
+// Daily brief: fetch public headlines (Google News RSS, keyless) about each tracked person, let Grok
 // pick and annotate the ones that may affect their wealth, store the result. Optional feature: without
-// ANTHROPIC_API_KEY it does nothing. Invoked once a day by a scheduler holding CRON_SECRET.
-import Anthropic from 'npm:@anthropic-ai/sdk';
+// XAI_API_KEY it does nothing. Invoked once a day by a scheduler holding CRON_SECRET. Counts against the shared
+// monthly xAI ceiling as a background job (stops at 70% of it, so chat keeps room).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { cors, json } from '../_shared/util.ts';
+import { reserve, xaiKey, xaiText } from '../_shared/xai.ts';
 
-const MODEL = 'claude-opus-5-5';
+const MODEL = Deno.env.get('XAI_MODEL') || 'grok-4.3';
+const ESTIMATE = 30_000; // ≈170 headlines (≈7k tokens) in, ≈1.5k out with reasoning: ≈$0.013
 const PER_PERSON = 8;
 const MAX_ITEMS = 8;
 
@@ -69,8 +71,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   const secret = Deno.env.get('CRON_SECRET');
   if (!secret || req.headers.get('x-cron-secret') !== secret) return json({ error: 'Forbidden.' }, 403);
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) return json({ skipped: 'Claude is not configured.' }, 200);
+  const apiKey = xaiKey();
+  if (!apiKey) return json({ skipped: 'Grok is not configured.' }, 200);
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false },
@@ -97,30 +99,30 @@ Deno.serve(async (req) => {
   if (!headlines.length) return json({ skipped: 'No headlines today.' });
 
   const list = headlines.map((h, i) => `${i}. [${h.slug}] ${h.title} — ${h.source}`).join('\n');
-  const client = new Anthropic({ apiKey });
-  const response = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
-    system:
-      'You are the news editor of Wealthline, which tracks the largest personal fortunes. From the numbered ' +
-      `headlines, choose at most ${MAX_ITEMS} that most plausibly affect a listed person's wealth (share price ` +
-      'moves, earnings, deals, stake sales, filings, lawsuits, regulation). You only see headlines, not articles: ' +
-      'base each note on the headline alone and say "may" rather than asserting outcomes. Never state or estimate ' +
-      'a net worth or any figure that is not in the headline. Skip gossip and duplicates. If nothing is notable, ' +
-      'return no items and a headline saying it was a quiet day.',
-    messages: [{ role: 'user', content: `Headlines from the last 24 hours:\n${list}` }],
-  } as Parameters<typeof client.beta.messages.create>[0]);
-
-  if (response.stop_reason === 'refusal') return json({ skipped: 'Model declined.' });
-  const text = response.content.find((b) => b.type === 'text');
+  const settleSpend = await reserve(db, ESTIMATE);
+  if (!settleSpend) return json({ skipped: 'Monthly xAI share for background jobs is used up.' });
   let out: { headline?: unknown; items?: unknown };
   try {
-    out = JSON.parse(text && 'text' in text ? text.text : '');
-  } catch {
-    return json({ error: 'Unparseable model output.' }, 502);
+    const r = await xaiText({
+      key: apiKey,
+      model: MODEL,
+      maxTokens: 6000,
+      schema,
+      system:
+        'You are the news editor of Wealthline, which tracks the largest personal fortunes. From the numbered ' +
+        `headlines, choose at most ${MAX_ITEMS} that most plausibly affect a listed person's wealth (share price ` +
+        'moves, earnings, deals, stake sales, filings, lawsuits, regulation). You only see headlines, not articles: ' +
+        'base each note on the headline alone and say "may" rather than asserting outcomes. Never state or estimate ' +
+        'a net worth or any figure that is not in the headline. Skip gossip and duplicates. If nothing is notable, ' +
+        'return no items and a headline saying it was a quiet day.',
+      input: `Headlines from the last 24 hours:\n${list}`,
+    });
+    await settleSpend(r.cost);
+    if (r.status && r.status !== 'completed') return json({ error: `xAI response ${r.status}.` }, 502);
+    out = JSON.parse(r.text);
+  } catch (e) {
+    console.error(e);
+    return json({ error: `Model call failed: ${(e as Error).message}`.slice(0, 300) }, 502);
   }
 
   // Trust boundary: keep only valid indexes; every displayed fact comes from the fetched feed.
@@ -144,7 +146,7 @@ Deno.serve(async (req) => {
   }
   const headline = typeof out.headline === 'string' && out.headline.trim() ? out.headline.trim().slice(0, 140) : 'Today’s brief';
 
-  const brief = await db.from('briefs').insert({ brief_date: today, headline, model: response.model }).select('id').single();
+  const brief = await db.from('briefs').insert({ brief_date: today, headline, model: MODEL }).select('id').single();
   if (brief.error) return json({ error: brief.error.message }, 500);
   if (items.length) {
     const ins = await db.from('brief_items').insert(items.map((i) => ({ ...i, brief_id: brief.data.id })));

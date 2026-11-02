@@ -1,17 +1,18 @@
-// Project scout (daily, pg_cron with CRON_SECRET): Claude reads the last 36 hours of headlines already stored in
+// Project scout (daily, pg_cron with CRON_SECRET): Grok reads the last 36 hours of headlines already stored in
 // person_news and picks announced projects: new factories, data centres, launches, products, partnerships,
-// acquisitions, investments. Trust boundary: Claude returns only an index into the stored list plus labels (kind,
+// acquisitions, investments. Trust boundary: Grok returns only an index into the stored list plus labels (kind,
 // status, place, stated date, named counterparty, a short note); title, outlet, link and date are copied from the
-// stored headline. Without ANTHROPIC_API_KEY it does nothing.
-import Anthropic from 'npm:@anthropic-ai/sdk';
+// stored headline. Without XAI_API_KEY it does nothing. Cost (shared xAI ceiling, background share): ≤1000
+// headlines ≈ 40k tokens on grok-4.3 ≈ $0.05 a day.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 import { getJson, track } from '../_shared/refresh.ts';
 import { cors, json } from '../_shared/util.ts';
+import { reserve, xaiKey, xaiText } from '../_shared/xai.ts';
 
-const MODEL = 'claude-opus-5-5';
+const MODEL = Deno.env.get('XAI_MODEL') || 'grok-4.3';
 const WINDOW_HOURS = 36;
-const MAX_HEADLINES = 2500;
+const MAX_HEADLINES = 1000;
 const KINDS = ['factory', 'data_center', 'launch', 'product', 'partnership', 'acquisition', 'investment', 'other'] as const;
 
 type Row = { person_id: string; title: string; source_name: string; source_url: string; published_at: string | null; people: { slug: string; name: string } };
@@ -71,8 +72,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   const secret = Deno.env.get('CRON_SECRET');
   if (!secret || req.headers.get('x-cron-secret') !== secret) return json({ error: 'Forbidden.' }, 403);
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) return json({ skipped: 'Claude is not configured.' });
+  const apiKey = xaiKey();
+  if (!apiKey) return json({ skipped: 'Grok is not configured.' });
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
   const since = new Date(Date.now() - WINDOW_HOURS * 3_600_000).toISOString();
@@ -92,30 +93,26 @@ Deno.serve(async (req) => {
   const list = headlines.map((h, i) => `${i}. [${h.people.name}] ${h.title} (${h.source_name}${h.published_at ? `, ${h.published_at.slice(0, 10)}` : ''})`).join('\n');
   const already = (recent.data ?? []).map((p) => `- ${p.title}`).join('\n') || '(none)';
 
-  const client = new Anthropic({ apiKey });
-  let response;
-  try {
-    response = await track(db, 'Claude (project scout)', () =>
-      client.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
-        system: SYSTEM,
-        messages: [{ role: 'user', content: `Already recorded:\n${already}\n\nHeadlines from the last ${WINDOW_HOURS} hours:\n${list}` }],
-      } as Parameters<typeof client.beta.messages.create>[0]),
-    );
-  } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 502);
-  }
-  if (response.stop_reason === 'refusal') return json({ skipped: 'Model declined.' });
-  const text = response.content.find((b) => b.type === 'text');
+  // ≈40 tokens a headline in, up to ≈6k out with reasoning.
+  const settleSpend = await reserve(db, Math.round(headlines.length * 40 * 1.25 + 15_000));
+  if (!settleSpend) return json({ skipped: 'Monthly xAI share for background jobs is used up.' });
   let out: { items?: unknown };
   try {
-    out = JSON.parse(text && 'text' in text ? text.text : '');
-  } catch {
-    return json({ error: 'Unparseable model output.' }, 502);
+    const r = await track(db, 'Grok (project scout)', () =>
+      xaiText({
+        key: apiKey,
+        model: MODEL,
+        maxTokens: 12000,
+        schema,
+        system: SYSTEM,
+        input: `Already recorded:\n${already}\n\nHeadlines from the last ${WINDOW_HOURS} hours:\n${list}`,
+      }),
+    );
+    await settleSpend(r.cost);
+    if (r.status && r.status !== 'completed') return json({ error: `xAI response ${r.status}.` }, 502);
+    out = JSON.parse(r.text);
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : String(e) }, 502);
   }
 
   const companiesOf = new Map<string, { id: string; name: string }[]>();
@@ -153,7 +150,7 @@ Deno.serve(async (req) => {
       country,
       lat: where?.lat ?? null,
       lng: where?.lng ?? null,
-      model: response.model,
+      model: MODEL,
     });
   }
   if (rows.length) {
