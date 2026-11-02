@@ -14,7 +14,7 @@ import { color } from '@/theme';
 const graticule = geoGraticule10();
 
 export type GlobeSite = { key: string; lat: number; lng: number; kind: SiteKind; group: string; live: boolean };
-export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string };
+export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null };
 /** A money flow: from where revenue is earned to the company's HQ. weight 0–1 sets the line width. */
 export type GlobeArc = { key: string; from: LatLng; to: LatLng; weight: number; group: string; risk?: boolean };
 /** A shaded country; strength 0–1. */

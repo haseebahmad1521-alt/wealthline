@@ -34,6 +34,31 @@ type Spring = { x: number; y: number; vx: number; vy: number; op: number; scale:
 
 // The bubble fanned open, kept outside the component so it is still open when Back returns from a profile.
 let opened: { keys: Set<string>; zoom: number } | null = null;
+
+/**
+ * An opened bubble's layout (owner, Nov 2, 2026): portraits grow to fill more of the screen, the wealthiest biggest
+ * (diameter by the square root of net worth, so area follows wealth). The richest sits in the middle and the rest are
+ * packed around it, each placed at the first free spot along a spiral. Offsets from the crowd's centre, plus its reach.
+ */
+function packFan(sizes: number[], gap: number) {
+  const at: { x: number; y: number }[] = [];
+  let reach = 0;
+  sizes.forEach((d, i) => {
+    let x = 0;
+    let y = 0;
+    if (i > 0) {
+      for (let t = 0; ; t += 0.12) {
+        const r = (sizes[0] / 2 + d / 2 + gap) * (0.9 + t / (2 * Math.PI) * 0.35);
+        x = r * Math.cos(t - Math.PI / 2);
+        y = r * Math.sin(t - Math.PI / 2);
+        if (at.every((q, j) => Math.hypot(q.x - x, q.y - y) >= (sizes[j] + d) / 2 + gap)) break;
+      }
+    }
+    at.push({ x, y });
+    reach = Math.max(reach, Math.hypot(x, y) + d / 2);
+  });
+  return { at, reach };
+}
 let openedFocus: string | null = null;
 
 const ARC_STEPS = 48;
@@ -144,7 +169,10 @@ export function WorldGlobe({
     faces.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
     el.prepend(dots, goo, faces);
 
-    const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; s: Spring }>();
+    const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; s: Spring; d: number; shown: number }>();
+    let worthFrom: GlobeMarker[] | null = null;
+    let worthOf = new Map<string, number>();
+    const packs = new Map<string, { ks: string[]; sizes: number[]; at: { x: number; y: number }[]; reach: number }>();
     const nodeFor = (m: GlobeMarker) => {
       let n = nodes.get(m.key);
       if (n) return n;
@@ -170,13 +198,13 @@ export function WorldGlobe({
       face.appendChild(count);
       goo.appendChild(blob);
       faces.appendChild(face);
-      n = { blob, face, count, s: { x: 0, y: 0, vx: 0, vy: 0, op: 0, scale: 1, init: false } };
+      n = { blob, face, count, s: { x: 0, y: 0, vx: 0, vy: 0, op: 0, scale: 1, init: false }, d: S, shown: S };
       nodes.set(m.key, n);
       return n;
     };
 
     // What a tap can hit, where it is drawn this frame: fanned people first (they sit on top), then bubbles.
-    let hits: { x: number; y: number; keys: string[] }[] = [];
+    let hits: { x: number; y: number; r: number; keys: string[] }[] = [];
     let raf = 0;
     let last = performance.now();
     let dragging = false;
@@ -282,6 +310,10 @@ export function WorldGlobe({
       dots.style.opacity = goo.style.opacity = faces.style.opacity = String(arrive);
 
       // Portraits: project, then cluster greedily in importance order (the chosen person first, then by rank).
+      if (worthFrom !== ms) {
+        worthFrom = ms;
+        worthOf = new Map(ms.map((m) => [m.key, m.worth ?? 0]));
+      }
       const order = f ? [...ms.filter((m) => m.key === f), ...ms.filter((m) => m.key !== f)] : ms;
       const R = S * 0.9;
       const next: { x: number; y: number; keys: string[] }[] = [];
@@ -318,7 +350,7 @@ export function WorldGlobe({
       // a sunflower spiral past six) with a clear gap, so every portrait can be tapped however close their HQs are.
       // Zooming in splits them further on their own; zooming back out past where it opened closes it.
       if (opened && w.zoom < opened.zoom - 0.15) opened = null;
-      const fan = new Map<string, { x: number; y: number }>();
+      const fan = new Map<string, { x: number; y: number; d: number }>();
       if (opened) {
         const crowds: { x: number; y: number; keys: string[] }[] = [];
         for (const m of order) {
@@ -331,9 +363,26 @@ export function WorldGlobe({
             g.keys.push(m.key);
           } else crowds.push({ x: p.x, y: p.y, keys: [m.key] });
         }
-        const gap = S + 14;
-        // How far a crowd of n reaches once spread; crowds whose spreads would touch become one crowd.
-        const reach = (n: number) => (n <= 1 ? S / 2 : n <= 6 ? gap / (2 * Math.sin(Math.PI / n)) : (gap / 1.75) * Math.sqrt(n - 0.5)) + S / 2;
+        // Diameters: up to ~30% of the short side for the richest in the bubble, half that for the least wealthy.
+        const short = Math.min(window.innerWidth, window.innerHeight);
+        const maxD = Math.min(big ? 136 : 108, short * 0.3);
+        const minD = Math.max(S + 6, maxD * 0.5);
+        let top = 0;
+        for (const k of opened.keys) top = Math.max(top, worthOf.get(k) ?? 0);
+        const size = (k: string) => Math.round(minD + (maxD - minD) * Math.sqrt(top > 0 ? Math.max(worthOf.get(k) ?? 0, 0) / top : 0));
+        const layout = (keys: string[]) => {
+          const ks = [...keys].sort((a, b) => (worthOf.get(b) ?? 0) - (worthOf.get(a) ?? 0));
+          const sizes = ks.map(size);
+          const id = `${ks.join('|')}:${sizes.join(',')}`;
+          let l = packs.get(id);
+          if (!l) {
+            if (packs.size > 64) packs.clear();
+            l = { ks, sizes, ...packFan(sizes, 10) };
+            packs.set(id, l);
+          }
+          return l;
+        };
+        // Crowds whose spreads would touch become one crowd.
         for (let merged = true; merged; ) {
           merged = false;
           for (let i = 0; i < crowds.length && !merged; i++)
@@ -341,7 +390,7 @@ export function WorldGlobe({
               const a = crowds[i];
               const b = crowds[j];
               const d = Math.hypot(a.x / a.keys.length - b.x / b.keys.length, a.y / a.keys.length - b.y / b.keys.length);
-              if (d < reach(a.keys.length) + reach(b.keys.length) + 6) {
+              if (d < layout(a.keys).reach + layout(b.keys).reach + 6) {
                 a.x += b.x;
                 a.y += b.y;
                 a.keys.push(...b.keys);
@@ -350,17 +399,18 @@ export function WorldGlobe({
               }
             }
         }
+        // Each crowd shrinks to fit if it must and slides in from the edges, so nobody is cut off. Horizontally it stays
+        // within the globe's area when that is a real column (desktop: clear of the panel beside it).
+        const margin = space.md;
+        const [lo, hi] = box.width >= 320 ? [box.left, box.right] : [0, window.innerWidth];
+        const room = Math.min(hi - lo, window.innerHeight) / 2 - margin;
         for (const g of crowds) {
-          const n = g.keys.length;
-          const cx = g.x / n;
-          const cy = g.y / n;
-          g.keys.forEach((k, i) => {
-            if (n === 1) return fan.set(k, pos.get(k)!);
-            const ring = n <= 6;
-            const r = ring ? gap / (2 * Math.sin(Math.PI / n)) : (gap / 1.75) * Math.sqrt(i + 0.5);
-            const a = ring ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n) + (i * 2 * Math.PI) / n : i * 2.39996;
-            fan.set(k, { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
-          });
+          const l = layout(g.keys);
+          const k = Math.min(1, room / l.reach);
+          const ext = l.reach * k + margin;
+          const cx = Math.min(Math.max(g.x / g.keys.length, lo + ext), hi - ext);
+          const cy = Math.min(Math.max(g.y / g.keys.length, ext), window.innerHeight - ext);
+          l.ks.forEach((key, i) => fan.set(key, { x: cx + l.at[i].x * k, y: cy + l.at[i].y * k, d: l.sizes[i] * k }));
         }
       }
       const fannedHits: typeof hits = [];
@@ -401,16 +451,25 @@ export function WorldGlobe({
         const y = p.y + s.y;
         s.op += (targetOp - s.op) * (reduce ? 1 : 1 - Math.exp(-dt * 10));
         const blobOp = faded ? 0 : p.vis * behind;
-        n.blob.style.transform = `translate3d(${x - (S + 8) / 2}px,${y - (S + 8) / 2}px,0)`;
+        // Diameter eases toward its fanned size (or back to the bubble size); real width/height keep photos sharp.
+        const dTarget = fp ? fp.d : S;
+        n.d = reduce ? dTarget : n.d + (dTarget - n.d) * (1 - Math.exp(-dt * 12));
+        const d = Math.round(n.d);
+        if (d !== n.shown) {
+          n.shown = d;
+          n.face.style.width = n.face.style.height = `${d}px`;
+          n.blob.style.width = n.blob.style.height = `${d + 8}px`;
+        }
+        n.blob.style.transform = `translate3d(${x - (d + 8) / 2}px,${y - (d + 8) / 2}px,0)`;
         n.blob.style.opacity = String(blobOp);
-        n.face.style.transform = `translate3d(${x - S / 2}px,${y - S / 2}px,0) scale(${c && !isLeader ? 0.7 : 1})`;
+        n.face.style.transform = `translate3d(${x - d / 2}px,${y - d / 2}px,0) scale(${c && !isLeader ? 0.7 : 1})`;
         n.face.style.opacity = String(s.op);
         n.face.style.zIndex = fp ? '3' : isLeader ? '2' : '1';
         const more = isLeader && c!.keys.length > 1 ? c!.keys.length - 1 : 0;
         n.count.style.display = more ? 'block' : 'none';
         if (more) n.count.textContent = `+${more}`;
-        if (fp && p.vis > 0) fannedHits.push({ x, y, keys: [m.key] });
-        else if (isLeader) bubbleHits.push({ x, y, keys: c!.keys });
+        if (fp && p.vis > 0) fannedHits.push({ x, y, r: d / 2, keys: [m.key] });
+        else if (isLeader) bubbleHits.push({ x, y, r: S / 2, keys: c!.keys });
       }
       hits = arrive > 0.5 ? [...fannedHits, ...bubbleHits] : [];
     };
@@ -468,7 +527,7 @@ export function WorldGlobe({
       if (down && !moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
         const x = e.clientX;
         const y = e.clientY;
-        const hit = hits.find((h) => Math.hypot(h.x - x, h.y - y) < S / 2 + 4);
+        const hit = hits.find((h) => Math.hypot(h.x - x, h.y - y) < h.r + 4);
         const { focus: f, onSelect: select, onOpen: openProfile, markers: ms } = live.current;
         if (hit && hit.keys.length > 1) {
           const inside = ms.filter((m) => hit.keys.includes(m.key));
@@ -559,7 +618,8 @@ function ZoomButton({ label, a11y, onPress }: { label: string; a11y: string; onP
 const styles = StyleSheet.create({
   // touch-action none: every gesture over the globe is ours (turn in any direction, pinch), so a turn never becomes a
   // page scroll halfway. The page scrolls from anywhere else.
-  area: { position: 'relative', overflow: 'visible', touchAction: 'none', cursor: 'grab', userSelect: 'none' } as object,
+  // Its own stacking context at z 0: portraits stay below glass (z 1) wherever they spill over the page.
+  area: { position: 'relative', zIndex: 0, isolation: 'isolate', overflow: 'visible', touchAction: 'none', cursor: 'grab', userSelect: 'none' } as object,
   zoom: { position: 'absolute', right: space.sm, bottom: space.sm, gap: space.sm, zIndex: 3 },
   zoomBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   zoomText: { fontFamily: font.semibold, fontSize: 22, lineHeight: 24, color: color.text },

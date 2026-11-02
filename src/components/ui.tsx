@@ -42,6 +42,7 @@ export const icons = {
   minus: { ios: 'minus', android: 'remove', web: 'remove' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
+  search: { ios: 'magnifyingglass', android: 'search', web: 'search' },
 } satisfies Record<string, IconName>;
 
 export function Icon({ name, size = 16, tint = color.text }: { name: IconName; size?: number; tint?: string }) {

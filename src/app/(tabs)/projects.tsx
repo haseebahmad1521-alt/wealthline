@@ -3,10 +3,12 @@ import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { PageSearch } from '@/components/page-search';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
 import { Body, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { usePeople, useProjects } from '@/lib/data';
 import { formatDate } from '@/lib/format';
+import { matches, useSearch } from '@/lib/search';
 import type { ProjectStatus } from '@/lib/view-params';
 import { color, radius, space, type } from '@/theme';
 
@@ -28,7 +30,10 @@ export default function Projects() {
     setFilter(applied.params.status);
   }
   const byId = new Map((people.data ?? []).map((p) => [p.id, p]));
-  const shown = (projects.data ?? []).filter((p) => filter === 'all' || p.status === filter);
+  const query = useSearch('projects').trim();
+  const shown = (projects.data ?? []).filter(
+    (p) => (filter === 'all' || p.status === filter) && matches(query, p.title, p.description, byId.get(p.person_id)?.name),
+  );
   const pending = projects.isPending || people.isPending;
   const error = projects.error ?? people.error;
 
@@ -38,6 +43,7 @@ export default function Projects() {
         <Heading>Projects.</Heading>
         <Body secondary>What the world’s biggest fortunes are building next.</Body>
       </View>
+      <PageSearch context="projects" />
       <View accessibilityRole="tablist" style={styles.segments}>
         {filters.map((f) => {
           const selected = filter === f.key;
@@ -68,6 +74,8 @@ export default function Projects() {
             void people.refetch();
           }}
         />
+      ) : shown.length === 0 && query ? (
+        <StateView empty={{ title: `No projects match “${query}”.`, body: 'Try a title, a person, or a word from the description.' }} />
       ) : shown.length === 0 ? (
         <StateView empty={{ title: 'No projects here yet.', body: 'Sourced announcements appear once they’re entered.' }} />
       ) : (

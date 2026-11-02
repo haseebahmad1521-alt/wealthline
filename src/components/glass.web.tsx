@@ -75,6 +75,8 @@ export function Glass({
         {
           backgroundColor: tint,
           borderRadius: radius,
+          // Above the World globe's portrait layer (which is isolated at z 0), so glass frosts the portraits.
+          zIndex: 1,
           backdropFilter: backdrop,
           WebkitBackdropFilter: glass.backdrop,
           boxShadow: `${glass.highlight}, ${glass.shadow}`,

@@ -1,24 +1,27 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Movers, Overtakes, Podium, Races } from '@/components/arena';
 import { BriefCard } from '@/components/news';
+import { PageSearch } from '@/components/page-search';
 import { PersonList } from '@/components/person-row';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
 import { Ticker, TickerSpace } from '@/components/ticker';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { rankMoves } from '@/lib/arena';
+import { matches, setSearch, useSearch } from '@/lib/search';
 import { useLatestBrief, usePeople } from '@/lib/data';
 import { peopleSorts, sortLabels, sortPeople, type PeopleSort } from '@/lib/view-params';
-import { color, font, radius, space, type } from '@/theme';
+import { color, radius, space, type } from '@/theme';
 
 const MAX_COMPARE = 3;
 
 export default function Rankings() {
   const people = usePeople();
   const brief = useLatestBrief();
-  const [query, setQuery] = useState('');
+  const query = useSearch('people');
+  const setQuery = (q: string) => setSearch('people', q);
   const [sort, setSort] = useState<PeopleSort>('rank');
   const [comparing, setComparing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -38,9 +41,7 @@ export default function Rankings() {
   const q = query.trim().toLowerCase();
   // Rank sort lists people without an estimate after the ranked ones.
   const sorted = sortPeople(people.data ?? [], sort);
-  const shown = q
-    ? sorted.filter((p) => [p.name, p.main_source, p.citizenship].some((v) => v?.toLowerCase().includes(q)))
-    : sorted;
+  const shown = q ? sorted.filter((p) => matches(q, p.name, p.main_source, p.citizenship)) : sorted;
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length < MAX_COMPARE ? [...s, id] : s));
@@ -74,27 +75,8 @@ export default function Rankings() {
             style={[styles.round, (filtersOpen || sort !== 'rank') && styles.roundOn]}>
             <Icon name={icons.filter} size={18} tint={filtersOpen || sort !== 'rank' ? color.action : color.text} />
           </Pressable>
-          {/* Narrow screens give compare mode the room: search returns when compare ends. */}
-          {!(comparing && narrow) && (
-          <View style={styles.search}>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search"
-              placeholderTextColor={color.textSecondary}
-              accessibilityLabel="Search by name, source, or country"
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-              style={styles.input}
-            />
-            {query.length > 0 && (
-              <Pressable accessibilityRole="button" accessibilityLabel="Clear search" onPress={() => setQuery('')} style={styles.clear}>
-                <Icon name={icons.close} size={14} tint={color.textSecondary} />
-              </Pressable>
-            )}
-          </View>
-          )}
+          {/* Native: the shared search, inline (web: in the app chrome). Narrow screens give compare mode the room. */}
+          {!(comparing && narrow) && (Platform.OS === 'web' ? <View style={styles.grow} /> : <PageSearch context="people" style={styles.grow} />)}
           {comparing ? (
             <>
               <View style={narrow ? styles.grow : undefined}>
@@ -191,16 +173,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentOn: { backgroundColor: color.surface },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: minTouch,
-    borderRadius: radius.pill,
-    backgroundColor: color.fill,
-    paddingLeft: space.md,
-    flex: 1,
-    minWidth: 0,
-  },
-  input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
-  clear: { width: minTouch, height: minTouch, alignItems: 'center', justifyContent: 'center' },
 });

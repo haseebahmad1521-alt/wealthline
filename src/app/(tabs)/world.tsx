@@ -1,6 +1,6 @@
 import { Link, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Chip as Tag } from 'heroui-native';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
@@ -9,11 +9,13 @@ import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite 
 import { WorldGlobe } from '@/components/world-globe';
 import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
 import { countryShape } from '@/lib/geo';
+import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
 import { scene } from '@/lib/scene';
+import { matches, publishSuggestions, useSearch, type Suggestion } from '@/lib/search';
 import { LIVE_QUOTE_MS, useWorld, type CompanyView, type Empire, type Quote, type SiteKind, type Stake } from '@/lib/world';
-import { color, desktopBreakpoint, radius, space, type } from '@/theme';
+import { color, desktopBreakpoint, glass, radius, space, type } from '@/theme';
 
 const regionName = new Intl.DisplayNames(['en'], { type: 'region' });
 const country = (iso: string | null) => (iso ? (regionName.of(iso) ?? iso) : null);
@@ -82,15 +84,47 @@ export default function World() {
         // duplicate keys left stale rings frozen at old positions as the globe turned.
         for (const site of c.sites) s.push({ key: `${e.person.id}:${c.id}:${site.kind}:${site.name}`, lat: site.lat, lng: site.lng, kind: site.kind, group: e.person.id, live });
       }
-      if (e.hq) m.push({ key: e.person.id, lat: e.hq.lat, lng: e.hq.lng, uri: e.person.portrait_url, label: e.person.name });
+      if (e.hq) m.push({ key: e.person.id, lat: e.hq.lat, lng: e.hq.lng, uri: e.person.portrait_url, label: e.person.name, worth: e.person.net_worth_usd });
     }
     return { sites: s, markers: m };
   }, [world.data]);
 
+  // A place picked from search: the camera flies there instead of to the owner's headquarters.
+  const [spot, setSpot] = useState<{ lat: number; lng: number } | null>(null);
   const select = (personId: string | null) => {
     const e = empires.find((x) => x.person.id === personId);
+    setSpot(null);
     router.setParams({ focus: e && e.person.slug !== slug ? e.person.slug : undefined });
   };
+
+  // Search: people, companies and places, each turning the globe to it and focusing its owner.
+  const query = useSearch('world').trim();
+  useEffect(() => {
+    if (!query) return publishSuggestions('world', undefined);
+    const out: Suggestion[] = [];
+    const fly = (e: Empire, at: { lat: number; lng: number } | null) => () => {
+      setSpot(at);
+      router.setParams({ focus: e.person.slug, view: undefined });
+    };
+    for (const e of empires) if (matches(query, e.person.name)) out.push({ key: `p:${e.person.id}`, label: e.person.name, detail: 'Person · headquarters', onPick: fly(e, null) });
+    for (const e of empires) {
+      for (const c of e.companies) {
+        const at = c.hq_lat != null && c.hq_lng != null ? { lat: c.hq_lat, lng: c.hq_lng } : (c.sites[0] ?? null);
+        if (at && matches(query, c.name, c.ticker)) out.push({ key: `c:${e.person.id}:${c.id}`, label: c.name, detail: `Company · ${e.person.name}`, onPick: fly(e, at) });
+      }
+    }
+    for (const e of empires) {
+      for (const c of e.companies) {
+        for (const site of c.sites) {
+          if (!matches(query, site.name, site.city, country(site.country))) continue;
+          const where = [site.city, country(site.country)].filter(Boolean).join(', ');
+          out.push({ key: `s:${e.person.id}:${c.id}:${site.kind}:${site.name}`, label: site.name, detail: `${KIND[site.kind][0]} · ${c.name}${where ? ` · ${where}` : ''}`, onPick: fly(e, site) });
+        }
+      }
+    }
+    publishSuggestions('world', out.slice(0, 8));
+  }, [query, empires]);
+  useEffect(() => () => publishSuggestions('world', undefined), []);
 
   const globeSize = desktop ? 520 : Math.min(width - space.md * 2 - space.md * 2, 440);
   // Web: the real planet is the globe in every view (flows and shaded countries are drawn on it). While World is open
@@ -115,6 +149,7 @@ export default function World() {
         <Heading>World.</Heading>
         <Body secondary>Where the biggest fortunes reach: every ring is a real place their companies own or run.</Body>
       </View>
+      <PageSearch context="world" />
       {world.isPending || world.error ? (
         <StateView loading={world.isPending} error={world.error} onRetry={() => void world.refetch()} />
       ) : !empires.length ? (
@@ -135,7 +170,7 @@ export default function World() {
               </Pressable>
             ))}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityRole="tablist">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.above} contentContainerStyle={styles.chips} accessibilityRole="tablist">
             <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
             {empires.map((e) => (
               <Chip key={e.person.id} label={e.person.name} selected={focused?.person.id === e.person.id} onPress={() => select(e.person.id)} empire={e} />
@@ -152,7 +187,7 @@ export default function World() {
                   arcs={arcs}
                   fills={fills}
                   focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                  center={shockCentre ?? focused?.hq ?? null}
+                  center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
                   onSelect={(id) => select(id)}
                   onOpen={(id) => {
                     const e = empires.find((x) => x.person.id === id);
@@ -183,7 +218,7 @@ export default function World() {
                 arcs={arcs}
                 fills={fills}
                 focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                center={shockCentre ?? focused?.hq ?? null}
+                center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
                 onSelect={(id) => select(id)}
                 label={
                   focused
@@ -425,8 +460,10 @@ function SourceLink({ label, url }: { label: string; url: string | null }) {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   chips: { gap: space.sm, paddingVertical: 2 },
+  // Controls above the globe's portraits, frosted where a portrait passes under them (web).
+  above: { zIndex: 1 },
   // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
-  segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
+  segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill, zIndex: 1, ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object) },
   segment: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
   chip: {
@@ -438,6 +475,7 @@ const styles = StyleSheet.create({
     paddingRight: space.md,
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object),
   },
   chipOn: { backgroundColor: color.actionTint },
   pressed: { opacity: 0.75 },

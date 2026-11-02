@@ -42,8 +42,10 @@
          Pinch zoom stays enabled (accessibility). */
       html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
       /* Browser surfaces carry the design: themed focus ring and selection. */
-      :focus-visible { outline: 2px solid #0071E3 !important; outline-offset: 2px; }
-      ::selection { background: rgba(0, 113, 227, 0.18); }
+      :focus-visible { outline: 2px solid #6CB8FF !important; outline-offset: 2px; }
+      /* Fields whose container draws the focus ring (the search pill). */
+      [data-ring="container"]:focus-visible { outline: none !important; }
+      ::selection { background: rgba(108, 184, 255, 0.32); }
     </style>
   </head>
 

@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
+import { PageSearch } from '@/components/page-search';
 import { PersonList } from '@/components/person-row';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { usePeople, useWatchlist } from '@/lib/data';
+import { matches, useSearch } from '@/lib/search';
 import { sortLabels } from '@/lib/view-params';
 import { useSavedViews, type SavedView } from '@/lib/views';
 import { color, space, type } from '@/theme';
@@ -17,7 +19,9 @@ export default function Watchlist() {
   const watch = useWatchlist();
   const people = usePeople();
   const views = useSavedViews();
+  const query = useSearch('watchlist').trim();
   const watched = (people.data ?? []).filter((p) => watch.ids.includes(p.id));
+  const shown = watched.filter((p) => matches(query, p.name, p.main_source, p.citizenship));
   const pending = people.isPending || (watch.signedIn && watch.isPending);
   const error = people.error ?? (watch.signedIn ? watch.error : null);
 
@@ -50,7 +54,14 @@ export default function Watchlist() {
           ) : watched.length === 0 ? (
             <StateView empty={{ title: 'Nothing watched yet.', body: 'Tap the star on a profile to add someone here.' }} />
           ) : (
-            <PersonList people={watched} />
+            <>
+              <PageSearch context="watchlist" />
+              {shown.length ? (
+                <PersonList people={shown} />
+              ) : (
+                <StateView empty={{ title: `No one you watch matches “${query}”.`, body: 'Try a different name, source, or country.' }} />
+              )}
+            </>
           )}
           <Heading level={2}>Saved views.</Heading>
           {views.error ? (

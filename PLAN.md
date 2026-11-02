@@ -21,20 +21,18 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
-_Updated Nov 2, 2026, batch B mostly done (pushed; see `git log`)._
+_Updated Nov 2, 2026: batch B done (pushed; see `git log`). Next: batch P._
 
-- **Just landed (batch B):**
-  - **World views on the planet:** Money, Economies and What if now draw on the real planet. Flows are great-circle lines on the overlay canvas, with dashes travelling to HQ (`world-globe.web.tsx`). Shaded countries are painted into an equirectangular `fillMap` that the Earth shader blends, and they fade with `worldMix` (`planet-scene.web.tsx`, `scene.fills`/`fillsVersion`). What if defaults to a region (e.g. "Rest of world"), which has no country shape, so nothing is shaded until a country is picked. That's the same as the old SVG globe.
-  - **Profiles zoom in:** `scene.visit` = HQ, a third camera pose blended after World. `scene.worldMix` now means World's share of the view, so portraits still wait on the way back.
-  - **Per-page camera angles:** `ANGLES` in `scene.ts`; `Screen angle="projects" | "watchlist"`.
-  - **News sheet:** tapping a headline opens a glass sheet (RN `Modal`) that grows from its row. "Read on <source>" opens the article. Escape, the backdrop or Done closes it.
-  - **Phone QR:** `npm run phone:qr -- --plain` prints a QR that can be pasted into chat (checked to decode).
-- **Next:** the last batch B item, one persistent search field. Then batch P (rocket, built in code, owner Nov 2), then C.
-  - Suggested shape for the search field: one glass search field in the top chrome (under the ticker on phones, in the desktop nav) whose placeholder and results follow the tab: people on Rankings, places/companies on World, projects on Projects, watchlist on Watchlist. Rankings' own search moves into it. Run Impeccable `shape` first.
+- **Just landed:**
+  - **One search field** (`src/lib/search.ts`, `src/components/search-field.tsx`). Each tab keeps its own query: people on Rankings, people/companies/places on World, projects, and watched people. Phones: a round glass button beside the floating tab bar expands into a field that rides above the keyboard (visualViewport). ✕ or Escape clears and closes. Desktop web: a field in the top nav. Native: inline `<PageSearch>` on each tab. World publishes suggestions, and picking one focuses the owner and flies the globe to that HQ or site (`spot` in world.tsx).
+  - **Glass frosts the globe portraits.** The portrait layer is isolated at z 0, and Glass, World's chips and the segment control sit at z 1 with backdrop blur.
+  - **Opened bubbles are big and wealth-sized:** `packFan` in `world-globe.web.tsx` puts the richest in the middle and the rest on a spiral. Diameters range from ~50% to 100% of min(30% of the short side, 108/136 px), so area follows net worth. The fan fits the screen (on desktop, the globe column).
+  - Global focus ring and selection now use the dark palette's action blue (`public/index.html`).
+- **Next:** batch P (rocket on Projects). Then C.
 - **Half-done:** nothing uncommitted.
 - **Ask the owner:** nothing open.
-- **Not verified on a device yet:** globe feel on a real phone (gestures, frame rate), the 8K swap (needs a visible desktop browser for ~10 s), Safari pinch events, tab transition mid-animation, the fan on a 320 px phone, the news-sheet zoom and the profile fly-in on a phone.
-- **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain` for a phone, or `npm run preview:phone` → http://localhost:8090 (phone frame). Also `npm run typecheck`, `npm test`, and `npm run build:pages` before a push.
+- **Not verified on a device yet:** the phone search above the iOS keyboard (visualViewport math), globe feel on a real phone, the 8K swap, Safari pinch, the fan on a 320 px phone, the news sheet and the profile fly-in on a phone.
+- **Verify:** `npx expo start --web --port 8081`, then `npm run phone:qr -- --plain`, or `npm run preview:phone` → http://localhost:8090. Also `npm run typecheck`, `npm test`, `npm run build:pages` before a push. (Don't run `npx expo lint`: it installs and configures ESLint on its own.)
 
 ## Next up (work queue, priority order)
 
@@ -63,8 +61,10 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 - [x] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
 - [x] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
 - [x] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
-- [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
+- [x] One persistent search field whose context follows the view (people / places / projects / watchlist)
 - [x] News items open as a glass sheet that zooms from the row
+- [x] Glass frosts the globe portraits (they no longer draw over UI)
+- [x] Opened bubbles: bigger portraits, sized by net worth
 
 **Batch P — Projects: the ascent (owner, Nov 2, 2026; planned, not started)**
 The Projects tab becomes a camera pose on a rocket climbing away from Earth. The rocket barely moves; the sense of speed comes from the huge sky and planet behind it.
@@ -96,6 +96,7 @@ The Projects tab becomes a camera pose on a rocket climbing away from Earth. The
 
 ## Decisions (owner)
 
+- **Target is iOS (owner, Nov 2, 2026):** iPhone, and iPad (landscape at worst). Desktop browser layouts no longer need design attention; the web build stays as the preview and the base for the native app.
 - Web-hosted React Native (Expo SDK 58) app for now; native iOS/Android builds later from the same code. No Expo Go.
 - Supabase backend (new project). The original records were exported once from the previous Bilt backend (10 people, 20 dated estimates, 11 holdings, 10 licensed portraits); that export is complete and its script was removed on Nov 1, 2026 (in git history before that date).
 - Accounts: email + strong password with activation link; emailed 6-digit code on new devices, enforced server-side. Google/Apple later.
