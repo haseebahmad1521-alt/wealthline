@@ -164,9 +164,11 @@ export function WorldGlobe({
     const faces = document.createElement('div');
     // The layers cover the whole viewport (moved each frame so their origin is the viewport's), so portraits reach
     // the screen edges instead of being cut at the globe area's box.
+    // Clipped to the viewport: a portrait off screen (or behind the horizon) must never widen or lengthen the page,
+    // or a drag would scroll into empty space (and on iOS shift the whole document, lifting the tab bar).
     dots.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
-    goo.style.cssText = `position:absolute;inset:0;pointer-events:none;filter:url(#${GOO_ID}) drop-shadow(0 8px 18px rgba(0,0,0,.55))`;
-    faces.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
+    goo.style.cssText = `position:absolute;inset:0;overflow:hidden;pointer-events:none;filter:url(#${GOO_ID}) drop-shadow(0 8px 18px rgba(0,0,0,.55))`;
+    faces.style.cssText = 'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none';
     el.prepend(dots, goo, faces);
 
     const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; s: Spring; d: number; shown: number }>();

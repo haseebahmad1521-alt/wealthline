@@ -30,10 +30,14 @@
         background: #04060b;
         color-scheme: dark;
       }
+      html,
       body {
         overflow: hidden;
       }
+      /* Nothing may make the document itself scrollable: iOS would then move the whole app (and its floating bars)
+         under a drag. Scrolling happens inside the screens. */
       #root {
+        overflow: hidden;
         display: flex;
         height: 100%;
         flex: 1;

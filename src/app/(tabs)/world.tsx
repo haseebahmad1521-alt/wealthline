@@ -1,6 +1,6 @@
 import { Link, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Chip as Tag } from 'heroui-native';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
@@ -141,6 +141,7 @@ export default function World() {
       };
     }, [planet]),
   );
+  const details = useRef<ComponentRef<typeof View>>(null);
   const places = new Set(sites.map((s) => s.key.split(':').slice(1).join(':'))).size;
 
   return (
@@ -199,15 +200,8 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                <Caption style={styles.globeNote}>
-                  {view === 'places'
-                    ? 'Drag to turn; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.'
-                    : view === 'money'
-                      ? 'Drag to turn; pinch to zoom. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
-                      : view === 'economies'
-                        ? 'Drag to turn; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
-                        : 'Drag to turn; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
-                </Caption>
+                {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
+                <MoreHandle target={details} />
               </View>
             ) : (
             <Surface style={[styles.globeCard, desktop && styles.globeCardWide]}>
@@ -237,7 +231,7 @@ export default function World() {
               </Caption>
             </Surface>
             )}
-            <View style={[styles.panel, desktop && styles.panelWide]}>
+            <View ref={details} style={[styles.panel, styles.details, desktop && styles.panelWide]}>
               {view === 'money' ? (
                 <MoneyPanel lines={lines} focus={focused} />
               ) : view === 'economies' ? (
@@ -259,6 +253,17 @@ export default function World() {
                 <EmpirePanel empire={focused} />
               ) : (
                 <Overview empires={empires} places={places} onSelect={select} />
+              )}
+              {planet && (
+                <Caption style={styles.planetNote}>
+                  {view === 'places'
+                    ? 'Drag the globe to turn it; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.'
+                    : view === 'money'
+                      ? 'Drag the globe to turn it; pinch to zoom. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
+                      : view === 'economies'
+                        ? 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                        : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
+                </Caption>
               )}
             </View>
           </View>
@@ -457,7 +462,46 @@ function SourceLink({ label, url }: { label: string; url: string | null }) {
   );
 }
 
+const reduceMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Web: a pill under the globe saying there's more below. A soft double glow every 5 s, three times, then still; tap to
+ * bring the details up (the page scrolls normally from here, since the globe itself keeps every drag for turning).
+ */
+function MoreHandle({ target }: { target: RefObject<ComponentRef<typeof View> | null> }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Show details"
+      accessibilityHint="Scrolls the details below the globe into view"
+      onPress={() => (target.current as unknown as HTMLElement | null)?.scrollIntoView?.({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })}
+      hitSlop={8}
+      style={styles.handleHit}>
+      {({ pressed }) => <View style={[styles.handle, !reduceMotion && styles.handlePulse, pressed && styles.pressed]} />}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  handleHit: { alignSelf: 'center', minWidth: 96, minHeight: minTouch, alignItems: 'center', justifyContent: 'center' },
+  handle: { width: 44, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.55)' },
+  // Two quick glows, then rest until the next 5 s beat; three beats, starting after a moment.
+  handlePulse: {
+    animationKeyframes: [
+      {
+        '0%, 24%, 100%': { boxShadow: '0 0 0 0 rgba(108,184,255,0)', backgroundColor: 'rgba(255,255,255,0.55)' },
+        '6%, 18%': { boxShadow: '0 0 14px 4px rgba(108,184,255,0.55)', backgroundColor: 'rgba(255,255,255,0.95)' },
+        '12%': { boxShadow: '0 0 4px 1px rgba(108,184,255,0.2)', backgroundColor: 'rgba(255,255,255,0.7)' },
+      },
+    ],
+    animationDuration: '5s',
+    animationDelay: '1.5s',
+    animationIterationCount: 3,
+    animationTimingFunction: 'ease-in-out',
+  } as object,
+  // Clear of the ticker when scrolled to.
+  details: { scrollMarginTop: 72 } as object,
+  planetNote: { maxWidth: 520 },
   flex: { flex: 1, minWidth: 0 },
   chips: { gap: space.sm, paddingVertical: 2 },
   // Controls above the globe's portraits, frosted where a portrait passes under them (web).
