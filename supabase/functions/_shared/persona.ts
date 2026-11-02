@@ -158,11 +158,14 @@ export function strikeNotice(outcome: StrikeOutcome, strikes: number, name: stri
 /** Plans (owner, Nov 2, 2026): Free has no chat. The daily allowance is spend, not a message count, so short messages
  * go further. Budgets are in micro-dollars at list API prices; tune them once real usage is measured. */
 export const PLANS = {
-  pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000 }, // ≈ 20 typical replies ($0.08/day at most)
+  // `estimate`: reserved before each reply, corrected to the real cost after it.
+  pro: { model: 'claude-haiku-4-5', localModel: 'haiku', dailyMicros: 80_000, estimate: 6_000 }, // ≈ 20 typical replies ($0.08/day at most)
   // $14.99/month: the worst case (every day at the cap, $9/month) stays under what's left after a 30% store fee.
-  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
+  premium: { model: 'claude-sonnet-5-5', localModel: 'sonnet', dailyMicros: 300_000, estimate: 12_000 }, // ≈ 40–50 short replies with caching ($0.30/day at most)
 } as const;
 export type Plan = keyof typeof PLANS;
+/** All users together, per UTC day: the circuit breaker's default ($25), overridable with CHAT_GLOBAL_DAILY_USD. */
+export const GLOBAL_DAILY_MICROS = 25_000_000;
 
 // List prices, $ per million tokens = micro-dollars per token (claude-api skill, Nov 2026).
 const PRICE = {
