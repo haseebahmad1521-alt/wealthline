@@ -4,7 +4,19 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 
 import { InstallCard } from '@/components/install-card';
 import { Body, Button, Caption, Heading, Icon, Screen, Surface, icons, minTouch } from '@/components/ui';
-import { activate, confirm, resetPassword, passwordRules, setFirstName, signOut, verifyDevice } from '@/lib/auth';
+import {
+  activate,
+  confirm,
+  enabledProviders,
+  resetPassword,
+  passwordRules,
+  resumeOAuth,
+  setFirstName,
+  signInWithProvider,
+  signOut,
+  verifyDevice,
+  type Provider,
+} from '@/lib/auth';
 import { useCurrencyChoice } from '@/lib/currency';
 import { useAuth } from '@/lib/data';
 import { color, font, radius, space, type } from '@/theme';
@@ -128,18 +140,25 @@ function NameCard({ saved }: { saved: string }) {
   );
 }
 
+// Back from Google / Apple on a new device: the code step's email, kept across the route replace that strips the
+// token fragment (the replace remounts this screen).
+let resumedEmail: string | null = null;
+
 export default function Account() {
   const { session, isAdmin } = useAuth();
   const router = useRouter();
   const { activated } = useLocalSearchParams<{ activated?: string }>();
-  const [step, setStep] = useState<Step>('form');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<Step>(resumedEmail ? 'code' : 'form');
+  const [email, setEmail] = useState(resumedEmail ?? '');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  // Set when the code step came from Google / Apple: Resend then goes back through that provider.
+  const [via, setVia] = useState<Provider | null>(null);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -163,6 +182,32 @@ export default function Account() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void enabledProviders().then(setProviders);
+    // Back from Google / Apple (web): a trusted device is signed in; any other gets the emailed code.
+    void run(async () => {
+      const r = await resumeOAuth();
+      if (!r) return;
+      if (r.status === 'mfa') {
+        resumedEmail = r.email;
+        setEmail(r.email);
+        setStep('code');
+      }
+      router.replace('/account'); // the router would otherwise keep restoring ?oauth=1 and the token fragment
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const withProvider = (p: Provider) =>
+    run(async () => {
+      const r = await signInWithProvider(p);
+      if (r.status === 'mfa') {
+        setVia(p);
+        setEmail(r.email);
+        setStep('code');
+      }
+    });
   const welcome = activated === 'welcome';
 
   const rules = passwordRules(password);
@@ -180,6 +225,10 @@ export default function Account() {
 
   const resend = () =>
     run(async () => {
+      if (via) {
+        await signInWithProvider(via);
+        return;
+      }
       await confirm(cleanEmail, password);
       setNotice('We sent a new email.');
     });
@@ -259,13 +308,23 @@ export default function Account() {
         {messages}
         <Button label="Verify" onPress={() => void confirmCode()} loading={busy} />
         <Button label="Resend email" variant="secondary" onPress={() => void resend()} disabled={busy} />
-        <Button label="Use a different account" variant="secondary" onPress={() => { setStep('form'); setCode(''); setError(null); }} />
+        <Button label="Use a different account" variant="secondary" onPress={() => { resumedEmail = null; setStep('form'); setCode(''); setError(null); setVia(null); }} />
       </Surface>
     );
   } else {
     content = (
       <Surface style={styles.card}>
         <Heading level={2}>Sign in or create an account.</Heading>
+        {providers.map((p) => (
+          <Button
+            key={p}
+            label={p === 'apple' ? 'Continue with Apple' : 'Continue with Google'}
+            variant="secondary"
+            onPress={() => void withProvider(p)}
+            disabled={busy}
+          />
+        ))}
+        {providers.length > 0 && <Caption>On a new device we also email you a code, whichever way you sign in.</Caption>}
         <Body secondary>Enter your email and a password. New here? Confirm creates your account.</Body>
         {activated === '1' && <Body>Email confirmed. Sign in to continue.</Body>}
         {activated === 'failed' && (

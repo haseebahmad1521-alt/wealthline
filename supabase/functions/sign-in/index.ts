@@ -16,11 +16,10 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'Invalid request.' }, 400);
   }
-  const { email, password, device_id, device_token, redirect_to, activate_to } = body;
+  const { email, password, device_id, device_token, redirect_to, activate_to, access_token, refresh_token } = body;
   if (
-    !isEmail(email) || !isStr(password, 256) || !isStr(device_id, 100) ||
-    (device_token != null && !isStr(device_token, 200)) || (redirect_to != null && !isStr(redirect_to, 500)) ||
-    (activate_to != null && !isStr(activate_to, 500))
+    !isStr(device_id, 100) || (device_token != null && !isStr(device_token, 200)) ||
+    (redirect_to != null && !isStr(redirect_to, 500)) || (activate_to != null && !isStr(activate_to, 500))
   ) {
     return json({ error: 'Invalid request.' }, 400);
   }
@@ -28,6 +27,17 @@ Deno.serve(async (req) => {
   const anon = createClient(url, anonKey, noSession);
   const admin = createClient(url, serviceKey, noSession);
 
+  // Google / Apple (owner, Nov 2, 2026): the provider's session counts like a correct password, so the device
+  // still needs the code emailed to the account's address unless it is already trusted.
+  if (access_token != null) {
+    if (!isStr(access_token, 4096) || !isStr(refresh_token, 200)) return json({ error: 'Invalid request.' }, 400);
+    // getUser validates the token with Auth (signature + expiry), unlike decoding it ourselves.
+    const { data, error } = await admin.auth.getUser(access_token);
+    if (error || !data.user?.email) return json({ error: 'Sign-in failed. Try again.' }, 401);
+    return await secondFactor(admin, anon, data.user.id, data.user.email, { access_token, refresh_token }, body);
+  }
+
+  if (!isEmail(email) || !isStr(password, 256)) return json({ error: 'Invalid request.' }, 400);
   const { data, error } = await anon.auth.signInWithPassword({ email, password });
   if (error || !data.session || !data.user) {
     if (error?.code === 'email_not_confirmed') {
@@ -35,7 +45,21 @@ Deno.serve(async (req) => {
     }
     return await signUpOrNeutral(anon, email, password, activate_to as string | undefined);
   }
-  const { session, user } = data;
+  return await secondFactor(admin, anon, data.user.id, email, data.session, body);
+});
+
+type Tokens = { access_token: string; refresh_token: string };
+
+// A trusted device gets its session marked verified; any other device loses the session and gets the emailed code.
+async function secondFactor(
+  admin: SupabaseClient,
+  anon: SupabaseClient,
+  userId: string,
+  email: string,
+  session: Tokens,
+  body: Record<string, unknown>,
+) {
+  const { device_id, device_token, redirect_to } = body;
   const sessionId = sessionIdOf(session.access_token);
   if (!sessionId) return json({ error: 'Sign-in failed. Try again.' }, 500);
 
@@ -44,11 +68,11 @@ Deno.serve(async (req) => {
     const { data: row } = await admin
       .from('trusted_devices')
       .select('token_hash, expires_at')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('device_id', device_id)
       .maybeSingle();
     if (row && row.token_hash === (await sha256Hex(device_token as string)) && new Date(row.expires_at) > new Date()) {
-      const ins = await admin.from('verified_sessions').insert({ session_id: sessionId, user_id: user.id });
+      const ins = await admin.from('verified_sessions').insert({ session_id: sessionId, user_id: userId });
       if (ins.error) return json({ error: 'Sign-in failed. Try again.' }, 500);
       return json({ session: { access_token: session.access_token, refresh_token: session.refresh_token } });
     }
@@ -61,13 +85,13 @@ Deno.serve(async (req) => {
   const { data: existing } = await admin
     .from('device_challenges')
     .select('attempts, expires_at')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .eq('device_id', device_id)
     .maybeSingle();
   const live = existing && new Date(existing.expires_at) > new Date();
   const attempts = live ? existing.attempts : 0;
   await admin.from('device_challenges').upsert({
-    user_id: user.id,
+    user_id: userId,
     device_id,
     expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
     attempts,
@@ -77,8 +101,9 @@ Deno.serve(async (req) => {
     // (handled by `activate`). Auth only honours redirect_to if it is on the redirect allowlist.
     await anon.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirect_to as string | undefined } });
   }
-  return json({ mfa_required: true });
-});
+  // The email lets an OAuth sign-in show and verify the code; the password path already knows it.
+  return json({ mfa_required: true, email });
+}
 
 // One "Confirm" for sign-in and sign-up. A wrong password and a new email get the same answer, so the form never
 // says whether an account exists: with confirmations on, Auth's signUp returns an obfuscated user for a confirmed
