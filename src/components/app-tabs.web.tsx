@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/glass';
 import { SearchField, SearchSuggestions } from '@/components/search-field';
 import { Icon, icons, minTouch, type IconName } from '@/components/ui';
+import { useKeyboardInset } from '@/lib/keyboard';
 import { useChromeHidden } from '@/lib/scene';
 import type { SearchContext } from '@/lib/search';
 import { useAuth } from '@/lib/data';
@@ -29,38 +30,6 @@ const tabs: { name: string; href: '/' | '/world' | '/projects' | '/watchlist'; l
   { name: 'watchlist', href: '/watchlist', label: 'Watchlist', icon: icons.starFill, search: 'watchlist' },
 ];
 const tabAt = (pathname: string) => tabs.findIndex((t) => (t.href === '/' ? pathname === '/' : pathname.startsWith(t.href)));
-
-/**
- * Phones: how far the visible area's bottom (above the keyboard) sits above the app's own bottom edge. Measured against
- * the app root's box rather than window.innerHeight: iOS Safari can make the two differ (toolbar, viewport-fit=cover)
- * and scrolls the document to reveal a focused field, both of which left the field slightly under the keyboard.
- */
-function useKeyboardInset(active: boolean) {
-  const [inset, setInset] = useState(0);
-  useEffect(() => {
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
-    if (!active || !vv) return setInset(0);
-    const root = document.getElementById('root') ?? document.documentElement;
-    const update = () => setInset(Math.max(0, Math.round(root.getBoundingClientRect().bottom - (vv.offsetTop + vv.height))));
-    // iOS reports the keyboard while it is still animating; settle again once it has landed.
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const settle = () => {
-      update();
-      timers.push(setTimeout(update, 120), setTimeout(update, 360));
-    };
-    settle();
-    vv.addEventListener('resize', settle);
-    vv.addEventListener('scroll', update);
-    window.addEventListener('scroll', update);
-    return () => {
-      timers.forEach(clearTimeout);
-      vv.removeEventListener('resize', settle);
-      vv.removeEventListener('scroll', update);
-      window.removeEventListener('scroll', update);
-    };
-  }, [active]);
-  return inset;
-}
 
 /** Desktop top bar. Link-based so it also works as the header of Stack screens above the tabs. */
 export function TopNav() {

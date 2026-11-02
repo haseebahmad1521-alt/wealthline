@@ -1,7 +1,9 @@
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
+import { useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
+import { ChatEntry } from '@/components/chat';
 import { SocialBubble } from '@/components/chat-bubble';
 import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
@@ -32,10 +34,11 @@ export function ProfileHero({
 }) {
   const desktop = useWindowDimensions().width >= desktopBreakpoint;
   const size = desktop ? 200 : 88;
+  const card = useRef<ComponentRef<typeof View>>(null);
   const identity = [person.rank ? `No. ${person.rank}` : null, person.main_source].filter(Boolean).join(' · ');
 
   return (
-    <View style={[styles.hero, desktop && styles.heroDesktop]}>
+    <View ref={card} style={[styles.hero, desktop && styles.heroDesktop]}>
       {person.portrait_url && (
         <Image
           // Blurred to a colour field: a small thumbnail is all it needs.
@@ -75,6 +78,15 @@ export function ProfileHero({
           <SocialBubble person={person} post={post} updating={postUpdating} tailX={size / 2} />
         </View>
       )}
+
+      <View style={desktop && styles.bubbleDesktop}>
+        <ChatEntry
+          person={person}
+          measureCard={(done) =>
+            card.current ? card.current.measureInWindow((x, y, width, height) => done(width ? { x, y, width, height } : null)) : done(null)
+          }
+        />
+      </View>
 
       {person.portrait_url && person.portrait_page_url && (
         <Pressable
