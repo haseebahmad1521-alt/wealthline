@@ -19,7 +19,7 @@ import {
 import { Glass } from '@/components/glass';
 import { direction, formatDate, formatTime, percent } from '@/lib/format';
 import { useMoney } from '@/lib/currency';
-import { reportScroll } from '@/lib/scene';
+import { reportScroll, scene, type CameraAngle } from '@/lib/scene';
 import type { LiveStatus } from '@/lib/live';
 import { color, contentWidth, desktopBreakpoint, radius, space, type } from '@/theme';
 
@@ -57,14 +57,20 @@ export function Icon({ name, size = 16, tint = color.text }: { name: IconName; s
 }
 
 /** Scrollable page body, centered at the desktop content width. */
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({ children, scroll = true, angle = 'home' }: { children: ReactNode; scroll?: boolean; /** The planet camera's angle for this page. */ angle?: CameraAngle }) {
   const inner = <View style={styles.inner}>{children}</View>;
   // Phones on the web: room at the bottom so the last items scroll clear of the floating tab bar.
   const floatingBar = Platform.OS === 'web' && useWindowDimensions().width < desktopBreakpoint;
   const content = [styles.screenContent, floatingBar && { paddingBottom: 112 }];
   // Tabs stay mounted, each with its own scroll: when this screen comes back into view, the camera returns to its spot.
   const at = useRef({ y: 0, max: 0, viewport: 0 });
-  useFocusEffect(useCallback(() => reportScroll(at.current.y, at.current.max, at.current.viewport, performance.now(), true), []));
+  useFocusEffect(
+    useCallback(() => {
+      scene.angle = angle;
+      scene.invalidate?.();
+      reportScroll(at.current.y, at.current.max, at.current.viewport, performance.now(), true);
+    }, [angle]),
+  );
   return scroll ? (
     <ScrollView
       style={styles.screen}

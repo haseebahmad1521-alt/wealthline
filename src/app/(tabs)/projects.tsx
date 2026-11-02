@@ -33,7 +33,7 @@ export default function Projects() {
   const error = projects.error ?? people.error;
 
   return (
-    <Screen>
+    <Screen angle="projects">
       <View>
         <Heading>Projects.</Heading>
         <Body secondary>What the world’s biggest fortunes are building next.</Body>

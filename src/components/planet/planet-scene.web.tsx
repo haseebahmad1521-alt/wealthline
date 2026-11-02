@@ -8,7 +8,7 @@ import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import * as THREE from 'three';
 
 import { countryShape, land } from '@/lib/geo';
-import { scene as sceneState, zoomFactor } from '@/lib/scene';
+import { ANGLES, scene as sceneState, zoomFactor } from '@/lib/scene';
 import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
 import { color } from '@/theme';
@@ -25,10 +25,7 @@ const DIST = [1.62, 1.3] as const; // distance from Earth's centre, in Earth rad
 const LIMB_Y = [-0.6, 0.7] as const;
 const ROLL = [0, -9] as const; // degrees: the horizon tilts steeper on the way down
 const HAZE = [0.0, 1.3] as const;
-// Where the camera hangs: south of the places we look across, so the horizon runs over the populated mid-latitudes,
-// and east of the subsolar point, so the evening terminator and its city lights cross the view.
-const CAMERA_LAT = -26;
-const CAMERA_EAST_OF_SUN = 78;
+// Where the camera hangs comes from the page in view (ANGLES in scene.ts); switching pages eases from one angle to the next.
 const DRIFT_DEG = 22; // gentle orbit: ±22° over DRIFT_PERIOD
 const DRIFT_PERIOD_S = 360;
 
@@ -320,6 +317,7 @@ export function PlanetScene() {
 
     // Camera state, eased toward what the page asks for.
     let p = sceneState.progress;
+    const angle = { ...ANGLES[sceneState.angle] };
     let spin = 0;
     let lastT = performance.now();
     let sunAt = 0;
@@ -377,9 +375,15 @@ export function PlanetScene() {
       const e = p;
       const d = mix(DIST[0], DIST[1], e);
       const drift = reduce ? 0 : DRIFT_DEG * Math.sin(((now / 1000) * 2 * Math.PI) / DRIFT_PERIOD_S);
-      const lng = sun.lng + CAMERA_EAST_OF_SUN + drift + spin;
+      // Ease toward the page's angle (the shorter way round in longitude).
+      const goalAngle = ANGLES[sceneState.angle];
+      const ka = reduce ? 1 : 1 - Math.exp(-dt * 1.8);
+      angle.lat += (goalAngle.lat - angle.lat) * ka;
+      angle.east += ((((goalAngle.east - angle.east + 180) % 360) + 360) % 360 - 180) * ka;
+      angle.roll += (goalAngle.roll - angle.roll) * ka;
+      const lng = sun.lng + angle.east + drift + spin;
       if (__DEV__) Object.assign((window as unknown as { __planet: object }).__planet, { dbg: { lng, sunLng: sun.lng, drift, spin, p, dt, vel: sceneState.velocity } });
-      const pos = posV.set(...latLngToUnit(CAMERA_LAT, lng)).multiplyScalar(d);
+      const pos = posV.set(...latLngToUnit(angle.lat, lng)).multiplyScalar(d);
 
       // Look from the camera toward Earth's centre, then pitch up so the horizon lands at LIMB_Y on screen.
       const alpha = Math.asin(1 / d);
@@ -392,7 +396,7 @@ export function PlanetScene() {
       orbitRig.position.copy(pos);
       orbitRig.up.copy(upPitched);
       orbitRig.lookAt(target.copy(pos).add(fwd));
-      orbitRig.rotateZ(mix(ROLL[0], ROLL[1], e) * RAD);
+      orbitRig.rotateZ((mix(ROLL[0], ROLL[1], e) + angle.roll) * RAD);
 
       // World view: straight at the chosen point, far enough that the globe's radius on screen is radiusPx × zoom.
       const w = sceneState.world;

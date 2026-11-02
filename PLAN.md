@@ -57,7 +57,7 @@ When the owner writes "continue", take the first unchecked batch, do it, tick it
 **Batch B — one scene for every view**
 - [x] Money / Economies / What if on the real planet: revenue arcs as lines on the globe, country shading as an overlay (replace the SVG globe on web)
 - [x] Profiles as a zoom-in: the camera flies to the person's HQ, the profile is glass over the planet, back flies out
-- [ ] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
+- [x] Projects and Watchlist get their own camera poses (one viewframe, every page a different angle)
 - [ ] One persistent search field whose context follows the view (people / places / projects / watchlist)
 - [ ] News items open as a glass sheet that zooms from the row
 

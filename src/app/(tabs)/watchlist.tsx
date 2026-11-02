@@ -22,7 +22,7 @@ export default function Watchlist() {
   const error = people.error ?? (watch.signedIn ? watch.error : null);
 
   return (
-    <Screen>
+    <Screen angle="watchlist">
       <View>
         <Heading>Watchlist.</Heading>
         <Body secondary>Private to your account. Only you can see it.</Body>
