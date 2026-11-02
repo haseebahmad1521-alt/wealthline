@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, dehydrate, hydrate, useQueries, useQuery, useQueryClient, type Query } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
@@ -8,6 +8,44 @@ import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, P
 const client = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
 });
+
+// A cold start shows the last public data at once (owner's smoothness rule, Nov 2, 2026): shared, non-private queries
+// are saved to localStorage in idle time and restored before the first render. Restored data keeps its original fetch
+// time, so React Query still refetches it straight away; the screens' freshness labels come from the records' own
+// dates, not from when they were fetched. Private queries (watchlist, views, admin) are never saved.
+const PERSIST_KEY = 'wl.query-cache.v1';
+const PERSIST_ROOTS = new Set(['people', 'world', 'projects', 'brief', 'fx-rates', 'fx-currencies']);
+const PERSIST_MAX_AGE = 7 * 86_400_000;
+const persistable = (q: Query) => q.state.status === 'success' && PERSIST_ROOTS.has(String(q.queryKey[0]));
+
+function persistCache() {
+  let store: Storage | undefined;
+  try {
+    store = (globalThis as { localStorage?: Storage }).localStorage;
+    const saved = store && JSON.parse(store.getItem(PERSIST_KEY) ?? 'null');
+    if (saved && Date.now() - saved.at < PERSIST_MAX_AGE) hydrate(client, saved.state);
+  } catch {
+    // Private mode, blocked storage or an old shape: start empty.
+  }
+  if (!store) return;
+  const idle = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  let pending = false;
+  client.getQueryCache().subscribe((e) => {
+    if (pending || e.type !== 'updated' || e.action.type !== 'success' || !persistable(e.query)) return;
+    pending = true;
+    const save = () => {
+      pending = false;
+      try {
+        store!.setItem(PERSIST_KEY, JSON.stringify({ at: Date.now(), state: dehydrate(client, { shouldDehydrateQuery: persistable }) }));
+      } catch {
+        // Quota or blocked storage: the next start just fetches.
+      }
+    };
+    if (idle) idle(save, { timeout: 5000 });
+    else setTimeout(save, 2000);
+  });
+}
+persistCache();
 
 type Auth = { session: Session | null; loading: boolean; isAdmin: boolean };
 const AuthContext = createContext<Auth>({ session: null, loading: true, isAdmin: false });

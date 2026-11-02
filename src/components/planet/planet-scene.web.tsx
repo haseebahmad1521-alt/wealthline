@@ -363,6 +363,18 @@ export function PlanetScene() {
         skyUniforms.milkyWay.value = milkyWay;
         setState('ready');
         invalidate();
+        // Compile the rocket's shaders in idle time (with its lights, so the programs match), in parallel where the
+        // browser supports it: first opening Projects used to stall ≈100 ms on a mid phone compiling them.
+        const idle = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        (idle ?? ((cb: () => void) => setTimeout(cb, 1500)))(
+          () => {
+            if (disposed || rocket.group.visible) return;
+            rocket.group.visible = true;
+            void renderer.compileAsync(scene, camera).catch(() => undefined);
+            rocket.group.visible = false; // compileAsync gathers the materials synchronously
+          },
+          { timeout: 4000 },
+        );
       })
       .catch(() => !disposed && setState('failed'));
 
