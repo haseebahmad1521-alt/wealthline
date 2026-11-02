@@ -8,6 +8,7 @@ import { AccessibilityInfo, PanResponder, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path, Text as SvgText } from 'react-native-svg';
 
 import { countryShape, land, type LatLng } from '@/lib/geo';
+import { portraitAt, portraitPx } from '@/lib/portrait';
 import type { SiteKind } from '@/lib/world';
 import { color } from '@/theme';
 
@@ -244,7 +245,7 @@ export function Globe({
                 <Circle cx={x} cy={y} r={d / 2} />
               </ClipPath>
             </Defs>
-            <SvgImage href={m.uri} x={x - d / 2} y={y - d / 2} width={d} height={d} preserveAspectRatio="xMidYMin slice" clipPath={`url(#clip-${m.key})`} />
+            <SvgImage href={portraitAt(m.uri, portraitPx(d))} x={x - d / 2} y={y - d / 2} width={d} height={d} preserveAspectRatio="xMidYMin slice" clipPath={`url(#clip-${m.key})`} />
           </>
         ) : (
           // No free portrait: initials, as everywhere else in the app.

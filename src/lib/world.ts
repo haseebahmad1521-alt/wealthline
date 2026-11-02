@@ -1,7 +1,8 @@
 // World tab data: each tracked person's companies (person_companies: Wikidata links, Forbes source, holdings), their
 // real sites (Wikidata), revenue by reported place (SEC 10-K),
 // subsidiary counts (Exhibit 21) and the latest observed share price. Nothing here is computed beyond grouping.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { usePeople, type Person } from '@/lib/data';
 import { db } from '@/lib/supabase';
@@ -58,9 +59,23 @@ async function loadWorld() {
 export function useWorld() {
   const people = usePeople();
   const world = useQuery({ queryKey: ['world'], queryFn: loadWorld, refetchInterval: 5 * 60_000 });
+  // Built once per data change, not per render: everything downstream (markers, arcs, the globe overlay) keys on it.
+  const empires = useMemo(() => buildEmpires(people.data, world.data), [people.data, world.data]);
+  return {
+    data: empires,
+    countries: world.data?.countries,
+    isPending: people.isPending || world.isPending,
+    error: people.error ?? world.error,
+    refetch: () => Promise.all([people.refetch(), world.refetch()]),
+  };
+}
+
+/** Warm the World query in the background so opening World never waits on the network. */
+export const prefetchWorld = (qc: QueryClient) => qc.prefetchQuery({ queryKey: ['world'], queryFn: loadWorld });
+
+function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof loadWorld>> | undefined): Empire[] | undefined {
   let empires: Empire[] | undefined;
-  if (people.data && world.data) {
-    const w = world.data;
+  if (people && w) {
     const quoteBy = new Map(w.quotes.map((q) => [q.ticker, q]));
     const companies = new Map(
       w.companies.map((c) => {
@@ -76,7 +91,7 @@ export function useWorld() {
         return [c.id, view];
       }),
     );
-    empires = people.data
+    empires = people
       .map((person) => {
         const owned = [...new Set(w.holdings.filter((h) => h.person_id === person.id).map((h) => h.company_id))]
           .map((id) => companies.get(id))
@@ -95,11 +110,5 @@ export function useWorld() {
       })
       .filter((e) => e.companies.length > 0);
   }
-  return {
-    data: empires,
-    countries: world.data?.countries,
-    isPending: people.isPending || world.isPending,
-    error: people.error ?? world.error,
-    refetch: () => Promise.all([people.refetch(), world.refetch()]),
-  };
+  return empires;
 }

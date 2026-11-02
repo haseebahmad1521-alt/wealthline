@@ -147,15 +147,13 @@ export const useValuesFor = (personIds: string[]) =>
     queries: personIds.map((id) => ({ queryKey: ['values', id, null], queryFn: () => fetchValues(id, null) })),
   });
 
-export const useProjects = () =>
-  useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const r = await db().from('projects').select('*').order('announced_date', { ascending: false });
-      if (r.error) throw r.error;
-      return r.data as Project[];
-    },
-  });
+export async function loadProjects() {
+  const r = await db().from('projects').select('*').order('announced_date', { ascending: false });
+  if (r.error) throw r.error;
+  return r.data as Project[];
+}
+
+export const useProjects = () => useQuery({ queryKey: ['projects'], queryFn: loadProjects });
 
 export function useWatchlist() {
   const { session } = useAuth();

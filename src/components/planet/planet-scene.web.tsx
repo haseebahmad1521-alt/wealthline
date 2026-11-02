@@ -92,6 +92,9 @@ function paintFills(c: HTMLCanvasElement, fills: typeof sceneState.fills) {
   }
 }
 
+const idle = (fn: () => void) =>
+  typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 500 }) : setTimeout(fn, 50);
+
 function sunDirection(now: number) {
   const s = subsolarPoint(now);
   return { vec: new THREE.Vector3(...latLngToUnit(s.lat, s.lng)), lng: s.lng };
@@ -128,10 +131,20 @@ export function PlanetScene() {
 
     // Phones get 2K textures; bigger or denser screens 4K.
     const res = TIERS[startTierFor(Math.max(window.innerWidth, window.innerHeight) * (window.devicePixelRatio || 1))];
-    const loader = new THREE.TextureLoader();
+    // ImageBitmapLoader decodes the JPEG off the main thread (an 8K swap used to stall a frame for the decode alone);
+    // browsers without createImageBitmap fall back to the plain loader.
+    const bitmaps = typeof createImageBitmap === 'function';
+    const loader = bitmaps
+      ? new THREE.ImageBitmapLoader().setOptions({ imageOrientation: 'flipY' })
+      : new THREE.TextureLoader();
     const load = (name: string, srgb = true, size: Tier = res) =>
       new Promise<THREE.Texture>((resolve, reject) =>
-        loader.load(`${BASE}/planet/${name}-${size}.jpg`, (t) => {
+        loader.load(`${BASE}/planet/${name}-${size}.jpg`, (img: THREE.Texture | ImageBitmap) => {
+          const t = img instanceof THREE.Texture ? img : new THREE.Texture(img);
+          if (!(img instanceof THREE.Texture)) {
+            t.flipY = false; // flipped while decoding
+            t.needsUpdate = true;
+          }
           t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
           resolve(t);
@@ -262,8 +275,10 @@ export function PlanetScene() {
         const big = loaded[tier];
         swapTo(tier - 1);
         loaded[tier + 1] = undefined;
-        big?.day.dispose();
-        big?.night.dispose();
+        for (const t of [big?.day, big?.night]) {
+          t?.dispose();
+          (t?.image as ImageBitmap | undefined)?.close?.(); // a decoded bitmap holds its pixels until closed
+        }
         settled = true;
       } else if (step === 'up') {
         busy = true;
@@ -469,10 +484,16 @@ export function PlanetScene() {
       const rPx = ((viewport.h / 2) * Math.tan(Math.asin(Math.min(1 / camera.position.length(), 1)))) / tanHalf;
       const geo = rPx > 520 ? sphereHi : sphereLo;
       if (earth.geometry !== geo) earth.geometry = atmosphere.geometry = geo;
+      // Country shading is painted in idle time, never inside a frame (it stalled opening World); the texture swaps
+      // in on the next frame after it's ready.
       if (fillsVersion !== sceneState.fillsVersion) {
-        fillsVersion = sceneState.fillsVersion;
-        paintFills(fillCanvas, sceneState.fills);
-        fillTexture.needsUpdate = true;
+        const version = (fillsVersion = sceneState.fillsVersion);
+        idle(() => {
+          if (disposed || version !== sceneState.fillsVersion) return;
+          paintFills(fillCanvas, sceneState.fills);
+          fillTexture.needsUpdate = true;
+          invalidate();
+        });
       }
       // Shading belongs to World: it fades with the swing out (a profile on top, another tab).
       earthUniforms.fillMix.value = sceneState.fills.length ? m : 0;

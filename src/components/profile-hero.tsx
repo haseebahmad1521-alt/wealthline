@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { SocialBubble } from '@/components/chat-bubble';
 import { Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
+import { portraitAt } from '@/lib/portrait';
 import type { SocialPost } from '@/lib/types';
 import { color, desktopBreakpoint, font, radius, shadow, space, type } from '@/theme';
 
@@ -37,7 +38,8 @@ export function ProfileHero({
     <View style={[styles.hero, desktop && styles.heroDesktop]}>
       {person.portrait_url && (
         <Image
-          source={person.portrait_url}
+          // Blurred to a colour field: a small thumbnail is all it needs.
+          source={portraitAt(person.portrait_url, 120)}
           style={styles.bg}
           contentFit="cover"
           blurRadius={desktop ? 80 : 50}

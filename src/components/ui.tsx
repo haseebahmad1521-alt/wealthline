@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -18,6 +18,7 @@ import {
 
 import { Glass } from '@/components/glass';
 import { direction, formatDate, formatTime, percent } from '@/lib/format';
+import { portraitAt, portraitPx } from '@/lib/portrait';
 import { useMoney } from '@/lib/currency';
 import { reportScroll, scene, type CameraAngle } from '@/lib/scene';
 import type { LiveStatus } from '@/lib/live';
@@ -189,9 +190,12 @@ export function Button({
 export function Portrait({ uri, name, size, rounded }: { uri: string | null; name: string; size: number; rounded?: number }) {
   const r = rounded ?? size / 2;
   const initials = name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('');
+  // A display-sized thumbnail; the original only if the thumbnail can't be had.
+  const [full, setFull] = useState(false);
   return uri ? (
     <Image
-      source={uri}
+      source={full ? uri : portraitAt(uri, portraitPx(size))}
+      onError={full ? undefined : () => setFull(true)}
       style={{ width: size, height: size, borderRadius: r, backgroundColor: color.fill }}
       contentFit="cover"
       contentPosition="top"

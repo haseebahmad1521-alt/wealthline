@@ -20,6 +20,7 @@ import { PlanetScene } from '@/components/planet/planet-scene';
 import { CurrencyProvider } from '@/lib/currency';
 import { lastTab } from '@/lib/last-tab';
 import { DataProvider } from '@/lib/data';
+import { useWarmup } from '@/lib/warmup';
 // Web: capture the browser's install prompt at start-up, before the Account screen exists.
 import '@/lib/install';
 // Web: lift an activation session out of the URL fragment before anything else reads the address.
@@ -52,6 +53,7 @@ export default function RootLayout() {
       <CurrencyProvider>
       <ThemeProvider value={navTheme}>
       <StatusBar style="light" />
+      <Warmup />
       {/* One planet behind every screen; screens and headers are transparent glass over it. */}
       <PlanetScene />
       <Stack
@@ -92,6 +94,11 @@ export default function RootLayout() {
 }
 
 /** Back/close for screens opened directly from a link, where there is no history to pop. */
+function Warmup() {
+  useWarmup();
+  return null;
+}
+
 function HeaderLink({ label }: { label: string }) {
   return (
     <Pressable

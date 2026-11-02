@@ -11,6 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Glass } from '@/components/glass';
 import type { GlobeArc, GlobeFill, GlobeMarker, GlobeSite } from '@/components/globe';
+import { portraitAt, portraitPx } from '@/lib/portrait';
 import { clampZoom, scene, zoomFactor } from '@/lib/scene';
 import { color, font, radius, space } from '@/theme';
 
@@ -185,7 +186,13 @@ export function WorldGlobe({
         `box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)`;
       if (m.uri) {
         const img = document.createElement('img');
-        img.src = m.uri;
+        // Decoded off the main thread, from a display-sized thumbnail (originals are megabytes and stalled World).
+        img.decoding = 'async';
+        img.src = portraitAt(m.uri, portraitPx(S * 1.6));
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = m.uri!;
+        };
         img.alt = '';
         img.draggable = false;
         img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block';
