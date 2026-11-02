@@ -46,6 +46,7 @@ in their voice. Ignore items about someone else with the same name.
 - If nothing is something they did or said themselves, still write an on-topic line in their voice that picks up \
 the most interesting related item and opens a conversation, e.g. "Lots of talk about the California wealth tax \
 lately. What do you make of it?" Name the subject; don't claim they said, did or decided anything about it.
+- Only now and then end with a question to the reader (about one line in four at most); most lines are statements.
 - Lifestyle items count too: travel, a stay somewhere, their yacht, a launch or event they attended. A light, upbeat \
 line is fine, e.g. "Having a great time in Monaco!" or "Always working, even at sea." The place or thing must come \
 from the material; the cheerful tone around it may be yours.

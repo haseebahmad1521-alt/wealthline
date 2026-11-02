@@ -39,6 +39,13 @@ export default function Rankings() {
   const moves = useMemo(() => rankMoves(people.data ?? []), [people.data]);
   // The game layer shows on the plain leaderboard; searching, sorting or comparing goes straight to the list.
   const arena = !query.trim() && sort === 'rank' && !comparing;
+  // Brief and Trending sit under the podium/movers on the default view, after the list otherwise.
+  const feeds = (
+    <>
+      <BriefCard brief={brief.data} people={people.data ?? []} />
+      <TrendingCard trends={trending.data} people={people.data ?? []} />
+    </>
+  );
   const q = query.trim().toLowerCase();
   // Rank sort lists people without an estimate after the ranked ones.
   const sorted = sortPeople(people.data ?? [], sort);
@@ -136,6 +143,7 @@ export default function Rankings() {
               <>
                 <Podium people={people.data ?? []} />
                 <Movers people={people.data ?? []} />
+                {feeds}
                 <Races people={people.data ?? []} />
                 <Overtakes people={people.data ?? []} />
                 <Heading level={2}>Leaderboard.</Heading>
@@ -143,8 +151,7 @@ export default function Rankings() {
             )}
             <PersonList people={shown} selectedIds={comparing ? selected : undefined} onToggle={toggle} moves={moves} />
             <Caption>Portraits from Wikimedia Commons. Each profile credits its photographer and links the license.</Caption>
-            <BriefCard brief={brief.data} people={people.data ?? []} />
-            <TrendingCard trends={trending.data} people={people.data ?? []} />
+            {!arena && feeds}
           </>
         )}
       </Screen>
