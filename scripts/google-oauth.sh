@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Turns on Google sign-in in Supabase Auth from the clipboard, so the Client ID/secret never pass through chat or the repo.
-# Run on the Mac: bash scripts/google-oauth.sh
+# Run on the Mac: bash scripts/google-oauth.sh  (prompts), or bash scripts/google-oauth.sh <client-id>  (secret from the clipboard; for `!`)
 set -euo pipefail
 
 REF=qucpeyrbzyfqtmxhmezr
@@ -20,9 +20,18 @@ take() { # $1 label, $2 regex
   printf %s "$v"
 }
 
-id=$(take "Client ID" '^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$')
+ID_RE='^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$'
+SECRET_RE='^GOCSPX-[A-Za-z0-9_-]{20,}$'
+if [[ $# -gt 0 ]]; then
+  # Non-interactive (Claude Code `!`): the public Client ID as the argument, the secret only from the clipboard.
+  id=$1; secret=$(pbpaste | tr -d '[:space:]')
+  [[ $id =~ $ID_RE ]] || { echo "That isn't a valid Client ID. Nothing was changed." >&2; exit 1; }
+  [[ $secret =~ $SECRET_RE ]] || { echo "The Mac clipboard doesn't hold a Client secret (GOCSPX-…). Copy it and run again. Nothing was changed." >&2; exit 1; }
+else
+  id=$(take "Client ID" "$ID_RE")
+  secret=$(take "Client secret" "$SECRET_RE")
+fi
 echo "  Client ID: $id"
-secret=$(take "Client secret" '^GOCSPX-[A-Za-z0-9_-]{20,}$')
 echo "  Client secret: GOCSPX-…${secret: -4}"
 pbcopy </dev/null # clear the Mac clipboard (a shared clipboard clears on the laptop too)
 
