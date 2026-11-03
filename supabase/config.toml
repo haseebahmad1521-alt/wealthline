@@ -3,8 +3,10 @@
 project_id = "wealthline"
 
 [auth]
-site_url = "https://haseebahmad1521-alt.github.io/wealthline/app/"
+site_url = "https://wealthline.arctim.no/app/"
 additional_redirect_urls = [
+  "https://wealthline.arctim.no/**",
+  # Old address, kept while links in already-sent emails still point there.
   "https://haseebahmad1521-alt.github.io/wealthline/**",
   "http://localhost:8081/**",
   "wealthline://**",

@@ -2,9 +2,9 @@
 import { execFileSync, execSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
-const pagesBase = (process.env.PAGES_BASE ?? '/wealthline').replace(/\/$/, '');
+const pagesBase = (process.env.PAGES_BASE ?? '').replace(/\/$/, '');
 const appBase = `${pagesBase}/app`;
-const pagesUrl = process.env.PAGES_URL ?? 'https://haseebahmad1521-alt.github.io/wealthline/';
+const pagesUrl = process.env.PAGES_URL ?? 'https://wealthline.arctim.no/';
 // The QR opens the app itself, not this preview page.
 const appUrl = `${pagesUrl.replace(/\/$/, '')}/app/`;
 const repo = process.env.GITHUB_REPOSITORY ?? 'haseebahmad1521-alt/wealthline';

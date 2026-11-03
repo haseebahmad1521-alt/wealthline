@@ -20,8 +20,9 @@ the free tier rejects template changes until a custom SMTP sender is configured.
   digits, symbols. (The app checks the same rules client-side in `src/lib/password-rules.ts`: 12+ chars, upper,
   lower, digit, symbol. Keep the two in sync.)
 - **Email OTP**: length 6, expiry 600 seconds or less.
-- **URL Configuration**: Site URL `https://haseebahmad1521-alt.github.io/wealthline/`. Redirect allowlist:
-  - `https://haseebahmad1521-alt.github.io/wealthline/**`
+- **URL Configuration**: Site URL `https://wealthline.arctim.no/app/`. Redirect allowlist:
+  - `https://wealthline.arctim.no/**`
+  - `https://haseebahmad1521-alt.github.io/wealthline/**` (old address)
   - `wealthline://**`
   - `exp://**` (Expo Go development)
 - **SMTP**: the built-in sender is for testing only and heavily rate limited. Configure a custom SMTP sender

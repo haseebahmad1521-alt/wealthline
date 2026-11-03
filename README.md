@@ -37,10 +37,10 @@ npm test
 
 ## Web preview (GitHub Pages)
 
-Live preview (iPhone frame, QR, commit id): https://haseebahmad1521-alt.github.io/wealthline/
-App: https://haseebahmad1521-alt.github.io/wealthline/app/
+Live preview (iPhone frame, QR, commit id): https://wealthline.arctim.no/
+App: https://wealthline.arctim.no/app/
 
-Every push to `main` builds and deploys it (`.github/workflows/pages.yml` runs `npm run build:pages`, which exports the app under `/wealthline/app/`, adds the PWA service worker, and assembles the shell with a QR for the public URL and the commit id). Scan the QR on the preview page to open the app on a phone.
+Every push to `main` builds and deploys it (`.github/workflows/pages.yml` runs `npm run build:pages`, which exports the app under `/app/`, adds the PWA service worker, and assembles the shell with a QR for the public URL and the commit id). Scan the QR on the preview page to open the app on a phone.
 
 One-time repository setup (done): Settings → Pages → Source: GitHub Actions; repository variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. A QR for another URL: `npm run preview:qr -- --url <https-url>` (written to `preview-artifacts/`).
 

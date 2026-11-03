@@ -24,7 +24,7 @@ Wealthline tracks the world's biggest personal fortunes over time: a ranking, ri
 ## Operating Context
 
 - Current target (owner, Oct 24, 2026): a web-hosted React Native (Expo) app — desktop and mobile web, installable PWA. Native iOS/Android builds come later from the same codebase; Expo Go is no longer used.
-- Hosting now: GitHub Pages (preview shell at /wealthline/, app at /wealthline/app/). Planned domains once acquired: wealthline.com = landing page, web.wealthline.com = web version, app.wealthline.com = web app. The base path is one build variable (EXPO_BASE_URL), so moving hosts needs no code change.
+- Hosting now: GitHub Pages on https://wealthline.arctim.no (owner, Nov 3, 2026; shell at /, app at /app/, privacy at /privacy/, terms at /terms/). Planned domains once acquired: wealthline.com = landing page, web.wealthline.com = web version, app.wealthline.com = web app. The base path is one build variable (EXPO_BASE_URL), so moving hosts needs no code change.
 - Admins (owner-designated accounts) maintain people, dated estimates, holdings, projects, and events.
 
 ## Capabilities and Constraints
