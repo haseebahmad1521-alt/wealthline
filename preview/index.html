@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Wealthline preview</title>
-<meta name="description" content="Browser preview of the Wealthline app. React Native Web, not a native iOS render." />
+<title>Wealthline</title>
+<meta name="description" content="Wealthline ranks the world's largest fortunes, with sourced net-worth estimates, charts and the projects behind them." />
 <meta name="color-scheme" content="dark light" />
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)" />
@@ -35,6 +35,7 @@
   .qr strong { color: var(--text); }
   .meta { font-size: 14px; }
   .meta a { color: var(--blue); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .meta.legal a { font-family: inherit; }
 
   /* Presentation-only iPhone: thin even bezel; the island and status bar live on the screen.
      The app iframe fills the space between the status bar and the home indicator, like a real safe area. */
@@ -61,13 +62,15 @@
   <section class="info">
     <h1>Wealthline.</h1>
     <p>The world's biggest fortunes.</p>
-    <p>This is the real app running in the browser, shown in a phone-shaped frame. It is React Native Web, not a native iOS runtime.</p>
+    <p>Wealthline ranks the world's richest people with sourced net-worth estimates, charts of how each fortune has moved, and the companies and projects behind them. Sign in to keep a private watchlist.</p>
+    <p>The frame shows the real web app running in your browser; it is not a native iOS render.</p>
     <a class="btn" href="{{APP_SRC}}">Open app</a>
     <div class="qr">
       <img src="qr.svg" width="112" height="112" alt="Web-preview QR code that opens the Wealthline app ({{APP_URL}}) on a phone" />
       <p><strong>Open on your phone.</strong> {{QR_NOTE}}</p>
     </div>
     <p class="meta">{{MODE_NOTE}}</p>
+    <p class="meta legal"><a href="privacy/">Privacy Policy</a> · <a href="terms/">Terms of Service</a></p>
   </section>
   <div class="phone">
     <div class="screen">

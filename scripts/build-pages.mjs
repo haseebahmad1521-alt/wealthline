@@ -1,4 +1,4 @@
-// Builds the GitHub Pages artifact: pages-dist/{index.html (shell), app/** (Expo web export), 404.html, qr.*}.
+// Builds the GitHub Pages artifact: pages-dist/{index.html (shell + landing), app/** (Expo web export), privacy/, terms/, 404.html, qr.*}.
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
@@ -56,6 +56,10 @@ writeFileSync(
     MODE_NOTE: `Deployed from commit <a href="https://github.com/${repo}/commit/${sha}">${sha.slice(0, 7)}</a>`,
   }),
 );
+for (const page of ['privacy', 'terms']) {
+  mkdirSync(`pages-dist/${page}`);
+  cpSync(`preview/${page}.html`, `pages-dist/${page}/index.html`);
+}
 writeFileSync('pages-dist/404.html', sub('preview/404.html', { APP_PREFIX: `${appBase}/`, SHELL_URL: `${pagesBase}/` }));
 
 run('node', ['scripts/preview-qr.mjs', '--url', appUrl, '--out', 'pages-dist/qr']);
