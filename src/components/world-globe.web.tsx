@@ -546,7 +546,9 @@ export function WorldGlobe({
 
     // Gestures. Drag turns the globe; pinch / ctrl+wheel / Safari gestures zoom it.
     const pointers = new Map<number, { x: number; y: number }>();
-    let down: { x: number; y: number; t: number } | null = null;
+    // A tap is judged against what was on screen when the finger landed: a few pixels of drift turn the globe and can
+    // regroup the portraits under it before the finger lifts.
+    let down: { x: number; y: number; t: number; hits: typeof hits } | null = null;
     // A finger drifts several pixels and lingers during a normal tap (iOS allows ~10 px), so tighter limits lost taps.
     const TAP_SLOP = 12;
     const TAP_MS = 700;
@@ -561,7 +563,7 @@ export function WorldGlobe({
     const onDown = (e: PointerEvent) => {
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 1) {
-        down = { x: e.clientX, y: e.clientY, t: performance.now() };
+        down = { x: e.clientX, y: e.clientY, t: performance.now(), hits };
         moved = false;
       } else down = null; // a second finger: a pinch, never a tap
       if (pointers.size === 2) {
@@ -597,11 +599,10 @@ export function WorldGlobe({
       // A tap: a portrait opens the profile; a "+N" bubble leans in a little and fans its people out; open space closes
       // the fanned bubble, then the chosen person.
       if (down && !moved && performance.now() - down.t < TAP_MS) {
-        const x = e.clientX;
-        const y = e.clientY;
+        const { x, y } = down;
         // Fanned people first (they sit on top), else the nearest portrait whose edge is within a fingertip.
         const near = (h: (typeof hits)[number]) => Math.hypot(h.x - x, h.y - y) - h.r;
-        const within = hits.filter((h) => near(h) < 8);
+        const within = down.hits.filter((h) => near(h) < 8);
         const hit = within.find((h) => h.keys.length === 1 && opened?.keys.has(h.keys[0])) ?? within.sort((a, b) => near(a) - near(b))[0];
         const { focus: f, onSelect: select, onOpen: openProfile, markers: ms } = live.current;
         if (hit && hit.keys.length > 1) {
