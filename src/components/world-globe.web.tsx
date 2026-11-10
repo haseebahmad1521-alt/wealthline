@@ -547,7 +547,10 @@ export function WorldGlobe({
     // Gestures. Drag turns the globe; pinch / ctrl+wheel / Safari gestures zoom it.
     const pointers = new Map<number, { x: number; y: number }>();
     let down: { x: number; y: number; t: number } | null = null;
-    let moved = false; // once a drag passes 6 px it's a turn, even if it ends near where it started
+    // A finger drifts several pixels and lingers during a normal tap (iOS allows ~10 px), so tighter limits lost taps.
+    const TAP_SLOP = 12;
+    const TAP_MS = 700;
+    let moved = false; // once a drag passes the slop it's a turn, even if it ends near where it started
     let pinch: { d: number; zoom: number } | null = null;
     const degPerPx = () => 57.3 / (scene.world.radiusPx * zoomFactor(scene.world.zoom));
     const zoomBy = (dz: number) => {
@@ -575,7 +578,7 @@ export function WorldGlobe({
         scene.world.zoom = clampZoom(pinch.zoom + Math.log2(Math.hypot(a.x - b.x, a.y - b.y) / pinch.d) / 2.32);
         tween.current = null;
       } else if (pointers.size === 1) {
-        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) moved = true;
+        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > TAP_SLOP) moved = true;
         dragging = true;
         tween.current = null;
         const k = degPerPx();
@@ -593,10 +596,13 @@ export function WorldGlobe({
       dragging = false;
       // A tap: a portrait opens the profile; a "+N" bubble leans in a little and fans its people out; open space closes
       // the fanned bubble, then the chosen person.
-      if (down && !moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 400) {
+      if (down && !moved && performance.now() - down.t < TAP_MS) {
         const x = e.clientX;
         const y = e.clientY;
-        const hit = hits.find((h) => Math.hypot(h.x - x, h.y - y) < h.r + 4);
+        // Fanned people first (they sit on top), else the nearest portrait whose edge is within a fingertip.
+        const near = (h: (typeof hits)[number]) => Math.hypot(h.x - x, h.y - y) - h.r;
+        const within = hits.filter((h) => near(h) < 8);
+        const hit = within.find((h) => h.keys.length === 1 && opened?.keys.has(h.keys[0])) ?? within.sort((a, b) => near(a) - near(b))[0];
         const { focus: f, onSelect: select, onOpen: openProfile, markers: ms } = live.current;
         if (hit && hit.keys.length > 1) {
           const inside = ms.filter((m) => hit.keys.includes(m.key));

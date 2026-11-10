@@ -60,8 +60,9 @@ export const earthFragment = /* glsl */ `
     vec3 H = normalize(sunDir + V);
     col += vec3(1.0, 0.91, 0.76) * pow(max(dot(N, H), 0.0), 90.0) * ocean * smoothstep(0.0, 0.25, ndl) * 0.85;
 
-    // Warm band along the terminator, where sunlight crosses the most air.
-    col += vec3(1.0, 0.40, 0.14) * exp(-pow(ndl / 0.07, 2.0)) * 0.09 * (0.35 + day);
+    // Warm tint along the terminator, where sunlight crosses the most air. Scaled by the ground's own colour: a flat
+    // added glow read as a pale stripe down the globe whenever the terminator faced the camera edge-on.
+    col += vec3(1.0, 0.40, 0.14) * exp(-pow(ndl / 0.06, 2.0)) * 0.12 * day;
 
     // Beer–Lambert extinction toward the limb: surface light crossing more air loses blue first.
     float mu = max(dot(N, V), 0.0);
