@@ -2,7 +2,7 @@ import { Link, router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Chip as Tag } from 'heroui-native';
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
@@ -100,7 +100,7 @@ export default function World() {
     return markers
       .map((m) => {
         const d = by.get(m.key);
-        return d == null ? m : { ...m, change: { text: money.format(Math.abs(d)), dir: (Math.sign(d) as 1 | -1 | 0) } };
+        return !d ? m : { ...m, change: { text: money.format(Math.abs(d)), dir: (Math.sign(d) as 1 | -1 | 0) } };
       })
       .sort((a, b) => Math.abs(by.get(b.key) ?? 0) - Math.abs(by.get(a.key) ?? 0));
   }, [markers, empires, money]);
@@ -171,7 +171,9 @@ export default function World() {
     <Screen>
       <View ref={top}>
         <Heading>World.</Heading>
-        <Body secondary>Who gained and lost today, pinned where their companies are based.</Body>
+        <Body secondary>
+          {view === 'places' ? 'Who gained and lost today, pinned where their companies are based.' : 'Where the biggest fortunes reach: every ring is a real place their companies own or run.'}
+        </Body>
       </View>
       <PageSearch context="world" />
       {world.isPending || world.error ? (
@@ -194,6 +196,15 @@ export default function World() {
               </Pressable>
             ))}
           </View>
+          {/* Today picks people from its lists and search; the other views keep the strip of names. */}
+          {view !== 'places' && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.above} contentContainerStyle={styles.chips} accessibilityRole="tablist">
+              <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
+              {empires.map((e) => (
+                <Chip key={e.person.id} label={e.person.name} selected={focused?.person.id === e.person.id} onPress={() => select(e.person.id)} empire={e} />
+              ))}
+            </ScrollView>
+          )}
           <View style={[styles.layout, desktop && styles.layoutWide]}>
             {planet ? (
               <View style={[styles.planetArea, desktop && styles.globeCardWide]}>
@@ -287,6 +298,26 @@ export default function World() {
         </>
       )}
     </Screen>
+  );
+}
+
+function mainQuote(e: Empire) {
+  return e.companies.find((c) => c.quote?.prev_close)?.quote ?? null;
+}
+
+function Chip({ label, selected, onPress, empire }: { label: string; selected: boolean; onPress: () => void; empire?: Empire }) {
+  const q = empire ? mainQuote(empire) : null;
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && styles.pressed]}>
+      {empire && <Portrait uri={empire.person.portrait_url} name={empire.person.name} size={26} />}
+      <Text style={[type.headline, { color: selected ? color.action : color.text, fontSize: 15 }]}>{label}</Text>
+      {q?.prev_close ? <Change delta={q.price - q.prev_close} base={q.prev_close} size={13} compact /> : null}
+    </Pressable>
   );
 }
 
@@ -539,9 +570,25 @@ const styles = StyleSheet.create({
   planetNote: { maxWidth: 520 },
   flex: { flex: 1, minWidth: 0 },
   // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
+  chips: { gap: space.sm, paddingVertical: 2 },
+  // Controls above the globe's portraits, frosted where a portrait passes under them (web).
+  above: { zIndex: 1 },
+  // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
   segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill, zIndex: 1, ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object) },
   segment: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
+  chip: {
+    minHeight: minTouch,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingLeft: space.sm,
+    paddingRight: space.md,
+    borderRadius: radius.pill,
+    backgroundColor: color.fill,
+    ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object),
+  },
+  chipOn: { backgroundColor: color.actionTint },
   pressed: { opacity: 0.75 },
   layout: { gap: space.lg },
   layoutWide: { flexDirection: 'row', alignItems: 'flex-start' },

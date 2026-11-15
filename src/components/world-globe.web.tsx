@@ -248,7 +248,7 @@ export function WorldGlobe({
       face.appendChild(count);
       // Today view: the change since the previous value, under the portrait (arrow and colour together, never colour alone).
       const tag = document.createElement('span');
-      tag.style.cssText = 'position:absolute;left:50%;top:100%;margin-top:3px;transform:translateX(-50%);white-space:nowrap;padding:1px 7px;border-radius:9px;' +
+      tag.style.cssText = 'position:absolute;left:50%;top:100%;margin-top:-7px;transform:translateX(-50%);white-space:nowrap;padding:1px 7px;border-radius:9px;' +
         'background:rgba(14,16,24,.9);font:700 11px/17px Inter_700Bold, Inter, system-ui;font-variant-numeric:tabular-nums;display:none;box-shadow:0 2px 8px rgba(0,0,0,.45)';
       face.appendChild(tag);
       goo.appendChild(blob);
@@ -437,7 +437,7 @@ export function WorldGlobe({
         for (const m of order) {
           const p = pos.get(m.key)!;
           if (!opened.keys.has(m.key) || p.vis <= 0) continue;
-          const g = crowds.find((k) => (k.x / k.keys.length - p.x) ** 2 + (k.y / k.keys.length - p.y) ** 2 < R * R);
+          const g = crowds.find((k) => (k.x / k.keys.length - p.x) ** 2 + (k.y / k.keys.length - p.y) ** 2 < (S * 0.9) ** 2);
           if (g) {
             g.x += p.x;
             g.y += p.y;
@@ -558,7 +558,8 @@ export function WorldGlobe({
           n.tag.style.color = tint;
           n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.text}` : '';
         }
-        n.tag.style.display = ch && (fp || isLeader) ? 'block' : 'none';
+        // In a fanned bubble only the bigger portraits keep a label; small ones would cover their neighbours.
+        n.tag.style.display = ch && (fp ? fp.d >= 64 : isLeader) ? 'block' : 'none';
         if (fp && p.vis > 0) fannedHits.push({ x, y, r: d / 2, keys: [m.key] });
         else if (isLeader) bubbleHits.push({ x, y, r: S / 2, keys: c!.keys });
       }
