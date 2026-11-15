@@ -212,9 +212,10 @@ export function WorldGlobe({
     faces.style.cssText = 'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none';
     el.prepend(dots, goo, faces);
 
-    const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; s: Spring; d: number; shown: number }>();
+    const nodes = new Map<string, { blob: HTMLDivElement; face: HTMLDivElement; count: HTMLSpanElement; tag: HTMLSpanElement; change: string; s: Spring; d: number; shown: number }>();
     let worthFrom: GlobeMarker[] | null = null;
     let worthOf = new Map<string, number>();
+    let tagged = false;
     const packs = new Map<string, { ks: string[]; sizes: number[]; at: { x: number; y: number }[]; reach: number }>();
     const nodeFor = (m: GlobeMarker) => {
       let n = nodes.get(m.key);
@@ -245,9 +246,14 @@ export function WorldGlobe({
       count.style.cssText = `position:absolute;right:-6px;top:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:${color.action};color:${color.onAction};` +
         `font:700 12px/22px Inter_700Bold, Inter, system-ui;text-align:center;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4)`;
       face.appendChild(count);
+      // Today view: the change since the previous value, under the portrait (arrow and colour together, never colour alone).
+      const tag = document.createElement('span');
+      tag.style.cssText = 'position:absolute;left:50%;top:100%;margin-top:3px;transform:translateX(-50%);white-space:nowrap;padding:1px 7px;border-radius:9px;' +
+        'background:rgba(14,16,24,.9);font:700 11px/17px Inter_700Bold, Inter, system-ui;font-variant-numeric:tabular-nums;display:none;box-shadow:0 2px 8px rgba(0,0,0,.45)';
+      face.appendChild(tag);
       goo.appendChild(blob);
       faces.appendChild(face);
-      n = { blob, face, count, s: { x: 0, y: 0, vx: 0, vy: 0, op: 0, scale: 1, init: false }, d: S, shown: S };
+      n = { blob, face, count, tag, change: '', s: { x: 0, y: 0, vx: 0, vy: 0, op: 0, scale: 1, init: false }, d: S, shown: S };
       nodes.set(m.key, n);
       return n;
     };
@@ -382,9 +388,15 @@ export function WorldGlobe({
       if (worthFrom !== ms) {
         worthFrom = ms;
         worthOf = new Map(ms.map((m) => [m.key, m.worth ?? 0]));
+        tagged = ms.some((m) => m.change);
       }
       const order = f ? [...ms.filter((m) => m.key === f), ...ms.filter((m) => m.key !== f)] : ms;
-      const R = S * 0.9;
+      // Change labels hang under the portraits, so bubbles keep more room between them while they show.
+      // Wider than tall would let a label touch the portrait under it, so the merge area is an ellipse (rx, ry).
+      const rx = tagged ? S * 1.3 : S * 0.9;
+      const ry = tagged ? S * 1.75 : S * 0.9;
+      const R = Math.max(rx, ry);
+      const near = (ax: number, ay: number, bx: number, by: number) => ((ax - bx) / rx) ** 2 + ((ay - by) / ry) ** 2 < 1;
       const next: { x: number; y: number; keys: string[] }[] = [];
       // Screen-space grid (cell = merge radius): each portrait only checks its own and neighbouring cells.
       const grid = new Map<number, (typeof next)[number][]>();
@@ -403,7 +415,7 @@ export function WorldGlobe({
         const gy = Math.floor(y / R);
         let c: (typeof next)[number] | undefined;
         for (let i = -1; i <= 1 && !c; i++)
-          for (let j = -1; j <= 1 && !c; j++) c = grid.get((gx + i) * 4096 + gy + j)?.find((k) => (k.x - x) ** 2 + (k.y - y) ** 2 < R * R);
+          for (let j = -1; j <= 1 && !c; j++) c = grid.get((gx + i) * 4096 + gy + j)?.find((k) => near(k.x, k.y, x, y));
         if (c) c.keys.push(m.key);
         else {
           const nc = { x, y, keys: [m.key] };
@@ -537,6 +549,16 @@ export function WorldGlobe({
         const more = isLeader && c!.keys.length > 1 ? c!.keys.length - 1 : 0;
         n.count.style.display = more ? 'block' : 'none';
         if (more) n.count.textContent = `+${more}`;
+        const ch = m.change ?? null;
+        const chKey = ch ? `${ch.dir}${ch.text}` : '';
+        if (chKey !== n.change) {
+          n.change = chKey;
+          const tint = !ch ? '' : ch.dir > 0 ? color.gain : ch.dir < 0 ? color.loss : color.textSecondary;
+          n.face.style.boxShadow = ch ? `0 0 0 2.5px ${tint}` : 'inset 0 0 0 1.5px rgba(255,255,255,.35)';
+          n.tag.style.color = tint;
+          n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.text}` : '';
+        }
+        n.tag.style.display = ch && (fp || isLeader) ? 'block' : 'none';
         if (fp && p.vis > 0) fannedHits.push({ x, y, r: d / 2, keys: [m.key] });
         else if (isLeader) bubbleHits.push({ x, y, r: S / 2, keys: c!.keys });
       }
