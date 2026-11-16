@@ -7,7 +7,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimen
 import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
-import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
+import { EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, fortuneFills, priceTargets, revenueLines, whatIfTargets, type EconomyMode, type WhatIfMode } from '@/components/world-views';
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryShape } from '@/lib/geo';
@@ -60,7 +60,8 @@ export default function World() {
   const lines = useMemo(() => revenueLines(world.data ?? []), [world.data]);
   const targets = useMemo(() => whatIfTargets(lines), [lines]);
   const [target, setTarget] = useState<string | null>(null);
-  const [drop, setDrop] = useState<number>(DROPS[1]);
+  const [drop, setDrop] = useState<number>(0.25);
+  const [econ, setEcon] = useState<EconomyMode>('fortune');
   const [mode, setMode] = useState<WhatIfMode>('place');
   const [firm, setFirm] = useState<string | null>(null);
   // Default shock: the biggest market outside the United States; default company: the largest recorded stakes.
@@ -71,13 +72,15 @@ export default function World() {
   let arcs: GlobeArc[] = [];
   let fills: GlobeFill[] = [];
   if (view === 'money') arcs = flowArcs(lines, focused);
-  if (view === 'economies') fills = economyFills(lines, world.countries ?? [], focused).fills;
+  if (view === 'economies') fills = econ === 'fortune' ? fortuneFills(empires, world.countries ?? [], focused) : economyFills(lines, world.countries ?? [], focused).fills;
   if (view === 'whatif' && mode === 'place') {
     arcs = flowArcs(lines, null, (l) => l.placeKey === shock, true);
     if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
   }
   if (view === 'whatif' && mode === 'price') arcs = flowArcs(lines, null, (l) => l.company.id === company, true);
   const shockCentre = view === 'whatif' ? (arcs[0]?.from ?? null) : null;
+  // What if and the fortune comparison are about the whole map, so picking a person doesn't fly the globe to them.
+  const wide = view === 'whatif' || (view === 'economies' && econ === 'fortune');
 
   const { sites, markers } = useMemo(() => {
     const s: GlobeSite[] = [];
@@ -215,8 +218,8 @@ export default function World() {
                   markers={shownMarkers}
                   arcs={arcs}
                   fills={fills}
-                  focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                  center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
+                  focus={wide ? null : (focused?.person.id ?? null)}
+                  center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                   onSelect={(id) => select(id)}
                   onOpen={(id) => {
                     const e = empires.find((x) => x.person.id === id);
@@ -239,8 +242,8 @@ export default function World() {
                 markers={markers}
                 arcs={arcs}
                 fills={fills}
-                focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
+                focus={wide ? null : (focused?.person.id ?? null)}
+                center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                 onSelect={(id) => select(id)}
                 label={
                   focused
@@ -254,7 +257,9 @@ export default function World() {
                   : view === 'money'
                     ? 'Drag to turn. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
                     : view === 'economies'
-                      ? 'Drag to turn. Darker countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                      ? econ === 'fortune'
+                        ? 'Drag to turn. Shaded countries have a yearly GDP smaller than the fortune.'
+                        : 'Drag to turn. Darker countries: more of the tracked companies’ revenue compared with that country’s GDP.'
                       : 'Drag to turn. Hypothetical: the place in red and the revenue that flows from it.'}
               </Caption>
             </Surface>
@@ -263,7 +268,7 @@ export default function World() {
               {view === 'money' ? (
                 <MoneyPanel lines={lines} focus={focused} />
               ) : view === 'economies' ? (
-                <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} />
+                <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} mode={econ} onMode={setEcon} onSelect={show} />
               ) : view === 'whatif' ? (
                 <WhatIfPanel
                   lines={lines}
@@ -289,7 +294,9 @@ export default function World() {
                     : view === 'money'
                       ? 'Drag the globe to turn it; pinch to zoom. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
                       : view === 'economies'
-                        ? 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                        ? econ === 'fortune'
+                          ? 'Drag the globe to turn it; pinch to zoom. Lit countries have a yearly GDP smaller than the fortune.'
+                          : 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
                         : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
                 </Caption>
               )}

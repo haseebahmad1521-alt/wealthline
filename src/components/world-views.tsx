@@ -2,10 +2,12 @@
 // GDP, and fortunes against whole economies) and What if (a hypothetical drop in one place). Every figure is
 // reported revenue from SEC filings, World Bank GDP or a tracked net worth; the What if view only multiplies them.
 import * as WebBrowser from 'expo-web-browser';
+import { Chip as Tag, Slider } from 'heroui-native';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { GlobeArc, GlobeFill } from '@/components/globe';
-import { Body, Caption, Heading, Icon, Surface, icons, minTouch } from '@/components/ui';
+import { Body, Caption, Heading, Icon, Portrait, Surface, icons, minTouch } from '@/components/ui';
 import { usd } from '@/lib/format';
 import { lineAnchor, type LatLng } from '@/lib/geo';
 import type { CompanyView, Country, Empire } from '@/lib/world';
@@ -157,20 +159,144 @@ export function economyFills(lines: Line[], countries: Country[], focus: Empire 
   return { rows, fills };
 }
 
-export function EconomiesPanel({ lines, countries, empires, focus }: { lines: Line[]; countries: Country[]; empires: Empire[]; focus: Empire | null }) {
-  const { rows } = economyFills(lines, countries, focus);
+export type EconomyMode = 'fortune' | 'revenue';
+
+/** Where one fortune falls among countries' yearly GDP (largest first). */
+export function fortuneRank(worth: number, countries: Country[]) {
   const gdps = countries.filter((c) => c.gdp_usd).sort((a, b) => b.gdp_usd! - a.gdp_usd!);
-  const people = (focus ? [focus] : empires.slice(0, 5)).filter((e) => e.person.net_worth_usd);
+  const smaller = gdps.filter((c) => c.gdp_usd! < worth);
+  return { gdps, smaller, below: smaller[0] ?? null, above: gdps.filter((c) => c.gdp_usd! >= worth).at(-1) ?? null };
+}
+
+/** The person the fortune comparison is about: the one picked, else the richest recorded. */
+export function fortuneSubject(empires: Empire[], focus: Empire | null) {
+  if (focus?.person.net_worth_usd) return focus;
+  return empires.reduce<Empire | null>((best, e) => ((e.person.net_worth_usd ?? 0) > (best?.person.net_worth_usd ?? 0) ? e : best), null);
+}
+
+/** Globe shading for the fortune comparison: every country whose yearly GDP is smaller than the fortune. */
+export function fortuneFills(empires: Empire[], countries: Country[], focus: Empire | null): GlobeFill[] {
+  const worth = fortuneSubject(empires, focus)?.person.net_worth_usd;
+  return worth ? fortuneRank(worth, countries).smaller.map((c) => ({ iso2: c.iso2, strength: 0.85 })) : [];
+}
+
+const SHOWN = 5;
+const TAGS = 4;
+
+export function EconomiesPanel({
+  lines,
+  countries,
+  empires,
+  focus,
+  mode,
+  onMode,
+  onSelect,
+}: {
+  lines: Line[];
+  countries: Country[];
+  empires: Empire[];
+  focus: Empire | null;
+  mode: EconomyMode;
+  onMode: (m: EconomyMode) => void;
+  onSelect: (personId: string) => void;
+}) {
   return (
     <Surface style={styles.card}>
       <Heading level={2}>Economies.</Heading>
+      <View accessibilityRole="tablist" style={styles.segments}>
+        {(['fortune', 'revenue'] as const).map((m) => (
+          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
+            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'fortune' ? 'A fortune' : 'Revenue'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {mode === 'fortune' ? <FortuneView countries={countries} empires={empires} focus={focus} onSelect={onSelect} /> : <RevenueView lines={lines} countries={countries} focus={focus} />}
+    </Surface>
+  );
+}
+
+function FortuneView({ countries, empires, focus, onSelect }: { countries: Country[]; empires: Empire[]; focus: Empire | null; onSelect: (personId: string) => void }) {
+  const subject = fortuneSubject(empires, focus);
+  const worth = subject?.person.net_worth_usd;
+  if (!subject || !worth) return <Caption>No recorded net worth to compare yet.</Caption>;
+  const { gdps, smaller, below, above } = fortuneRank(worth, countries);
+  const others = empires
+    .filter((e) => e.person.net_worth_usd)
+    .sort((a, b) => b.person.net_worth_usd! - a.person.net_worth_usd!)
+    .slice(0, SHOWN);
+  return (
+    <>
+      <View style={styles.hero} accessible accessibilityLabel={`${subject.person.name}, ${usd(worth)}: larger than the yearly GDP of ${smaller.length} of ${gdps.length} countries`}>
+        <Portrait uri={subject.person.portrait_url} name={subject.person.name} size={56} rounded={16} />
+        <View style={styles.flex}>
+          <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
+            {subject.person.name}
+          </Text>
+          <Caption>{usd(worth)} recorded net worth</Caption>
+        </View>
+      </View>
+      <View style={styles.block}>
+        <View style={styles.bigLine}>
+          <Text style={styles.big}>{smaller.length}</Text>
+          <Text style={[type.headline, styles.flex, { color: color.text }]}>of {gdps.length} countries have a smaller yearly GDP.</Text>
+        </View>
+        <Bar value={gdps.length ? smaller.length / gdps.length : 0} />
+        <Body secondary>
+          {below && above
+            ? `Between ${below.name} (${usd(below.gdp_usd!)}) and ${above.name} (${usd(above.gdp_usd!)}).`
+            : below
+              ? 'Larger than every country’s yearly GDP.'
+              : 'Smaller than every country’s yearly GDP.'}{' '}
+          The lit countries on the globe are the smaller ones.
+        </Body>
+      </View>
+
+      <Heading level={2}>Fortunes and countries.</Heading>
+      <View style={styles.list}>
+        {others.map((e, i) => {
+          const n = fortuneRank(e.person.net_worth_usd!, countries).smaller.length;
+          const on = e.person.id === subject.person.id;
+          return (
+            <Pressable
+              key={e.person.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${e.person.name}: larger than ${n} of ${gdps.length} countries' GDP`}
+              onPress={() => onSelect(e.person.id)}
+              style={[styles.row, i > 0 && styles.sep, on && styles.rowOn]}>
+              <Portrait uri={e.person.portrait_url} name={e.person.name} size={32} />
+              <View style={[styles.flex, styles.block]}>
+                <View style={styles.rowLine}>
+                  <Text style={[type.headline, styles.flex, { color: color.text }]} numberOfLines={1}>
+                    {e.person.name}
+                  </Text>
+                  <Text style={[type.number, { color: color.text, fontSize: 15 }]}>{n}</Text>
+                </View>
+                <Bar value={gdps.length ? n / gdps.length : 0} />
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Caption>A fortune is wealth built up over years; GDP is what a country produces in one year. The comparison is for scale.</Caption>
+      <SourceLink label={`GDP from the World Bank, ${gdps[0]?.gdp_year ?? ''}`} url="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" />
+    </>
+  );
+}
+
+function RevenueView({ lines, countries, focus }: { lines: Line[]; countries: Country[]; focus: Empire | null }) {
+  const { rows } = economyFills(lines, countries, focus);
+  const [all, setAll] = useState(false);
+  const shown = all ? rows : rows.slice(0, SHOWN);
+  return (
+    <>
       <Body secondary>
         Countries shaded by what {focus ? `${focus.person.name}'s companies` : 'the tracked companies'} earn there, set against that country’s GDP. Revenue
         isn’t a share of the economy; it’s a sense of scale.
       </Body>
       {rows.length ? (
         <View style={styles.list}>
-          {rows.map((r, i) => (
+          {shown.map((r, i) => (
             <View key={r.iso2} style={[styles.block, styles.rowPad, i > 0 && styles.sep]} accessible accessibilityLabel={`${r.name}: ${usd(r.revenue)} earned, equal to ${pct(r.ratio, 2)} of its GDP`}>
               <View style={styles.rowLine}>
                 <Text style={[type.headline, styles.flex, { color: color.text }]}>{r.name}</Text>
@@ -178,42 +304,38 @@ export function EconomiesPanel({ lines, countries, empires, focus }: { lines: Li
               </View>
               <Bar value={r.ratio / rows[0].ratio} />
               <Caption>
-                {usd(r.revenue)} earned · GDP {usd(r.gdp)} ({r.gdpYear}) · {r.parts.map((p) => `${p.company.name} ${usd(p.revenue)}`).join(', ')}
+                {usd(r.revenue)} earned · GDP {usd(r.gdp)} ({r.gdpYear})
               </Caption>
+              <View style={styles.tags}>
+                {r.parts.slice(0, TAGS).map((p) => (
+                  <Tag key={p.key} size="sm" variant="soft" color="default">
+                    <Tag.Label>
+                      {p.company.name} {usd(p.revenue)}
+                    </Tag.Label>
+                  </Tag>
+                ))}
+                {r.parts.length > TAGS && <Caption>+{r.parts.length - TAGS} more</Caption>}
+              </View>
             </View>
           ))}
+          {rows.length > SHOWN && (
+            <Pressable accessibilityRole="button" onPress={() => setAll(!all)} style={[styles.more, styles.sep]}>
+              <Text style={[type.headline, { color: color.action }]}>{all ? 'Show fewer' : `Show all ${rows.length}`}</Text>
+            </Pressable>
+          )}
         </View>
       ) : (
         <Caption>No company reports revenue for a single country yet.</Caption>
       )}
-
-      <Heading level={2}>Fortunes and countries.</Heading>
-      {people.map((e) => {
-        const worth = e.person.net_worth_usd!;
-        const smaller = gdps.filter((c) => c.gdp_usd! < worth);
-        const above = gdps.filter((c) => c.gdp_usd! >= worth).at(-1);
-        const below = smaller[0];
-        return (
-          <View key={e.person.id} style={styles.block} accessible>
-            <Text style={[type.headline, { color: color.text }]}>
-              {e.person.name}: {usd(worth)}
-            </Text>
-            <Body secondary>
-              Larger than the yearly GDP of {smaller.length} of {gdps.length} countries
-              {above && below ? `, between ${below.name} (${usd(below.gdp_usd!)}) and ${above.name} (${usd(above.gdp_usd!)})` : ''}. A fortune is wealth
-              built up over years; GDP is what a country produces in one year.
-            </Body>
-          </View>
-        );
-      })}
-      <SourceLink label={`GDP from the World Bank, ${gdps[0]?.gdp_year ?? ''}`} url="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" />
-    </Surface>
+      <SourceLink label="Revenue from SEC annual reports; GDP from the World Bank" url="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD" />
+    </>
   );
 }
 
 // ——— What if ———
 
-export const DROPS = [0.1, 0.25, 0.5] as const;
+/** The slider's largest hypothetical fall, in percent. */
+const MAX_DROP = 50;
 export type WhatIfMode = 'place' | 'price';
 
 export function whatIfTargets(lines: Line[]) {
@@ -347,12 +469,24 @@ export function WhatIfPanel({
           );
         })}
       </ScrollView>
-      <View accessibilityRole="tablist" style={styles.segments}>
-        {DROPS.map((d) => (
-          <Pressable key={d} accessibilityRole="tab" accessibilityLabel={`Falls ${d * 100} percent`} accessibilityState={{ selected: d === drop }} onPress={() => onDrop(d)} style={[styles.segment, d === drop && styles.segmentOn]}>
-            <Text style={[type.headline, { color: d === drop ? color.text : color.textSecondary }]}>−{d * 100}%</Text>
-          </Pressable>
-        ))}
+      <View style={styles.block}>
+        <View style={styles.rowLine}>
+          <Text style={[type.headline, styles.flex, { color: color.text }]}>{mode === 'place' ? 'Business falls by' : 'Share price falls by'}</Text>
+          <Icon name={icons.down} size={16} tint={color.loss} />
+          <Text style={[type.number, { color: color.loss, fontSize: 17 }]}>{Math.round(drop * 100)}%</Text>
+        </View>
+        <Slider
+          value={Math.round(drop * 100)}
+          minValue={1}
+          maxValue={MAX_DROP}
+          step={1}
+          aria-label={mode === 'place' ? 'How far business falls, in percent' : 'How far the share price falls, in percent'}
+          onChange={(v) => onDrop((Array.isArray(v) ? v[0] : v) / 100)}>
+          <Slider.Track>
+            <Slider.Fill />
+            <Slider.Thumb />
+          </Slider.Track>
+        </Slider>
       </View>
 
       {mode === 'place' && (
@@ -435,4 +569,10 @@ const styles = StyleSheet.create({
   segmentOn: { backgroundColor: color.surface },
   result: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   price: { alignItems: 'flex-end', gap: 2 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  bigLine: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  big: { ...type.title, fontSize: 56, lineHeight: 60, letterSpacing: -1.5, color: color.text, fontVariant: ['tabular-nums'] },
+  rowOn: { backgroundColor: color.fill },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 2 },
+  more: { minHeight: minTouch, justifyContent: 'center', paddingHorizontal: space.lg },
 });
