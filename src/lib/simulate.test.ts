@@ -119,15 +119,17 @@ test('measured sensitivities move each company; a private one borrows its peers;
   ];
   const f = simulate(scenario([{ kind: 'factor', target: 'oil', pct: 0.5, from: 0, to: 0 }]), people, countries, 1);
   const move = (id: string) => f.companies.find((c) => c.company.id === id)!;
-  assert.ok(Math.abs(move('drill').price - 0.3) < 1e-9);
-  assert.ok(Math.abs(move('pipe').price - 0.1) < 1e-9);
+  // In log terms, as measured: a sensitivity b to a 50% oil rise moves the price by 1.5^b - 1.
+  assert.ok(Math.abs(move('drill').price - (1.5 ** 0.6 - 1)) < 1e-9);
+  assert.ok(Math.abs(move('pipe').price - (1.5 ** 0.2 - 1)) < 1e-9);
   assert.equal(move('drill').basis, 'measured');
   assert.equal(move('private-oil').basis, 'peers');
-  assert.ok(Math.abs(move('private-oil').price - 0.2) < 1e-9); // the peers' average sensitivity, 0.4
-  // 80% range: ± 1.28 × se × move.
-  assert.ok(Math.abs(move('drill').hi - move('drill').lo - 2 * 1.2816 * 0.1 * 0.5) < 1e-6);
+  assert.ok(Math.abs(move('private-oil').price - (1.5 ** 0.4 - 1)) < 1e-9); // the peers' average sensitivity, 0.4
+  // 80% range, in log terms: ± 1.28 × se × log(1.5); never below -100%.
+  const d = move('drill');
+  assert.ok(Math.abs(Math.log(1 + d.hi) - Math.log(1 + d.lo) - 2 * 1.2816 * 0.1 * Math.log(1.5)) < 1e-9);
   const a = f.people.find((p) => p.person.slug === 'a')!;
-  assert.ok(Math.abs(a.delta! - 15) < 1e-9);
+  assert.ok(Math.abs(a.delta! - 50 * (1.5 ** 0.6 - 1)) < 1e-9);
   assert.ok(a.range![0] < 15 && a.range![1] > 15);
 });
 
@@ -141,7 +143,8 @@ test('an analog becomes its measured market moves, scaled, with the spread betwe
   };
   const s = expandAnalogs(scenario([{ kind: 'analog', target: 'mideast', pct: 2, from: 0, to: 0 }]), data);
   const kinds = s.shocks.map((x) => `${x.kind}:${x.target}:${Math.round(x.pct * 1000) / 1000}`);
-  assert.deepEqual(kinds, ['analog:mideast:2', 'market::-0.04', 'factor:oil:0.1', 'sector:energy:0.06', 'sector:defense:0.04']);
+  // Measured moves are log returns: a part's price change is e^(2 x mean) - 1.
+  assert.deepEqual(kinds, ['analog:mideast:2', 'market::-0.039', 'factor:oil:0.105', 'sector:energy:0.062', 'sector:defense:0.041']);
   assert.match(s.assumptions.at(-1)!, /^Market moves as around 2 past middle east escalations, 2× as strongly: A; B\.$/);
   // Expanding again (a continued scenario) doesn't double anything.
   assert.deepEqual(expandAnalogs(s, data).shocks.length, s.shocks.length);
@@ -149,6 +152,15 @@ test('an analog becomes its measured market moves, scaled, with the spread betwe
   const fit = { beta: { market: 1, oil: 0, china: 0, usd: 0, sector: 1 }, se: { market: 0, oil: 0, china: 0, usd: 0, sector: 0 } };
   const e: SimEmpire[] = [{ person: person('o', 100), companies: [{ id: 'oilco', name: 'oilco', sector: 'energy', listed: true, regions: [], fit }], stakes: [] }];
   const f = simulate(s, e, countries, 1).companies[0];
-  assert.ok(Math.abs(f.price - ((1 - 0.04) * (1 + 0.06) - 1)) < 1e-9);
+  assert.ok(Math.abs(f.price - (Math.exp(-0.04 + 0.06) - 1)) < 1e-9);
   assert.ok(f.hi - f.lo > 0.05);
+});
+
+test('no price falls below zero, however hard the shock', () => {
+  const fit = { beta: { market: 2.5, oil: 0, china: 0, usd: 0, sector: 0 }, se: { market: 0.5, oil: 0, china: 0, usd: 0, sector: 0 }, sd: 0.08 };
+  const e: SimEmpire[] = [{ person: person('x', 100), companies: [{ id: 'risky', name: 'risky', sector: null, listed: true, regions: [], fit }], stakes: [{ company: { id: 'risky' }, value: 100 }] }];
+  const f = simulate(scenario([{ kind: 'market', target: '', pct: -0.6, from: 0, to: 0 }]), e, countries, 1);
+  const c = f.companies[0];
+  assert.ok(c.price > -1 && c.lo > -1 && c.hi > c.lo, JSON.stringify([c.price, c.lo, c.hi]));
+  assert.ok(f.people[0].range![0] > -100);
 });

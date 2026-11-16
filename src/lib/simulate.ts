@@ -146,31 +146,38 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     const fit = c.fit ?? peer ?? RULE;
     const basis: CompanyMove['basis'] = c.fit ? 'measured' : peer ? 'peers' : 'rule';
     const revShare = base ? delta / base : 0;
-    let price = 1 + revShare;
-    // Variance of the change: revenue effects are uncertain by about half (how far a price follows revenue), and each
-    // factor effect by its sensitivity's standard error times the factor's move.
-    let variance = (0.39 * revShare) ** 2; // ±half at 80%
+    // Everything adds up in log terms, the way the sensitivities were measured (weekly log returns): a factor that
+    // moves by m moves the company by beta x log(1 + m). So moves compound properly and no price can fall below zero;
+    // ranges are formed in log terms too.
+    const ln = (v: number) => Math.log(1 + Math.max(v, -0.99));
+    let logMove = ln(revShare);
+    // Variance (log terms): revenue effects are uncertain by about half (how far a price follows revenue); each factor
+    // effect by its sensitivity's standard error, and an analog part by the spread between its past events.
+    let variance = (0.39 * logMove) ** 2; // +/- half at 80%
     for (const s of scenario.shocks) {
-      const m = at(s);
-      if (!m) continue;
-      if (s.kind === 'company' && s.target === c.id) price *= 1 + m;
+      const r = ramp(s, month);
+      if (!r) continue;
+      const L = ln(s.pct) * r;
+      const spread = (b: number) => (b * (('sd' in s ? s.sd : 0) ?? 0) * r) ** 2;
+      if (s.kind === 'company' && s.target === c.id) logMove += L;
       else if (s.kind === 'sector' && c.sector === s.target) {
         const b = fit.beta.sector ?? 1;
-        price *= 1 + b * m;
-        variance += ((fit.se.sector ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se.sector ?? 0) * L) ** 2 + spread(b);
       } else if (s.kind === 'market') {
         const b = fit.beta.market ?? 1;
-        price *= 1 + b * m;
-        variance += ((fit.se.market ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se.market ?? 0) * L) ** 2 + spread(b);
       } else if (s.kind === 'factor') {
         const b = (s.direct ? fit.raw?.[s.target] : undefined) ?? fit.beta[s.target] ?? 0;
-        price *= 1 + b * m;
-        variance += ((fit.se[s.target] ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se[s.target] ?? 0) * L) ** 2 + spread(b);
       }
     }
-    if (Math.abs(price - 1) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
+    if (Math.abs(logMove) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
-    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: price - 1 - Z80 * sd, hi: price - 1 + Z80 * sd, basis });
+    const price = Math.exp(logMove);
+    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: Math.exp(logMove - Z80 * sd) - 1, hi: Math.exp(logMove + Z80 * sd) - 1, basis });
   }
   const move = (id: string) => moves.get(id)?.price ?? 0;
 

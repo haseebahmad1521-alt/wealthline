@@ -364,7 +364,7 @@ export function DialsPanel({
             {/* No fill: zero sits mid-track, so a fill from the left end would read as a change. */}
             <Slider value={v} minValue={d.min} maxValue={d.max} step={5} aria-label={d.label} onChange={(x) => onChange({ ...values, [d.key]: Array.isArray(x) ? x[0] : x })}>
               <Slider.Track>
-                <Slider.Thumb />
+                <Slider.Thumb aria-label={`${d.label}: ${v ? d.describe(v) : 'as today'}`} />
               </Slider.Track>
             </Slider>
             {dialEffects(d, v, names).map((line) => (
@@ -544,7 +544,7 @@ export function SimOverlay({
           <Slider value={Math.min(tick, length)} minValue={0} maxValue={Math.max(length, 1)} step={1} aria-label="Time in the simulation" onChange={(v) => onScrub(Array.isArray(v) ? v[0] : v)}>
             <Slider.Track>
               <Slider.Fill />
-              <Slider.Thumb />
+              <Slider.Thumb aria-label={`Time in the simulation: ${month === 0 ? 'today' : simDate(start, month)}`} />
             </Slider.Track>
           </Slider>
         </View>
@@ -594,7 +594,7 @@ function EndCard({
   const top = frame.ranks.slice(0, 5);
   const hit = [...frame.fills].sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 4);
   return (
-    <Animated.View entering={FadeInDown.duration(320).reduceMotion(ReduceMotion.System)} style={styles.card} accessibilityLabel={`${title}: the world after ${months} months`}>
+    <Animated.View entering={FadeInDown.duration(320).reduceMotion(ReduceMotion.System)} style={[styles.card, styles.cardFit]} accessibilityLabel={`${title}: the world after ${months} months`}>
       <View style={styles.cardHead}>
         <View style={styles.flex}>
           <Caption>{simDate(start, months)} · hypothetical</Caption>
@@ -607,6 +607,8 @@ function EndCard({
           <Icon name={icons.close} size={16} tint={color.textSecondary} />
         </Pressable>
       </View>
+      {/* Below the header the card scrolls, so on a short phone screen nothing ends up behind the panel. */}
+      <ScrollView style={styles.cardBody} contentContainerStyle={styles.cardBodyInner} showsVerticalScrollIndicator={false}>
       {verdict && (
         <View style={[styles.verdict, { borderColor: verdict.right ? color.gain : color.loss }]} accessible>
           <Text style={[type.headline, { color: verdict.right ? color.gain : color.loss }]}>
@@ -682,6 +684,7 @@ function EndCard({
           ))}
         </View>
       )}
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -1079,6 +1082,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,.14)',
   },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  cardFit: { flexShrink: 1, minHeight: 0 },
+  cardBody: { flexShrink: 1, minHeight: 0 },
+  cardBodyInner: { gap: 10 },
   close: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.08)' },
   cardRow: { gap: 4 },
   rowLabel: { color: color.textSecondary, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6 },

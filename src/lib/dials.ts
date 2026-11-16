@@ -21,7 +21,7 @@ const ramp = { from: 0, to: 6 };
 /** A share in words, the nearest of a few plain fractions: 35 → "a third", 50 → "half". */
 export function share(percent: number): string {
   const p = Math.abs(percent);
-  const words: [number, string][] = [[5, 'a twentieth'], [10, 'a tenth'], [20, 'a fifth'], [25, 'a quarter'], [33, 'a third'], [50, 'half'], [67, 'two thirds'], [75, 'three quarters'], [100, 'all of it']];
+  const words: [number, string][] = [[5, 'a twentieth'], [10, 'a tenth'], [16, 'about a sixth'], [20, 'a fifth'], [25, 'a quarter'], [33, 'a third'], [50, 'half'], [67, 'two thirds'], [75, 'three quarters'], [100, 'all of it']];
   return words.reduce((best, w) => (Math.abs(w[0] - p) < Math.abs(best[0] - p) ? w : best))[1];
 }
 const by = (v: number, up: string, down: string) => (v > 0 ? `${up} by ${share(v)}` : `${down} by ${share(v)}`);
@@ -58,8 +58,8 @@ export const DIALS: Dial[] = [
   {
     key: 'us',
     label: 'US economy',
-    min: -30,
-    max: 20,
+    min: -15,
+    max: 10,
     rule: 'Business done in the US moves by the dial and global stocks by twice it (stocks swing harder than the economy); each company by its measured sensitivity to global stocks.',
     describe: (v) => (v < 0 ? `The US economy shrinks by ${share(v)}: ${v <= -15 ? 'a depression' : v <= -5 ? 'a recession' : 'a slowdown'}` : `The US economy grows by ${share(v)}: ${v >= 5 ? 'a boom' : 'faster growth'}`),
     shocks: (v) => [{ kind: 'place', target: 'US', pct: v, ...ramp }, { kind: 'market', target: '', pct: v * 2, ...ramp }],

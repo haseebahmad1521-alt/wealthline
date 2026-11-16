@@ -28,9 +28,11 @@ export function expandAnalogs(given: Scenario, data: EventData | null): Scenario
     const k = a.pct;
     const span = { from: a.from, to: a.to };
     const add = (shock: Shock) => Math.abs(shock.pct) >= MIN && parts.push(shock);
-    add({ kind: 'market', target: '', pct: d.mean.market * k, sd: d.sd.market * k, quiet: true, ...span });
-    for (const f of ['oil', 'china', 'usd'] as const) add({ kind: 'factor', target: f, pct: d.mean[f] * k, sd: d.sd[f] * k, quiet: true, direct: true, ...span });
-    for (const [sector, v] of Object.entries(d.mean.sector)) add({ kind: 'sector', target: sector as never, pct: v * k, sd: (d.sd.sector[sector] ?? 0) * k, quiet: true, ...span });
+    // Measured moves are log returns: a move of L is a price change of e^L - 1. The spread stays in log terms.
+    const move = (logMove: number) => Math.exp(logMove * k) - 1;
+    add({ kind: 'market', target: '', pct: move(d.mean.market), sd: d.sd.market * k, quiet: true, ...span });
+    for (const f of ['oil', 'china', 'usd'] as const) add({ kind: 'factor', target: f, pct: move(d.mean[f]), sd: d.sd[f] * k, quiet: true, direct: true, ...span });
+    for (const [sector, v] of Object.entries(d.mean.sector)) add({ kind: 'sector', target: sector as never, pct: move(v), sd: (d.sd.sector[sector] ?? 0) * k, quiet: true, ...span });
     const times = Math.abs(k - 1) < 0.05 ? '' : `, ${Math.round(k * 10) / 10}× as strongly`;
     notes.push(`${NOTE}${d.events.length} past ${ANALOGS[a.target as Analog].toLowerCase()}${times}: ${d.events.join('; ')}.`);
   }
