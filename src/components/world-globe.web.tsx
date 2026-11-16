@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Glass } from '@/components/glass';
-import type { GlobeArc, GlobeFill, GlobeMarker, GlobeSite } from '@/components/globe';
+import type { GlobeArc, GlobeFill, GlobeMarker, GlobePulse, GlobeSite } from '@/components/globe';
 import { portraitAt, portraitPx } from '@/lib/portrait';
 import { latLngToUnit } from '@/lib/sun';
 import { clampZoom, scene, zoomFactor } from '@/lib/scene';
@@ -109,6 +109,8 @@ export function WorldGlobe({
   sites,
   arcs = [],
   fills = [],
+  pulses = [],
+  zoomTo = null,
   focus,
   center,
   onSelect,
@@ -120,6 +122,9 @@ export function WorldGlobe({
   sites: GlobeSite[];
   arcs?: GlobeArc[];
   fills?: GlobeFill[];
+  pulses?: GlobePulse[];
+  /** Camera zoom for `center` (0 whole globe … 1 close); by default close for a person, unchanged otherwise. */
+  zoomTo?: number | null;
   focus: string | null;
   center: { lat: number; lng: number } | null;
   onSelect: (id: string | null) => void;
@@ -144,11 +149,11 @@ export function WorldGlobe({
     },
     [arcKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const live = useRef({ markers, sites, paths, focus, onSelect, onOpen });
-  live.current = { markers, sites, paths, focus, onSelect, onOpen };
+  const live = useRef({ markers, sites, paths, pulses, focus, onSelect, onOpen });
+  live.current = { markers, sites, paths, pulses, focus, onSelect, onOpen };
 
   // Shaded countries live on the planet itself; cleared when World goes.
-  const fillKey = fills.map((f) => `${f.iso2}:${f.strength}:${f.risk ? 1 : 0}`).join('|');
+  const fillKey = fills.map((f) => `${f.iso2}:${f.strength}:${f.risk ? 1 : 0}${f.gain ? 1 : 0}`).join('|');
   useEffect(() => {
     scene.fills = fills;
     scene.fillsVersion++;
@@ -169,10 +174,10 @@ export function WorldGlobe({
     if (focus !== openedFocus) opened = null;
     openedFocus = focus;
     // Choosing a person flies in close over their headquarters; "Everyone" eases back out to the whole globe.
-    if (center) tween.current = { lat: center.lat, lng: center.lng, zoom: focus ? 0.78 : scene.world.zoom };
-    else if (!focus && scene.world.zoom > 0.3) tween.current = { lat: scene.world.lat, lng: scene.world.lng, zoom: 0 };
+    if (center) tween.current = { lat: center.lat, lng: center.lng, zoom: zoomTo ?? (focus ? 0.78 : scene.world.zoom) };
+    else if (!focus && (zoomTo === 0 || scene.world.zoom > 0.3)) tween.current = { lat: scene.world.lat, lng: scene.world.lng, zoom: 0 };
     scene.invalidate?.();
-  }, [center?.lat, center?.lng, focus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [center?.lat, center?.lng, focus, zoomTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const el = host.current;
@@ -298,7 +303,7 @@ export function WorldGlobe({
       // Portraits stay pinned to the planet but only show once the camera has nearly swung into the World view, so
       // coming back from another screen they fade in on the globe instead of riding the swing through space.
       const arrive = reduce ? 1 : Math.min(Math.max((scene.worldMix - 0.75) / 0.25, 0), 1);
-      const { markers: ms, sites: ss, paths: ps, focus: f } = live.current;
+      const { markers: ms, sites: ss, paths: ps, pulses: pz, focus: f } = live.current;
 
       // Places: one dot per real site, faded with everyone else when a person is chosen.
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -329,6 +334,21 @@ export function WorldGlobe({
           ctx.beginPath();
           ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
           ctx.fill();
+        }
+        // Simulation events: rings spreading from where something is happening (one still ring with reduced motion).
+        for (const pulse of pz) {
+          const p = project(pulse.lat, pulse.lng);
+          if (p.facing <= 0) continue;
+          ctx.strokeStyle = pulse.tone === 'loss' ? color.loss : pulse.tone === 'gain' ? color.gain : color.action;
+          ctx.lineWidth = 2;
+          const reach = 18 + 30 * Math.min(Math.max(pulse.strength, 0), 1);
+          for (let i = 0; i < (reduce ? 1 : 3); i++) {
+            const phase = reduce ? 0.45 : (now / 1800 + i / 3) % 1;
+            ctx.globalAlpha = Math.min(p.facing / 0.08, 1) * (1 - phase) * 0.85;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5 + reach * phase, 0, Math.PI * 2);
+            ctx.stroke();
+          }
         }
         // Money flows: a soft line for the route, brighter dashes travelling along it toward headquarters. Drawn
         // segment by segment so each fades out at the horizon instead of crossing the planet's back.
@@ -510,7 +530,7 @@ export function WorldGlobe({
         const faded = !!f && m.key !== f;
         // While a bubble is fanned open, everyone outside it steps back so the fan reads clearly.
         const behind = !!opened && !fp ? 0.3 : 1;
-        const targetOp = p.vis * behind * (faded ? FADED : c && !isLeader ? 0 : 1);
+        const targetOp = p.vis * behind * (faded ? FADED : c && !isLeader ? 0 : 1) * (m.dim ? 0.3 : 1);
         const s = n.s; // s.x / s.y: the sprung offset from the portrait's own place
         const ox = tx - p.x;
         const oy = ty - p.y;
@@ -550,13 +570,17 @@ export function WorldGlobe({
         n.count.style.display = more ? 'block' : 'none';
         if (more) n.count.textContent = `+${more}`;
         const ch = m.change ?? null;
-        const chKey = ch ? `${ch.dir}${ch.text}` : '';
+        const chKey = ch ? `${ch.dir}${ch.text}${ch.projected ? 'p' : ''}` : '';
         if (chKey !== n.change) {
           n.change = chKey;
           const tint = !ch ? '' : ch.dir > 0 ? color.gain : ch.dir < 0 ? color.loss : color.textSecondary;
-          n.face.style.boxShadow = ch ? `0 0 0 2.5px ${tint}` : 'inset 0 0 0 1.5px rgba(255,255,255,.35)';
+          // A simulated change (projected) gets a dashed ring and "≈", so it never reads as a recorded one.
+          n.face.style.boxShadow = ch && !ch.projected ? `0 0 0 2.5px ${tint}` : ch ? 'none' : 'inset 0 0 0 1.5px rgba(255,255,255,.35)';
+          n.face.style.outline = ch?.projected ? `2.5px dashed ${tint}` : 'none';
+          n.face.style.outlineOffset = ch?.projected ? '1px' : '0';
           n.tag.style.color = tint;
-          n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.text}` : '';
+          n.tag.style.border = ch?.projected ? '1px dashed currentColor' : 'none';
+          n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.projected ? '≈' : ''}${ch.text}` : '';
         }
         // In a fanned bubble only the bigger portraits keep a label; small ones would cover their neighbours.
         n.tag.style.display = ch && (fp ? fp.d >= 64 : isLeader) ? 'block' : 'none';

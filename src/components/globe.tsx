@@ -15,13 +15,16 @@ import { color } from '@/theme';
 const graticule = geoGraticule10();
 
 export type GlobeSite = { key: string; lat: number; lng: number; kind: SiteKind; group: string; live: boolean };
-export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null;
+export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null; /** Stepped back (a simulation that doesn't touch them). */ dim?: boolean;
   /** Today view: change since the previous recorded value, already formatted ("$7.2B"), with its direction. */
-  change?: { text: string; dir: 1 | -1 | 0 } | null };
+  change?: { text: string; dir: 1 | -1 | 0; /** A simulated value, drawn dashed with "≈". */ projected?: boolean } | null };
 /** A money flow: from where revenue is earned to the company's HQ. weight 0–1 sets the line width. */
 export type GlobeArc = { key: string; from: LatLng; to: LatLng; weight: number; group: string; risk?: boolean };
 /** A shaded country; strength 0–1. */
-export type GlobeFill = { iso2: string; strength: number; risk?: boolean };
+/** Where something is happening in a simulation: rings spread from it (a still ring with reduced motion). */
+export type GlobePulse = { key: string; lat: number; lng: number; tone: 'loss' | 'gain' | 'info'; strength: number };
+/** `risk`: a loss (red); `gain`: a gain (green), both in simulations; otherwise a neutral tint by strength. */
+export type GlobeFill = { iso2: string; strength: number; risk?: boolean; gain?: boolean };
 
 // Ring size by what the place is, not by any invented "influence" figure.
 const BASE: Record<SiteKind, number> = { hq: 7, factory: 6, launch_site: 5.5, data_center: 5, research: 4.5, office: 4.5, store: 4, other: 4 };
@@ -57,8 +60,10 @@ export function Globe({
   label,
   arcs = [],
   fills = [],
+  pulses = [],
 }: {
   size: number;
+  pulses?: GlobePulse[];
   sites: GlobeSite[];
   markers: GlobeMarker[];
   arcs?: GlobeArc[];
@@ -193,7 +198,7 @@ export function Globe({
   const shading = fills.flatMap((f) => {
     const shape = countryShape(f.iso2);
     const d = shape ? path(shape) : null;
-    return d ? [<Path key={`fill-${f.iso2}`} d={d} fill={f.risk ? color.loss : color.text} fillOpacity={f.risk ? 0.35 : 0.08 + 0.55 * f.strength} stroke={color.surface} strokeWidth={0.6} />] : [];
+    return d ? [<Path key={`fill-${f.iso2}`} d={d} fill={f.risk ? color.loss : f.gain ? color.gain : color.text} fillOpacity={f.risk || f.gain ? 0.15 + 0.35 * f.strength : 0.08 + 0.55 * f.strength} stroke={color.surface} strokeWidth={0.6} />] : [];
   });
 
   // Money flows along great circles (clipped at the horizon); dashes travel toward the HQ.
@@ -222,6 +227,12 @@ export function Globe({
   });
 
   // Portraits at HQs, only well inside the front (65° from centre); people sharing a city fan out around it.
+  // Simulation events: a still ring where something is happening (the web planet animates them).
+  const pulseRings = pulses.flatMap((p) => {
+    const xy = facing(p.lng, p.lat) != null ? projection([p.lng, p.lat]) : null;
+    const tint = p.tone === 'loss' ? color.loss : p.tone === 'gain' ? color.gain : color.action;
+    return xy ? [<Circle key={`pulse-${p.key}`} cx={xy[0]} cy={xy[1]} r={(10 + 14 * p.strength) * scale} fill="none" stroke={tint} strokeWidth={2} strokeOpacity={0.8} />] : [];
+  });
   const placed = markers.flatMap((m) => {
     const vis = facing(m.lng, m.lat);
     const xy = vis != null && geoDistance([m.lng, m.lat], centre) < (65 * Math.PI) / 180 ? projection([m.lng, m.lat]) : null;
@@ -229,7 +240,7 @@ export function Globe({
   });
   const at = new Map<string, number>();
   // Change labels go in a layer above every portrait; a label that would overlap a bigger mover's is left out.
-  const tags: { key: string; x: number; y: number; w: number; text: string; tint: string }[] = [];
+  const tags: { key: string; x: number; y: number; w: number; text: string; tint: string; dashed: boolean }[] = [];
   const pins = placed.map((m) => {
     const cell = `${Math.round(m.x / 18)}:${Math.round(m.y / 18)}`;
     const n = at.get(cell) ?? 0;
@@ -244,14 +255,14 @@ export function Globe({
     const ch = m.change && m.change.dir ? m.change : null;
     const tint = ch ? (ch.dir > 0 ? color.gain : color.loss) : null;
     if (ch && tint && !faded) {
-      const text = `${ch.dir > 0 ? '▲' : '▼'} ${ch.text}`;
+      const text = `${ch.dir > 0 ? '▲' : '▼'} ${ch.projected ? '≈' : ''}${ch.text}`;
       const w = text.length * 6.4 + 12;
       const ty = y + d / 2 - 4;
-      if (!tags.some((t) => Math.abs(t.x - x) < (t.w + w) / 2 + 2 && Math.abs(t.y - ty) < 18)) tags.push({ key: m.key, x, y: ty, w, text, tint });
+      if (!tags.some((t) => Math.abs(t.x - x) < (t.w + w) / 2 + 2 && Math.abs(t.y - ty) < 18)) tags.push({ key: m.key, x, y: ty, w, text, tint, dashed: !!ch.projected });
     }
     return (
-      <G key={m.key} opacity={(faded ? 0.45 : 1) * m.vis} onPress={onSelect ? () => onSelect(m.key) : undefined}>
-        <Circle cx={x} cy={y} r={d / 2 + 2} fill={color.surface} stroke={tint ?? (on ? color.action : color.hairline)} strokeWidth={tint ? 2.5 : on ? 2 : 1} />
+      <G key={m.key} opacity={(faded ? 0.45 : 1) * (m.dim ? 0.35 : 1) * m.vis} onPress={onSelect ? () => onSelect(m.key) : undefined}>
+        <Circle cx={x} cy={y} r={d / 2 + 2} fill={color.surface} stroke={tint ?? (on ? color.action : color.hairline)} strokeWidth={tint ? 2.5 : on ? 2 : 1} strokeDasharray={ch?.projected ? '4 3' : undefined} />
         {m.uri ? (
           <>
             <Defs>
@@ -293,10 +304,11 @@ export function Globe({
         {shading}
         {flows}
         {rings}
+        {pulseRings}
         {pins}
         {tags.map((t) => (
           <G key={`tag-${t.key}`} pointerEvents="none">
-            <Rect x={t.x - t.w / 2} y={t.y} width={t.w} height={16} rx={8} fill={color.surface} stroke={t.tint} strokeWidth={1} />
+            <Rect x={t.x - t.w / 2} y={t.y} width={t.w} height={16} rx={8} fill={color.surface} stroke={t.tint} strokeWidth={1} strokeDasharray={t.dashed ? '3 2' : undefined} />
             <SvgText x={t.x} y={t.y + 12} fontSize={11} fontWeight="700" fill={t.tint} textAnchor="middle">
               {t.text}
             </SvgText>

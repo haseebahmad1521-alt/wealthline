@@ -16,6 +16,22 @@ import { color, radius, space, type } from '@/theme';
 // Medal tones for ranks 1–3 (game layer only; text on them stays dark or white at AA contrast).
 export const MEDAL = ['#C9971C', '#8A96A3', '#A8653A'] as const;
 
+// Metallic sheen for the medals (owner, Nov 16): a brushed-metal gradient with a bright band across it, gold, silver and
+// bronze. MEDAL stays the flat fallback (and the colour where a gradient can't be drawn). The mid tones keep white
+// numbers readable.
+const SHEEN = [
+  'linear-gradient(135deg, #F6DE8A 0%, #C9971C 34%, #FFF3BF 50%, #B8860B 66%, #7E5A0C 100%)',
+  'linear-gradient(135deg, #EEF2F6 0%, #8A96A3 34%, #FFFFFF 50%, #7D8894 66%, #4E5862 100%)',
+  'linear-gradient(135deg, #F2C49C 0%, #A8653A 34%, #FFDCC0 50%, #96552C 66%, #5E3218 100%)',
+] as const;
+
+/** The metal fill for rank `place` (1–3): a gradient where supported, the flat medal tone otherwise. */
+export function metal(place: number): object {
+  const i = place - 1;
+  if (i < 0 || i > 2) return {};
+  return { backgroundColor: MEDAL[i], experimental_backgroundImage: SHEEN[i], backgroundImage: SHEEN[i] };
+}
+
 /**
  * Entrance: rises and fades in once, staggered by `i`. React Native's Animated (Reanimated's layout animations stayed
  * stuck at their start state on web). Already visible when reduced motion is on.
@@ -62,7 +78,7 @@ function Step({ person, place, height, i }: { person: Person; place: number; hei
     <Link href={`/person/${person.slug}`} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={`Number ${place}, ${person.name}, ${person.net_worth_usd != null ? money.format(person.net_worth_usd) : ''}`} style={styles.step}>
         <Rise i={i + 3} from={12} style={styles.stepTop}>
-          <View style={[styles.ring, { borderColor: MEDAL[place - 1], borderRadius: (size + 8) / 2 }]}>
+          <View style={[styles.ring, metal(place), { borderRadius: (size + 8) / 2 }]}>
             <Portrait uri={person.portrait_url} name={person.name} size={size} />
           </View>
           <Text style={[type.headline, styles.center, { color: color.text }]} numberOfLines={2}>
@@ -71,7 +87,7 @@ function Step({ person, place, height, i }: { person: Person; place: number; hei
           {person.net_worth_usd != null && <Text style={[type.number, { color: color.text, fontSize: place === 1 ? 18 : 15 }]}>{money.format(person.net_worth_usd)}</Text>}
           {delta === 0 ? <Caption>No change</Caption> : delta != null ? <Change delta={delta} base={person.prev_net_worth_usd!} size={12} compact /> : null}
         </Rise>
-        <Rise i={i} from={height} style={[styles.pedestal, { height, backgroundColor: MEDAL[place - 1] }]}>
+        <Rise i={i} from={height} style={[styles.pedestal, metal(place), { height }]}>
           <Text style={styles.pedestalText}>{place}</Text>
         </Rise>
       </Pressable>
@@ -206,9 +222,10 @@ const styles = StyleSheet.create({
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   step: { flex: 1, minWidth: 0, alignItems: 'center' },
   stepTop: { alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: space.sm },
-  ring: { borderWidth: 4, padding: 0 },
+  // A metal frame: the gradient shows in the padding around the portrait.
+  ring: { padding: 4 },
   pedestal: { alignSelf: 'stretch', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 30, lineHeight: 34 },
+  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 30, lineHeight: 34, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
   pair: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   // 150px basis: two cards side by side from ~330px, stacked on 320px phones.
   moverCell: { flexGrow: 1, flexBasis: 150, minWidth: 150 },

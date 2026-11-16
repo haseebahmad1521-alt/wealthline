@@ -75,7 +75,7 @@ function oceanMask() {
 
 // World's shaded countries, painted into an equirectangular map the Earth shader blends over the surface. Economies
 // tints by strength (more of the tracked revenue against GDP: stronger); What if marks the shocked place in red.
-const FILL = { base: [156, 203, 255], risk: [255, 138, 128] } as const;
+const FILL = { base: [156, 203, 255], risk: [255, 138, 128], gain: [74, 222, 128] } as const;
 function paintFills(c: HTMLCanvasElement, fills: typeof sceneState.fills) {
   const ctx = c.getContext('2d')!;
   ctx.clearRect(0, 0, c.width, c.height);
@@ -83,8 +83,9 @@ function paintFills(c: HTMLCanvasElement, fills: typeof sceneState.fills) {
   for (const f of fills) {
     const shape = countryShape(f.iso2);
     if (!shape) continue;
-    const [r, g, b] = f.risk ? FILL.risk : FILL.base;
-    ctx.fillStyle = `rgba(${r},${g},${b},${f.risk ? 0.5 : 0.1 + 0.4 * f.strength})`;
+    const [r, g, b] = f.risk ? FILL.risk : f.gain ? FILL.gain : FILL.base;
+    // A loss or gain in a simulation: stronger for a bigger change; neutral shading by strength as before.
+    ctx.fillStyle = `rgba(${r},${g},${b},${f.risk || f.gain ? 0.2 + 0.4 * f.strength : 0.1 + 0.4 * f.strength})`;
     ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();

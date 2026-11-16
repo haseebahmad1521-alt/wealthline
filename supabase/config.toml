@@ -52,5 +52,8 @@ verify_jwt = false # cron calls it with x-cron-secret, not a user token
 [functions.trending]
 verify_jwt = false # cron calls it with x-cron-secret, not a user token
 
+[functions.scenarios]
+verify_jwt = false # cron calls it with x-cron-secret; anyone may POST a question (cached, capped inside)
+
 [functions.status]
 verify_jwt = false # cron calls it with x-cron-secret; members POST with their own token, checked inside

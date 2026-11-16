@@ -1,0 +1,1367 @@
+{
+ "built": "2026-11-16",
+ "window": {
+  "from": "2023-W47",
+  "to": "2026-W47",
+  "weeks": 157
+ },
+ "source": "Yahoo Finance weekly closes; factors: ACWI, Brent (BZ=F), MCHI, DXY, US sector funds",
+ "links": {
+  "oil": {
+   "oil": 1,
+   "china": 0.006,
+   "usd": 0.029,
+   "sector": {
+    "energy": 0.417,
+    "materials": -0.021,
+    "industrials": -0.002,
+    "autos": 0.014,
+    "consumer": -0.045,
+    "health": -0.046,
+    "finance": 0.012,
+    "technology": 0.071,
+    "media": -0.014,
+    "real_estate": -0.019,
+    "transport": -0.026
+   }
+  },
+  "china": {
+   "oil": 0.019,
+   "china": 1,
+   "usd": -0.047,
+   "sector": {
+    "energy": 0,
+    "materials": 0.017,
+    "industrials": -0.088,
+    "autos": 0.062,
+    "consumer": -0.024,
+    "health": -0.025,
+    "finance": -0.053,
+    "technology": -0.129,
+    "media": 0.02,
+    "real_estate": 0.003,
+    "transport": -0.101
+   }
+  },
+  "usd": {
+   "oil": 1.296,
+   "china": -0.658,
+   "usd": 1,
+   "sector": {
+    "energy": 0.779,
+    "materials": -0.307,
+    "industrials": 0.292,
+    "autos": 0.034,
+    "consumer": 0.175,
+    "health": -0.237,
+    "finance": 0.41,
+    "technology": 0.594,
+    "media": 0.052,
+    "real_estate": -0.238,
+    "transport": 0.26
+   }
+  }
+ },
+ "companies": {
+  "23fc4bae-f96e-4c7d-8c8a-b118c10d6636": {
+   "symbol": "300750.SZ",
+   "sector": "industrials",
+   "beta": {
+    "market": 0.448,
+    "oil": 0.007,
+    "china": 0.841,
+    "usd": 0.527,
+    "sector": 0.491
+   },
+   "se": {
+    "market": 0.182,
+    "oil": 0.063,
+    "china": 0.114,
+    "usd": 0.43,
+    "sector": 0.284
+   },
+   "r2": 0.29,
+   "n": 155
+  },
+  "44f82f0c-70ba-47a3-9075-1b27f88a04e0": {
+   "symbol": "META",
+   "sector": "technology",
+   "beta": {
+    "market": 1.439,
+    "oil": -0.041,
+    "china": -0.096,
+    "usd": 0.249,
+    "sector": 0.404
+   },
+   "se": {
+    "market": 0.196,
+    "oil": 0.069,
+    "china": 0.123,
+    "usd": 0.469,
+    "sector": 0.23
+   },
+   "r2": 0.283,
+   "n": 157
+  },
+  "73dc826d-1d43-41a4-bfa4-8bf31fe4189d": {
+   "symbol": "DELL",
+   "sector": "technology",
+   "beta": {
+    "market": 2.456,
+    "oil": 0.076,
+    "china": -0.155,
+    "usd": 0.011,
+    "sector": 2.053
+   },
+   "se": {
+    "market": 0.282,
+    "oil": 0.099,
+    "china": 0.177,
+    "usd": 0.675,
+    "sector": 0.331
+   },
+   "r2": 0.458,
+   "n": 157
+  },
+  "d98275fb-a50a-4849-a769-8e114dc8952e": {
+   "symbol": "NVDA",
+   "sector": "technology",
+   "beta": {
+    "market": 2.042,
+    "oil": 0.045,
+    "china": 0.136,
+    "usd": -0.01,
+    "sector": 1.617
+   },
+   "se": {
+    "market": 0.175,
+    "oil": 0.062,
+    "china": 0.109,
+    "usd": 0.418,
+    "sector": 0.205
+   },
+   "r2": 0.581,
+   "n": 157
+  },
+  "117ba2a7-3f87-4446-9e56-9c3bda87fad7": {
+   "symbol": "9984.T",
+   "sector": "technology",
+   "beta": {
+    "market": 2.114,
+    "oil": 0.096,
+    "china": -0.018,
+    "usd": -1.288,
+    "sector": 1.904
+   },
+   "se": {
+    "market": 0.291,
+    "oil": 0.103,
+    "china": 0.182,
+    "usd": 0.696,
+    "sector": 0.341
+   },
+   "r2": 0.372,
+   "n": 157
+  },
+  "396e57d2-44d4-484a-9866-827472b706b7": {
+   "symbol": "9983.T",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.885,
+    "oil": -0.204,
+    "china": -0.111,
+    "usd": 0.069,
+    "sector": 0.107
+   },
+   "se": {
+    "market": 0.159,
+    "oil": 0.056,
+    "china": 0.097,
+    "usd": 0.374,
+    "sector": 0.188
+   },
+   "r2": 0.24,
+   "n": 157
+  },
+  "c1d6c6f1-d2b8-4c26-ae00-2c1e936d5b5e": {
+   "symbol": "9633.HK",
+   "sector": null,
+   "beta": {
+    "market": 0.545,
+    "oil": -0.072,
+    "china": 0.641,
+    "usd": -0.145,
+    "sector": 0
+   },
+   "se": {
+    "market": 0.167,
+    "oil": 0.058,
+    "china": 0.102,
+    "usd": 0.39,
+    "sector": 0
+   },
+   "r2": 0.261,
+   "n": 157
+  },
+  "702f8546-d3ff-4112-981e-496598e055a0": {
+   "symbol": "BRK-B",
+   "sector": "finance",
+   "beta": {
+    "market": 0.352,
+    "oil": -0.033,
+    "china": 0.08,
+    "usd": 0.026,
+    "sector": 0.853
+   },
+   "se": {
+    "market": 0.069,
+    "oil": 0.024,
+    "china": 0.042,
+    "usd": 0.163,
+    "sector": 0.081
+   },
+   "r2": 0.489,
+   "n": 157
+  },
+  "2d4f6ee5-18f8-407d-aa91-d94b049dd211": {
+   "symbol": "NKE",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.96,
+    "oil": -0.071,
+    "china": 0.218,
+    "usd": -0.444,
+    "sector": 0.473
+   },
+   "se": {
+    "market": 0.205,
+    "oil": 0.072,
+    "china": 0.125,
+    "usd": 0.481,
+    "sector": 0.242
+   },
+   "r2": 0.175,
+   "n": 157
+  },
+  "464d1bb3-afae-4faa-a86c-9622d39b0ee3": {
+   "symbol": "MSFT",
+   "sector": "technology",
+   "beta": {
+    "market": 1.02,
+    "oil": -0.056,
+    "china": 0.033,
+    "usd": -0.439,
+    "sector": 0.702
+   },
+   "se": {
+    "market": 0.131,
+    "oil": 0.046,
+    "china": 0.082,
+    "usd": 0.313,
+    "sector": 0.153
+   },
+   "r2": 0.353,
+   "n": 157
+  },
+  "87ec911d-2c90-462e-806c-15e0c42c8c00": {
+   "symbol": "HCLTECH.NS",
+   "sector": "technology",
+   "beta": {
+    "market": 0.523,
+    "oil": 0.006,
+    "china": -0.096,
+    "usd": 0.262,
+    "sector": -0.17
+   },
+   "se": {
+    "market": 0.162,
+    "oil": 0.057,
+    "china": 0.101,
+    "usd": 0.387,
+    "sector": 0.19
+   },
+   "r2": 0.075,
+   "n": 157
+  },
+  "a9622606-a68d-46ef-8a5b-ca9846583bd3": {
+   "symbol": "GOOGL",
+   "sector": "technology",
+   "beta": {
+    "market": 1.188,
+    "oil": -0.026,
+    "china": 0.182,
+    "usd": -0.02,
+    "sector": 0.265
+   },
+   "se": {
+    "market": 0.165,
+    "oil": 0.058,
+    "china": 0.103,
+    "usd": 0.394,
+    "sector": 0.193
+   },
+   "r2": 0.271,
+   "n": 157
+  },
+  "f82bcafe-0117-4987-a1ec-90268e69e2b3": {
+   "symbol": "0001.HK",
+   "sector": "industrials",
+   "beta": {
+    "market": 0.398,
+    "oil": -0.023,
+    "china": 0.357,
+    "usd": -1.098,
+    "sector": 0.087
+   },
+   "se": {
+    "market": 0.145,
+    "oil": 0.05,
+    "china": 0.091,
+    "usd": 0.344,
+    "sector": 0.226
+   },
+   "r2": 0.21,
+   "n": 157
+  },
+  "0335850d-8236-4ffc-8719-52b9dd496638": {
+   "symbol": "0700.HK",
+   "sector": "technology",
+   "beta": {
+    "market": 0.462,
+    "oil": -0.048,
+    "china": 1.134,
+    "usd": 0.126,
+    "sector": 0.103
+   },
+   "se": {
+    "market": 0.131,
+    "oil": 0.046,
+    "china": 0.082,
+    "usd": 0.313,
+    "sector": 0.154
+   },
+   "r2": 0.586,
+   "n": 157
+  },
+  "9b1b8380-f6e4-4ca8-aa61-c2b0e14c5565": {
+   "symbol": "ITX.MC",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.93,
+    "oil": -0.119,
+    "china": 0.018,
+    "usd": 0.078,
+    "sector": 0.21
+   },
+   "se": {
+    "market": 0.132,
+    "oil": 0.046,
+    "china": 0.081,
+    "usd": 0.31,
+    "sector": 0.156
+   },
+   "r2": 0.283,
+   "n": 157
+  },
+  "30b9f62d-f88e-4525-b4b9-5f1fb829be0f": {
+   "symbol": "AWC.BK",
+   "sector": null,
+   "beta": {
+    "market": 0.474,
+    "oil": -0.241,
+    "china": 0.041,
+    "usd": 0.048,
+    "sector": 0
+   },
+   "se": {
+    "market": 0.199,
+    "oil": 0.069,
+    "china": 0.122,
+    "usd": 0.465,
+    "sector": 0
+   },
+   "r2": 0.108,
+   "n": 157
+  },
+  "cd895ec0-bbbb-4a8e-a8b4-547e77809095": {
+   "symbol": "CNI",
+   "sector": "transport",
+   "beta": {
+    "market": 0.447,
+    "oil": -0.01,
+    "china": -0.08,
+    "usd": -0.431,
+    "sector": 0.538
+   },
+   "se": {
+    "market": 0.087,
+    "oil": 0.03,
+    "china": 0.054,
+    "usd": 0.205,
+    "sector": 0.086
+   },
+   "r2": 0.328,
+   "n": 157
+  },
+  "72444632-89d7-49c2-b17b-70db5629d244": {
+   "symbol": "000333.SZ",
+   "sector": "industrials",
+   "beta": {
+    "market": 0.139,
+    "oil": 0.057,
+    "china": 0.185,
+    "usd": 0.201,
+    "sector": -0.073
+   },
+   "se": {
+    "market": 0.11,
+    "oil": 0.038,
+    "china": 0.069,
+    "usd": 0.26,
+    "sector": 0.172
+   },
+   "r2": 0.079,
+   "n": 155
+  },
+  "6f24ec88-a752-4dc7-a455-c71c0597015f": {
+   "symbol": "KEN",
+   "sector": null,
+   "beta": {
+    "market": 0.669,
+    "oil": 0.088,
+    "china": -0.08,
+    "usd": -0.563,
+    "sector": 0
+   },
+   "se": {
+    "market": 0.214,
+    "oil": 0.074,
+    "china": 0.131,
+    "usd": 0.5,
+    "sector": 0
+   },
+   "r2": 0.074,
+   "n": 157
+  },
+  "428a332c-1c29-4d50-b1d1-3e44c5c2e9ec": {
+   "symbol": "JIOFIN.NS",
+   "sector": "finance",
+   "beta": {
+    "market": 0.432,
+    "oil": -0.2,
+    "china": 0.101,
+    "usd": -0.199,
+    "sector": -0.049
+   },
+   "se": {
+    "market": 0.187,
+    "oil": 0.064,
+    "china": 0.115,
+    "usd": 0.444,
+    "sector": 0.219
+   },
+   "r2": 0.103,
+   "n": 157
+  },
+  "cc2cdca0-b86b-4e5a-b370-0f22c98c6526": {
+   "symbol": "RELIANCE.NS",
+   "sector": "energy",
+   "beta": {
+    "market": 0.371,
+    "oil": -0.084,
+    "china": -0.032,
+    "usd": -0.032,
+    "sector": -0.069
+   },
+   "se": {
+    "market": 0.129,
+    "oil": 0.06,
+    "china": 0.079,
+    "usd": 0.301,
+    "sector": 0.1
+   },
+   "r2": 0.095,
+   "n": 157
+  },
+  "bb1ea52a-096f-4772-a4e3-9f7afab527f6": {
+   "symbol": "AMX",
+   "sector": "media",
+   "beta": {
+    "market": 0.456,
+    "oil": -0.018,
+    "china": 0.104,
+    "usd": -1.083,
+    "sector": -0.352
+   },
+   "se": {
+    "market": 0.146,
+    "oil": 0.051,
+    "china": 0.09,
+    "usd": 0.342,
+    "sector": 0.175
+   },
+   "r2": 0.157,
+   "n": 157
+  },
+  "721d5639-7a03-4db9-bed4-79664920535d": {
+   "symbol": "2038.HK",
+   "sector": null,
+   "beta": {
+    "market": 0.77,
+    "oil": 0.017,
+    "china": 0.768,
+    "usd": 1.194,
+    "sector": 0
+   },
+   "se": {
+    "market": 0.339,
+    "oil": 0.117,
+    "china": 0.207,
+    "usd": 0.79,
+    "sector": 0
+   },
+   "r2": 0.116,
+   "n": 157
+  },
+  "839e1bc5-17a3-4c2a-8850-579e1bcbf2d6": {
+   "symbol": "AMZN",
+   "sector": "technology",
+   "beta": {
+    "market": 1.41,
+    "oil": -0.05,
+    "china": 0,
+    "usd": 0.114,
+    "sector": 0.258
+   },
+   "se": {
+    "market": 0.146,
+    "oil": 0.052,
+    "china": 0.091,
+    "usd": 0.35,
+    "sector": 0.172
+   },
+   "r2": 0.389,
+   "n": 157
+  },
+  "533f8726-fe36-4e5e-a546-ed6a23535bb5": {
+   "symbol": "KMI",
+   "sector": "energy",
+   "beta": {
+    "market": 0.281,
+    "oil": -0.172,
+    "china": -0.105,
+    "usd": 0.198,
+    "sector": 0.811
+   },
+   "se": {
+    "market": 0.101,
+    "oil": 0.047,
+    "china": 0.062,
+    "usd": 0.237,
+    "sector": 0.078
+   },
+   "r2": 0.493,
+   "n": 157
+  },
+  "eb4acf98-9a6b-416b-8353-1702d7cad5a2": {
+   "symbol": "NWS",
+   "sector": "media",
+   "beta": {
+    "market": 0.761,
+    "oil": 0.153,
+    "china": -0.078,
+    "usd": -0.806,
+    "sector": 0.528
+   },
+   "se": {
+    "market": 0.131,
+    "oil": 0.045,
+    "china": 0.08,
+    "usd": 0.305,
+    "sector": 0.156
+   },
+   "r2": 0.282,
+   "n": 157
+  },
+  "2909998e-67e2-4d37-9ee5-22cbb1bd52a8": {
+   "symbol": "NU",
+   "sector": "finance",
+   "beta": {
+    "market": 1.539,
+    "oil": 0.037,
+    "china": -0.165,
+    "usd": -0.214,
+    "sector": 0.557
+   },
+   "se": {
+    "market": 0.237,
+    "oil": 0.082,
+    "china": 0.145,
+    "usd": 0.563,
+    "sector": 0.278
+   },
+   "r2": 0.241,
+   "n": 157
+  },
+  "cfbff0ef-a4f7-4689-8f94-ab7ec3bd9b02": {
+   "symbol": "300433.SZ",
+   "sector": "industrials",
+   "beta": {
+    "market": 0.821,
+    "oil": -0.176,
+    "china": 0.521,
+    "usd": 1.88,
+    "sector": 0.766
+   },
+   "se": {
+    "market": 0.318,
+    "oil": 0.11,
+    "china": 0.199,
+    "usd": 0.752,
+    "sector": 0.496
+   },
+   "r2": 0.126,
+   "n": 155
+  },
+  "62048172-6096-4d90-8944-f2e0d345a43f": {
+   "symbol": "PDD",
+   "sector": "technology",
+   "beta": {
+    "market": 1.096,
+    "oil": 0.058,
+    "china": 1.445,
+    "usd": 0.397,
+    "sector": 0.159
+   },
+   "se": {
+    "market": 0.239,
+    "oil": 0.084,
+    "china": 0.149,
+    "usd": 0.571,
+    "sector": 0.28
+   },
+   "r2": 0.44,
+   "n": 157
+  },
+  "7703988d-f5c9-48fe-911a-e6feb89bccce": {
+   "symbol": "PLTR",
+   "sector": "technology",
+   "beta": {
+    "market": 2.219,
+    "oil": 0.123,
+    "china": 0.185,
+    "usd": -0.241,
+    "sector": 1.668
+   },
+   "se": {
+    "market": 0.341,
+    "oil": 0.12,
+    "china": 0.213,
+    "usd": 0.815,
+    "sector": 0.4
+   },
+   "r2": 0.299,
+   "n": 157
+  },
+  "be2badd3-0adc-42d8-8c50-19608fe19123": {
+   "symbol": "CRWD",
+   "sector": "technology",
+   "beta": {
+    "market": 1.851,
+    "oil": 0.085,
+    "china": -0.195,
+    "usd": 0.291,
+    "sector": 1.692
+   },
+   "se": {
+    "market": 0.242,
+    "oil": 0.085,
+    "china": 0.152,
+    "usd": 0.58,
+    "sector": 0.284
+   },
+   "r2": 0.427,
+   "n": 157
+  },
+  "a45c77cd-fa08-40cf-8c73-24339fd8a3ae": {
+   "symbol": "UI",
+   "sector": "technology",
+   "beta": {
+    "market": 1.574,
+    "oil": -0.094,
+    "china": -0.067,
+    "usd": 1.139,
+    "sector": -0.48
+   },
+   "se": {
+    "market": 0.292,
+    "oil": 0.103,
+    "china": 0.183,
+    "usd": 0.699,
+    "sector": 0.343
+   },
+   "r2": 0.183,
+   "n": 157
+  },
+  "d7b5c594-e612-43b0-9979-ace67deff888": {
+   "symbol": "URI",
+   "sector": "industrials",
+   "beta": {
+    "market": 1.439,
+    "oil": 0.084,
+    "china": -0.075,
+    "usd": 0.056,
+    "sector": 1.829
+   },
+   "se": {
+    "market": 0.177,
+    "oil": 0.061,
+    "china": 0.111,
+    "usd": 0.42,
+    "sector": 0.276
+   },
+   "r2": 0.439,
+   "n": 157
+  },
+  "59a94d42-929d-4c5b-a25b-77c7c522d661": {
+   "symbol": "APO",
+   "sector": "finance",
+   "beta": {
+    "market": 1.626,
+    "oil": 0.177,
+    "china": 0.042,
+    "usd": 0.69,
+    "sector": 1.198
+   },
+   "se": {
+    "market": 0.155,
+    "oil": 0.054,
+    "china": 0.095,
+    "usd": 0.368,
+    "sector": 0.182
+   },
+   "r2": 0.544,
+   "n": 157
+  },
+  "09afcd95-2bd9-470a-8a87-aa11d5691387": {
+   "symbol": "SPOT",
+   "sector": "technology",
+   "beta": {
+    "market": 0.845,
+    "oil": 0.072,
+    "china": -0.063,
+    "usd": 0.495,
+    "sector": -0.228
+   },
+   "se": {
+    "market": 0.233,
+    "oil": 0.082,
+    "china": 0.146,
+    "usd": 0.556,
+    "sector": 0.273
+   },
+   "r2": 0.092,
+   "n": 157
+  },
+  "c559490d-8b14-490c-a8bc-a2e33f5659a7": {
+   "symbol": "MT",
+   "sector": "materials",
+   "beta": {
+    "market": 1.579,
+    "oil": -0.105,
+    "china": 0.219,
+    "usd": -1.306,
+    "sector": 0.61
+   },
+   "se": {
+    "market": 0.161,
+    "oil": 0.056,
+    "china": 0.098,
+    "usd": 0.379,
+    "sector": 0.175
+   },
+   "r2": 0.483,
+   "n": 157
+  },
+  "a5ed8ba9-8439-4dfb-ae2d-199aeb55e789": {
+   "symbol": "TSLA",
+   "sector": "autos",
+   "beta": {
+    "market": 1.786,
+    "oil": 0.059,
+    "china": -0.069,
+    "usd": 0.743,
+    "sector": 1.136
+   },
+   "se": {
+    "market": 0.265,
+    "oil": 0.091,
+    "china": 0.163,
+    "usd": 0.617,
+    "sector": 0.273
+   },
+   "r2": 0.304,
+   "n": 157
+  },
+  "e2297038-0e64-41e7-82b3-bfd53d87e270": {
+   "symbol": "XPO",
+   "sector": "transport",
+   "beta": {
+    "market": 1.587,
+    "oil": 0.099,
+    "china": -0.132,
+    "usd": 0.337,
+    "sector": 1.788
+   },
+   "se": {
+    "market": 0.195,
+    "oil": 0.068,
+    "china": 0.121,
+    "usd": 0.457,
+    "sector": 0.193
+   },
+   "r2": 0.521,
+   "n": 157
+  },
+  "50feeeaf-ab6e-4925-995b-23236edf954e": {
+   "symbol": "WDAY",
+   "sector": "technology",
+   "beta": {
+    "market": 0.886,
+    "oil": 0.042,
+    "china": -0.09,
+    "usd": 0.242,
+    "sector": 0.215
+   },
+   "se": {
+    "market": 0.233,
+    "oil": 0.082,
+    "china": 0.146,
+    "usd": 0.558,
+    "sector": 0.274
+   },
+   "r2": 0.101,
+   "n": 157
+  },
+  "c9c96e92-b549-4e0a-b8a9-44c9c0b5fe9d": {
+   "symbol": "BABA",
+   "sector": "technology",
+   "beta": {
+    "market": 1.188,
+    "oil": -0.058,
+    "china": 1.395,
+    "usd": -0.17,
+    "sector": 0.068
+   },
+   "se": {
+    "market": 0.156,
+    "oil": 0.055,
+    "china": 0.098,
+    "usd": 0.373,
+    "sector": 0.183
+   },
+   "r2": 0.649,
+   "n": 157
+  },
+  "be3bd941-9d8d-4c13-9841-f36678e46f56": {
+   "symbol": "ORCL",
+   "sector": "technology",
+   "beta": {
+    "market": 1.743,
+    "oil": -0.004,
+    "china": 0.09,
+    "usd": -0.527,
+    "sector": 1.583
+   },
+   "se": {
+    "market": 0.24,
+    "oil": 0.085,
+    "china": 0.15,
+    "usd": 0.575,
+    "sector": 0.282
+   },
+   "r2": 0.363,
+   "n": 157
+  },
+  "42b2ea26-c881-40c3-818b-967d34fe42b5": {
+   "symbol": "SCHW",
+   "sector": "finance",
+   "beta": {
+    "market": 0.873,
+    "oil": 0.039,
+    "china": 0.083,
+    "usd": -0.092,
+    "sector": 0.972
+   },
+   "se": {
+    "market": 0.134,
+    "oil": 0.046,
+    "china": 0.082,
+    "usd": 0.319,
+    "sector": 0.158
+   },
+   "r2": 0.353,
+   "n": 157
+  },
+  "68b8f24c-2d96-4127-8cae-bd43e462ff01": {
+   "symbol": "RL",
+   "sector": "consumer",
+   "beta": {
+    "market": 1.228,
+    "oil": -0.07,
+    "china": 0.052,
+    "usd": 0.334,
+    "sector": 0.328
+   },
+   "se": {
+    "market": 0.172,
+    "oil": 0.06,
+    "china": 0.105,
+    "usd": 0.403,
+    "sector": 0.203
+   },
+   "r2": 0.273,
+   "n": 157
+  },
+  "e95a77f4-b5cd-4794-bc60-b674351aa974": {
+   "symbol": "GLEN.L",
+   "sector": "finance",
+   "beta": {
+    "market": 1.023,
+    "oil": 0.251,
+    "china": 0.193,
+    "usd": -0.218,
+    "sector": -0.151
+   },
+   "se": {
+    "market": 0.162,
+    "oil": 0.056,
+    "china": 0.099,
+    "usd": 0.384,
+    "sector": 0.19
+   },
+   "r2": 0.303,
+   "n": 157
+  },
+  "d6c409ea-7b66-49df-85c4-fa1a555d24cb": {
+   "symbol": "PAG",
+   "sector": "autos",
+   "beta": {
+    "market": 0.656,
+    "oil": 0.008,
+    "china": -0.021,
+    "usd": -0.611,
+    "sector": -0.328
+   },
+   "se": {
+    "market": 0.143,
+    "oil": 0.049,
+    "china": 0.088,
+    "usd": 0.333,
+    "sector": 0.147
+   },
+   "r2": 0.164,
+   "n": 157
+  },
+  "e67a07f3-23fc-4ed2-b40c-bdf373880a7e": {
+   "symbol": "0285.HK",
+   "sector": "technology",
+   "beta": {
+    "market": 1.155,
+    "oil": 0.011,
+    "china": 0.854,
+    "usd": -0.048,
+    "sector": 0.415
+   },
+   "se": {
+    "market": 0.254,
+    "oil": 0.09,
+    "china": 0.159,
+    "usd": 0.607,
+    "sector": 0.298
+   },
+   "r2": 0.25,
+   "n": 157
+  },
+  "952146a0-887a-45ec-9586-38431da1baf6": {
+   "symbol": "ABNB",
+   "sector": "consumer",
+   "beta": {
+    "market": 1.171,
+    "oil": -0.026,
+    "china": 0.064,
+    "usd": 0.242,
+    "sector": 0.777
+   },
+   "se": {
+    "market": 0.18,
+    "oil": 0.063,
+    "china": 0.11,
+    "usd": 0.423,
+    "sector": 0.213
+   },
+   "r2": 0.275,
+   "n": 157
+  },
+  "48cd0018-3c4a-4560-81e8-6993d54b3739": {
+   "symbol": "NYT",
+   "sector": "media",
+   "beta": {
+    "market": 0.32,
+    "oil": 0.098,
+    "china": -0.04,
+    "usd": -0.662,
+    "sector": 0.267
+   },
+   "se": {
+    "market": 0.15,
+    "oil": 0.052,
+    "china": 0.092,
+    "usd": 0.351,
+    "sector": 0.179
+   },
+   "r2": 0.075,
+   "n": 157
+  },
+  "66e02fcd-4f63-4d52-ae9e-abfb6c4410a4": {
+   "symbol": "ZAL.DE",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.816,
+    "oil": 0.046,
+    "china": 0.346,
+    "usd": 0.338,
+    "sector": 0.67
+   },
+   "se": {
+    "market": 0.238,
+    "oil": 0.084,
+    "china": 0.146,
+    "usd": 0.559,
+    "sector": 0.282
+   },
+   "r2": 0.133,
+   "n": 157
+  },
+  "caf676b8-7b17-4041-ba58-35d225a406da": {
+   "symbol": "BX",
+   "sector": "finance",
+   "beta": {
+    "market": 1.285,
+    "oil": 0.006,
+    "china": -0.074,
+    "usd": 0.059,
+    "sector": 0.986
+   },
+   "se": {
+    "market": 0.159,
+    "oil": 0.055,
+    "china": 0.098,
+    "usd": 0.379,
+    "sector": 0.187
+   },
+   "r2": 0.389,
+   "n": 157
+  },
+  "5c42fb11-4dc4-437f-94cb-9b9c6871da2a": {
+   "symbol": "KKR",
+   "sector": "finance",
+   "beta": {
+    "market": 1.635,
+    "oil": 0.128,
+    "china": -0.057,
+    "usd": 0.357,
+    "sector": 1.285
+   },
+   "se": {
+    "market": 0.158,
+    "oil": 0.054,
+    "china": 0.097,
+    "usd": 0.375,
+    "sector": 0.185
+   },
+   "r2": 0.532,
+   "n": 157
+  },
+  "8cad09bb-3ab1-46b1-9d4e-af700ccc0af6": {
+   "symbol": "1810.HK",
+   "sector": "autos",
+   "beta": {
+    "market": 0.722,
+    "oil": 0.052,
+    "china": 0.999,
+    "usd": 0.07,
+    "sector": -0.313
+   },
+   "se": {
+    "market": 0.197,
+    "oil": 0.068,
+    "china": 0.121,
+    "usd": 0.46,
+    "sector": 0.203
+   },
+   "r2": 0.358,
+   "n": 157
+  },
+  "45077dd7-f805-4179-b190-e840bbb15d67": {
+   "symbol": "EBAY",
+   "sector": "technology",
+   "beta": {
+    "market": 0.481,
+    "oil": 0.117,
+    "china": 0.09,
+    "usd": -0.185,
+    "sector": -0.337
+   },
+   "se": {
+    "market": 0.166,
+    "oil": 0.059,
+    "china": 0.104,
+    "usd": 0.398,
+    "sector": 0.195
+   },
+   "r2": 0.099,
+   "n": 157
+  },
+  "59e32250-36a0-415e-be58-9077e967650f": {
+   "symbol": "TEAM",
+   "sector": "technology",
+   "beta": {
+    "market": 1.64,
+    "oil": 0.189,
+    "china": -0.196,
+    "usd": -0.511,
+    "sector": 0.942
+   },
+   "se": {
+    "market": 0.342,
+    "oil": 0.121,
+    "china": 0.214,
+    "usd": 0.819,
+    "sector": 0.402
+   },
+   "r2": 0.187,
+   "n": 157
+  },
+  "0ab7fea8-1dd3-4979-b711-d2d4892985a6": {
+   "symbol": "002415.SZ",
+   "sector": "technology",
+   "beta": {
+    "market": 0.213,
+    "oil": -0.056,
+    "china": 0.686,
+    "usd": 0.121,
+    "sector": 0.204
+   },
+   "se": {
+    "market": 0.137,
+    "oil": 0.048,
+    "china": 0.086,
+    "usd": 0.328,
+    "sector": 0.162
+   },
+   "r2": 0.312,
+   "n": 155
+  },
+  "f69b816f-6610-4ccf-b13f-ec44f6761ac1": {
+   "symbol": "SAP",
+   "sector": "technology",
+   "beta": {
+    "market": 1.02,
+    "oil": -0.059,
+    "china": -0.049,
+    "usd": -0.06,
+    "sector": 0.055
+   },
+   "se": {
+    "market": 0.158,
+    "oil": 0.056,
+    "china": 0.099,
+    "usd": 0.378,
+    "sector": 0.185
+   },
+   "r2": 0.223,
+   "n": 157
+  },
+  "860eeae9-1701-4774-bfec-50e6c511d301": {
+   "symbol": "OR.PA",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.324,
+    "oil": -0.079,
+    "china": 0.183,
+    "usd": -0.301,
+    "sector": 0.113
+   },
+   "se": {
+    "market": 0.128,
+    "oil": 0.045,
+    "china": 0.079,
+    "usd": 0.302,
+    "sector": 0.152
+   },
+   "r2": 0.109,
+   "n": 157
+  },
+  "8e31c9c2-e25d-4d02-84c4-0129e08235f1": {
+   "symbol": "MC.PA",
+   "sector": "consumer",
+   "beta": {
+    "market": 1.006,
+    "oil": -0.098,
+    "china": 0.361,
+    "usd": 0.446,
+    "sector": 0.422
+   },
+   "se": {
+    "market": 0.153,
+    "oil": 0.054,
+    "china": 0.094,
+    "usd": 0.36,
+    "sector": 0.182
+   },
+   "r2": 0.309,
+   "n": 157
+  },
+  "5636902e-a927-4134-8938-3e0d9f072120": {
+   "symbol": "SUNPHARMA.NS",
+   "sector": "health",
+   "beta": {
+    "market": 0.156,
+    "oil": -0.029,
+    "china": 0.084,
+    "usd": 0.086,
+    "sector": 0.278
+   },
+   "se": {
+    "market": 0.113,
+    "oil": 0.039,
+    "china": 0.069,
+    "usd": 0.264,
+    "sector": 0.111
+   },
+   "r2": 0.064,
+   "n": 157
+  },
+  "b6a8d1d5-475a-4fcb-9d36-c9af844d2205": {
+   "symbol": "HD",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.826,
+    "oil": -0.113,
+    "china": -0.027,
+    "usd": -0.062,
+    "sector": 0.74
+   },
+   "se": {
+    "market": 0.111,
+    "oil": 0.039,
+    "china": 0.068,
+    "usd": 0.26,
+    "sector": 0.131
+   },
+   "r2": 0.407,
+   "n": 157
+  },
+  "a6c65bca-bd8d-4e49-8a9d-6d1cc7c4f416": {
+   "symbol": "DMART.NS",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.113,
+    "oil": -0.083,
+    "china": 0.018,
+    "usd": 0.192,
+    "sector": -0.134
+   },
+   "se": {
+    "market": 0.179,
+    "oil": 0.063,
+    "china": 0.11,
+    "usd": 0.422,
+    "sector": 0.213
+   },
+   "r2": 0.015,
+   "n": 157
+  },
+  "c89d7879-8a39-4e55-98a1-609d23408ef9": {
+   "symbol": "BMW.DE",
+   "sector": "autos",
+   "beta": {
+    "market": 0.811,
+    "oil": -0.048,
+    "china": 0.305,
+    "usd": -0.466,
+    "sector": 0.143
+   },
+   "se": {
+    "market": 0.161,
+    "oil": 0.056,
+    "china": 0.099,
+    "usd": 0.376,
+    "sector": 0.166
+   },
+   "r2": 0.213,
+   "n": 157
+  },
+  "06ddf175-f1ec-4375-b0c8-b5363585f921": {
+   "symbol": "0069.HK",
+   "sector": "consumer",
+   "beta": {
+    "market": 0.297,
+    "oil": -0.045,
+    "china": 0.405,
+    "usd": 0.067,
+    "sector": 0.169
+   },
+   "se": {
+    "market": 0.137,
+    "oil": 0.048,
+    "china": 0.084,
+    "usd": 0.323,
+    "sector": 0.163
+   },
+   "r2": 0.166,
+   "n": 157
+  },
+  "b2f734f0-4676-45e5-870f-768d101f0d96": {
+   "symbol": "FOXA",
+   "sector": "media",
+   "beta": {
+    "market": 0.375,
+    "oil": 0.065,
+    "china": 0.15,
+    "usd": 0.011,
+    "sector": 1.131
+   },
+   "se": {
+    "market": 0.16,
+    "oil": 0.055,
+    "china": 0.098,
+    "usd": 0.373,
+    "sector": 0.191
+   },
+   "r2": 0.229,
+   "n": 157
+  },
+  "ca2599cb-331a-4607-94ae-fb3606629b20": {
+   "symbol": "TRI",
+   "sector": "media",
+   "beta": {
+    "market": 0.375,
+    "oil": 0.108,
+    "china": -0.105,
+    "usd": -0.884,
+    "sector": 0.585
+   },
+   "se": {
+    "market": 0.196,
+    "oil": 0.068,
+    "china": 0.12,
+    "usd": 0.458,
+    "sector": 0.234
+   },
+   "r2": 0.088,
+   "n": 157
+  }
+ }
+}

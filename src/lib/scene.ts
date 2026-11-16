@@ -47,7 +47,7 @@ type SceneState = {
     radiusPx: number;
   };
   /** Countries shaded on the planet (World's Economies and What if views); bump `fillsVersion` after changing them. */
-  fills: { iso2: string; strength: number; risk?: boolean }[];
+  fills: { iso2: string; strength: number; risk?: boolean; gain?: boolean }[];
   fillsVersion: number;
   /** Screen position (px, viewport coordinates) of a point on Earth's surface; set by the planet scene each frame. */
   project: ((lat: number, lng: number) => Projected) | null;
