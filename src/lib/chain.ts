@@ -10,28 +10,25 @@ export const FOLLOW_UPS: FollowUp[] = [
   {
     key: 'oil',
     label: 'The oil price doubles',
-    rule: 'Energy shares rise by about a third; transport falls by a fifth.',
-    shocks: [
-      { kind: 'sector', target: 'energy', pct: 0.35, ...year },
-      { kind: 'sector', target: 'transport', pct: -0.2, ...year },
-    ],
+    rule: 'Brent oil doubles; companies move by how their shares have followed oil since 2023.',
+    shocks: [{ kind: 'factor', target: 'oil', pct: 1, ...year }],
   },
   {
     key: 'china',
     label: 'China hits back',
-    rule: 'Business in China falls by a third; tech shares by a twentieth.',
+    rule: 'Business in China falls by a third and Chinese stocks by a fifth.',
     shocks: [
       { kind: 'place', target: 'CN', pct: -0.3, ...year },
-      { kind: 'sector', target: 'technology', pct: -0.05, ...year },
+      { kind: 'factor', target: 'china', pct: -0.2, ...year },
     ],
   },
   {
     key: 'recession',
     label: 'A US recession follows',
-    rule: 'Business in the US falls by a twentieth; listed shares by a twentieth.',
+    rule: 'Business in the US falls by a twentieth; global stocks by a tenth.',
     shocks: [
       { kind: 'place', target: 'US', pct: -0.05, ...year },
-      { kind: 'market', target: '', pct: -0.05, ...year },
+      { kind: 'market', target: '', pct: -0.1, ...year },
     ],
   },
 ];

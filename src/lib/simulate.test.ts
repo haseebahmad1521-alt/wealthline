@@ -108,3 +108,25 @@ test('notifications queue so each gets its own moment, and the film lasts until 
   assert.deepEqual(notes.map((n) => n.tick), [0, 2, 4, 15]);
   assert.equal(length, 20); // 15 + 6 − 1 beats 6 months × 3
 });
+
+test('measured sensitivities move each company; a private one borrows its peers; ranges come from the errors', () => {
+  const fit = (oil: number, se: number) => ({ beta: { market: 1, oil, china: 0, usd: 0, sector: 1 }, se: { market: 0.1, oil: se, china: 0, usd: 0, sector: 0 } });
+  const company = (id: string, f: ReturnType<typeof fit> | null) => ({ id, name: id, sector: 'energy', listed: !!f, regions: [], fit: f });
+  const people: SimEmpire[] = [
+    { person: person('a', 100), companies: [company('drill', fit(0.6, 0.1))], stakes: [{ company: { id: 'drill' }, value: 50 }] },
+    { person: person('b', 100), companies: [company('pipe', fit(0.2, 0.1))], stakes: [] },
+    { person: person('c', 100), companies: [company('private-oil', null)], stakes: [] },
+  ];
+  const f = simulate(scenario([{ kind: 'factor', target: 'oil', pct: 0.5, from: 0, to: 0 }]), people, countries, 1);
+  const move = (id: string) => f.companies.find((c) => c.company.id === id)!;
+  assert.ok(Math.abs(move('drill').price - 0.3) < 1e-9);
+  assert.ok(Math.abs(move('pipe').price - 0.1) < 1e-9);
+  assert.equal(move('drill').basis, 'measured');
+  assert.equal(move('private-oil').basis, 'peers');
+  assert.ok(Math.abs(move('private-oil').price - 0.2) < 1e-9); // the peers' average sensitivity, 0.4
+  // 80% range: ± 1.28 × se × move.
+  assert.ok(Math.abs(move('drill').hi - move('drill').lo - 2 * 1.2816 * 0.1 * 0.5) < 1e-6);
+  const a = f.people.find((p) => p.person.slug === 'a')!;
+  assert.ok(Math.abs(a.delta! - 15) < 1e-9);
+  assert.ok(a.range![0] < 15 && a.range![1] > 15);
+});

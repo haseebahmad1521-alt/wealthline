@@ -33,16 +33,16 @@ export const DIALS: Dial[] = [
     label: 'Oil price',
     min: -50,
     max: 100,
-    rule: 'Energy shares move by about a third of the oil move; transport moves a fifth the other way.',
+    rule: 'Brent oil moves by the dial; each company moves by how its shares have followed oil, directly and through its sector, over the last three years.',
     describe: (v) => (v >= 95 ? 'The oil price doubles' : by(v, 'The oil price goes up', 'The oil price falls')),
-    shocks: (v) => [sector('energy', v * 0.35), sector('transport', -v * 0.2)],
+    shocks: (v) => [{ kind: 'factor', target: 'oil', pct: v, ...ramp }],
   },
   {
     key: 'ai',
     label: 'AI boom',
     min: -50,
     max: 100,
-    rule: 'Tech shares move by half the dial.',
+    rule: 'US tech shares beat the market by half the dial; each tech company moves by its measured sensitivity to them.',
     describe: (v) => (v >= 95 ? 'Spending on AI doubles' : v > 0 ? by(v, 'Spending on AI grows', '') : `The AI bubble deflates: spending falls by ${share(v)}`),
     shocks: (v) => [sector('technology', v * 0.5)],
   },
@@ -51,25 +51,25 @@ export const DIALS: Dial[] = [
     label: 'Trade with China',
     min: -100,
     max: 50,
-    rule: 'Business in China moves by half the dial; tech shares by a tenth.',
+    rule: 'Business done in China moves by half the dial and Chinese stocks by four tenths of it; each company by its measured sensitivity to Chinese stocks.',
     describe: (v) => (v <= -95 ? 'Trade with China is cut off' : by(v, 'Trade with China grows', 'Trade with China is cut')),
-    shocks: (v) => [{ kind: 'place', target: 'CN', pct: v * 0.5, ...ramp }, sector('technology', v * 0.1)],
+    shocks: (v) => [{ kind: 'place', target: 'CN', pct: v * 0.5, ...ramp }, { kind: 'factor', target: 'china', pct: v * 0.4, ...ramp }],
   },
   {
     key: 'us',
     label: 'US economy',
     min: -30,
     max: 20,
-    rule: 'Business in the US moves by the dial; all listed shares by half of it.',
+    rule: 'Business done in the US moves by the dial and global stocks by twice it (stocks swing harder than the economy); each company by its measured sensitivity to global stocks.',
     describe: (v) => (v < 0 ? `The US economy shrinks by ${share(v)}: ${v <= -15 ? 'a depression' : v <= -5 ? 'a recession' : 'a slowdown'}` : `The US economy grows by ${share(v)}: ${v >= 5 ? 'a boom' : 'faster growth'}`),
-    shocks: (v) => [{ kind: 'place', target: 'US', pct: v, ...ramp }, { kind: 'market', target: '', pct: v * 0.5, ...ramp }],
+    shocks: (v) => [{ kind: 'place', target: 'US', pct: v, ...ramp }, { kind: 'market', target: '', pct: v * 2, ...ramp }],
   },
   {
     key: 'luxury',
     label: 'Luxury spending',
     min: -50,
     max: 50,
-    rule: 'Consumer shares move by four tenths of the dial.',
+    rule: 'US consumer shares beat the market by four tenths of the dial; each consumer company moves by its measured sensitivity to them.',
     describe: (v) => by(v, 'Spending on luxury goes up', 'Spending on luxury falls'),
     shocks: (v) => [sector('consumer', v * 0.4)],
   },
@@ -115,10 +115,16 @@ export function dialEffects(dial: Dial, percent: number, names: Record<string, s
     if (s.kind === 'sector') {
       const list = names[s.target] ?? [];
       const some = list.length ? ` like ${list.slice(0, 3).join(', ')}${list.length > 3 ? ` (${list.length} tracked)` : ''}` : '';
-      return `${SECTOR_WORD[s.target] ?? s.target}${some} ${pctWord(s.pct)}.`;
+      return `${SECTOR_WORD[s.target] ?? s.target}${some} ${s.pct > 0 ? 'beat' : 'trail'} the market by about ${Math.round(Math.abs(s.pct) * 100)}%, each by its measured sensitivity.`;
     }
     if (s.kind === 'place') return `Business done in ${region?.of(s.target) ?? s.target} ${s.pct > 0 ? 'grows' : 'shrinks'} about ${Math.round(Math.abs(s.pct) * 100)}%.`;
-    if (s.kind === 'market') return `All listed shares ${pctWord(s.pct)}.`;
+    if (s.kind === 'market') return `Global stocks ${pctWord(s.pct)}; each company moves by how its shares follow them.`;
+    if (s.kind === 'factor') {
+      const what = s.target === 'oil' ? 'Brent oil' : s.target === 'china' ? 'Chinese stocks' : 'The US dollar';
+      const list = s.target === 'oil' ? (names.energy ?? []) : [];
+      const verb = s.target === 'china' ? (s.pct > 0 ? 'rise' : 'fall') : s.pct > 0 ? 'rises' : 'falls';
+      return `${what} ${verb} about ${Math.round(Math.abs(s.pct) * 100)}%${list.length ? `; energy companies like ${list.slice(0, 3).join(', ')} follow it most` : ''}. Each company moves by how its shares have followed ${s.target === 'usd' ? 'the dollar' : s.target === 'oil' ? 'oil' : 'Chinese stocks'}.`;
+    }
     return '';
   }).filter(Boolean);
 }

@@ -40,7 +40,9 @@ export function sectorFor(labels: string[]): { sector: Sector; label: string } |
  *  place     business in a country (ISO 3166-1 alpha-2) changes by `pct` of revenue earned there
  *  company   a company's share price changes by `pct`
  *  sector    every tracked company in a sector: share price changes by `pct`
- *  market    every listed company: share price changes by `pct`
+ *  market    global stocks move by `pct`; each company by its measured sensitivity (beta) to them
+ *  factor    oil, Chinese stocks or the US dollar move by `pct` (target 'oil' | 'china' | 'usd'); each company by its
+ *            measured sensitivity to that factor beyond the market (supabase/functions/_shared/factors.ts)
  *  transfer  `fraction` of `person`'s recorded shares in `company` sold to `buyer` at the market price plus `pct`
  *            (a premium), at month `to`
  */
@@ -49,6 +51,7 @@ export type Shock =
   | { kind: 'company'; target: string; pct: number; from: number; to: number }
   | { kind: 'sector'; target: Sector; pct: number; from: number; to: number }
   | { kind: 'market'; target: ''; pct: number; from: number; to: number }
+  | { kind: 'factor'; target: 'oil' | 'china' | 'usd'; pct: number; from: number; to: number }
   | { kind: 'transfer'; target: string; person: string; buyer: string; fraction: number; pct: number; from: number; to: number };
 
 export type Plausibility = 'likely' | 'possible' | 'unlikely';
@@ -117,6 +120,8 @@ export function checkShock(raw: Record<string, unknown>, months: number, cat: Ca
       return (SECTORS as readonly string[]).includes(target) ? { kind, target: target as Sector, pct: p, from, to } : `unknown sector ${target}`;
     case 'market':
       return { kind, target: '', pct: p, from, to };
+    case 'factor':
+      return target === 'oil' || target === 'china' || target === 'usd' ? { kind, target, pct: p, from, to } : `unknown factor ${target}`;
     case 'transfer': {
       const person = typeof raw.person === 'string' ? raw.person : '';
       const buyer = typeof raw.buyer === 'string' ? raw.buyer : '';

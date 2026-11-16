@@ -13,7 +13,17 @@
 //  - transfer: the shares change hands at month `to` at that month's price plus the premium, paid in cash.
 import { ramp, type Scenario, type Shock } from '../../supabase/functions/_shared/scenario.ts';
 
-export type SimCompany = { id: string; name: string; sector?: string | null; listed: boolean; regions: { region: string; country: string | null; revenue_usd: number }[] };
+/** Measured sensitivities (factors.ts) and their standard errors, by factor. */
+export type SimFit = { beta: Record<string, number>; se: Record<string, number> };
+export type SimCompany = {
+  id: string;
+  name: string;
+  sector?: string | null;
+  listed: boolean;
+  regions: { region: string; country: string | null; revenue_usd: number }[];
+  /** Its own measured sensitivities; without them it borrows its listed sector peers' average (and their spread). */
+  fit?: SimFit | null;
+};
 export type SimPerson = { id: string; slug: string; name: string; net_worth_usd: number | null; portrait_url?: string | null };
 export type SimEmpire = { person: SimPerson; companies: SimCompany[]; stakes: { company: { id: string }; value: number | null }[] };
 export type SimCountry = { iso2: string; gdp_usd: number | null; region?: string | null };
@@ -50,13 +60,25 @@ export function lineCountries(line: { region: string; country: string | null }, 
   return countries.filter((c) => c.region && regions.includes(c.region) && !out.has(c.iso2)).map((c) => c.iso2);
 }
 
-export type CompanyMove = { company: SimCompany; revenueBase: number; revenueDelta: number; price: number /* fractional change */ };
+export type CompanyMove = {
+  company: SimCompany;
+  revenueBase: number;
+  revenueDelta: number;
+  price: number /* fractional change */;
+  /** An 80% range for the price change, from the sensitivities' standard errors (and ±half for revenue effects). */
+  lo: number;
+  hi: number;
+  /** Whose sensitivities were used: its own, its sector peers', or none measured. */
+  basis: 'measured' | 'peers' | 'rule';
+};
 export type PersonMove = {
   person: SimPerson;
   /** Dollar change from recorded stakes; null when the person has none in the companies that move. */
   delta: number | null;
   /** Their most-moved company's share-price change, for people without a recorded stake. */
   pct: number | null;
+  /** An 80% range for `delta` (or for `pct` when there's no recorded stake). */
+  range?: [number, number] | null;
   via: string;
 };
 export type Frame = {
@@ -76,6 +98,27 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
   const bySlug = new Map(empires.map((e) => [e.person.slug, e]));
   const at = (s: Shock) => s.pct * ramp(s, month);
 
+  // Sensitivities: a company's own, else its listed sector peers' average with their spread as the uncertainty, else
+  // the plain rule (moves one-for-one with the market and its sector, not at all with oil, China or the dollar).
+  const fitted = [...new Map(empires.flatMap((e) => e.companies).filter((c) => c.fit).map((c) => [c.id, c])).values()];
+  const peerCache = new Map<string, SimFit | null>();
+  const peers = (sector: string | null | undefined): SimFit | null => {
+    const key = sector ?? '';
+    if (peerCache.has(key)) return peerCache.get(key)!;
+    const group = fitted.filter((c) => (sector ? c.sector === sector : true));
+    let out: SimFit | null = null;
+    if (group.length >= 2) {
+      const factors = Object.keys(group[0].fit!.beta);
+      const mean = (f: string) => group.reduce((n, c) => n + (c.fit!.beta[f] ?? 0), 0) / group.length;
+      const spread = (f: string) => Math.sqrt(group.reduce((n, c) => n + ((c.fit!.beta[f] ?? 0) - mean(f)) ** 2, 0) / (group.length - 1) / group.length + mean(f) ** 2 * 0.04);
+      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])) };
+    }
+    peerCache.set(key, out);
+    return out;
+  };
+  const RULE: SimFit = { beta: { market: 1, sector: 1, oil: 0, china: 0, usd: 0 }, se: { market: 0, sector: 0, oil: 0, china: 0, usd: 0 } };
+  const Z80 = 1.2816;
+
   // Revenue: each place shock moves the country's share of every line that covers it.
   const places = scenario.shocks.filter((s): s is Extract<Shock, { kind: 'place' }> => s.kind === 'place');
   const moves = new Map<string, CompanyMove>();
@@ -91,11 +134,31 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       if (!total) continue;
       for (const s of places) if (covers.includes(s.target)) delta += line.revenue_usd * ((gdp.get(s.target) ?? 0) / total) * at(s);
     }
-    let price = 1 + (base ? delta / base : 0);
+    const peer = c.fit ? null : fitted.length ? (peers(c.sector) ?? peers(null)) : null;
+    const fit = c.fit ?? peer ?? RULE;
+    const basis: CompanyMove['basis'] = c.fit ? 'measured' : peer ? 'peers' : 'rule';
+    const revShare = base ? delta / base : 0;
+    let price = 1 + revShare;
+    // Variance of the change: revenue effects are uncertain by about half (how far a price follows revenue), and each
+    // factor effect by its sensitivity's standard error times the factor's move.
+    let variance = (0.39 * revShare) ** 2; // ±half at 80%
     for (const s of scenario.shocks) {
-      if ((s.kind === 'company' && s.target === c.id) || (s.kind === 'sector' && c.sector === s.target) || (s.kind === 'market' && c.listed)) price *= 1 + at(s);
+      const m = at(s);
+      if (!m) continue;
+      if (s.kind === 'company' && s.target === c.id) price *= 1 + m;
+      else if (s.kind === 'sector' && c.sector === s.target) {
+        price *= 1 + (fit.beta.sector ?? 1) * m;
+        variance += ((fit.se.sector ?? 0) * m) ** 2;
+      } else if (s.kind === 'market') {
+        price *= 1 + (fit.beta.market ?? 1) * m;
+        variance += ((fit.se.market ?? 0) * m) ** 2;
+      } else if (s.kind === 'factor') {
+        price *= 1 + (fit.beta[s.target] ?? 0) * m;
+        variance += ((fit.se[s.target] ?? 0) * m) ** 2;
+      }
     }
-    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1 });
+    const sd = Math.sqrt(variance);
+    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: price - 1 - Z80 * sd, hi: price - 1 + Z80 * sd, basis });
   }
   const move = (id: string) => moves.get(id)?.price ?? 0;
 
@@ -109,6 +172,12 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
   const transfers: Frame['transfers'] = [];
   const deltas = new Map<string, number>();
   const add = (slug: string, v: number) => deltas.set(slug, (deltas.get(slug) ?? 0) + v);
+  // Ranges add up as the low and high ends of each stake (a conservative 80% band for a person's total).
+  const spans = new Map<string, [number, number]>();
+  const addSpan = (slug: string, lo: number, hi: number) => {
+    const s = spans.get(slug) ?? [0, 0];
+    spans.set(slug, [s[0] + lo, s[1] + hi]);
+  };
   for (const e of empires) {
     for (const st of e.stakes) {
       if (!st.value) continue;
@@ -116,12 +185,18 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       const now = st.value * move(st.company.id); // change in the stake's value by this month
       if (!sold || month < sold.to) {
         add(e.person.slug, now);
+        const m = moves.get(st.company.id);
+        addSpan(e.person.slug, st.value * (m?.lo ?? 0), st.value * (m?.hi ?? 0));
         continue;
       }
       // After the sale: the seller keeps the rest of the stake and the cash; the buyer owns the shares from then on.
       const paid = st.value * sold.fraction * salePrice.get(sold)! * (1 + sold.pct);
-      add(e.person.slug, st.value * (1 - sold.fraction) * move(st.company.id) + paid - st.value * sold.fraction);
-      add(sold.buyer, st.value * sold.fraction * (1 + move(st.company.id)) - paid);
+      const seller = st.value * (1 - sold.fraction) * move(st.company.id) + paid - st.value * sold.fraction;
+      const buyer = st.value * sold.fraction * (1 + move(st.company.id)) - paid;
+      add(e.person.slug, seller);
+      add(sold.buyer, buyer);
+      addSpan(e.person.slug, seller, seller);
+      addSpan(sold.buyer, buyer, buyer);
     }
   }
   for (const s of sales) {
@@ -139,8 +214,12 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     const d = deltas.get(e.person.slug);
     const touched = e.companies.map((c) => ({ c, p: move(c.id) })).filter((x) => Math.abs(x.p) > 1e-6).sort((a, b) => Math.abs(b.p) - Math.abs(a.p));
     const party = transfers.find((t) => t.seller.id === e.person.id || t.buyer.id === e.person.id);
-    if (d != null && Math.abs(d) > 0.5) people.push({ person: e.person, delta: d, pct: null, via: party ? party.company.name : (touched[0]?.c.name ?? '') });
-    else if (touched.length) people.push({ person: e.person, delta: null, pct: touched[0].p, via: touched[0].c.name });
+    const span = spans.get(e.person.slug);
+    if (d != null && Math.abs(d) > 0.5) people.push({ person: e.person, delta: d, pct: null, via: party ? party.company.name : (touched[0]?.c.name ?? ''), range: span ? [Math.min(span[0], d), Math.max(span[1], d)] : null });
+    else if (touched.length) {
+      const m = moves.get(touched[0].c.id)!;
+      people.push({ person: e.person, delta: null, pct: touched[0].p, via: touched[0].c.name, range: [m.lo, m.hi] });
+    }
   }
   people.sort((a, b) => Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0) || Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 

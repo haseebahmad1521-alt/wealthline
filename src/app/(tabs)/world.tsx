@@ -91,7 +91,7 @@ export default function World() {
       empires.map((e) => ({
         person: e.person,
         stakes: e.stakes,
-        companies: e.companies.map((c) => ({ id: c.id, name: c.name, sector: simData.data?.sectors.get(c.id) ?? null, listed: !c.is_private && !!c.ticker, regions: c.regions })),
+        companies: e.companies.map((c) => ({ id: c.id, name: c.name, sector: simData.data?.sectors.get(c.id) ?? null, listed: !c.is_private && !!c.ticker, regions: c.regions, fit: simData.data?.fits.get(c.id) ?? null })),
       })),
     [empires, simData.data],
   );

@@ -6,29 +6,37 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { Scenario, Shock } from '../../supabase/functions/_shared/scenario.ts';
 import reference from '@/data/sim-reference.json';
+import { effectiveFit, REFERENCE, type Links } from '@/lib/factor-data';
+import type { SimFit } from '@/lib/simulate';
 import { db } from '@/lib/supabase';
 import type { Empire } from '@/lib/world';
 
 export type { Scenario, Shock };
 
 /**
- * Sectors (by company id) and World Bank regions (by country). Starts from src/data/sim-reference.json (built by
- * scripts/build-sim-reference.mjs from the World Bank and Wikidata); the backend's own values win once it has them.
+ * Sectors (by company id), World Bank regions (by country) and measured sensitivities (by company id). Starts from the
+ * shipped reference files (src/data/sim-reference.json, src/data/factors.json); the backend's own values win once it
+ * has them (the facts job and the weekly factors job).
  */
 export function useSimData() {
   return useQuery({
     queryKey: ['world-sim-data'],
     staleTime: 6 * 3600_000,
-    placeholderData: fromReference,
+    placeholderData: () => withFits(fromReference(), REFERENCE.raw, REFERENCE.links),
     queryFn: async () => {
-      const [cos, regions] = await Promise.all([
+      const [cos, regions, factors, model] = await Promise.all([
         db().from('companies').select('id, sector'),
         db().from('countries').select('iso2, region'),
+        db().from('company_factors').select('company_id, beta, se'),
+        db().from('factor_model').select('links, window_from, window_to').order('fitted_at', { ascending: false }).limit(1),
       ]);
       const out = fromReference();
       for (const c of cos.error ? [] : (cos.data ?? [])) if (c.sector) out.sectors.set(c.id as string, c.sector as string);
       for (const c of regions.error ? [] : (regions.data ?? [])) if (c.region) out.regions.set(c.iso2 as string, c.region as string);
-      return out;
+      const raw = new Map(REFERENCE.raw);
+      for (const f of factors.error ? [] : (factors.data ?? [])) raw.set(f.company_id as string, { beta: f.beta, se: f.se });
+      const links = (!model.error && model.data?.[0]?.links) || REFERENCE.links;
+      return withFits(out, raw, links);
     },
   });
 }
@@ -38,6 +46,12 @@ function fromReference() {
     sectors: new Map(Object.entries(reference.sectors).map(([id, s]) => [id, s.sector])),
     regions: new Map(Object.entries(reference.regions)),
   };
+}
+
+function withFits(base: ReturnType<typeof fromReference>, raw: typeof REFERENCE.raw, links: Links | null) {
+  const fits = new Map<string, SimFit>();
+  for (const [id, r] of raw) fits.set(id, effectiveFit(r, base.sectors.get(id) ?? r.sector ?? null, links));
+  return { ...base, fits };
 }
 
 type Row = Omit<Scenario, 'origin'> & { origin: 'daily' | 'prompt' | 'versus'; created_at?: string };
@@ -138,11 +152,15 @@ const EXAMPLES: Example[] = [
       { kind: 'place', target: 'IR', pct: -0.7, from: 0, to: 2 },
       { kind: 'place', target: 'SA', pct: -0.5, from: 0, to: 2 },
       { kind: 'place', target: 'AE', pct: -0.25, from: 0, to: 3 },
-      { kind: 'sector', target: 'energy', pct: 0.25, from: 0, to: 2 },
-      { kind: 'sector', target: 'transport', pct: -0.2, from: 0, to: 3 },
+      { kind: 'factor', target: 'oil', pct: 0.5, from: 0, to: 2 },
+      { kind: 'sector', target: 'transport', pct: -0.1, from: 0, to: 3 },
       { kind: 'market', target: '', pct: -0.1, from: 0, to: 3 },
     ],
-    assumptions: ['Business in Iran falls by about two thirds and in Saudi Arabia by half within two months.', 'Energy shares rise by a quarter; transport falls by a fifth.', 'Listed shares fall by a tenth on the risk.'],
+    assumptions: [
+      'Business in Iran falls by about two thirds and in Saudi Arabia by half within two months.',
+      'Brent oil rises by half; companies move by how their shares have followed oil since 2023.',
+      'Global stocks fall by a tenth on the risk, and transport trails the market by a tenth.',
+    ],
     sources: [],
   },
   {
@@ -155,10 +173,15 @@ const EXAMPLES: Example[] = [
     shocks: [
       { kind: 'place', target: 'CN', pct: -0.4, from: 0, to: 6 },
       { kind: 'place', target: 'TW', pct: -0.15, from: 2, to: 6 },
-      { kind: 'sector', target: 'technology', pct: -0.12, from: 0, to: 6 },
+      { kind: 'factor', target: 'china', pct: -0.25, from: 0, to: 6 },
+      { kind: 'sector', target: 'technology', pct: -0.08, from: 0, to: 6 },
       { kind: 'market', target: '', pct: -0.05, from: 0, to: 6 },
     ],
-    assumptions: ['Companies lose about two fifths of their business in China.', 'Technology shares fall by about an eighth; all listed shares by a twentieth.'],
+    assumptions: [
+      'Companies lose about two fifths of their business in China.',
+      'Chinese stocks fall by a quarter; companies move by how their shares have followed them since 2023.',
+      'US tech trails the market by about a twelfth; global stocks fall by a twentieth.',
+    ],
     sources: [],
   },
 ];
