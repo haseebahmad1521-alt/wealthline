@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider, dehydrate, hydrate, useQueries, useQu
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { sameKindOnly, toCheck } from './baseline';
 import { db, supabase } from './supabase';
 import type { Brief, Holding, LifeEvent, NetWorthValue, PersonNews, PersonRow, Project, PersonStatus, RefreshState, Summary, XTrend } from './types';
 
@@ -119,13 +120,26 @@ async function loadPeople(): Promise<Person[]> {
       prev_as_of: s?.prev_as_of ?? null,
     };
   });
+  // A baseline from another method (a yearly list estimate before the real-time feed) isn't a change: look up the
+  // kind of each older baseline and drop it when it differs (src/lib/baseline.ts).
+  const older = toCheck(merged);
+  let kinds = new Map<string, string>();
+  if (older.length) {
+    const r = await db()
+      .from('net_worth_values')
+      .select('person_id, as_of, kind')
+      .in('person_id', older.map((p) => p.id))
+      .in('as_of', [...new Set(older.map((p) => p.prev_as_of!))]);
+    if (!r.error) kinds = new Map((r.data as { person_id: string; as_of: string; kind: string }[]).map((v) => [`${v.person_id}|${new Date(v.as_of).getTime()}`, v.kind]));
+  }
+  const compared = sameKindOnly(merged, (id, at) => kinds.get(`${id}|${new Date(at).getTime()}`));
   // Rank by latest value; people without one are listed after, unranked (never invented).
-  merged.sort(
+  compared.sort(
     (a, b) =>
       (b.net_worth_usd ?? -1) - (a.net_worth_usd ?? -1) || a.name.localeCompare(b.name),
   );
   let rank = 0;
-  return merged.map((p) => ({ ...p, rank: p.net_worth_usd == null ? null : ++rank }));
+  return compared.map((p) => ({ ...p, rank: p.net_worth_usd == null ? null : ++rank }));
 }
 
 export const usePeople = () =>
