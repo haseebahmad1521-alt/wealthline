@@ -2,15 +2,19 @@
 // rank-move badges. All numbers come from recorded values via lib/arena.ts; motion is entrance only, never data.
 import { Link } from 'expo-router';
 import { Chip } from 'heroui-native';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Glass } from '@/components/glass';
 import { Caption, Change, Heading, Icon, Portrait, icons } from '@/components/ui';
+import covariance from '@/data/covariance.json';
 import { closestRaces, overtakes, topMovers } from '@/lib/arena';
 import { useMoney } from '@/lib/currency';
 import type { Person } from '@/lib/data';
 import { formatDate } from '@/lib/format';
+import { overtakeChance, passText, type Covariance } from '@/lib/races';
+import { weekEnd } from '@/lib/why';
+import { useWorld } from '@/lib/world';
 import { color, radius, space, type } from '@/theme';
 
 // Medal tones for ranks 1–3 (game layer only; text on them stays dark or white at AA contrast).
@@ -154,14 +158,25 @@ export function Movers({ people }: { people: Person[] }) {
 export function Races({ people }: { people: Person[] }) {
   const money = useMoney();
   const races = closestRaces(people);
+  const world = useWorld();
+  // Each person's recorded listed stakes in dollars, by company: the part of a fortune that swings with share prices.
+  const stakes = useMemo(
+    () => new Map((world.data ?? []).map((e) => [e.person.id, new Map(e.stakes.filter((s) => s.value).map((s) => [s.company.id, s.value!]))])),
+    [world.data],
+  );
+  const chanceOf = (leader: string, chaser: string, gap: number) => overtakeChance(gap, stakes.get(leader) ?? new Map(), stakes.get(chaser) ?? new Map(), covariance as Covariance);
   if (!races.length) return null;
+  const chances = races.map((r) => chanceOf(r.leader.id, r.chaser.id, r.gap));
   return (
     <View style={styles.section}>
       <Heading level={2}>Closest races.</Heading>
       <Glass style={styles.list}>
         {races.map((r, i) => (
           <Rise key={`${r.leader.id}:${r.chaser.id}`} i={i} style={[styles.race, i > 0 && styles.sep]}>
-            <View style={styles.raceRow} accessible accessibilityLabel={`Number ${r.rank} ${r.leader.name} leads number ${r.rank + 1} ${r.chaser.name} by ${money.format(r.gap)}`}>
+            <View
+              style={styles.raceRow}
+              accessible
+              accessibilityLabel={`Number ${r.rank} ${r.leader.name} leads number ${r.rank + 1} ${r.chaser.name} by ${money.format(r.gap)}${chances[i] != null ? `; ${passText(chances[i]!)}, from share-price swings` : ''}`}>
               <Portrait uri={r.leader.portrait_url} name={r.leader.name} size={34} />
               <View style={styles.flex}>
                 <View style={styles.raceNames}>
@@ -176,13 +191,22 @@ export function Races({ people }: { people: Person[] }) {
                   <View style={[styles.tugLeft, { flex: r.share }]} />
                   <View style={[styles.tugRight, { flex: 1 - r.share }]} />
                 </View>
-                <Caption style={styles.centerText}>{money.format(r.gap)} apart</Caption>
+                <Caption style={styles.centerText}>
+                  {money.format(r.gap)} apart
+                  {chances[i] != null ? ` · ${passText(chances[i]!)}` : ''}
+                </Caption>
               </View>
               <Portrait uri={r.chaser.portrait_url} name={r.chaser.name} size={34} />
             </View>
           </Rise>
         ))}
       </Glass>
+      {chances.some((c) => c != null) && (
+        <Caption>
+          Chance of a pass: how far ordinary share-price swings could move the gap in a month, from each person’s recorded listed stakes only (other assets held still), with swings measured over the three years to{' '}
+          {formatDate(`${weekEnd(covariance.window.to)}T12:00:00Z`)} and checked against past four-week moves. It says how much the gap can move, not which way. A model estimate, not a forecast or advice.
+        </Caption>
+      )}
     </View>
   );
 }
