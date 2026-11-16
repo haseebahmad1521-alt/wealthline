@@ -8,11 +8,12 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
+import { metal } from '@/components/arena';
 import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
-import { DIALS, type DialValues } from '@/lib/dials';
+import { DIALS, dialEffects, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
 import { color, font, radius, space, type } from '@/theme';
 
@@ -273,7 +274,20 @@ export function VersusPicker({
 }
 
 /** The sandbox: one slider per force; the globe shows where the year ends up as they move. */
-export function DialsPanel({ values, onChange, result, money }: { values: DialValues; onChange: (v: DialValues) => void; result: Frame | null; money: (usd: number) => string }) {
+export function DialsPanel({
+  values,
+  onChange,
+  result,
+  money,
+  names,
+}: {
+  values: DialValues;
+  onChange: (v: DialValues) => void;
+  result: Frame | null;
+  money: (usd: number) => string;
+  /** Tracked company names by sector, so a dial's effect names real companies. */
+  names: Record<string, string[]>;
+}) {
   const touched = DIALS.filter((d) => values[d.key]);
   const value = (p: PersonMove) => p.delta ?? p.pct ?? 0;
   const text = (p: PersonMove) => (p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct!));
@@ -285,12 +299,15 @@ export function DialsPanel({ values, onChange, result, money }: { values: DialVa
         const v = values[d.key] ?? 0;
         return (
           <View key={d.key} style={styles.dial}>
+            <Caption style={styles.dialLabel}>{d.label}</Caption>
             <View style={styles.dialHead}>
-              <Text style={[type.headline, styles.flex, { color: color.text }]}>{d.label}</Text>
-              <Text style={[type.number, { fontSize: 15, color: v > 0 ? color.gain : v < 0 ? color.loss : color.textSecondary }]}>
-                {v > 0 ? '+' : v < 0 ? '−' : ''}
-                {Math.abs(v)}%
-              </Text>
+              <Text style={[type.headline, styles.flex, { color: v ? color.text : color.textSecondary }]}>{v ? d.describe(v) : 'As today'}</Text>
+              {v !== 0 && (
+                <Text style={[type.caption, { color: v > 0 ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]}>
+                  {v > 0 ? '+' : '−'}
+                  {Math.abs(v)}%
+                </Text>
+              )}
             </View>
             {/* No fill: zero sits mid-track, so a fill from the left end would read as a change. */}
             <Slider value={v} minValue={d.min} maxValue={d.max} step={5} aria-label={d.label} onChange={(x) => onChange({ ...values, [d.key]: Array.isArray(x) ? x[0] : x })}>
@@ -298,6 +315,9 @@ export function DialsPanel({ values, onChange, result, money }: { values: DialVa
                 <Slider.Thumb />
               </Slider.Track>
             </Slider>
+            {dialEffects(d, v, names).map((line) => (
+              <Caption key={line}>{line}</Caption>
+            ))}
           </View>
         );
       })}
@@ -322,7 +342,7 @@ export function DialsPanel({ values, onChange, result, money }: { values: DialVa
               <Text style={[type.headline, { fontSize: 14, color: color.text }]}>Reset</Text>
             </Pressable>
           </View>
-          <Caption>A year with these dials, hypothetical. {touched.map((d) => d.rule).join(' ')}</Caption>
+          <Caption>A year with these dials, hypothetical. Sizes follow the rules above; the globe and labels show where the year ends up.</Caption>
         </>
       )}
       {!touched.length && <Caption>Move a dial and the globe shows where the year ends up. Press play to watch it unfold.</Caption>}
@@ -629,7 +649,7 @@ function VersusResult({ score, frame, money }: { score: VersusScore; frame: Fram
     const won = lead === mine;
     return (
       <View style={styles.fighter}>
-        <View style={[styles.crownRing, won && styles.crownOn]}>
+        <View style={[styles.crownRing, won && metal(1)]}>
           <Portrait uri={c.person.portrait_url ?? null} name={c.person.name} size={won ? 58 : 46} />
         </View>
         <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
@@ -681,8 +701,7 @@ const styles = StyleSheet.create({
   tugA: { backgroundColor: color.action, borderRadius: 3 },
   tugB: { backgroundColor: '#FFB86B', borderRadius: 3 },
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
-  crownRing: { borderRadius: 40, padding: 3, borderWidth: 2, borderColor: 'transparent' },
-  crownOn: { borderColor: '#F5C451' },
+  crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
   share: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: color.action },
   guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
@@ -690,6 +709,7 @@ const styles = StyleSheet.create({
   skip: { alignSelf: 'center', minHeight: minTouch, justifyContent: 'center' },
   verdict: { gap: 2, padding: 10, borderRadius: radius.md, borderWidth: 1, backgroundColor: 'rgba(255,255,255,.04)' },
   dialHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  dialLabel: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6 },
   movers: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   mover: { width: '31%', alignItems: 'center', gap: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },

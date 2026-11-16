@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type Compo
 import { Chip as Tag } from 'heroui-native';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { MEDAL } from '@/components/arena';
+import { metal } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobePulse, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
 import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, revenueLines, type EconomyMode } from '@/components/world-views';
@@ -250,6 +250,15 @@ export default function World() {
     }
   }, [simParam, vsParam, dialsParam, simEmpires.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Tracked companies by sector, biggest revenue first, so the dials can name who they reach.
+  const sectorNames = useMemo(() => {
+    const out: Record<string, string[]> = {};
+    const seen = new Set<string>();
+    const all = simEmpires.flatMap((e) => e.companies).filter((c) => c.sector && !seen.has(c.id) && seen.add(c.id));
+    const revenue = (c: (typeof all)[number]) => c.regions.reduce((n, r) => n + r.revenue_usd, 0);
+    for (const c of all.sort((a, b) => revenue(b) - revenue(a))) (out[c.sector!] ??= []).push(c.name);
+    return out;
+  }, [simEmpires]);
   // Dials: the globe jumps to the year's end as they move; play replays it as a film.
   const turnDials = (v: DialValues) => {
     setDials(v);
@@ -573,7 +582,7 @@ export default function World() {
                       if (m === 'dials') turnDials(dials);
                     }}
                     versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} onGrok={fightGrok} />}
-                    dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} />}
+                    dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} names={sectorNames} />}
                   />
                 </Surface>
               ) : focused ? (
@@ -676,7 +685,7 @@ function Overview({ empires, people, places, onSelect }: { empires: Empire[]; pe
               accessibilityLabel={`Number ${i + 1}, ${c.name}: ${revenue ? `${usd(revenue)} revenue, ` : ''}${n} ${n === 1 ? 'place' : 'places'}. Owners: ${owners.map((o) => o.person.name).join(', ')}. Follow`}
               onPress={() => onSelect(owners[0].person.id)}
               style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
-              <View style={[styles.place, i < 3 && { backgroundColor: MEDAL[i] }]}>
+              <View style={[styles.place, i < 3 && metal(i + 1)]}>
                 <Text style={[type.number, { fontSize: 13, color: i < 3 ? '#FFFFFF' : color.text }]}>{i + 1}</Text>
               </View>
               <View style={styles.flex}>

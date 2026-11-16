@@ -4,7 +4,7 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { MEDAL, Rise } from '@/components/arena';
+import { metal, Rise } from '@/components/arena';
 import { Glass } from '@/components/glass';
 import { NewsList } from '@/components/news';
 import { Caption, Change, Heading, Portrait } from '@/components/ui';
@@ -22,7 +22,7 @@ function Step({ project, owner, place, height, i }: { project: Project; owner: P
     <Link href={`/person/${owner.slug}`} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={`Number ${place}, ${project.title}, by ${owner.name}, opens profile`} style={styles.step}>
         <Rise i={i + 3} from={12} style={styles.stepTop}>
-          <View style={[styles.ring, { borderColor: MEDAL[place - 1], borderRadius: (size + 8) / 2 }]}>
+          <View style={[styles.ring, metal(place), { borderRadius: (size + 8) / 2 }]}>
             <Portrait uri={owner.portrait_url} name={owner.name} size={size} />
           </View>
           <Text style={[type.headline, styles.center, { color: color.text, fontSize: place === 1 ? 17 : 15 }]} numberOfLines={3}>
@@ -32,7 +32,7 @@ function Step({ project, owner, place, height, i }: { project: Project; owner: P
             {short(owner.name)}
           </Caption>
         </Rise>
-        <Rise i={i} from={height} style={[styles.pedestal, { height, backgroundColor: MEDAL[place - 1] }]}>
+        <Rise i={i} from={height} style={[styles.pedestal, metal(place), { height }]}>
           <Text style={styles.pedestalText}>{place}</Text>
         </Rise>
       </Pressable>
@@ -115,9 +115,10 @@ const styles = StyleSheet.create({
   podium: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   step: { flex: 1, minWidth: 0, alignItems: 'center' },
   stepTop: { alignItems: 'center', gap: 4, paddingHorizontal: 2, paddingBottom: space.sm },
-  ring: { borderWidth: 4 },
+  // A metal frame: the gradient shows in the padding around the portrait.
+  ring: { padding: 4 },
   pedestal: { alignSelf: 'stretch', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 26, lineHeight: 30 },
+  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 26, lineHeight: 30, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
   list: { paddingVertical: space.xs, borderRadius: radius.lg },
   row,
   rowSep: { ...row, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
