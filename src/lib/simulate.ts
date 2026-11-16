@@ -164,3 +164,66 @@ export function simPct(v: number): string {
   const x = Math.round(Math.abs(v) * 1000) / 10;
   return `${x < 10 ? x.toFixed(1) : Math.round(x)}%`;
 }
+
+export type SimEvent = { month: number; text: string; tone: 'gain' | 'loss' | 'info' };
+
+/** The film runs in ticks, a few per month; notifications queue so each gets its own moment on screen. */
+export const TICKS_PER_MONTH = 3;
+export const NOTE_GAP = 2; // ticks between two notifications
+export const NOTE_LIFE = 6; // ticks a notification stays up
+
+/** Each event's tick (in month order, never closer than NOTE_GAP to the one before) and the film's length in ticks. */
+export function schedule(events: SimEvent[], months: number): { notes: (SimEvent & { tick: number })[]; length: number } {
+  let last = -NOTE_GAP;
+  const notes = events.map((e) => {
+    last = Math.max(e.month * TICKS_PER_MONTH, last + NOTE_GAP);
+    return { ...e, tick: last };
+  });
+  return { notes, length: Math.max(months * TICKS_PER_MONTH, last + NOTE_LIFE - 1) };
+}
+
+const SECTOR_NAME: Record<string, string> = {
+  energy: 'Energy', materials: 'Materials', industrials: 'Industrial', autos: 'Carmaker', consumer: 'Consumer', health: 'Healthcare',
+  finance: 'Bank and finance', technology: 'Tech', media: 'Media', real_estate: 'Property', transport: 'Transport',
+};
+const region = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+const countryName = (iso: string) => region?.of(iso) ?? iso;
+const first = (name: string) => name.replace(/ & family$/, '');
+// Size words for a change, so a notification reads as an event; the numbers stay in the labels on the globe.
+const size = (p: number) => (Math.abs(p) >= 0.5 ? (p < 0 ? 'collapses' : 'booms') : Math.abs(p) >= 0.2 ? (p < 0 ? 'falls sharply' : 'jumps') : p < 0 ? 'slips' : 'rises');
+const moveWord = (p: number) => (Math.abs(p) >= 0.2 ? (p < 0 ? 'tumble' : 'soar') : p < 0 ? 'fall' : 'rise');
+
+/**
+ * The notifications a scenario plays as it runs: each change as it starts, a sale when it happens, the biggest
+ * overtake each month in the top ten, and a closing line. `frames[m]` is `simulate(…, m)`.
+ */
+export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id: string) => string, personName: (slug: string) => string): SimEvent[] {
+  const out: SimEvent[] = [{ month: 0, text: scenario.title.replace(/\.$/, ''), tone: 'info' }];
+  for (const s of scenario.shocks) {
+    const tone = s.pct < 0 ? 'loss' : 'gain';
+    const at = s.kind === 'transfer' ? s.to : s.from;
+    if (s.kind === 'place') out.push({ month: at, text: `Business in ${countryName(s.target)} ${size(s.pct)}`, tone });
+    if (s.kind === 'sector') out.push({ month: at, text: `${SECTOR_NAME[s.target] ?? s.target} shares ${moveWord(s.pct)}`, tone });
+    if (s.kind === 'market') out.push({ month: at, text: `Markets ${s.pct < 0 ? 'sell off' : 'rally'}`, tone });
+    if (s.kind === 'company') out.push({ month: at, text: `${companyName(s.target)} shares ${moveWord(s.pct)}`, tone });
+    if (s.kind === 'transfer') out.push({ month: at, text: `${first(personName(s.buyer))} buys ${first(personName(s.person))}’s ${companyName(s.target)} stake`, tone: 'info' });
+  }
+  // Overtakes: the biggest jump into or within the top ten, once per month.
+  for (let m = 1; m < frames.length; m++) {
+    const before = new Map(frames[m - 1].ranks.map((r) => [r.person.id, r.after]));
+    const jump = frames[m].ranks
+      .filter((r) => r.after <= 10 && (before.get(r.person.id) ?? 99) > r.after)
+      .sort((a, b) => (before.get(b.person.id)! - b.after) - (before.get(a.person.id)! - a.after))[0];
+    if (!jump) continue;
+    const passed = frames[m].ranks.find((r) => r.after === jump.after + 1);
+    out.push({ month: m, text: passed ? `${first(jump.person.name)} passes ${first(passed.person.name)} for #${jump.after}` : `${first(jump.person.name)} climbs to #${jump.after}`, tone: 'gain' });
+  }
+  const last = frames[frames.length - 1];
+  if (last && frames.length > 1) {
+    const top = last.people.find((p) => p.delta != null && p.delta > 0) ?? last.people.find((p) => (p.pct ?? 0) > 0);
+    const low = last.people.find((p) => (p.delta ?? p.pct ?? 0) < 0); // people come sorted biggest move first
+    const parts = [top && `${first(top.person.name)} up most`, low && `${first(low.person.name)} hit hardest`].filter(Boolean);
+    out.push({ month: frames.length - 1, text: `${scenario.months} months on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info' });
+  }
+  return out.sort((a, b) => a.month - b.month);
+}

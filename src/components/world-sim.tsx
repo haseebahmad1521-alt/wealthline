@@ -1,53 +1,31 @@
-// World simulations panel (What if → Simulate): ask a question or pick a scenario, then play it month by month. The
-// globe shows the same month (world.tsx). Every figure comes from `simulate` (src/lib/simulate.ts): recorded revenue,
-// GDP and stakes times the scenario's stated changes; dollar figures only where a stake is recorded.
+// World simulations (What if): ask a question or pick a scenario, then it plays on the globe like a short film.
+// SimulatePanel sits under the globe (question box and scenario chips); SimOverlay sits on the globe (notifications as
+// things happen, and a play bar). Every figure on the globe comes from `simulate` (src/lib/simulate.ts): recorded
+// revenue, GDP and stakes times the scenario's stated changes, drawn dashed with "≈".
 import * as WebBrowser from 'expo-web-browser';
-import { Slider } from 'heroui-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
-import { Body, Caption, Heading, Icon, Portrait, icons, minTouch } from '@/components/ui';
-import { usd } from '@/lib/format';
+import { Caption, Icon, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
-import { simPct, type Frame } from '@/lib/simulate';
+import { NOTE_LIFE, type SimEvent } from '@/lib/simulate';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
-const pct = simPct;
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
-const tint = (v: number) => (v > 0 ? color.gain : v < 0 ? color.loss : color.textSecondary);
-
-function Move({ value, text }: { value: number; text: string }) {
-  return (
-    <View style={styles.move}>
-      <Icon name={value > 0 ? icons.up : value < 0 ? icons.down : icons.flat} size={16} tint={tint(value)} />
-      <Text style={[type.number, { color: tint(value), fontSize: 15 }]}>≈{text}</Text>
-    </View>
-  );
-}
+const TONE = { gain: color.gain, loss: color.loss, info: color.action } as const;
 
 export function SimulatePanel({
   scenarios,
   scenario,
   onPick,
   onAsk,
-  month,
-  onMonth,
-  playing,
-  onPlay,
-  frame,
-  tracked,
 }: {
   scenarios: Scenario[];
   scenario: Scenario | null;
   onPick: (s: Scenario) => void;
   onAsk: (prompt: string) => Promise<string | null>;
-  month: number;
-  onMonth: (m: number) => void;
-  playing: boolean;
-  onPlay: () => void;
-  frame: Frame | null;
-  tracked: number;
 }) {
   const [prompt, setPrompt] = useState('');
   const [asking, setAsking] = useState(false);
@@ -60,6 +38,7 @@ export function SimulatePanel({
     setError(await onAsk(q));
     setAsking(false);
   };
+  const off = asking || prompt.trim().length < 8;
 
   return (
     <>
@@ -76,11 +55,11 @@ export function SimulatePanel({
           editable={!asking}
           style={styles.input}
         />
-        <Pressable accessibilityRole="button" accessibilityLabel="Simulate" disabled={asking || prompt.trim().length < 8} onPress={ask} style={[styles.ask, (asking || prompt.trim().length < 8) && styles.dim]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Simulate" disabled={off} onPress={ask} style={[styles.ask, off && styles.dim]}>
           {asking ? <ActivityIndicator color={color.onAction} /> : <Icon name={icons.send} size={18} tint={color.onAction} />}
         </Pressable>
       </View>
-      {asking && <Caption>Grok is reading the news and working out what this touches. This takes about half a minute.</Caption>}
+      {asking && <Caption>Grok is working out what this touches, about half a minute.</Caption>}
       {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
@@ -97,129 +76,12 @@ export function SimulatePanel({
         })}
       </ScrollView>
 
-      {scenario && frame && (
-        <>
-          <View style={styles.block}>
-            <Text style={[type.title, { color: color.text, fontSize: 22, lineHeight: 27 }]}>{scenario.title}</Text>
-            <View style={styles.metaRow}>
-              <View style={styles.badge}>
-                <Caption>{PLAUSIBLE[scenario.plausibility]}</Caption>
-              </View>
-              <Caption style={styles.flex}>{scenario.origin === 'example' ? 'Built-in example' : scenario.origin === 'daily' ? 'Grok’s judgement, from today’s news' : 'Grok’s answer to a question'}</Caption>
-            </View>
-            <Body secondary>{scenario.summary}</Body>
-            <Caption>{scenario.reason}</Caption>
-          </View>
-
-          <View style={styles.player}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={playing ? 'Pause' : month >= scenario.months ? 'Play again' : 'Play'}
-              onPress={onPlay}
-              style={styles.play}>
-              <Icon name={playing ? icons.pause : month >= scenario.months ? icons.replay : icons.play} size={22} tint={color.onAction} />
-            </Pressable>
-            <View style={[styles.flex, styles.block]}>
-              <View style={styles.rowLine}>
-                <Text style={[type.headline, styles.flex, { color: color.text }]}>{month === 0 ? 'Now' : `Month ${month}`}</Text>
-                <Caption>of {scenario.months}</Caption>
-              </View>
-              <Slider value={month} minValue={0} maxValue={scenario.months} step={1} aria-label="Month of the simulation" onChange={(v) => onMonth(Array.isArray(v) ? v[0] : v)}>
-                <Slider.Track>
-                  <Slider.Fill />
-                  <Slider.Thumb />
-                </Slider.Track>
-              </Slider>
-            </View>
-          </View>
-
-          {frame.transfers.map((t) => (
-            <View key={`${t.seller.id}-${t.company.id}`} style={styles.note} accessible>
-              <Body>
-                {t.done ? `${t.buyer.name} has bought` : `In month ${scenario.shocks.find((s) => s.kind === 'transfer')?.to}, ${t.buyer.name} buys`} {t.seller.name}’s {t.company.name} shares for ≈{usd(t.paid)}.
-              </Body>
-              {t.buyerShort && <Caption>That is more than {t.buyer.name}’s recorded net worth; the deal would need outside money.</Caption>}
-            </View>
-          ))}
-
-          <Heading level={2}>Fortunes.</Heading>
-          {frame.people.length ? (
-            <View style={styles.list}>
-              {frame.people.slice(0, 8).map((p, i) => (
-                <View
-                  key={p.person.id}
-                  style={[styles.row, i > 0 && styles.sep]}
-                  accessible
-                  accessibilityLabel={`${p.person.name}: ${p.delta != null ? `${p.delta < 0 ? 'down' : 'up'} about ${usd(Math.abs(p.delta))}` : `${p.via} ${p.pct! < 0 ? 'down' : 'up'} about ${pct(p.pct!)}`}, projected`}>
-                  <Portrait uri={p.person.portrait_url ?? null} name={p.person.name} size={32} />
-                  <View style={styles.flex}>
-                    <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
-                      {p.person.name}
-                    </Text>
-                    <Caption numberOfLines={1}>{p.delta != null ? `Recorded stake · ${p.via}` : `${p.via} shares`}</Caption>
-                  </View>
-                  {p.delta != null ? <Move value={p.delta} text={usd(Math.abs(p.delta))} /> : <Move value={p.pct!} text={pct(p.pct!)} />}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Caption>{month === 0 ? 'Press play to run it.' : 'Nothing tracked moves yet.'}</Caption>
-          )}
+      {scenario && (
+        <View style={styles.foot}>
           <Caption>
-            Touches {frame.people.length} of {tracked} tracked fortunes. Dollar figures only where shares are recorded; others show their company’s share-price move.
+            Hypothetical, not a forecast{scenario.origin === 'example' ? ' · built-in example' : ` · ${PLAUSIBLE[scenario.plausibility].toLowerCase()}, by Grok`}. Changes are applied to recorded revenue, GDP and share
+            counts.
           </Caption>
-
-          {(() => {
-            // Biggest moves first, among the top 10 before or after.
-            const moved = frame.ranks
-              .filter((r) => r.after !== r.before && (r.after <= 10 || r.before <= 10))
-              .sort((a, b) => Math.abs(b.before - b.after) - Math.abs(a.before - a.after) || a.after - b.after)
-              .slice(0, 5);
-            return moved.length ? (
-              <>
-                <Heading level={2}>Rank changes.</Heading>
-                <View style={styles.list}>
-                  {moved.map((r, i) => (
-                    <View key={r.person.id} style={[styles.row, i > 0 && styles.sep]} accessible accessibilityLabel={`${r.person.name}: from number ${r.before} to number ${r.after}`}>
-                      <Text style={[type.number, { color: color.text, width: 34 }]}>#{r.after}</Text>
-                      <Text style={[type.headline, styles.flex, { color: color.text }]} numberOfLines={1}>
-                        {r.person.name}
-                      </Text>
-                      <Move value={r.before - r.after} text={`${Math.abs(r.before - r.after)} from #${r.before}`} />
-                    </View>
-                  ))}
-                </View>
-              </>
-            ) : null;
-          })()}
-
-          {frame.companies.length > 0 && (
-            <>
-              <Heading level={2}>Companies.</Heading>
-              <View style={styles.list}>
-                {frame.companies.slice(0, 6).map((c, i) => (
-                  <View key={c.company.id} style={[styles.row, i > 0 && styles.sep]} accessible>
-                    <View style={styles.flex}>
-                      <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
-                        {c.company.name}
-                      </Text>
-                      <Caption numberOfLines={1}>{Math.abs(c.revenueDelta) > 0.5 ? `Revenue ≈${c.revenueDelta < 0 ? '−' : '+'}${usd(Math.abs(c.revenueDelta))} a year` : 'Share price'}</Caption>
-                    </View>
-                    <Move value={c.price} text={pct(c.price)} />
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
-
-          {scenario.assumptions.length > 0 && (
-            <View style={styles.block}>
-              <Text style={[type.headline, { color: color.text }]}>Assumptions</Text>
-              {scenario.assumptions.map((a) => (
-                <Caption key={a}>• {a}</Caption>
-              ))}
-            </View>
-          )}
           {scenario.sources.map((s) => (
             <Pressable key={s.url} accessibilityRole="link" onPress={() => open(s.url)} style={styles.source}>
               <Caption style={{ color: color.action }} numberOfLines={1}>
@@ -227,22 +89,62 @@ export function SimulatePanel({
               </Caption>
             </Pressable>
           ))}
-          <Caption>
-            Hypothetical, not a forecast. The scenario’s changes are applied to recorded revenue by place (SEC filings), GDP (World Bank) and recorded share
-            counts; a company’s share price is assumed to follow its revenue. Supply chains, currencies and knock-on effects aren’t modelled.
-          </Caption>
-        </>
+        </View>
       )}
     </>
   );
 }
 
+/** On the globe: the notifications for the last moments, newest last, and the play bar. Doesn't block globe drags. */
+export function SimOverlay({
+  notes,
+  tick,
+  length,
+  month,
+  playing,
+  onPlay,
+}: {
+  notes: (SimEvent & { tick: number })[];
+  tick: number;
+  length: number;
+  month: number;
+  playing: boolean;
+  onPlay: () => void;
+}) {
+  // Each notification stays up for NOTE_LIFE ticks; at most three at once, newest last.
+  const shown = notes.filter((e) => e.tick <= tick && e.tick > tick - NOTE_LIFE).slice(-3);
+  const done = tick >= length;
+  return (
+    <View pointerEvents="box-none" style={styles.overlay}>
+      <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
+        {shown.map((e) => (
+          <Animated.View
+            key={`${e.month}:${e.text}`}
+            entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
+            exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}
+            layout={LinearTransition.duration(200).reduceMotion(ReduceMotion.System)}
+            style={styles.toast}>
+            <View style={[styles.dot, { backgroundColor: TONE[e.tone] }]} />
+            <Text style={[type.headline, styles.toastText]} numberOfLines={2}>
+              {e.text}
+            </Text>
+          </Animated.View>
+        ))}
+      </View>
+      <View style={styles.bar}>
+        <Pressable accessibilityRole="button" accessibilityLabel={playing ? 'Pause' : done ? 'Play again' : 'Play'} onPress={onPlay} style={styles.play}>
+          <Icon name={playing ? icons.pause : done ? icons.replay : icons.play} size={20} tint={color.onAction} />
+        </Pressable>
+        <View style={styles.track} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: length, now: tick }}>
+          <View style={[styles.fill, { width: `${(Math.min(tick, length) / Math.max(length, 1)) * 100}%` }]} />
+        </View>
+        <Text style={[type.caption, styles.month]}>{month === 0 ? 'Now' : `M${month}`}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  flex: { flex: 1, minWidth: 0 },
-  block: { gap: space.xs },
-  rowLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
-  badge: { backgroundColor: color.fill, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },
   // minWidth 0: web inputs otherwise keep an intrinsic width and push the button out.
   input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
@@ -251,12 +153,27 @@ const styles = StyleSheet.create({
   pills: { gap: space.sm },
   pill: { minHeight: minTouch + 8, maxWidth: 240, justifyContent: 'center', paddingHorizontal: space.md, paddingVertical: 6, borderRadius: radius.md, backgroundColor: color.fill },
   pillOn: { backgroundColor: color.actionTint },
-  player: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  play: { width: 48, height: 48, borderRadius: 24, backgroundColor: color.action, alignItems: 'center', justifyContent: 'center' },
-  note: { gap: 2, padding: space.md, borderRadius: radius.md, backgroundColor: color.fill },
-  list: { marginHorizontal: -space.lg },
-  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
-  sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },
-  move: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  foot: { gap: 2 },
   source: { alignSelf: 'flex-start', minHeight: minTouch, justifyContent: 'center' },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'space-between', padding: space.sm, zIndex: 5 },
+  toasts: { gap: 6, alignItems: 'flex-start' },
+  toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    maxWidth: 300,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(14,16,24,.82)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,.12)',
+  },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  toastText: { color: color.text, fontSize: 13, lineHeight: 17, flexShrink: 1 },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm, alignSelf: 'stretch', paddingRight: 52 /* clear of the zoom buttons */ },
+  play: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.action, alignItems: 'center', justifyContent: 'center' },
+  track: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.18)', overflow: 'hidden' },
+  fill: { height: 4, borderRadius: 2, backgroundColor: color.action },
+  month: { color: color.text, minWidth: 30, fontVariant: ['tabular-nums'] },
 });

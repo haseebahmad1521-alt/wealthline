@@ -7,13 +7,13 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimen
 import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
-import { EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, fortuneFills, priceTargets, revenueLines, whatIfTargets, type EconomyMode, type WhatIfMode } from '@/components/world-views';
+import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, revenueLines, type EconomyMode } from '@/components/world-views';
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
-import { countryCentre, countryShape } from '@/lib/geo';
+import { countryCentre } from '@/lib/geo';
 import { askScenario, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
-import { lineCountries, simPct, simulate, type SimCountry, type SimEmpire } from '@/lib/simulate';
-import { SimulatePanel } from '@/components/world-sim';
+import { lineCountries, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire } from '@/lib/simulate';
+import { SimOverlay, SimulatePanel } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
@@ -61,16 +61,7 @@ export default function World() {
   const empires = world.data ?? [];
   const focused = empires.find((e) => e.person.slug === slug) ?? null;
   const lines = useMemo(() => revenueLines(world.data ?? []), [world.data]);
-  const targets = useMemo(() => whatIfTargets(lines), [lines]);
-  const [target, setTarget] = useState<string | null>(null);
-  const [drop, setDrop] = useState<number>(0.25);
   const [econ, setEcon] = useState<EconomyMode>('fortune');
-  const [mode, setMode] = useState<WhatIfMode>('simulate');
-  const [firm, setFirm] = useState<string | null>(null);
-  // Default shock: the biggest market outside the United States; default company: the largest recorded stakes.
-  const shock = target ?? targets.find((t) => t.key !== 'US')?.key ?? targets[0]?.key ?? '';
-  const firms = useMemo(() => priceTargets(world.data ?? []), [world.data]);
-  const company = firm ?? firms[0]?.key ?? '';
 
   // Simulations: Grok's daily scenarios first (most plausible first), then the built-in examples; a typed question's
   // answer joins the front. The month is the globe's month too.
@@ -80,9 +71,10 @@ export default function World() {
   const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires)], [asked, daily.data, empires]);
   const [simId, setSimId] = useState<string | null>(null);
   const sim = scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null;
-  const [month, setMonth] = useState(0);
+  // The film's clock: a few ticks per month (TICKS_PER_MONTH); the globe shows the month the clock is in.
+  const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const simOn = view === 'whatif' && mode === 'simulate' && !!sim;
+  const simOn = view === 'whatif' && !!sim;
   const simEmpires = useMemo<SimEmpire[]>(
     () =>
       empires.map((e) => ({
@@ -93,16 +85,34 @@ export default function World() {
     [empires, simData.data],
   );
   const simCountries = useMemo<SimCountry[]>(() => (world.countries ?? []).map((c) => ({ ...c, region: simData.data?.regions.get(c.iso2) ?? null })), [world.countries, simData.data]);
-  const frame = useMemo(() => (simOn && sim ? simulate(sim, simEmpires, simCountries, Math.min(month, sim.months)) : null), [simOn, sim, simEmpires, simCountries, month]);
-  // Play: one month per step; at the end it stops, and play again starts over.
+  // Every month of the film at once (a few dozen small calculations), so notifications can compare months.
+  const frames = useMemo(
+    () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m)) : []),
+    [simOn, sim, simEmpires, simCountries],
+  );
+  const month = sim ? Math.min(Math.floor(tick / TICKS_PER_MONTH), sim.months) : 0;
+  const frame = frames[Math.min(month, frames.length - 1)] ?? null;
+  const events = useMemo(() => {
+    if (!sim || !frames.length) return [];
+    const companyName = new Map(empires.flatMap((e) => e.companies.map((c) => [c.id, c.name] as const)));
+    const personName = new Map(empires.map((e) => [e.person.slug, e.person.name] as const));
+    return simEvents(sim, frames, (id) => companyName.get(id) ?? 'A company', (slug) => personName.get(slug) ?? slug);
+  }, [sim, frames, empires]);
+  const film = useMemo(() => schedule(events, sim?.months ?? 0), [events, sim]);
+  const playPause = () => {
+    if (playing) return setPlaying(false);
+    if (tick >= film.length) setTick(0);
+    setPlaying(true);
+  };
+  // Play: about a second a month; it stops once the last notification has had its moment, and play starts over.
   useEffect(() => {
     if (!playing || !sim) return;
-    const t = setInterval(() => setMonth((m) => (m >= sim.months ? (setPlaying(false), m) : m + 1)), 900);
+    const t = setInterval(() => setTick((k) => (k >= film.length ? (setPlaying(false), k) : k + 1)), 330);
     return () => clearInterval(t);
-  }, [playing, sim]);
+  }, [playing, sim, film.length]);
   const pick = (s: Scenario) => {
     setSimId(s.id);
-    setMonth(0);
+    setTick(0);
     setPlaying(!reduceMotion); // with reduced motion, nothing starts moving by itself
   };
   const ask = async (prompt: string) => {
@@ -117,11 +127,6 @@ export default function World() {
   let fills: GlobeFill[] = [];
   if (view === 'money') arcs = flowArcs(lines, focused);
   if (view === 'economies') fills = econ === 'fortune' ? fortuneFills(empires, world.countries ?? [], focused) : economyFills(lines, world.countries ?? [], focused).fills;
-  if (view === 'whatif' && mode === 'place') {
-    arcs = flowArcs(lines, null, (l) => l.placeKey === shock, true);
-    if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
-  }
-  if (view === 'whatif' && mode === 'price') arcs = flowArcs(lines, null, (l) => l.company.id === company, true);
   let simCentre: { lat: number; lng: number } | null = null;
   if (simOn && sim && frame) {
     fills = frame.fills.map((f) => ({ iso2: f.iso2, strength: Math.min(Math.abs(f.pct) / 0.5, 1), risk: f.pct < 0, gain: f.pct > 0 }));
@@ -143,7 +148,7 @@ export default function World() {
     const seller = sim.shocks.find((s) => s.kind === 'transfer');
     simCentre = (first && countryCentre(first.target)) || (seller && empires.find((e) => e.person.slug === (seller as { person: string }).person)?.hq) || null;
   }
-  const shockCentre = simOn ? simCentre : view === 'whatif' ? (arcs[0]?.from ?? null) : null;
+  const shockCentre = simOn ? simCentre : null;
   // What if and the fortune comparison are about the whole map, so picking a person doesn't fly the globe to them.
   const wide = view === 'whatif' || (view === 'economies' && econ === 'fortune');
 
@@ -291,6 +296,7 @@ export default function World() {
           <View style={[styles.layout, desktop && styles.layoutWide]}>
             {planet ? (
               <View style={[styles.planetArea, desktop && styles.planetWide]}>
+                <View style={styles.globeBox}>
                 <WorldGlobe
                   // Desktop: as tall as fits below the header, segments and chips (~360px), so the whole globe is in view.
                   height={desktop ? Math.max(360, Math.min(560, windowHeight - 360)) : Math.min(width - space.md * 2, 420)}
@@ -311,6 +317,8 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} playing={playing} onPlay={playPause} />}
+                </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
               </View>
@@ -331,6 +339,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} playing={playing} onPlay={playPause} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -350,39 +359,13 @@ export default function World() {
               ) : view === 'economies' ? (
                 <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} mode={econ} onMode={setEcon} onSelect={show} />
               ) : view === 'whatif' ? (
-                <WhatIfPanel
-                  lines={lines}
-                  empires={empires}
-                  mode={mode}
-                  target={shock}
-                  company={company}
-                  drop={drop}
-                  onMode={setMode}
-                  onTarget={setTarget}
-                  onCompany={setFirm}
-                  onDrop={setDrop}
-                  simulate={
-                    <SimulatePanel
-                      scenarios={scenarios}
-                      scenario={sim}
-                      onPick={pick}
-                      onAsk={ask}
-                      month={month}
-                      onMonth={(m) => {
-                        setPlaying(false);
-                        setMonth(m);
-                      }}
-                      playing={playing}
-                      onPlay={() => {
-                        if (playing) return setPlaying(false);
-                        if (sim && month >= sim.months) setMonth(0);
-                        setPlaying(true);
-                      }}
-                      frame={frame}
-                      tracked={empires.length}
-                    />
-                  }
-                />
+                <Surface style={styles.simCard}>
+                  <View style={styles.headRow}>
+                    <Heading level={2}>What if.</Heading>
+                    <Caption>Hypothetical</Caption>
+                  </View>
+                  <SimulatePanel scenarios={scenarios} scenario={sim} onPick={pick} onAsk={ask} />
+                </Surface>
               ) : focused ? (
                 <EmpirePanel empire={focused} onClear={() => select(null)} />
               ) : (
@@ -398,9 +381,7 @@ export default function World() {
                         ? econ === 'fortune'
                           ? 'Drag the globe to turn it; pinch to zoom. Lit countries have a yearly GDP smaller than the fortune.'
                           : 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
-                        : mode === 'simulate'
-                          ? 'Drag the globe to turn it; pinch to zoom. Hypothetical: shaded countries are where business falls (red) or grows (green); dashed portraits with ≈ show projected changes, never recorded ones.'
-                          : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
+                        : 'Drag the globe to turn it; pinch to zoom. Hypothetical: shaded countries are where business falls (red) or grows (green); dashed portraits with ≈ show projected changes, never recorded ones.'}
                 </Caption>
               )}
             </View>
@@ -705,6 +686,8 @@ const styles = StyleSheet.create({
   globeCard: { padding: space.md, gap: space.md },
   // No card: the planet behind the page is the globe; the area is just where it sits and where gestures land.
   planetArea: { gap: space.sm },
+  globeBox: { position: 'relative' },
+  simCard: { padding: space.lg, gap: space.md },
   // Desktop: the globe takes the larger column; it sized to its content before and sat in a narrow strip.
   planetWide: { flex: 3, minWidth: 0 },
   globeCardWide: { padding: space.lg },

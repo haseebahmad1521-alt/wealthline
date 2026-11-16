@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { checkShock, cleanProse, promptKey, ramp, sectorFor, type Catalog, type Scenario } from '../../supabase/functions/_shared/scenario.ts';
-import { lineCountries, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
+import { lineCountries, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
 
 const countries: SimCountry[] = [
   { iso2: 'US', gdp_usd: 30, region: 'NAC' },
@@ -85,4 +85,26 @@ test('prose with figures is rejected; questions normalise for the cache; sectors
   assert.equal(sectorFor(['petroleum industry'])?.sector, 'energy');
   assert.equal(sectorFor(['knitting']), null);
   assert.equal(ramp({ from: 2, to: 6 }, 4), 0.5);
+});
+
+test('notifications: each change as it starts, the sale, overtakes, and a closing line', () => {
+  const s = scenario([
+    { kind: 'place', target: 'SA', pct: -0.6, from: 1, to: 2 },
+    { kind: 'transfer', target: 'acme', person: 'ann', buyer: 'cy', fraction: 1, pct: 0.25, from: 3, to: 3 },
+  ], 4);
+  const frames = [0, 1, 2, 3, 4].map((m) => simulate(s, empires, countries, m));
+  const ev = simEvents(s, frames, (id) => id.toUpperCase(), (slug) => slug);
+  const text = ev.map((e) => `${e.month}:${e.text}`);
+  assert.equal(text[0], '0:t');
+  assert.ok(text.includes('1:Business in Saudi Arabia collapses'));
+  assert.ok(text.includes('3:cy buys ann’s ACME stake'));
+  assert.ok(text.some((t) => t.startsWith('4:4 months on')));
+  assert.deepEqual(ev.map((e) => e.month), [...ev.map((e) => e.month)].sort((a, b) => a - b));
+});
+
+test('notifications queue so each gets its own moment, and the film lasts until the last has shown', () => {
+  const ev = [0, 0, 0, 5].map((month, i) => ({ month, text: String(i), tone: 'info' as const }));
+  const { notes, length } = schedule(ev, 6);
+  assert.deepEqual(notes.map((n) => n.tick), [0, 2, 4, 15]);
+  assert.equal(length, 20); // 15 + 6 − 1 beats 6 months × 3
 });
