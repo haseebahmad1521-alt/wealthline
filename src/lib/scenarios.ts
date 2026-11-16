@@ -71,6 +71,13 @@ export async function askScenario(prompt: string): Promise<{ scenario: Scenario 
   }
 }
 
+/** A stored scenario by id (a shared link to a Grok scenario); null when it isn't there. */
+export async function fetchScenario(id: string): Promise<Scenario | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const { data, error } = await db().from('world_scenarios').select('*').eq('id', id).maybeSingle();
+  return error || !data ? null : fromRow(data as Row);
+}
+
 /** Asks Grok (through the backend) for a rivalry between two tracked people. */
 export async function askVersus(a: string, b: string): Promise<{ scenario: Scenario } | { error: string }> {
   try {

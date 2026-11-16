@@ -385,7 +385,10 @@ export function SimOverlay({
   asking,
   onGuess,
   verdict,
+  onShare,
 }: {
+  /** Shares the result; resolves to a short status ("Link copied"). */
+  onShare?: () => Promise<string>;
   /** Guess before you play: the question (while `asking`), and how the answer went (on the end card). */
   guess?: Guess | null;
   asking?: boolean;
@@ -424,7 +427,7 @@ export function SimOverlay({
       {asking && guess && onGuess ? (
         <GuessCard guess={guess} title={title} onGuess={onGuess} />
       ) : card ? (
-        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} verdict={verdict ?? null} onClose={() => setClosed(true)} />
+        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} verdict={verdict ?? null} onShare={onShare} onClose={() => setClosed(true)} />
       ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
         {score && <Scoreboard {...score} money={money} />}
@@ -473,7 +476,9 @@ function EndCard({
   versus,
   verdict,
   onClose,
+  onShare,
 }: {
+  onShare?: () => Promise<string>;
   verdict: Verdict | null;
   frame: Frame;
   months: number;
@@ -498,6 +503,7 @@ function EndCard({
             {title.replace(/\.$/, '')}, {months} months on.
           </Text>
         </View>
+        {onShare && <ShareButton onShare={onShare} />}
         <Pressable accessibilityRole="button" accessibilityLabel="Close the summary" onPress={onClose} hitSlop={8} style={styles.close}>
           <Icon name={icons.close} size={16} tint={color.textSecondary} />
         </Pressable>
@@ -563,6 +569,24 @@ function EndCard({
         </View>
       )}
     </Animated.View>
+  );
+}
+
+/** Share from the end card; says what happened (shared, copied) for a moment. */
+function ShareButton({ onShare }: { onShare: () => Promise<string> }) {
+  const [said, setSaid] = useState<string | null>(null);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Share this result"
+      onPress={async () => {
+        setSaid(await onShare());
+        setTimeout(() => setSaid(null), 2500);
+      }}
+      style={styles.share}>
+      <Icon name={icons.link} size={14} tint={color.onAction} />
+      <Text style={[type.caption, { color: color.onAction, fontWeight: '600' }]}>{said ?? 'Share'}</Text>
+    </Pressable>
   );
 }
 
@@ -660,6 +684,7 @@ const styles = StyleSheet.create({
   crownRing: { borderRadius: 40, padding: 3, borderWidth: 2, borderColor: 'transparent' },
   crownOn: { borderColor: '#F5C451' },
   dial: { gap: 2 },
+  share: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: color.action },
   guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
   guessOption: { width: '24%', minHeight: minTouch, alignItems: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
   skip: { alignSelf: 'center', minHeight: minTouch, justifyContent: 'center' },

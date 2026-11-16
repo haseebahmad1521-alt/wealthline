@@ -11,7 +11,8 @@ import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, reven
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
-import { askScenario, askVersus, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
@@ -60,7 +61,7 @@ export default function World() {
   const money = useMoney();
   const { width, height: windowHeight } = useWindowDimensions();
   const desktop = width >= desktopBreakpoint;
-  const { focus: slug, view: viewParam } = useLocalSearchParams<{ focus?: string; view?: string }>();
+  const { focus: slug, view: viewParam, sim: simParam, vs: vsParam, dials: dialsParam } = useLocalSearchParams<{ focus?: string; view?: string; sim?: string; vs?: string; dials?: string }>();
   const view: ViewKey = VIEWS.some((v) => v.key === viewParam) ? (viewParam as ViewKey) : 'places';
   const empires = world.data ?? [];
   const focused = empires.find((e) => e.person.slug === slug) ?? null;
@@ -207,6 +208,47 @@ export default function World() {
     filmDone && guess && sim && choice?.id === sim.id && choice.pick && choice.scored
       ? { right: choice.pick === guess.answer, answer: byId(guess.answer)!, pick: byId(choice.pick), gained: choice.gained, streak: game.streak }
       : null;
+
+  // Share: a link that rebuilds this scenario (or match, or dials), sent with a one-line result.
+  const shareLine = () => {
+    if (!sim) return '';
+    if (finalScore?.lead) return `${sim.title.replace(/\.$/, '')} — ${(finalScore.lead === 'a' ? finalScore.a : finalScore.b).person.name.replace(/ & family$/, '')} wins.`;
+    const end = frames[frames.length - 1];
+    const low = end?.people.find((p) => (p.delta ?? p.pct ?? 0) < 0);
+    const high = end?.people.find((p) => (p.delta ?? p.pct ?? 0) > 0);
+    const who = [high && `${high.person.name.replace(/ & family$/, '')} gains most`, low && `${low.person.name.replace(/ & family$/, '')} is hit hardest`].filter(Boolean).join(', ');
+    return `${sim.title.replace(/\.$/, '')}${who ? ` — ${who}.` : ''} A Wealthline what-if.`;
+  };
+  const onShare = async () => {
+    if (!sim) return 'Nothing to share';
+    const r = await shareSim(shareLine(), simUrl(simParams(sim, dials)));
+    return r === 'copied' ? 'Link copied' : r === 'shared' ? 'Shared' : 'Couldn’t share';
+  };
+  // Opening a shared link: rebuild the match or dials, or find the scenario (fetching a Grok one by id), once the
+  // people are loaded.
+  const opened = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${simParam ?? ''}|${vsParam ?? ''}|${dialsParam ?? ''}`;
+    if (key === '||' || opened.current === key || !simEmpires.length) return;
+    opened.current = key;
+    const want = readSimParams({ sim: simParam, vs: vsParam, dials: dialsParam });
+    if (want.vs) {
+      setPanel('versus');
+      fight(want.vs.a, want.vs.b, want.vs.battle, want.vs.winner);
+    } else if (want.dials) {
+      setPanel('dials');
+      turnDials(want.dials);
+    } else if (want.sim) {
+      const known = scenarios.find((s) => s.id === want.sim);
+      if (known) pick(known);
+      else
+        void fetchScenario(want.sim).then((s) => {
+          if (!s) return;
+          setAsked((x) => [s, ...x.filter((y) => y.id !== s.id)]);
+          pick(s);
+        });
+    }
+  }, [simParam, vsParam, dialsParam, simEmpires.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dials: the globe jumps to the year's end as they move; play replays it as a film.
   const turnDials = (v: DialValues) => {
@@ -470,7 +512,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -493,7 +535,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
