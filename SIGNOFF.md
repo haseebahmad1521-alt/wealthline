@@ -127,6 +127,21 @@ near the person's name. Apply the additive column, then redeploy `scenarios`:
 npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000100_scenario_statements.sql
 ```
 
+## The residual ledger (with the next `world` deploy)
+
+Every Sunday the factors job also records, for each listed company, what the model expected its share price to do
+that week, what it did, and the gap (`factor_residuals`, public read, append-only, even for the service role). The
+first run fills in the year before, marked as backfill. Nothing in the app changes;
+`node scripts/test-residuals.mjs` tests explanations for the gaps. Apply the additive table, then redeploy `world`:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261118000000_factor_residuals.sql
+```
+
+```bash
+npx supabase@latest functions deploy world --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes
+```
+
 ## For the lobbying ties (optional)
 
 The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on

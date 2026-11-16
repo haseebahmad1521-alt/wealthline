@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 
 import { EVENTS as PAST_EVENTS, eventWeeks } from '../supabase/functions/_shared/events.ts';
 import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, ols, residualize, weekKey, weeklyReturns } from '../supabase/functions/_shared/factors.ts';
+import { revenueShares } from './revenue-shares.mjs';
 
 const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
@@ -43,35 +44,8 @@ async function get(symbol) {
   return weeklyReturns(t.map((ts, i) => ({ t: ts, c: c[i] })).filter((b) => b.c != null));
 }
 
-// Countries counted as Europe (EU, EEA, UK, Switzerland, and the rest of geographic Europe west of Russia).
-const EUROPE = new Set('AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE GB CH NO IS UA RS BA AL MK ME MD BY'.split(' '));
-const isChina = (country, region) => country === 'CN' || /china|prc/i.test(region ?? '');
-// EMEA lines count as Europe (Europe is most of EMEA for these companies); a line that only covers the World Bank's
-// Europe & Central Asia region does too.
-const isEurope = (country, region, covers) => EUROPE.has(country) || /europe|emea/i.test(region ?? '') || (covers?.length === 1 && covers[0] === 'ECS');
-
 const companies = await sb('companies?select=id,name,ticker,quote_symbol,is_private');
-const exposure = await sb('company_exposure?select=company_id,region,country,revenue_usd,fiscal_year');
-/** Share of revenue in each place, from the latest fiscal year's lines (SEC filings first, else annual reports). */
-const shares = new Map();
-for (const c of companies) {
-  const rows = exposure.filter((e) => e.company_id === c.id);
-  if (!rows.length) continue;
-  const year = Math.max(...rows.map((r) => r.fiscal_year ?? 0));
-  const latest = rows.filter((r) => (r.fiscal_year ?? 0) === year);
-  const total = latest.reduce((n, r) => n + Number(r.revenue_usd ?? 0), 0);
-  const part = (test) => latest.filter((r) => test(r.country, r.region, null)).reduce((n, r) => n + Number(r.revenue_usd ?? 0), 0) / total;
-  if (total > 0) shares.set(c.id, { china: part(isChina), europe: part(isEurope) });
-}
-const annualReports = JSON.parse(readFileSync('src/data/regions.json', 'utf8')).companies;
-for (const [id, r] of Object.entries(annualReports)) {
-  if (shares.has(id)) continue;
-  const total = r.lines.reduce((n, l) => n + l.revenue_usd, 0);
-  // A Greater China / PRC line is China; a line merely adding CN to a wider region is not.
-  const china = r.lines.filter((l) => l.country === 'CN' || (l.add?.includes('CN') && /china|prc/i.test(l.region))).reduce((n, l) => n + l.revenue_usd, 0);
-  const europe = r.lines.filter((l) => isEurope(l.country, l.region, l.covers)).reduce((n, l) => n + l.revenue_usd, 0);
-  if (total > 0) shares.set(id, { china: china / total, europe: europe / total });
-}
+const shares = await revenueShares(sb, companies);
 const count = (k) => [...shares.values()].filter((s) => s[k] > 0).length;
 console.log(`companies with revenue by place: ${shares.size}; with China revenue: ${count('china')}; with Europe revenue: ${count('europe')}`);
 
