@@ -38,12 +38,15 @@ Run these from the repository, logged in to the Supabase CLI with an account tha
    - `countries.region`, `companies.sector` and `companies.sector_source`;
    - the public-read `world_scenarios` table (with story `beats`, the `versus` pair and an `asks` count);
    - a daily `scenarios` cron at 07:05 UTC.
+   - `company_factors` and `factor_model` (public read) for the measured sensitivities, and a weekly `factors` cron
+     (Sundays 05:20 UTC) that refits them from Yahoo Finance prices.
 
    ```bash
    npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261116000000_world_scenarios.sql
    ```
 
-2. **Deploy the two functions.** `world` now also saves regions and sectors; `scenarios` is new.
+2. **Deploy the two functions.** `world` now also saves regions and sectors and refits the factor model weekly
+   (`?job=factors`); `scenarios` is new.
 
    ```bash
    npx supabase@latest functions deploy world scenarios --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes
@@ -64,6 +67,16 @@ Run these from the repository, logged in to the Supabase CLI with an account tha
      body := '{}'::jsonb, timeout_milliseconds := 150000);
    select net.http_post(
      url := 'https://qucpeyrbzyfqtmxhmezr.supabase.co/functions/v1/scenarios',
+     headers := jsonb_build_object('content-type', 'application/json',
+       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')),
+     body := '{}'::jsonb, timeout_milliseconds := 150000);
+   ```
+
+   Optionally refit the factor model now too (otherwise it runs on Sunday; the app ships a recent copy meanwhile):
+
+   ```sql
+   select net.http_post(
+     url := 'https://qucpeyrbzyfqtmxhmezr.supabase.co/functions/v1/world?job=factors',
      headers := jsonb_build_object('content-type', 'application/json',
        'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')),
      body := '{}'::jsonb, timeout_milliseconds := 150000);
