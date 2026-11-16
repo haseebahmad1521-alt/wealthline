@@ -6,13 +6,14 @@ import * as WebBrowser from 'expo-web-browser';
 import { Slider } from 'heroui-native';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
 import { DIALS, type DialValues } from '@/lib/dials';
+import type { Guess, Score } from '@/lib/guess';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
@@ -35,7 +36,11 @@ export function SimulatePanel({
   onMode,
   versus,
   dials,
+  score,
+  challengeId,
 }: {
+  score: Score;
+  challengeId: string | null;
   scenarios: Scenario[];
   scenario: Scenario | null;
   onPick: (s: Scenario) => void;
@@ -70,6 +75,11 @@ export function SimulatePanel({
       </View>
       {mode === 'dials' ? dials : mode === 'versus' ? versus : (
       <>
+      {score.played > 0 && (
+        <Caption>
+          ★ {score.points} points · streak {score.streak} · {score.right} of {score.played} called right
+        </Caption>
+      )}
       <View style={styles.inputRow}>
         <TextInput
           accessibilityLabel="Ask a what-if question"
@@ -98,7 +108,9 @@ export function SimulatePanel({
               <Text numberOfLines={1} style={[type.headline, { fontSize: 14, color: on ? color.action : color.text }]}>
                 {s.title.replace(/\.$/, '')}
               </Text>
-              <Caption style={{ fontSize: 11 }}>{s.origin === 'example' ? 'Example' : PLAUSIBLE[s.plausibility]}</Caption>
+              <Caption style={{ fontSize: 11, color: s.id === challengeId ? '#F5C451' : undefined }}>
+                {s.id === challengeId ? '★ Today’s challenge' : s.origin === 'example' ? 'Example' : PLAUSIBLE[s.plausibility]}
+              </Caption>
             </Pressable>
           );
         })}
@@ -369,7 +381,16 @@ export function SimOverlay({
   score,
   finalScore,
   quiet,
+  guess,
+  asking,
+  onGuess,
+  verdict,
 }: {
+  /** Guess before you play: the question (while `asking`), and how the answer went (on the end card). */
+  guess?: Guess | null;
+  asking?: boolean;
+  onGuess?: (personId: string | null) => void;
+  verdict?: Verdict | null;
   /** The dials: no notifications or end card while the player is setting them. */
   quiet?: boolean;
   /** Versus: the scoreboard now, and at the end. */
@@ -400,8 +421,10 @@ export function SimOverlay({
   const card = done && !closed && ending && !quiet;
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
-      {card ? (
-        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} onClose={() => setClosed(true)} />
+      {asking && guess && onGuess ? (
+        <GuessCard guess={guess} title={title} onGuess={onGuess} />
+      ) : card ? (
+        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} verdict={verdict ?? null} onClose={() => setClosed(true)} />
       ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
         {score && <Scoreboard {...score} money={money} />}
@@ -409,7 +432,6 @@ export function SimOverlay({
           <Animated.View
             key={`${e.month}:${e.text}`}
             entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
-            exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}
             layout={LinearTransition.duration(200).reduceMotion(ReduceMotion.System)}
             style={styles.toast}>
             <View style={[styles.dot, { backgroundColor: TONE[e.tone] }]} />
@@ -449,8 +471,10 @@ function EndCard({
   title,
   money,
   versus,
+  verdict,
   onClose,
 }: {
+  verdict: Verdict | null;
   frame: Frame;
   months: number;
   start: string | null;
@@ -478,6 +502,14 @@ function EndCard({
           <Icon name={icons.close} size={16} tint={color.textSecondary} />
         </Pressable>
       </View>
+      {verdict && (
+        <View style={[styles.verdict, { borderColor: verdict.right ? color.gain : color.loss }]} accessible>
+          <Text style={[type.headline, { color: verdict.right ? color.gain : color.loss }]}>
+            {verdict.right ? `You called it: ${lastName(verdict.answer.name)}.` : `It was ${lastName(verdict.answer.name)}.`}
+          </Text>
+          <Caption>{verdict.right ? `+${verdict.gained} points · streak ${verdict.streak}` : `You picked ${verdict.pick ? lastName(verdict.pick.name) : 'nobody'}. Streak reset.`}</Caption>
+        </View>
+      )}
       {versus && <VersusResult score={versus} frame={frame} money={money} />}
       {!versus && [
         { label: 'Gained', people: up, tint: color.gain, icon: icons.up },
@@ -530,6 +562,31 @@ function EndCard({
           ))}
         </View>
       )}
+    </Animated.View>
+  );
+}
+
+export type Verdict = { right: boolean; answer: SimPerson; pick: SimPerson | null; gained: number; streak: number };
+
+/** Before the film: who gains the most (or is hit hardest)? Four portraits, or skip. */
+function GuessCard({ guess, title, onGuess }: { guess: Guess; title: string; onGuess: (personId: string | null) => void }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)} style={styles.card}>
+      <Caption>{title.replace(/\.$/, '')}</Caption>
+      <Text style={[type.headline, { color: color.text, fontSize: 18 }]}>{guess.question === 'gain' ? 'Who gains the most?' : guess.question === 'loss' ? 'Who is hit hardest?' : guess.question === 'money-loss' ? 'Who loses the most money?' : 'Who makes the most money?'}</Text>
+      <View style={styles.guessGrid}>
+        {guess.options.map((p) => (
+          <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`Guess ${p.name}`} onPress={() => onGuess(p.id)} style={styles.guessOption}>
+            <Portrait uri={p.portrait_url ?? null} name={p.name} size={44} />
+            <Text style={[type.caption, { color: color.text }]} numberOfLines={1}>
+              {lastName(p.name)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable accessibilityRole="button" onPress={() => onGuess(null)} style={styles.skip}>
+        <Caption style={{ color: color.action }}>Skip and watch</Caption>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -603,6 +660,10 @@ const styles = StyleSheet.create({
   crownRing: { borderRadius: 40, padding: 3, borderWidth: 2, borderColor: 'transparent' },
   crownOn: { borderColor: '#F5C451' },
   dial: { gap: 2 },
+  guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
+  guessOption: { width: '24%', minHeight: minTouch, alignItems: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
+  skip: { alignSelf: 'center', minHeight: minTouch, justifyContent: 'center' },
+  verdict: { gap: 2, padding: 10, borderRadius: radius.md, borderWidth: 1, backgroundColor: 'rgba(255,255,255,.04)' },
   dialHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   movers: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   mover: { width: '31%', alignItems: 'center', gap: 2 },

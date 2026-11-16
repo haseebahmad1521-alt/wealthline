@@ -14,6 +14,8 @@ import { countryCentre } from '@/lib/geo';
 import { askScenario, askVersus, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
+import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
+import { getItem, setItem } from '@/lib/device-store';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
 import { DialsPanel, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
@@ -129,8 +131,13 @@ export default function World() {
   const pick = (s: Scenario) => {
     setSimId(s.id);
     setTick(0);
-    setPlaying(!reduceMotion); // with reduced motion, nothing starts moving by itself
+    // Scenarios open on the guess first (the answer starts the film); matches start straight away, unless the device
+    // asks for reduced motion.
+    setPlaying(s.origin === 'versus' && !reduceMotion);
+    setAutoStart(s.origin !== 'versus');
   };
+  // A scenario with no clear question to ask starts playing by itself, as before.
+  const [autoStart, setAutoStart] = useState(false);
   // Versus: the rivals' slugs, scored every month; everyone else steps back.
   const rivals = sim?.versus ? sim.versus.map((slug) => simEmpires.find((e) => e.person.slug === slug)) : null;
   const pair = rivals && rivals[0] && rivals[1] ? ([rivals[0], rivals[1]] as const) : null;
@@ -155,6 +162,52 @@ export default function World() {
     pick(r.scenario);
     return null;
   };
+  // Guess before you play: asked before the film starts, scored when it ends; points and streak stay on this device.
+  const [game, setGame] = useState<Score>(EMPTY_SCORE);
+  useEffect(() => {
+    void getItem('wl.sim.score').then((v) => {
+      try {
+        if (v) setGame({ ...EMPTY_SCORE, ...JSON.parse(v) });
+      } catch {
+        /* a damaged value just starts over */
+      }
+    });
+  }, []);
+  const today = new Date().toISOString().slice(0, 10);
+  const challenge = useMemo(() => dailyChallenge(scenarios, today), [scenarios, today]);
+  const [choice, setChoice] = useState<{ id: string; pick: string | null; scored: boolean; gained: number } | null>(null);
+  const guess = useMemo(
+    () => (simOn && sim && sim.origin !== 'dials' && sim.origin !== 'versus' ? makeGuess(sim.id, frames[frames.length - 1] ?? null) : null),
+    [simOn, sim, frames],
+  );
+  const asking = !!guess && !!sim && choice?.id !== sim.id && tick === 0 && !playing;
+  const onGuess = (personId: string | null) => {
+    if (!sim) return;
+    setChoice({ id: sim.id, pick: personId, scored: false, gained: 0 });
+    setTick(0);
+    setPlaying(true);
+  };
+  useEffect(() => {
+    if (!autoStart || !frames.length) return;
+    setAutoStart(false);
+    if (!guess && !reduceMotion) setPlaying(true);
+  }, [autoStart, frames.length, guess]);
+  const filmDone = tick >= film.length;
+  useEffect(() => {
+    if (!filmDone || !guess || !sim || !choice || choice.id !== sim.id || choice.scored || !choice.pick) return;
+    const right = choice.pick === guess.answer;
+    const counts = sim.id === challenge?.id && game.challenge !== today;
+    const next = scored(game, right, counts ? today : null);
+    setGame(next);
+    void setItem('wl.sim.score', JSON.stringify(next));
+    setChoice({ ...choice, scored: true, gained: next.points - game.points });
+  }, [filmDone, guess, sim, choice, challenge, game, today]);
+  const byId = (id: string | null) => (id ? (empires.find((e) => e.person.id === id)?.person ?? null) : null);
+  const verdict =
+    filmDone && guess && sim && choice?.id === sim.id && choice.pick && choice.scored
+      ? { right: choice.pick === guess.answer, answer: byId(guess.answer)!, pick: byId(choice.pick), gained: choice.gained, streak: game.streak }
+      : null;
+
   // Dials: the globe jumps to the year's end as they move; play replays it as a film.
   const turnDials = (v: DialValues) => {
     setDials(v);
@@ -417,7 +470,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -440,7 +493,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -471,6 +524,8 @@ export default function World() {
                     onPick={pick}
                     onAsk={ask}
                     mode={panel}
+                    score={game}
+                    challengeId={challenge?.id ?? null}
                     onMode={(m) => {
                       setPanel(m);
                       if (m === 'dials') turnDials(dials);
