@@ -11,7 +11,53 @@
 --                    Versus rows (origin 'versus') name the two rivals in `versus`; `beats` are story lines without
 --                    figures, shown as notifications on the globe.
 
+-- company_factors  each listed company's measured sensitivities (betas) and their standard errors to global stocks,
+--                  oil, Chinese stocks, the dollar and its sector, from three years of weekly prices; refitted weekly
+--                  by the `world` function (?job=factors). factor_model keeps each run's factor links and window.
+
 alter table public.countries add column region text;
+
+create table public.company_factors (
+  company_id uuid primary key references public.companies (id) on delete cascade,
+  symbol text not null,
+  beta jsonb not null,
+  se jsonb not null,
+  r2 double precision not null,
+  weeks int not null,
+  fitted_at timestamptz not null default now()
+);
+alter table public.company_factors enable row level security;
+create policy "public read" on public.company_factors for select using (true);
+grant select on public.company_factors to anon, authenticated;
+
+create table public.factor_model (
+  id bigint generated always as identity primary key,
+  links jsonb not null,
+  window_from text not null,
+  window_to text not null,
+  companies int not null,
+  fitted_at timestamptz not null default now()
+);
+alter table public.factor_model enable row level security;
+create policy "public read" on public.factor_model for select using (true);
+grant select on public.factor_model to anon, authenticated;
+
+-- Weekly refit, Sundays 05:20 UTC (markets closed).
+select cron.schedule(
+  'factors',
+  '20 5 * * 0',
+  $$
+  select net.http_post(
+    url := 'https://qucpeyrbzyfqtmxhmezr.supabase.co/functions/v1/world?job=factors',
+    headers := jsonb_build_object(
+      'content-type', 'application/json',
+      'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 150000
+  );
+  $$
+);
 
 alter table public.companies add column sector text check (sector in (
   'energy', 'materials', 'industrials', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'

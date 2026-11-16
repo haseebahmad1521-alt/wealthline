@@ -2,10 +2,13 @@
 //   ?job=quotes  every 10 minutes: observed share prices for every listed company (Yahoo Finance chart data).
 //   ?job=facts   daily: company headquarters, facilities and sector (Wikidata), country GDP, population and region (World Bank).
 //   ?job=edgar   hourly: revenue by country/region and subsidiaries from new 10-K filings (edgar.ts).
+//   ?job=factors weekly: each listed company's measured sensitivities (_shared/factors.ts) from three years of weekly
+//                prices, and how the factors move together, for the World simulations.
 // Everything stored is copied from its source with a link back; each source reports to source_health.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { getJson, track } from '../_shared/refresh.ts';
 import { sectorFor } from '../_shared/scenario.ts';
+import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, weeklyReturns, type Bar } from '../_shared/factors.ts';
 import { cors, json } from '../_shared/util.ts';
 import { runEdgar } from './edgar.ts';
 
@@ -168,6 +171,42 @@ async function companyPlaces(db: SupabaseClient) {
   return unique.length;
 }
 
+async function weeklyBars(symbol: string): Promise<Bar[]> {
+  const body = await getJson(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3y&interval=1wk`, BROWSER).catch(() => null);
+  const r = body?.chart?.result?.[0];
+  const t: number[] = r?.timestamp ?? [];
+  const c: (number | null)[] = r?.indicators?.adjclose?.[0]?.adjclose ?? r?.indicators?.quote?.[0]?.close ?? [];
+  return t.flatMap((ts, i) => (c[i] != null ? [{ t: ts, c: c[i]! }] : []));
+}
+
+/** Weekly: re-measures every listed company's sensitivities and the factor links (same code as the app's reference). */
+async function factors(db: SupabaseClient) {
+  const { data: companies, error } = await db.from('companies').select('id, ticker, quote_symbol, sector').not('ticker', 'is', null).eq('is_private', false);
+  if (error) throw new Error(error.message);
+  const series: Record<string, Map<string, number>> = {};
+  for (const [f, sym] of Object.entries(FACTOR_SYMBOL)) series[f] = weeklyReturns(await weeklyBars(sym));
+  const market = series.market;
+  if (market.size < 80) throw new Error('Not enough market history from Yahoo Finance.');
+  const own = { oil: residualize(series.oil, market), china: residualize(series.china, market), usd: residualize(series.usd, market) };
+  const sectorOwn: Record<string, Map<string, number>> = {};
+  for (const [sector, sym] of Object.entries(SECTOR_FUND)) sectorOwn[sector] = residualize(weeklyReturns(await weeklyBars(sym)), market);
+  const rows = [];
+  for (const c of companies ?? []) {
+    const quoted = (c.quote_symbol as string | null) ?? yahooSymbol(c.ticker as string);
+    const symbol = FIT_SYMBOL[quoted] ?? quoted;
+    const fit = fitCompany(weeklyReturns(await weeklyBars(symbol)), { market, ...own, sector: c.sector ? (sectorOwn[c.sector as string] ?? null) : null });
+    if (fit) rows.push({ company_id: c.id, symbol, beta: fit.beta, se: fit.se, r2: fit.r2, weeks: fit.n, fitted_at: new Date().toISOString() });
+  }
+  if (rows.length) {
+    const { error: e } = await db.from('company_factors').upsert(rows, { onConflict: 'company_id' });
+    if (e) throw new Error(e.message);
+  }
+  const weeks = [...market.keys()].sort();
+  const { error: e2 } = await db.from('factor_model').insert({ links: factorLinks(own, sectorOwn), window_from: weeks[0], window_to: weeks[weeks.length - 1], companies: rows.length });
+  if (e2) throw new Error(e2.message);
+  return rows.length;
+}
+
 async function countries(db: SupabaseClient) {
   const wb = (path: string) => getJson(`https://api.worldbank.org/v2/${path}${path.includes('?') ? '&' : '?'}format=json&per_page=400`, BROWSER);
   const [list, gdp, pop] = await Promise.all([
@@ -207,6 +246,7 @@ Deno.serve(async (req) => {
     const done = await runEdgar(db).catch((e) => (e instanceof Error ? e.message : String(e)));
     return json({ edgar: done });
   }
+  if (job === 'factors') return json({ factors: await settle(() => track(db, 'Yahoo Finance history', () => factors(db))) });
   if (job === 'facts') {
     return json({
       places: await settle(() => track(db, 'Wikidata', () => companyPlaces(db))),
