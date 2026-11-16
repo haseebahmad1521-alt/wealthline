@@ -238,6 +238,17 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
   };
 }
 
+/** An 80% range in words: "−$9.1B to −$20B" for dollars (with `money`), "−4.0% to −12%" for a share-price move. */
+/** True when a range says something (an estimate without measured uncertainty has none). */
+export function hasRange(range: [number, number] | null | undefined): range is [number, number] {
+  return !!range && Math.abs(range[1] - range[0]) > 1e-3 * Math.max(Math.abs(range[0]), Math.abs(range[1]), 1e-9);
+}
+
+export function rangeText(range: [number, number], money: ((usd: number) => string) | null): string {
+  const one = (v: number) => `${v < 0 ? '−' : '+'}${money ? money(Math.abs(v)) : simPct(v)}`;
+  return `${one(range[0])} to ${one(range[1])}`;
+}
+
 /** A simulated percentage for labels: one decimal under 10%, whole numbers above (rounded first, so 9.99… reads 10%). */
 export function simPct(v: number): string {
   const x = Math.round(Math.abs(v) * 1000) / 10;

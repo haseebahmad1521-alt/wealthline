@@ -129,6 +129,11 @@ export function dialEffects(dial: Dial, percent: number, names: Record<string, s
   }).filter(Boolean);
 }
 
+const hasWidth = (r: [number, number]) => Math.abs(r[1] - r[0]) > 1e-3 * Math.max(Math.abs(r[0]), Math.abs(r[1]), 1e-9);
+const spanText = (r: [number, number], money: ((usd: number) => string) | null) => {
+  const one = (v: number) => `${v < 0 ? '−' : '+'}${money ? money(Math.abs(v)) : `${Math.round(Math.abs(v) * 100)}%`}`;
+  return `${one(r[0])} to ${one(r[1])}`;
+};
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const joinAnd = (parts: string[]) => (parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`);
 const pctText = (p: number) => `${Math.round(Math.abs(p) * 100)}%`;
@@ -162,6 +167,7 @@ export function dialSummary(values: DialValues, frame: Frame | null, money: (usd
   const best = sorted[0] && rel(sorted[0]) > 0 ? sorted[0] : null;
   const worst = sorted.length && rel(sorted[sorted.length - 1]) < 0 ? sorted[sorted.length - 1] : null;
   const name = (p: Mover) => p.person.name.replace(/ & family$/, '');
-  const who = [best && `${name(best)} comes out best (≈+${amount(best)})`, worst && `${name(worst)} is hit hardest (≈−${amount(worst)})`].filter(Boolean).join('; ');
+  const likely = (p: Mover) => (p.range && hasWidth(p.range) ? `, likely ${spanText(p.range, p.delta != null ? money : null)}` : '');
+  const who = [best && `${name(best)} comes out best (≈+${amount(best)}${likely(best)})`, worst && `${name(worst)} is hit hardest (≈−${amount(worst)}${likely(worst)})`].filter(Boolean).join('; ');
   return { setup, overall, who: who ? `${who}.` : '' };
 }

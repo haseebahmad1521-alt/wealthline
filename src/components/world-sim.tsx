@@ -11,7 +11,7 @@ import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-nati
 import { metal } from '@/components/arena';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
-import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
+import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
@@ -618,6 +618,7 @@ function EndCard({
                     <Icon name={row.icon} size={18} tint={row.tint} />
                     <Text style={[type.caption, { color: row.tint, fontVariant: ['tabular-nums'] }]}>≈{text(p)}</Text>
                   </View>
+                  {hasRange(p.range) && <Text style={styles.range} numberOfLines={2}>{rangeText(p.range, p.delta != null ? money : null)}</Text>}
                 </View>
               ))}
             </View>
@@ -653,6 +654,9 @@ function EndCard({
           </View>
         </View>
       )}
+      <Caption style={styles.basis}>
+        Ranges are 80%, from how each company’s shares have moved with stocks, oil, China, the dollar and its sector over the last three years; private companies use their listed peers.
+      </Caption>
       {!versus && hit.length > 0 && (
         <View style={styles.chips}>
           {hit.map((f) => (
@@ -837,6 +841,10 @@ function VersusResult({ score, frame, money }: { score: VersusScore; frame: Fram
           <Icon name={value(c) >= 0 ? icons.up : icons.down} size={18} tint={value(c) >= 0 ? color.gain : color.loss} />
           <Text style={[type.caption, { color: value(c) >= 0 ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]}>≈{text(c)}</Text>
         </View>
+        {(() => {
+          const p = frame.people.find((x) => x.person.id === c.person.id);
+          return hasRange(p?.range) ? <Text style={styles.range}>{rangeText(p!.range!, basis === 'fortune' && p!.delta != null ? money : null)}</Text> : null;
+        })()}
         {r && <Caption>{r.before === r.after ? `#${r.after}` : `#${r.before} → #${r.after}`}</Caption>}
       </View>
     );
@@ -881,6 +889,8 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
+  range: { ...type.caption, fontSize: 10, lineHeight: 13, color: color.textSecondary, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  basis: { fontSize: 10, lineHeight: 13 },
   summary: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(108,184,255,.10)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(108,184,255,.35)' },
   you: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, padding: 10, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
   mine: { gap: 6 },

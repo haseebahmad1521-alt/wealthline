@@ -28,7 +28,19 @@ export function makeGuess(scenarioId: string, final: Frame | null): Guess | null
   const moved = final.people.map((p) => ({ p, r: relative(p) })).filter((x) => Math.abs(x.r) > 1e-6);
   const ups = moved.filter((x) => x.r > 0).sort((a, b) => b.r - a.r);
   const downs = moved.filter((x) => x.r < 0).sort((a, b) => a.r - b.r);
-  const clear = (list: typeof moved) => list.length > 0 && (!list[1] || Math.abs(list[1].r - list[0].r) >= 0.0015);
+  // Clear: the leader's likely range (80%) still beats the runner-up's estimate, so a right answer isn't luck.
+  const span = (p: PersonMove): [number, number] => {
+    if (!p.range) return [relative(p), relative(p)];
+    return p.delta != null && p.person.net_worth_usd ? [p.range[0] / p.person.net_worth_usd, p.range[1] / p.person.net_worth_usd] : p.range;
+  };
+  const clear = (list: typeof moved) => {
+    if (!list.length) return false;
+    if (!list[1]) return true;
+    const lead = span(list[0].p);
+    const up = list[0].r > 0;
+    const margin = up ? lead[0] - list[1].r : list[1].r - lead[1];
+    return Math.abs(list[1].r - list[0].r) >= 0.0015 && margin > 0;
+  };
   // Then dollars, among people with a recorded stake: their amounts rarely tie.
   const money = moved.filter((x) => x.p.delta != null).map((x) => ({ p: x.p, r: x.p.delta! }));
   const lost = money.filter((x) => x.r < 0).sort((a, b) => a.r - b.r);
