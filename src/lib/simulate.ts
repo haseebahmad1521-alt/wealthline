@@ -388,7 +388,7 @@ export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id:
     const top = last.people.find((p) => p.delta != null && p.delta > 0) ?? last.people.find((p) => (p.pct ?? 0) > 0);
     const low = last.people.find((p) => (p.delta ?? p.pct ?? 0) < 0); // people come sorted biggest move first
     const parts = [top && `${first(top.person.name)} up most`, low && `${first(low.person.name)} hit hardest`].filter(Boolean);
-    out.push({ month: frames.length - 1, text: `${scenario.months} months on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info', about: { kind: 'world' } });
+    out.push({ month: frames.length - 1, text: `${scenario.months === 1 ? 'A month' : `${scenario.months} months`} on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info', about: { kind: 'world' } });
   }
   return out.sort((a, b) => a.month - b.month);
 }

@@ -187,3 +187,27 @@ test('a revenue loss reaches the price through profit', () => {
   assert.ok(Math.abs(by('cnull').price - -0.1) < 1e-9);
   assert.ok(Math.abs(by('c0.2').leverage - 2.2) < 1e-9);
 });
+
+test('last time this happened: past events behind a scenario, and a replay of one', async () => {
+  const { pastEvents, replayScenario } = await import('./analogs.ts');
+  const moves = (m: number, oilPrice: number) => ({ market: m, oil: 0.1, china: 0, usd: 0, oilPrice, sector: { energy: 0.05, defense: 0.01 } });
+  const data = {
+    analogs: {},
+    events: [
+      { key: 'old', analog: 'mideast', label: 'Old one', from: '2019-01-01', weeks: 2, moves: moves(-0.02, 0.05) },
+      { key: 'new', analog: 'mideast', label: 'New one', from: '2024-01-01', weeks: 1, moves: moves(-0.03, 0.1) },
+      { key: 'other', analog: 'banking', label: 'Other', from: '2023-01-01', weeks: 2, moves: moves(-0.04, 0) },
+    ],
+  };
+  const s = scenario([{ kind: 'analog', target: 'mideast', pct: 1, from: 0, to: 1 }]);
+  assert.deepEqual(pastEvents(s, data).map((e) => e.key), ['new', 'old']);
+  assert.deepEqual(pastEvents(scenario([]), data), []);
+  const r = replayScenario('new', data)!;
+  assert.equal(r.id, 'replay:new');
+  // Measured log moves become price moves; small sector moves stay quiet; oil gets a story line.
+  assert.ok(Math.abs(r.shocks.find((x) => x.kind === 'market')!.pct - (Math.exp(-0.03) - 1)) < 1e-12);
+  assert.equal(r.shocks.some((x) => x.kind === 'sector' && x.target === 'energy' && !('quiet' in x && x.quiet)), true);
+  assert.equal(r.shocks.some((x) => x.kind === 'sector' && x.target === 'defense' && 'quiet' in x && x.quiet), true);
+  assert.equal(r.beats?.[0]?.text, 'Oil prices jump');
+  assert.equal(replayScenario('missing', data), null);
+});

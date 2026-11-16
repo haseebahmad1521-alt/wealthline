@@ -19,7 +19,7 @@ import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { chain, FOLLOW_UPS } from '@/lib/chain';
-import { expandAnalogs, type EventData } from '@/lib/analogs';
+import { expandAnalogs, pastEvents, replayScenario, type EventData } from '@/lib/analogs';
 import eventData from '@/data/events.json';
 import { MINE_KEY, myChange, readMine, type Holding } from '@/lib/mine';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
@@ -308,6 +308,17 @@ export default function World() {
   }, [view, briefSource, simEmpires, simCountries, empires]);
   const liveOdds = useLiveOdds(briefSource.map((s) => s.odds?.market).filter((x): x is string => !!x));
 
+  // "Last time this happened": the past events behind the scenario's analogs, each replayed on today's fortunes.
+  const replays = useMemo(() => (picked ? pastEvents(picked, eventData as EventData) : []), [picked]);
+  const replay = (key: string) => {
+    const s = replayScenario(key, eventData as EventData);
+    if (!s) return;
+    setAsked((x) => [s, ...x.filter((y) => y.id !== s.id)]);
+    setSimId(s.id);
+    setTick(0);
+    setPlaying(!reduceMotion);
+  };
+
   // "…and then?": the story carries on for another year from where it ended; the film resumes there.
   const followUps = sim && sim.origin !== 'dials' && sim.months < 36 ? FOLLOW_UPS : undefined;
   const continueWith = (key: string) => {
@@ -582,7 +593,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} mine={mineEnd} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -605,7 +616,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} mine={mineEnd} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'

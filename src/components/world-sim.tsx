@@ -463,11 +463,16 @@ export function SimOverlay({
   onShare,
   followUps,
   onContinue,
+  replays,
+  onReplay,
   mine,
 }: {
   mine?: { delta: number; pct: number } | null;
   followUps?: { key: string; label: string }[];
   onContinue?: (key: string) => void;
+  /** "Last time this happened": past events behind the scenario, each playable on today's fortunes. */
+  replays?: { key: string; label: string }[];
+  onReplay?: (key: string) => void;
   /** Shares the result; resolves to a short status ("Link copied"). */
   onShare?: () => Promise<string>;
   /** Guess before you play: the question (while `asking`), and how the answer went (on the end card). */
@@ -519,6 +524,8 @@ export function SimOverlay({
           onShare={onShare}
           followUps={followUps}
           onContinue={onContinue}
+          replays={replays}
+          onReplay={onReplay}
           mine={mine}
           onClose={() => setClosed(true)}
         />
@@ -573,8 +580,12 @@ function EndCard({
   onShare,
   followUps,
   onContinue,
+  replays,
+  onReplay,
   mine,
 }: {
+  replays?: { key: string; label: string }[];
+  onReplay?: (key: string) => void;
   /** What the simulation does to what the player owns. */
   mine?: { delta: number; pct: number } | null;
   /** "…and then?": follow-ups that carry the story on for another year. */
@@ -602,7 +613,7 @@ function EndCard({
         <View style={styles.flex}>
           <Caption>{simDate(start, months)} · hypothetical</Caption>
           <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
-            {title.replace(/\.$/, '')}, {months} months on.
+            {title.replace(/\.$/, '')}, {months === 1 ? 'a month' : `${months} months`} on.
           </Text>
         </View>
         {onShare && <ShareButton onShare={onShare} />}
@@ -671,6 +682,18 @@ function EndCard({
             {followUps.map((f) => (
               <Pressable key={f.key} accessibilityRole="button" accessibilityLabel={`And then: ${f.label}`} onPress={() => onContinue(f.key)} style={styles.then}>
                 <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{f.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+      {replays && onReplay && replays.length > 0 && (
+        <View style={styles.cardRow}>
+          <Text style={[type.caption, styles.rowLabel]}>Last time this happened.</Text>
+          <View style={styles.chips}>
+            {replays.slice(0, 4).map((r) => (
+              <Pressable key={r.key} accessibilityRole="button" accessibilityLabel={`Replay on today’s fortunes: ${r.label}`} onPress={() => onReplay(r.key)} style={styles.then}>
+                <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{r.label}</Text>
               </Pressable>
             ))}
           </View>
