@@ -119,7 +119,8 @@ export function PlanetScene() {
       return;
     }
     const phone = Math.min(window.innerWidth, window.innerHeight) < 600;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, phone ? 1.5 : 2));
+    const fullRatio = Math.min(window.devicePixelRatio || 1, phone ? 1.5 : 2);
+    renderer.setPixelRatio(fullRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -406,6 +407,24 @@ export function PlanetScene() {
     resize();
     window.addEventListener('resize', resize);
 
+    // Reading a profile: the planet steps back behind the text. Half resolution (blurred anyway, and cheaper), a soft
+    // blur and a slight dark tint; scaled up a touch so the blur's soft edge stays off screen. Eased by CSS.
+    const tint = document.createElement('div');
+    tint.setAttribute('aria-hidden', 'true');
+    tint.style.cssText = `position:absolute;inset:0;pointer-events:none;background:rgba(4,6,12,.32);opacity:0;transition:${reduce ? 'none' : 'opacity .6s ease'}`;
+    el.appendChild(tint);
+    el.style.transition = reduce ? 'none' : 'filter .6s ease, transform .6s ease';
+    let focused = false;
+    const setFocus = (on: boolean) => {
+      if (on === focused) return;
+      focused = on;
+      renderer.setPixelRatio(on ? fullRatio / 2 : fullRatio);
+      resize();
+      el.style.filter = on ? 'blur(10px)' : '';
+      el.style.transform = on ? 'scale(1.04)' : '';
+      tint.style.opacity = on ? '1' : '0';
+    };
+
     // Camera state, eased toward what the page asks for.
     let p = sceneState.progress;
     const angle = { ...ANGLES[sceneState.angle] };
@@ -623,6 +642,7 @@ export function PlanetScene() {
       const dt = Math.min(Math.max((now - lastT) / 1000, 0), 0.1);
       lastT = now;
       if (!reduce) adapt(now);
+      setFocus(sceneState.focus);
       try {
         place(now, dt);
         renderer.render(scene, camera);
@@ -645,6 +665,8 @@ export function PlanetScene() {
       sceneState.projectPoint = null;
       sceneState.invalidate = null;
       glow.remove();
+      tint.remove();
+      el.style.filter = el.style.transform = el.style.transition = '';
       camera.remove(rocket.group);
       rocket.dispose();
       if (still) clearInterval(still);

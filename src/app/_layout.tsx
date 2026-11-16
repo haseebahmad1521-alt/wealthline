@@ -11,7 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { HeroUINativeProvider } from 'heroui-native';
-import { Platform, Pressable, Text, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { TopNav } from '@/components/app-tabs';
@@ -25,7 +25,7 @@ import { useWarmup } from '@/lib/warmup';
 import '@/lib/install';
 // Web: lift an activation session out of the URL fragment before anything else reads the address.
 import '@/lib/activation';
-import { color, desktopBreakpoint, font } from '@/theme';
+import { color, desktopBreakpoint, font, scrim } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -62,7 +62,12 @@ export default function RootLayout() {
           headerTintColor: color.action,
           headerTitleStyle: { fontFamily: font.semibold, color: color.text },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: 'transparent' },
+          // Content scrolls under the header, which frosts and tints what passes beneath and fades out at its bottom
+          // edge instead of cutting it off (web: the ticker's scrim; iOS: the system's dark material; Android: a tint).
+          headerTransparent: true,
+          headerBackground: HeaderFrost,
+          headerBlurEffect: Platform.OS === 'ios' ? 'systemChromeMaterialDark' : undefined,
+          headerStyle: { backgroundColor: Platform.OS === 'android' ? 'rgba(4,6,11,0.86)' : 'transparent' },
           headerBackButtonDisplayMode: 'minimal',
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -93,12 +98,17 @@ export default function RootLayout() {
   );
 }
 
-/** Back/close for screens opened directly from a link, where there is no history to pop. */
+/** Web header background: a dark tint and blur that fade out a little below the header's edge. */
+function HeaderFrost() {
+  return Platform.OS === 'web' ? <View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: -40 }, scrim('bottom') as object]} /> : null;
+}
+
 function Warmup() {
   useWarmup();
   return null;
 }
 
+/** Back/close for screens opened directly from a link, where there is no history to pop. */
 function HeaderLink({ label }: { label: string }) {
   return (
     <Pressable
