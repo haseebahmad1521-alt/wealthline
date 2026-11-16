@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { HeaderHeightContext } from 'expo-router/react-navigation';
+import { useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -70,7 +71,9 @@ export function Screen({ children, scroll = true, angle = 'home' }: { children: 
   const inner = <View style={styles.inner}>{children}</View>;
   // Phones on the web: room at the bottom so the last items scroll clear of the floating tab bar.
   const floatingBar = Platform.OS === 'web' && useWindowDimensions().width < desktopBreakpoint;
-  const content = [styles.screenContent, floatingBar && { paddingBottom: 112 }];
+  // Under a transparent header (profiles, account): start below it; content then scrolls up beneath its frost.
+  const header = useContext(HeaderHeightContext) ?? 0;
+  const content = [styles.screenContent, header > 0 && { paddingTop: header + space.md }, floatingBar && { paddingBottom: 112 }];
   // Tabs stay mounted, each with its own scroll: when this screen comes back into view, the camera returns to its spot.
   const at = useRef({ y: 0, max: 0, viewport: 0 });
   useFocusEffect(
