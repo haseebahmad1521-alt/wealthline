@@ -8,14 +8,14 @@
     "scheme": "wealthline",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.haseebahmad.wealthline",
+      "bundleIdentifier": "no.arctim.wealthline",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.haseebahmad.wealthline",
+      "package": "no.arctim.wealthline",
       "adaptiveIcon": {
         "backgroundColor": "#0071E3",
         "foregroundImage": "./assets/images/adaptive-icon.png"

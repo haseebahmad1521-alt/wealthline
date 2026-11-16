@@ -3,8 +3,7 @@
 From-scratch rebuild of Wealthline, now on `main`. The original prototype (built on the Bilt platform) is archived at tag `archive/bilt-final`; nothing in the app depends on Bilt.
 Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/README.md`.
 
-**Live:** shell https://haseebahmad1521-alt.github.io/wealthline/ · app https://haseebahmad1521-alt.github.io/wealthline/app/
-(auto-deploys on every push to `main`).
+**Live:** https://haseebahmad1521-alt.github.io/wealthline/ is a static coming-soon page (`soon/`, auto-deploys on push to `main`). No web app for now: Android and iOS builds only, published by Arctic Imaginarium (`no.arctim.wealthline`); McKack deploys the landing page at wealthline.arctim.no (owner, Nov 17, 2026). `npm run build:pages` / `preview:phone` still build the web app locally for testing.
 
 ## Current state (for a fresh session — read this first)
 
@@ -353,5 +352,5 @@ The Projects tab becomes a camera pose on a rocket climbing away from Earth. The
 ## Later
 
 - Market-data updater + secure market-hours scheduler (needs verified holdings first).
-- Custom domains; native builds (EAS) with store identities (`com.haseebahmad.wealthline` is a placeholder).
+- Custom domains; native builds (EAS) with store identities (`no.arctim.wealthline`, publisher Arctic Imaginarium).
 - Dark mode (owner palette is light-only today).

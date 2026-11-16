@@ -10,10 +10,10 @@ Wealthline is fully independent: its own GitHub repository, its own Supabase pro
 | --- | --- |
 | Repository | <https://github.com/haseebahmad1521-alt/wealthline> |
 | Default / deploy branch | `main` |
-| Pages preview (shell) | <https://haseebahmad1521-alt.github.io/wealthline/> |
-| App | <https://haseebahmad1521-alt.github.io/wealthline/app/> |
+| Pages | <https://haseebahmad1521-alt.github.io/wealthline/>: static coming-soon page (`soon/`); no web app, native only (owner, Nov 17, 2026) |
+| Landing page | wealthline.arctim.no, deployed by Arctic Imaginarium (McKack), not from this repo |
 | Backend | Supabase project (ref in `PLAN.md`) |
-| Native identifiers | scheme `wealthline`; `com.haseebahmad.wealthline` (placeholder, review before any store release) |
+| Native identifiers | scheme `wealthline`; `no.arctim.wealthline` (publisher Arctic Imaginarium, owner Nov 17, 2026) |
 
 Collect credentials through a secure mechanism, never committed documentation.
 
