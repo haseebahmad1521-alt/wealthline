@@ -9,11 +9,11 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { metal } from '@/components/arena';
-import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
+import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
-import { DIALS, dialEffects, type DialValues } from '@/lib/dials';
+import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
 import type { Holding } from '@/lib/mine';
 import { color, font, radius, space, type } from '@/theme';
@@ -314,12 +314,22 @@ export function DialsPanel({
   names: Record<string, string[]>;
 }) {
   const touched = DIALS.filter((d) => values[d.key]);
+  // All the dials in one picture, rewritten as any of them moves.
+  const summary = dialSummary(values, result, money);
   const value = (p: PersonMove) => p.delta ?? p.pct ?? 0;
   const text = (p: PersonMove) => (p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct!));
   const up = (result?.people ?? []).filter((p) => value(p) > 0).slice(0, 3);
   const down = (result?.people ?? []).filter((p) => value(p) < 0).slice(0, 3);
   return (
     <>
+      {summary && (
+        <View style={styles.summary} accessibilityLiveRegion="polite">
+          <Text style={[type.headline, { color: color.text }]}>{summary.setup}</Text>
+          <Body>{summary.overall}</Body>
+          {summary.who ? <Caption>{summary.who}</Caption> : null}
+          {mine && <YouLine mine={mine} money={money} />}
+        </View>
+      )}
       {DIALS.map((d) => {
         const v = values[d.key] ?? 0;
         return (
@@ -348,7 +358,6 @@ export function DialsPanel({
       })}
       {touched.length > 0 && (
         <>
-          {mine && <YouLine mine={mine} money={money} />}
           <View style={styles.movers}>
             {[...up.map((p) => ({ p, gain: true })), ...down.map((p) => ({ p, gain: false }))].map(({ p, gain }) => (
               <View key={p.person.id} style={styles.mover} accessible accessibilityLabel={`${p.person.name}, ${gain ? 'up' : 'down'} about ${text(p)}`}>
@@ -872,6 +881,7 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
+  summary: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(108,184,255,.10)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(108,184,255,.35)' },
   you: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, padding: 10, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
   mine: { gap: 6 },
   mineHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: minTouch },

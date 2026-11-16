@@ -1,6 +1,7 @@
 // The dials sandbox: big forces as sliders. Each dial maps to scenario changes by a stated rule (shown with it), so the
 // player sets the size and `simulate` does the arithmetic on recorded values. Nothing here is a forecast.
 import type { Scenario, Shock } from '../../supabase/functions/_shared/scenario.ts';
+import type { Frame } from './simulate.ts';
 
 export type Dial = {
   key: string;
@@ -120,4 +121,41 @@ export function dialEffects(dial: Dial, percent: number, names: Record<string, s
     if (s.kind === 'market') return `All listed shares ${pctWord(s.pct)}.`;
     return '';
   }).filter(Boolean);
+}
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const joinAnd = (parts: string[]) => (parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`);
+const pctText = (p: number) => `${Math.round(Math.abs(p) * 100)}%`;
+type Mover = Frame['people'][number];
+
+/**
+ * All the dials together, in three sentences: what's set, what it adds up to (changes compound, so two dials pulling
+ * on the same sector add up or cancel), and who comes out best and worst. Built from the simulated year's last frame.
+ */
+export function dialSummary(values: DialValues, frame: Frame | null, money: (usd: number) => string): { setup: string; overall: string; who: string } | null {
+  const set = DIALS.filter((d) => values[d.key]);
+  if (!set.length || !frame) return null;
+  const setup = `${joinAnd(set.map((d, i) => (i ? lowerFirst(d.describe(values[d.key])) : d.describe(values[d.key]))))}.`;
+
+  // Each sector's average share-price move across its tracked companies, and each shaded country.
+  const bySector = new Map<string, number[]>();
+  for (const c of frame.companies) if (c.company.sector) bySector.set(c.company.sector, [...(bySector.get(c.company.sector) ?? []), c.price]);
+  const sectors = [...bySector]
+    .map(([k, v]) => ({ k, p: v.reduce((n, x) => n + x, 0) / v.length }))
+    .filter((x) => Math.abs(x.p) >= 0.01)
+    .sort((a, b) => Math.abs(b.p) - Math.abs(a.p))
+    .slice(0, 3)
+    .map((x) => `${lowerFirst(SECTOR_WORD[x.k] ?? x.k)} ${x.p > 0 ? 'rise' : 'fall'} about ${pctText(x.p)}`);
+  const places = frame.fills.slice(0, 2).map((f) => `business in ${region?.of(f.iso2) ?? f.iso2} ${f.pct > 0 ? 'grows' : 'shrinks'} about ${pctText(f.pct)}`);
+  const parts = [...places, ...sectors];
+  const overall = parts.length ? `Together: ${joinAnd(parts)}. ${frame.people.length} of the tracked fortunes move.` : 'Together, the dials cancel out: nothing tracked moves much.';
+
+  const rel = (p: Mover) => (p.delta != null && p.person.net_worth_usd ? p.delta / p.person.net_worth_usd : (p.pct ?? 0));
+  const amount = (p: Mover) => (p.delta != null ? money(Math.abs(p.delta)) : pctText(p.pct ?? 0));
+  const sorted = [...frame.people].sort((a, b) => rel(b) - rel(a));
+  const best = sorted[0] && rel(sorted[0]) > 0 ? sorted[0] : null;
+  const worst = sorted.length && rel(sorted[sorted.length - 1]) < 0 ? sorted[sorted.length - 1] : null;
+  const name = (p: Mover) => p.person.name.replace(/ & family$/, '');
+  const who = [best && `${name(best)} comes out best (≈+${amount(best)})`, worst && `${name(worst)} is hit hardest (≈−${amount(worst)})`].filter(Boolean).join('; ');
+  return { setup, overall, who: who ? `${who}.` : '' };
 }
