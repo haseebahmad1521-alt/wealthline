@@ -117,6 +117,16 @@ migration is applied and the function redeployed:
 npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000000_company_margins.sql
 ```
 
+## People's own words (with the next function deploy)
+
+The daily briefing can now show what tracked people said publicly about a storyline. Grok proposes quotes from its own
+search; the `scenarios` function keeps one only if those exact words are on the cited page (X posts via X's embed),
+near the person's name. Apply the additive column, then redeploy `scenarios`:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000100_scenario_statements.sql
+```
+
 ## For the lobbying ties (optional)
 
 The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on

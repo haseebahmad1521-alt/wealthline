@@ -726,7 +726,10 @@ export function BriefingPanel({
   date,
   money,
   onWatch,
+  nameOf,
 }: {
+  /** A tracked person's name from their slug (for statements). */
+  nameOf: (slug: string) => string;
   items: BriefingItem[];
   /** True while the daily briefing isn't on yet: the built-in examples stand in. */
   sample: boolean;
@@ -802,6 +805,25 @@ export function BriefingPanel({
                   </Pressable>
                 ))}
                 <Caption style={styles.basis}>From the public record (USAspending.gov). A tie shows a documented connection, not a claim that anyone is driving events.</Caption>
+              </View>
+            )}
+            {s.statements && s.statements.length > 0 && (
+              <View style={styles.ties}>
+                <Text style={[type.caption, styles.rowLabel]}>In their words</Text>
+                {s.statements.map((q) => {
+                  const who = nameOf(q.person).replace(/ & family$/, '');
+                  const when = q.said ? new Date(`${q.said}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+                  return (
+                    <Pressable key={`${q.person}:${q.url}`} accessibilityRole="link" accessibilityLabel={`${who}${when ? `, ${when}` : ''}: ${q.quote}. Opens ${q.label}.`} onPress={() => open(q.url)} style={styles.tie}>
+                      <Caption style={[styles.flex, { color: color.text }]} numberOfLines={4}>
+                        “{q.quote}” <Text style={{ fontWeight: '600' }}>{who}</Text>
+                        {when ? `, ${when}` : ''} · {q.label}
+                      </Caption>
+                      <Icon name={icons.link} size={12} tint={color.action} />
+                    </Pressable>
+                  );
+                })}
+                <Caption style={styles.basis}>Each quote was found by Grok’s search and checked word for word against its page.</Caption>
               </View>
             )}
             <Pressable accessibilityRole="button" accessibilityLabel={`Watch: ${s.title}`} onPress={() => onWatch(s)} style={styles.watch}>

@@ -60,7 +60,7 @@ function withFits(base: ReturnType<typeof fromReference>, raw: typeof REFERENCE.
 }
 
 type Row = Omit<Scenario, 'origin'> & { origin: 'daily' | 'prompt' | 'versus'; created_at?: string };
-const fromRow = (r: Row): Scenario => ({ ...r, assumptions: r.assumptions ?? [], sources: r.sources ?? [], beats: r.beats ?? [] });
+const fromRow = (r: Row): Scenario => ({ ...r, assumptions: r.assumptions ?? [], sources: r.sources ?? [], beats: r.beats ?? [], statements: r.statements ?? [] });
 
 /** The latest daily set from Grok, most plausible first; empty when there is none (or the table isn't there yet). */
 export function useDailyScenarios() {

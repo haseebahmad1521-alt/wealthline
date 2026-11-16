@@ -652,6 +652,7 @@ export default function World() {
                     mostAsked={mostAsked.data ?? []}
                     brief={
                       <BriefingPanel
+                        nameOf={(slug) => empires.find((e) => e.person.slug === slug)?.person.name ?? slug}
                         items={briefItems}
                         sample={!daily.data?.length}
                         live={liveOdds.data ?? new Map()}

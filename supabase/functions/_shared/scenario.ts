@@ -90,6 +90,8 @@ export type Scenario = {
   sources: Source[];
   prompt?: string | null;
   declined?: string | null;
+  /** People's own words on the subject, each checked against its page (statements.ts). */
+  statements?: { person: string; quote: string; said: string | null; url: string; label: string }[];
   run_date?: string;
   position?: number;
 };
