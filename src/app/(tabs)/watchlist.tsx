@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { PageSearch } from '@/components/page-search';
+import { UnusualWeeks } from '@/components/why';
 import { PersonList } from '@/components/person-row';
 import { Body, Button, Caption, Heading, Icon, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { usePeople, useWatchlist } from '@/lib/data';
@@ -57,7 +58,10 @@ export default function Watchlist() {
             <>
               <PageSearch context="watchlist" />
               {shown.length ? (
-                <PersonList people={shown} />
+                <>
+                  <UnusualWeeks personIds={shown.map((p) => p.id)} />
+                  <PersonList people={shown} />
+                </>
               ) : (
                 <StateView empty={{ title: `No one you watch matches “${query}”.`, body: 'Try a different name, source, or country.' }} />
               )}
