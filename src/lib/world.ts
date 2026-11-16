@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 
 import { usePeople, type Person } from '@/lib/data';
 import { db } from '@/lib/supabase';
+import stakeReference from '@/data/stakes.json';
 
 export type SiteKind = 'hq' | 'office' | 'factory' | 'data_center' | 'launch_site' | 'store' | 'research' | 'other';
 export type Site = { company_id: string; kind: SiteKind; name: string; city: string | null; country: string | null; lat: number; lng: number; source_url: string | null };
@@ -26,6 +27,7 @@ export type CompanyView = Company & { sites: Site[]; regions: RegionShare[]; quo
 /** A recorded share count (SEC Form 4 or Schedule 13G/13D) valued at the latest observed price. */
 export type Stake = { company: CompanyView; shares: number; value: number | null; asOf: string | null; label: string | null; url: string | null; note: string | null };
 export type Empire = { person: Person; companies: CompanyView[]; hq: { lat: number; lng: number } | null; stakes: Stake[] };
+type ReferenceStake = { person_id: string; company_id: string; shares: number; label: string | null; url: string | null; as_of: string | null; note: string | null };
 type ShareRow = { person_id: string; company_id: string; shares_owned: number; shares_as_of: string | null; shares_source_label: string | null; shares_source_url: string | null; shares_note: string | null };
 export type Country = { iso2: string; name: string; gdp_usd: number | null; gdp_year: number | null; source_url: string | null };
 
@@ -106,6 +108,17 @@ function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof
             const shares = Number(h.shares_owned);
             return { company, shares, value: company.quote ? shares * company.quote.price : null, asOf: h.shares_as_of, label: h.shares_source_label, url: h.shares_source_url, note: h.shares_note };
           });
+        // Share counts the ownership import found in SEC filings but the database doesn't have yet
+        // (src/data/stakes.json, from supabase/import/ownership.sql). Used only where it's substantial: worth at least a
+        // tenth of the recorded fortune, since a Form 4 that covers one share class or one trust can be far from the
+        // whole stake.
+        for (const r of (stakeReference as { stakes: ReferenceStake[] }).stakes) {
+          if (r.person_id !== person.id || stakes.some((x) => x.company.id === r.company_id)) continue;
+          const company = companies.get(r.company_id);
+          const value = company?.quote ? r.shares * company.quote.price : null;
+          if (!company || value == null || !person.net_worth_usd || value < 0.1 * person.net_worth_usd) continue;
+          stakes.push({ company, shares: r.shares, value, asOf: r.as_of, label: r.label, url: r.url, note: r.note ?? 'From the SEC ownership import; not yet in the database.' });
+        }
         return { person, companies: owned, hq: main ? { lat: main.hq_lat!, lng: main.hq_lng! } : null, stakes };
       })
       .filter((e) => e.companies.length > 0);

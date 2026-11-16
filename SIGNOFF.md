@@ -94,6 +94,19 @@ Run these from the repository, logged in to the Supabase CLI with an account tha
 Invite the developer's Supabase account to the Wealthline organisation (Dashboard → Organization → Team) with a role
 that can run SQL and deploy functions. They can then do steps 1–5.
 
+## Recorded share counts (recommended)
+
+`supabase/import/ownership.sql` (generated Nov 1 from SEC Form 4 and Schedule 13G/13D filings) has 23 share counts,
+but the database holds only 6 of them. The app already uses the substantial ones from a copy
+(`src/data/stakes.json`); applying the file puts them in the database properly:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/import/ownership.sql
+```
+
+Three look partial (one share class or one trust only): the Atlassian founders (275,940 shares each), a Palantir
+holder (53,487) and Workday's founder (105,049). Worth a look before applying; the app leaves them out.
+
 ## For the lobbying ties (optional)
 
 The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on
