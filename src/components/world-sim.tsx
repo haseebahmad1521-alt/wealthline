@@ -15,6 +15,7 @@ import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type Sim
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
+import type { Holding } from '@/lib/mine';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
@@ -39,7 +40,10 @@ export function SimulatePanel({
   dials,
   score,
   challengeId,
+  you,
 }: {
+  /** The "You" editor (what the player owns), shown under the tabs. */
+  you: ReactNode;
   score: Score;
   challengeId: string | null;
   scenarios: Scenario[];
@@ -74,6 +78,7 @@ export function SimulatePanel({
           </Pressable>
         ))}
       </View>
+      {you}
       {mode === 'dials' ? dials : mode === 'versus' ? versus : (
       <>
       {score.played > 0 && (
@@ -280,7 +285,9 @@ export function DialsPanel({
   result,
   money,
   names,
+  mine,
 }: {
+  mine?: { delta: number; pct: number } | null;
   values: DialValues;
   onChange: (v: DialValues) => void;
   result: Frame | null;
@@ -323,6 +330,7 @@ export function DialsPanel({
       })}
       {touched.length > 0 && (
         <>
+          {mine && <YouLine mine={mine} money={money} />}
           <View style={styles.movers}>
             {[...up.map((p) => ({ p, gain: true })), ...down.map((p) => ({ p, gain: false }))].map(({ p, gain }) => (
               <View key={p.person.id} style={styles.mover} accessible accessibilityLabel={`${p.person.name}, ${gain ? 'up' : 'down'} about ${text(p)}`}>
@@ -408,7 +416,9 @@ export function SimOverlay({
   onShare,
   followUps,
   onContinue,
+  mine,
 }: {
+  mine?: { delta: number; pct: number } | null;
   followUps?: { key: string; label: string }[];
   onContinue?: (key: string) => void;
   /** Shares the result; resolves to a short status ("Link copied"). */
@@ -462,6 +472,7 @@ export function SimOverlay({
           onShare={onShare}
           followUps={followUps}
           onContinue={onContinue}
+          mine={mine}
           onClose={() => setClosed(true)}
         />
       ) : (
@@ -515,7 +526,10 @@ function EndCard({
   onShare,
   followUps,
   onContinue,
+  mine,
 }: {
+  /** What the simulation does to what the player owns. */
+  mine?: { delta: number; pct: number } | null;
   /** "…and then?": follow-ups that carry the story on for another year. */
   followUps?: { key: string; label: string }[];
   onContinue?: (key: string) => void;
@@ -557,6 +571,7 @@ function EndCard({
           <Caption>{verdict.right ? `+${verdict.gained} points · streak ${verdict.streak}` : `You picked ${verdict.pick ? lastName(verdict.pick.name) : 'nobody'}. Streak reset.`}</Caption>
         </View>
       )}
+      {mine && <YouLine mine={mine} money={money} />}
       {versus && <VersusResult score={versus} frame={frame} money={money} />}
       {!versus && [
         { label: 'Gained', people: up, tint: color.gain, icon: icons.up },
@@ -622,6 +637,109 @@ function EndCard({
         </View>
       )}
     </Animated.View>
+  );
+}
+
+/** What a simulation does to what the player owns. */
+function YouLine({ mine, money }: { mine: { delta: number; pct: number }; money: (usd: number) => string }) {
+  const up = mine.delta >= 0;
+  const tint = Math.abs(mine.delta) < 0.5 ? color.textSecondary : up ? color.gain : color.loss;
+  return (
+    <View style={styles.you} accessible accessibilityLabel={`You: ${up ? 'up' : 'down'} about ${money(Math.abs(mine.delta))}, ${Math.round(Math.abs(mine.pct) * 100)} percent`}>
+      <Text style={[type.headline, { color: color.text }]}>You</Text>
+      <View style={styles.tileMove}>
+        <Icon name={up ? icons.up : icons.down} size={18} tint={tint} />
+        <Text style={[type.headline, { color: tint, fontVariant: ['tabular-nums'] }]}>
+          ≈{money(Math.abs(mine.delta))} ({Math.round(Math.abs(mine.pct) * 1000) / 10}%)
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/** "You": what the player owns in tracked companies, on this device only. Collapsed to one line until opened. */
+export function MineEditor({ holdings, companies, onChange, money }: { holdings: Holding[]; companies: { id: string; name: string }[]; onChange: (h: Holding[]) => void; money: (usd: number) => string }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
+  const [amount, setAmount] = useState('');
+  const name = (id: string) => companies.find((c) => c.id === id)?.name ?? 'A company';
+  const total = holdings.reduce((n, h) => n + h.usd, 0);
+  const q = query.trim().toLowerCase();
+  const matches = q ? companies.filter((c) => c.name.toLowerCase().includes(q) && !holdings.some((h) => h.company === c.id)).slice(0, 6) : [];
+  const usd = Number(amount.replace(/[^0-9.]/g, ''));
+  const add = () => {
+    if (!picked || !(usd > 0)) return;
+    onChange([...holdings.filter((h) => h.company !== picked.id), { company: picked.id, usd: Math.round(usd) }]);
+    setPicked(null);
+    setQuery('');
+    setAmount('');
+  };
+  return (
+    <View style={styles.mine}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.mineHead}>
+        <Text style={[type.headline, styles.flex, { color: color.text }]} numberOfLines={1}>
+          {holdings.length ? `You: ${money(total)} in ${holdings.length} ${holdings.length === 1 ? 'company' : 'companies'}` : 'Add what you own, to see what it does to you'}
+        </Text>
+        <Icon name={open ? icons.close : icons.plus} size={16} tint={color.textSecondary} />
+      </Pressable>
+      {open && (
+        <>
+          {holdings.map((h) => (
+            <View key={h.company} style={styles.mineRow}>
+              <Text style={[type.body, styles.flex, { color: color.text }]} numberOfLines={1}>
+                {name(h.company)}
+              </Text>
+              <Text style={[type.number, { color: color.text, fontSize: 15 }]}>{money(h.usd)}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${name(h.company)}`} onPress={() => onChange(holdings.filter((x) => x.company !== h.company))} hitSlop={8} style={styles.close}>
+                <Icon name={icons.close} size={14} tint={color.textSecondary} />
+              </Pressable>
+            </View>
+          ))}
+          {picked ? (
+            <View style={styles.inputRow}>
+              <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+                {picked.name}
+              </Text>
+              <TextInput
+                accessibilityLabel={`Amount in ${picked.name}, in dollars`}
+                placeholder="$ amount"
+                placeholderTextColor={color.textSecondary}
+                keyboardType="numeric"
+                value={amount}
+                onChangeText={setAmount}
+                onSubmitEditing={add}
+                style={styles.input}
+              />
+              <Pressable accessibilityRole="button" accessibilityLabel="Add" disabled={!(usd > 0)} onPress={add} style={[styles.ask, !(usd > 0) && styles.dim]}>
+                <Icon name={icons.check} size={18} tint={color.onAction} />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.inputRow}>
+              <TextInput
+                accessibilityLabel="Find a company you own"
+                placeholder="A company you own: Tesla, Nvidia…"
+                placeholderTextColor={color.textSecondary}
+                value={query}
+                onChangeText={setQuery}
+                style={styles.input}
+              />
+            </View>
+          )}
+          {matches.length > 0 && !picked && (
+            <View style={styles.chips}>
+              {matches.map((c) => (
+                <Pressable key={c.id} accessibilityRole="button" onPress={() => setPicked(c)} style={styles.then}>
+                  <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{c.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+          <Caption>Kept on this device only, never sent anywhere. Each holding moves with its company in the simulation.</Caption>
+        </>
+      )}
+    </View>
   );
 }
 
@@ -736,6 +854,10 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
+  you: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, padding: 10, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
+  mine: { gap: 6 },
+  mineHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: minTouch },
+  mineRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 36 },
   then: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: 'rgba(108,184,255,.18)' },
   share: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: color.action },
   guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
