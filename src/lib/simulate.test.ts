@@ -103,7 +103,7 @@ test('notifications: each change as it starts, the sale, overtakes, and a closin
 });
 
 test('notifications queue so each gets its own moment, and the film lasts until the last has shown', () => {
-  const ev = [0, 0, 0, 5].map((month, i) => ({ month, text: String(i), tone: 'info' as const }));
+  const ev = [0, 0, 0, 5].map((month, i) => ({ month, text: String(i), tone: 'info' as const, about: { kind: 'world' as const } }));
   const { notes, length } = schedule(ev, 6);
   assert.deepEqual(notes.map((n) => n.tick), [0, 2, 4, 15]);
   assert.equal(length, 20); // 15 + 6 − 1 beats 6 months × 3

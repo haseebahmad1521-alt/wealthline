@@ -15,12 +15,14 @@ import { color } from '@/theme';
 const graticule = geoGraticule10();
 
 export type GlobeSite = { key: string; lat: number; lng: number; kind: SiteKind; group: string; live: boolean };
-export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null;
+export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null; /** Stepped back (a simulation that doesn't touch them). */ dim?: boolean;
   /** Today view: change since the previous recorded value, already formatted ("$7.2B"), with its direction. */
   change?: { text: string; dir: 1 | -1 | 0; /** A simulated value, drawn dashed with "≈". */ projected?: boolean } | null };
 /** A money flow: from where revenue is earned to the company's HQ. weight 0–1 sets the line width. */
 export type GlobeArc = { key: string; from: LatLng; to: LatLng; weight: number; group: string; risk?: boolean };
 /** A shaded country; strength 0–1. */
+/** Where something is happening in a simulation: rings spread from it (a still ring with reduced motion). */
+export type GlobePulse = { key: string; lat: number; lng: number; tone: 'loss' | 'gain' | 'info'; strength: number };
 /** `risk`: a loss (red); `gain`: a gain (green), both in simulations; otherwise a neutral tint by strength. */
 export type GlobeFill = { iso2: string; strength: number; risk?: boolean; gain?: boolean };
 
@@ -58,8 +60,10 @@ export function Globe({
   label,
   arcs = [],
   fills = [],
+  pulses = [],
 }: {
   size: number;
+  pulses?: GlobePulse[];
   sites: GlobeSite[];
   markers: GlobeMarker[];
   arcs?: GlobeArc[];
@@ -223,6 +227,12 @@ export function Globe({
   });
 
   // Portraits at HQs, only well inside the front (65° from centre); people sharing a city fan out around it.
+  // Simulation events: a still ring where something is happening (the web planet animates them).
+  const pulseRings = pulses.flatMap((p) => {
+    const xy = facing(p.lng, p.lat) != null ? projection([p.lng, p.lat]) : null;
+    const tint = p.tone === 'loss' ? color.loss : p.tone === 'gain' ? color.gain : color.action;
+    return xy ? [<Circle key={`pulse-${p.key}`} cx={xy[0]} cy={xy[1]} r={(10 + 14 * p.strength) * scale} fill="none" stroke={tint} strokeWidth={2} strokeOpacity={0.8} />] : [];
+  });
   const placed = markers.flatMap((m) => {
     const vis = facing(m.lng, m.lat);
     const xy = vis != null && geoDistance([m.lng, m.lat], centre) < (65 * Math.PI) / 180 ? projection([m.lng, m.lat]) : null;
@@ -251,7 +261,7 @@ export function Globe({
       if (!tags.some((t) => Math.abs(t.x - x) < (t.w + w) / 2 + 2 && Math.abs(t.y - ty) < 18)) tags.push({ key: m.key, x, y: ty, w, text, tint, dashed: !!ch.projected });
     }
     return (
-      <G key={m.key} opacity={(faded ? 0.45 : 1) * m.vis} onPress={onSelect ? () => onSelect(m.key) : undefined}>
+      <G key={m.key} opacity={(faded ? 0.45 : 1) * (m.dim ? 0.35 : 1) * m.vis} onPress={onSelect ? () => onSelect(m.key) : undefined}>
         <Circle cx={x} cy={y} r={d / 2 + 2} fill={color.surface} stroke={tint ?? (on ? color.action : color.hairline)} strokeWidth={tint ? 2.5 : on ? 2 : 1} strokeDasharray={ch?.projected ? '4 3' : undefined} />
         {m.uri ? (
           <>
@@ -294,6 +304,7 @@ export function Globe({
         {shading}
         {flows}
         {rings}
+        {pulseRings}
         {pins}
         {tags.map((t) => (
           <G key={`tag-${t.key}`} pointerEvents="none">

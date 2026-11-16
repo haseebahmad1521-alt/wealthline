@@ -3,6 +3,7 @@
 // things happen, and a play bar). Every figure on the globe comes from `simulate` (src/lib/simulate.ts): recorded
 // revenue, GDP and stakes times the scenario's stated changes, drawn dashed with "≈".
 import * as WebBrowser from 'expo-web-browser';
+import { Slider } from 'heroui-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
@@ -15,6 +16,13 @@ import { color, font, radius, space, type } from '@/theme';
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
 const TONE = { gain: color.gain, loss: color.loss, info: color.action } as const;
+
+/** The simulated month as a date ("Mar 2027"), counted from the scenario's day (or today). */
+export function simDate(start: string | null, month: number): string {
+  const d = start ? new Date(`${start}T12:00:00Z`) : new Date();
+  d.setUTCMonth(d.getUTCMonth() + month);
+  return d.toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
 
 export function SimulatePanel({
   scenarios,
@@ -101,15 +109,19 @@ export function SimOverlay({
   tick,
   length,
   month,
+  start,
   playing,
   onPlay,
+  onScrub,
 }: {
   notes: (SimEvent & { tick: number })[];
   tick: number;
   length: number;
   month: number;
+  start: string | null;
   playing: boolean;
   onPlay: () => void;
+  onScrub: (tick: number) => void;
 }) {
   // Each notification stays up for NOTE_LIFE ticks; at most three at once, newest last.
   const shown = notes.filter((e) => e.tick <= tick && e.tick > tick - NOTE_LIFE).slice(-3);
@@ -135,10 +147,15 @@ export function SimOverlay({
         <Pressable accessibilityRole="button" accessibilityLabel={playing ? 'Pause' : done ? 'Play again' : 'Play'} onPress={onPlay} style={styles.play}>
           <Icon name={playing ? icons.pause : done ? icons.replay : icons.play} size={20} tint={color.onAction} />
         </Pressable>
-        <View style={styles.track} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: length, now: tick }}>
-          <View style={[styles.fill, { width: `${(Math.min(tick, length) / Math.max(length, 1)) * 100}%` }]} />
+        <View style={styles.flex}>
+          <Slider value={Math.min(tick, length)} minValue={0} maxValue={Math.max(length, 1)} step={1} aria-label="Time in the simulation" onChange={(v) => onScrub(Array.isArray(v) ? v[0] : v)}>
+            <Slider.Track>
+              <Slider.Fill />
+              <Slider.Thumb />
+            </Slider.Track>
+          </Slider>
         </View>
-        <Text style={[type.caption, styles.month]}>{month === 0 ? 'Now' : `M${month}`}</Text>
+        <Text style={[type.caption, styles.month]}>{month === 0 ? 'Today' : simDate(start, month)}</Text>
       </View>
     </View>
   );
@@ -173,7 +190,6 @@ const styles = StyleSheet.create({
   toastText: { color: color.text, fontSize: 13, lineHeight: 17, flexShrink: 1 },
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.sm, alignSelf: 'stretch', paddingRight: 52 /* clear of the zoom buttons */ },
   play: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.action, alignItems: 'center', justifyContent: 'center' },
-  track: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.18)', overflow: 'hidden' },
-  fill: { height: 4, borderRadius: 2, backgroundColor: color.action },
-  month: { color: color.text, minWidth: 30, fontVariant: ['tabular-nums'] },
+  month: { color: color.text, minWidth: 64, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  flex: { flex: 1, minWidth: 0 },
 });

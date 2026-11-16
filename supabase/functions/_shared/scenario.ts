@@ -16,14 +16,14 @@ const SECTOR_WORDS: [RegExp, Sector][] = [
   [/\b(automotive|automobile|motor vehicle|car manufactur|electric vehicle)/i, 'autos'],
   [/\b(airline|aviation services|shipping|logistics|freight|railway|transport|courier|delivery)/i, 'transport'],
   [/\b(bank|financ|investment|insurance|asset management|private equity|hedge fund|stock exchange|brokerage|payment|fintech|venture capital)/i, 'finance'],
-  [/\b(pharmaceutic|biotech|health|medical|hospital|drug)/i, 'health'],
+  [/\b(pharmaceutic|biotech|health ?care|medical|hospitals?\b|drug)/i, 'health'],
   [/\b(oil|petroleum|natural gas|electric(ity)? (utility|generation)|power generation|refin|coal|energy industry)/i, 'energy'],
-  [/\b(software|internet|semiconductor|computer|information technology|electronics|cloud|artificial intelligence|e-commerce|online|video game|technology)/i, 'technology'],
-  [/\b(media|entertainment|publishing|broadcast|film|music|news|telecommunication|mass media|advertising)/i, 'media'],
+  [/\b(software|internet|semiconductor|computer|information technology|electronics|cloud|artificial intelligence|e-commerce|online|video game|technology|robotics|closed-circuit television)/i, 'technology'],
+  [/\b(media|entertainment|publishing|broadcast|film|music|news|journalism|telecommunication|mass media|advertising|professional sport)/i, 'media'],
   [/\b(real estate|property|construction of buildings)/i, 'real_estate'],
   [/\b(steel|mining|metal|chemical|cement|paper|materials)/i, 'materials'],
-  [/\b(retail|apparel|fashion|clothing|luxury|food|beverage|brewing|cosmetic|consumer|supermarket|restaurant|hospitality|hotel|tobacco)/i, 'consumer'],
-  [/\b(aerospace|defen[cs]e|conglomerate|industr|manufactur|machinery|engineering|construction|infrastructure)/i, 'industrials'],
+  [/\b(retail|apparel|fashion|clothing|luxury|food|beverage|brewing|cosmetic|consumer|supermarket|grocery|restaurant|hospitality|hotel|tourism|travel|tobacco)/i, 'consumer'],
+  [/\b(aerospace|defen[cs]e|conglomerate|industr|manufactur|machinery|engineering|construction|infrastructure|equipment rental)/i, 'industrials'],
 ];
 
 /** The sector for a company's Wikidata industry labels (highest-priority match), with the label it came from. */

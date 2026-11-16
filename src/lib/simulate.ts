@@ -165,7 +165,16 @@ export function simPct(v: number): string {
   return `${x < 10 ? x.toFixed(1) : Math.round(x)}%`;
 }
 
-export type SimEvent = { month: number; text: string; tone: 'gain' | 'loss' | 'info' };
+/** What a notification is about, so the camera can go there: a country, a company, a person, a sector (its most-moved
+ * company), the start (the scenario's first place or sale), or the whole world (markets, the ending). */
+export type SimSubject =
+  | { kind: 'place'; iso2: string }
+  | { kind: 'company'; id: string }
+  | { kind: 'person'; slug: string }
+  | { kind: 'sector'; sector: string }
+  | { kind: 'start' }
+  | { kind: 'world' };
+export type SimEvent = { month: number; text: string; tone: 'gain' | 'loss' | 'info'; about: SimSubject };
 
 /** The film runs in ticks, a few per month; notifications queue so each gets its own moment on screen. */
 export const TICKS_PER_MONTH = 3;
@@ -198,32 +207,39 @@ const moveWord = (p: number) => (Math.abs(p) >= 0.2 ? (p < 0 ? 'tumble' : 'soar'
  * overtake each month in the top ten, and a closing line. `frames[m]` is `simulate(…, m)`.
  */
 export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id: string) => string, personName: (slug: string) => string): SimEvent[] {
-  const out: SimEvent[] = [{ month: 0, text: scenario.title.replace(/\.$/, ''), tone: 'info' }];
+  const out: SimEvent[] = [{ month: 0, text: scenario.title.replace(/\.$/, ''), tone: 'info', about: { kind: 'start' } }];
   for (const s of scenario.shocks) {
     const tone = s.pct < 0 ? 'loss' : 'gain';
     const at = s.kind === 'transfer' ? s.to : s.from;
-    if (s.kind === 'place') out.push({ month: at, text: `Business in ${countryName(s.target)} ${size(s.pct)}`, tone });
-    if (s.kind === 'sector') out.push({ month: at, text: `${SECTOR_NAME[s.target] ?? s.target} shares ${moveWord(s.pct)}`, tone });
-    if (s.kind === 'market') out.push({ month: at, text: `Markets ${s.pct < 0 ? 'sell off' : 'rally'}`, tone });
-    if (s.kind === 'company') out.push({ month: at, text: `${companyName(s.target)} shares ${moveWord(s.pct)}`, tone });
-    if (s.kind === 'transfer') out.push({ month: at, text: `${first(personName(s.buyer))} buys ${first(personName(s.person))}’s ${companyName(s.target)} stake`, tone: 'info' });
+    if (s.kind === 'place') out.push({ month: at, text: `Business in ${countryName(s.target)} ${size(s.pct)}`, tone, about: { kind: 'place', iso2: s.target } });
+    if (s.kind === 'sector') out.push({ month: at, text: `${SECTOR_NAME[s.target] ?? s.target} shares ${moveWord(s.pct)}`, tone, about: { kind: 'sector', sector: s.target } });
+    if (s.kind === 'market') out.push({ month: at, text: `Markets ${s.pct < 0 ? 'sell off' : 'rally'}`, tone, about: { kind: 'world' } });
+    if (s.kind === 'company') out.push({ month: at, text: `${companyName(s.target)} shares ${moveWord(s.pct)}`, tone, about: { kind: 'company', id: s.target } });
+    if (s.kind === 'transfer') out.push({ month: at, text: `${first(personName(s.buyer))} buys ${first(personName(s.person))}’s ${companyName(s.target)} stake`, tone: 'info', about: { kind: 'person', slug: s.buyer } });
   }
-  // Overtakes: the biggest jump into or within the top ten, once per month.
+  // Overtakes: each month's biggest jump within the top five; only the three biggest of the film make it, so the
+  // scenario's own events stay the story.
+  const jumps: { m: number; size: number; e: SimEvent }[] = [];
   for (let m = 1; m < frames.length; m++) {
     const before = new Map(frames[m - 1].ranks.map((r) => [r.person.id, r.after]));
     const jump = frames[m].ranks
-      .filter((r) => r.after <= 10 && (before.get(r.person.id) ?? 99) > r.after)
+      .filter((r) => r.after <= 5 && (before.get(r.person.id) ?? 99) > r.after)
       .sort((a, b) => (before.get(b.person.id)! - b.after) - (before.get(a.person.id)! - a.after))[0];
     if (!jump) continue;
     const passed = frames[m].ranks.find((r) => r.after === jump.after + 1);
-    out.push({ month: m, text: passed ? `${first(jump.person.name)} passes ${first(passed.person.name)} for #${jump.after}` : `${first(jump.person.name)} climbs to #${jump.after}`, tone: 'gain' });
+    jumps.push({
+      m,
+      size: (before.get(jump.person.id)! - jump.after) * 10 + (6 - jump.after),
+      e: { month: m, text: passed ? `${first(jump.person.name)} passes ${first(passed.person.name)} for #${jump.after}` : `${first(jump.person.name)} climbs to #${jump.after}`, tone: 'gain', about: { kind: 'person', slug: jump.person.slug } },
+    });
   }
+  for (const j of jumps.sort((a, b) => b.size - a.size).slice(0, 3)) out.push(j.e);
   const last = frames[frames.length - 1];
   if (last && frames.length > 1) {
     const top = last.people.find((p) => p.delta != null && p.delta > 0) ?? last.people.find((p) => (p.pct ?? 0) > 0);
     const low = last.people.find((p) => (p.delta ?? p.pct ?? 0) < 0); // people come sorted biggest move first
     const parts = [top && `${first(top.person.name)} up most`, low && `${first(low.person.name)} hit hardest`].filter(Boolean);
-    out.push({ month: frames.length - 1, text: `${scenario.months} months on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info' });
+    out.push({ month: frames.length - 1, text: `${scenario.months} months on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info', about: { kind: 'world' } });
   }
   return out.sort((a, b) => a.month - b.month);
 }

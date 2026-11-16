@@ -1,0 +1,548 @@
+{
+ "built": "2026-11-16",
+ "sources": [
+  "World Bank country API (region)",
+  "Wikidata P452 (industry)"
+ ],
+ "regions": {
+  "AW": "LCN",
+  "AF": "MEA",
+  "AO": "SSF",
+  "AL": "ECS",
+  "AD": "ECS",
+  "AE": "MEA",
+  "AR": "LCN",
+  "AM": "ECS",
+  "AS": "EAS",
+  "AG": "LCN",
+  "AU": "EAS",
+  "AT": "ECS",
+  "AZ": "ECS",
+  "BI": "SSF",
+  "BE": "ECS",
+  "BJ": "SSF",
+  "BF": "SSF",
+  "BD": "SAS",
+  "BG": "ECS",
+  "BH": "MEA",
+  "BS": "LCN",
+  "BA": "ECS",
+  "BY": "ECS",
+  "BZ": "LCN",
+  "BM": "NAC",
+  "BO": "LCN",
+  "BR": "LCN",
+  "BB": "LCN",
+  "BN": "EAS",
+  "BT": "SAS",
+  "BW": "SSF",
+  "CF": "SSF",
+  "CA": "NAC",
+  "CH": "ECS",
+  "JG": "ECS",
+  "CL": "LCN",
+  "CN": "EAS",
+  "CI": "SSF",
+  "CM": "SSF",
+  "CD": "SSF",
+  "CG": "SSF",
+  "CO": "LCN",
+  "KM": "SSF",
+  "CV": "SSF",
+  "CR": "LCN",
+  "CU": "LCN",
+  "CW": "LCN",
+  "KY": "LCN",
+  "CY": "ECS",
+  "CZ": "ECS",
+  "DE": "ECS",
+  "DJ": "MEA",
+  "DM": "LCN",
+  "DK": "ECS",
+  "DO": "LCN",
+  "DZ": "MEA",
+  "EC": "LCN",
+  "EG": "MEA",
+  "ER": "SSF",
+  "ES": "ECS",
+  "EE": "ECS",
+  "ET": "SSF",
+  "FI": "ECS",
+  "FJ": "EAS",
+  "FR": "ECS",
+  "FO": "ECS",
+  "FM": "EAS",
+  "GA": "SSF",
+  "GB": "ECS",
+  "GE": "ECS",
+  "GH": "SSF",
+  "GI": "ECS",
+  "GN": "SSF",
+  "GM": "SSF",
+  "GW": "SSF",
+  "GQ": "SSF",
+  "GR": "ECS",
+  "GD": "LCN",
+  "GL": "ECS",
+  "GT": "LCN",
+  "GU": "EAS",
+  "GY": "LCN",
+  "HK": "EAS",
+  "HN": "LCN",
+  "HR": "ECS",
+  "HT": "LCN",
+  "HU": "ECS",
+  "ID": "EAS",
+  "IM": "ECS",
+  "IN": "SAS",
+  "IE": "ECS",
+  "IR": "MEA",
+  "IQ": "MEA",
+  "IS": "ECS",
+  "IL": "MEA",
+  "IT": "ECS",
+  "JM": "LCN",
+  "JO": "MEA",
+  "JP": "EAS",
+  "KZ": "ECS",
+  "KE": "SSF",
+  "KG": "ECS",
+  "KH": "EAS",
+  "KI": "EAS",
+  "KN": "LCN",
+  "KR": "EAS",
+  "KW": "MEA",
+  "LA": "EAS",
+  "LB": "MEA",
+  "LR": "SSF",
+  "LY": "MEA",
+  "LC": "LCN",
+  "LI": "ECS",
+  "LK": "SAS",
+  "LS": "SSF",
+  "LT": "ECS",
+  "LU": "ECS",
+  "LV": "ECS",
+  "MO": "EAS",
+  "MF": "LCN",
+  "MA": "MEA",
+  "MC": "ECS",
+  "MD": "ECS",
+  "MG": "SSF",
+  "MV": "SAS",
+  "MX": "LCN",
+  "MH": "EAS",
+  "MK": "ECS",
+  "ML": "SSF",
+  "MT": "MEA",
+  "MM": "EAS",
+  "ME": "ECS",
+  "MN": "EAS",
+  "MP": "EAS",
+  "MZ": "SSF",
+  "MR": "SSF",
+  "MU": "SSF",
+  "MW": "SSF",
+  "MY": "EAS",
+  "NA": "SSF",
+  "NC": "EAS",
+  "NE": "SSF",
+  "NG": "SSF",
+  "NI": "LCN",
+  "NL": "ECS",
+  "NO": "ECS",
+  "NP": "SAS",
+  "NR": "EAS",
+  "NZ": "EAS",
+  "OM": "MEA",
+  "PK": "MEA",
+  "PA": "LCN",
+  "PE": "LCN",
+  "PH": "EAS",
+  "PW": "EAS",
+  "PG": "EAS",
+  "PL": "ECS",
+  "PR": "LCN",
+  "KP": "EAS",
+  "PT": "ECS",
+  "PY": "LCN",
+  "PS": "MEA",
+  "PF": "EAS",
+  "QA": "MEA",
+  "RO": "ECS",
+  "RU": "ECS",
+  "RW": "SSF",
+  "SA": "MEA",
+  "SD": "SSF",
+  "SN": "SSF",
+  "SG": "EAS",
+  "SB": "EAS",
+  "SL": "SSF",
+  "SV": "LCN",
+  "SM": "ECS",
+  "SO": "SSF",
+  "RS": "ECS",
+  "SS": "SSF",
+  "ST": "SSF",
+  "SR": "LCN",
+  "SK": "ECS",
+  "SI": "ECS",
+  "SE": "ECS",
+  "SZ": "SSF",
+  "SX": "LCN",
+  "SC": "SSF",
+  "SY": "MEA",
+  "TC": "LCN",
+  "TD": "SSF",
+  "TG": "SSF",
+  "TH": "EAS",
+  "TJ": "ECS",
+  "TM": "ECS",
+  "TL": "EAS",
+  "TO": "EAS",
+  "TT": "LCN",
+  "TN": "MEA",
+  "TR": "ECS",
+  "TV": "EAS",
+  "TZ": "SSF",
+  "UG": "SSF",
+  "UA": "ECS",
+  "UY": "LCN",
+  "US": "NAC",
+  "UZ": "ECS",
+  "VC": "LCN",
+  "VE": "LCN",
+  "VG": "LCN",
+  "VI": "LCN",
+  "VN": "EAS",
+  "VU": "EAS",
+  "WS": "EAS",
+  "XK": "ECS",
+  "YE": "MEA",
+  "ZA": "SSF",
+  "ZM": "SSF",
+  "ZW": "SSF"
+ },
+ "sectors": {
+  "23fc4bae-f96e-4c7d-8c8a-b118c10d6636": {
+   "sector": "industrials",
+   "source": "Wikidata industry: battery industry"
+  },
+  "44f82f0c-70ba-47a3-9075-1b27f88a04e0": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "73dc826d-1d43-41a4-bfa4-8bf31fe4189d": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "d98275fb-a50a-4849-a769-8e114dc8952e": {
+   "sector": "technology",
+   "source": "Wikidata industry: semiconductor industry"
+  },
+  "117ba2a7-3f87-4446-9e56-9c3bda87fad7": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "396e57d2-44d4-484a-9866-827472b706b7": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "702f8546-d3ff-4112-981e-496598e055a0": {
+   "sector": "finance",
+   "source": "Wikidata industry: insurance"
+  },
+  "2d4f6ee5-18f8-407d-aa91-d94b049dd211": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "464d1bb3-afae-4faa-a86c-9622d39b0ee3": {
+   "sector": "technology",
+   "source": "Wikidata industry: software development"
+  },
+  "87ec911d-2c90-462e-806c-15e0c42c8c00": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "a9622606-a68d-46ef-8a5b-ca9846583bd3": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "f82bcafe-0117-4987-a1ec-90268e69e2b3": {
+   "sector": "industrials",
+   "source": "Wikidata industry: conglomerate"
+  },
+  "0335850d-8236-4ffc-8719-52b9dd496638": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology"
+  },
+  "9b1b8380-f6e4-4ca8-aa61-c2b0e14c5565": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "cd895ec0-bbbb-4a8e-a8b4-547e77809095": {
+   "sector": "transport",
+   "source": "Wikidata industry: rail freight transport"
+  },
+  "72444632-89d7-49c2-b17b-70db5629d244": {
+   "sector": "industrials",
+   "source": "Wikidata industry: industrial manufacturing"
+  },
+  "81f233ea-cda8-4e2f-8344-00a94249f00e": {
+   "sector": "industrials",
+   "source": "Wikidata industry: space industry"
+  },
+  "428a332c-1c29-4d50-b1d1-3e44c5c2e9ec": {
+   "sector": "finance",
+   "source": "Wikidata industry: financial services"
+  },
+  "cc2cdca0-b86b-4e5a-b370-0f22c98c6526": {
+   "sector": "energy",
+   "source": "Wikidata industry: petroleum industry"
+  },
+  "bb1ea52a-096f-4772-a4e3-9f7afab527f6": {
+   "sector": "media",
+   "source": "Wikidata industry: telecommunications industry"
+  },
+  "a219a0ef-d8be-4238-b6d8-0b4b54cca2ad": {
+   "sector": "energy",
+   "source": "Wikidata industry: petroleum industry"
+  },
+  "7d718d1d-228f-4f78-84c8-c6c960ad1e10": {
+   "sector": "technology",
+   "source": "Wikidata industry: Internet"
+  },
+  "735d021c-b0b4-4154-8adb-a5f51f078032": {
+   "sector": "media",
+   "source": "Wikidata industry: telecommunications"
+  },
+  "839e1bc5-17a3-4c2a-8850-579e1bcbf2d6": {
+   "sector": "technology",
+   "source": "Wikidata industry: e-commerce"
+  },
+  "533f8726-fe36-4e5e-a546-ed6a23535bb5": {
+   "sector": "energy",
+   "source": "Wikidata industry: petroleum industry"
+  },
+  "eb4acf98-9a6b-416b-8353-1702d7cad5a2": {
+   "sector": "media",
+   "source": "Wikidata industry: journalism"
+  },
+  "2909998e-67e2-4d37-9ee5-22cbb1bd52a8": {
+   "sector": "finance",
+   "source": "Wikidata industry: financial services"
+  },
+  "cfbff0ef-a4f7-4689-8f94-ab7ec3bd9b02": {
+   "sector": "industrials",
+   "source": "Wikidata industry: light industry"
+  },
+  "e1763f6d-5465-4064-b424-3763af92612e": {
+   "sector": "technology",
+   "source": "Wikidata industry: information technology industry"
+  },
+  "62048172-6096-4d90-8944-f2e0d345a43f": {
+   "sector": "technology",
+   "source": "Wikidata industry: e-commerce"
+  },
+  "cdd8f228-6a1f-4f18-b9ff-a28f5d9dd67e": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "7703988d-f5c9-48fe-911a-e6feb89bccce": {
+   "sector": "technology",
+   "source": "Wikidata industry: computer and network surveillance"
+  },
+  "be2badd3-0adc-42d8-8c50-19608fe19123": {
+   "sector": "technology",
+   "source": "Wikidata industry: computer security"
+  },
+  "a45c77cd-fa08-40cf-8c73-24339fd8a3ae": {
+   "sector": "technology",
+   "source": "Wikidata industry: computer network"
+  },
+  "d7b5c594-e612-43b0-9979-ace67deff888": {
+   "sector": "industrials",
+   "source": "Wikidata industry: equipment rental"
+  },
+  "59a94d42-929d-4c5b-a25b-77c7c522d661": {
+   "sector": "finance",
+   "source": "Wikidata industry: asset management"
+  },
+  "09afcd95-2bd9-470a-8a87-aa11d5691387": {
+   "sector": "technology",
+   "source": "Wikidata industry: software development"
+  },
+  "c559490d-8b14-490c-a8bc-a2e33f5659a7": {
+   "sector": "materials",
+   "source": "Wikidata industry: mining industry"
+  },
+  "a5ed8ba9-8439-4dfb-ae2d-199aeb55e789": {
+   "sector": "autos",
+   "source": "Wikidata industry: automotive industry"
+  },
+  "41bc38d7-4728-4457-9e2b-874b711fbd05": {
+   "sector": "media",
+   "source": "Wikidata industry: journalism"
+  },
+  "e2297038-0e64-41e7-82b3-bfd53d87e270": {
+   "sector": "transport",
+   "source": "Wikidata industry: logistics"
+  },
+  "50feeeaf-ab6e-4925-995b-23236edf954e": {
+   "sector": "technology",
+   "source": "Wikidata industry: software industry"
+  },
+  "c9c96e92-b549-4e0a-b8a9-44c9c0b5fe9d": {
+   "sector": "technology",
+   "source": "Wikidata industry: e-commerce"
+  },
+  "be3bd941-9d8d-4c13-9841-f36678e46f56": {
+   "sector": "technology",
+   "source": "Wikidata industry: software development"
+  },
+  "42b2ea26-c881-40c3-818b-967d34fe42b5": {
+   "sector": "finance",
+   "source": "Wikidata industry: financial services"
+  },
+  "68b8f24c-2d96-4127-8cae-bd43e462ff01": {
+   "sector": "consumer",
+   "source": "Wikidata industry: clothing industry"
+  },
+  "e95a77f4-b5cd-4794-bc60-b674351aa974": {
+   "sector": "finance",
+   "source": "Wikidata industry: security and commodity contracts brokerage"
+  },
+  "d6c409ea-7b66-49df-85c4-fa1a555d24cb": {
+   "sector": "autos",
+   "source": "Wikidata industry: automotive industry"
+  },
+  "e67a07f3-23fc-4ed2-b40c-bdf373880a7e": {
+   "sector": "technology",
+   "source": "Wikidata industry: electronics industry"
+  },
+  "952146a0-887a-45ec-9586-38431da1baf6": {
+   "sector": "consumer",
+   "source": "Wikidata industry: tourism industry"
+  },
+  "48cd0018-3c4a-4560-81e8-6993d54b3739": {
+   "sector": "media",
+   "source": "Wikidata industry: journalism"
+  },
+  "66e02fcd-4f63-4d52-ae9e-abfb6c4410a4": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "caf676b8-7b17-4041-ba58-35d225a406da": {
+   "sector": "finance",
+   "source": "Wikidata industry: financial services"
+  },
+  "d11c10e6-e72d-4b8c-a428-f7b8562e7999": {
+   "sector": "consumer",
+   "source": "Wikidata industry: grocery store"
+  },
+  "4fe1a200-b8f1-4bba-ac5c-0cd6df6f23c0": {
+   "sector": "energy",
+   "source": "Wikidata industry: coal industry"
+  },
+  "7249b944-f47d-493b-94dc-3ae3a9ce91a5": {
+   "sector": "media",
+   "source": "Wikidata industry: professional sport"
+  },
+  "5c42fb11-4dc4-437f-94cb-9b9c6871da2a": {
+   "sector": "finance",
+   "source": "Wikidata industry: asset management"
+  },
+  "04ebd6c2-3305-43e0-b322-bcd20ff6fb9a": {
+   "sector": "energy",
+   "source": "Wikidata industry: petroleum industry"
+  },
+  "8cad09bb-3ab1-46b1-9d4e-af700ccc0af6": {
+   "sector": "autos",
+   "source": "Wikidata industry: automotive industry"
+  },
+  "2e65c24c-a8c9-4d7e-9580-d7e99eb1d8ef": {
+   "sector": "technology",
+   "source": "Wikidata industry: robotics"
+  },
+  "437262b9-b50e-478a-a02d-b00df5bc3aa9": {
+   "sector": "consumer",
+   "source": "Wikidata industry: clothing industry"
+  },
+  "45077dd7-f805-4179-b190-e840bbb15d67": {
+   "sector": "technology",
+   "source": "Wikidata industry: e-commerce"
+  },
+  "e5a2ab43-2ae8-4518-994c-d07c24fd03fe": {
+   "sector": "transport",
+   "source": "Wikidata industry: water transport"
+  },
+  "cd153ee5-a4c1-4c78-8a3d-b0ba64d8195f": {
+   "sector": "technology",
+   "source": "Wikidata industry: semiconductor industry"
+  },
+  "2c34ec28-a62c-48a2-abcf-7dbefa72deb6": {
+   "sector": "media",
+   "source": "Wikidata industry: telecommunications industry"
+  },
+  "59e32250-36a0-415e-be58-9077e967650f": {
+   "sector": "technology",
+   "source": "Wikidata industry: software industry"
+  },
+  "0ab7fea8-1dd3-4979-b711-d2d4892985a6": {
+   "sector": "technology",
+   "source": "Wikidata industry: closed-circuit television"
+  },
+  "f69b816f-6610-4ccf-b13f-ec44f6761ac1": {
+   "sector": "technology",
+   "source": "Wikidata industry: software development"
+  },
+  "860eeae9-1701-4774-bfec-50e6c511d301": {
+   "sector": "consumer",
+   "source": "Wikidata industry: fast-moving consumer goods"
+  },
+  "4065bbbd-3c05-436c-96f6-e7f687334055": {
+   "sector": "consumer",
+   "source": "Wikidata industry: beverage industry"
+  },
+  "8e31c9c2-e25d-4d02-84c4-0129e08235f1": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "5636902e-a927-4134-8938-3e0d9f072120": {
+   "sector": "health",
+   "source": "Wikidata industry: pharmaceutical industry"
+  },
+  "abff8aea-470b-4c00-84d7-023790e5c511": {
+   "sector": "technology",
+   "source": "Wikidata industry: artificial intelligence"
+  },
+  "a5fbe091-4429-43ac-bcf8-dbaf4f2bd27f": {
+   "sector": "materials",
+   "source": "Wikidata industry: steel"
+  },
+  "b6a8d1d5-475a-4fcb-9d36-c9af844d2205": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "a6c65bca-bd8d-4e49-8a9d-6d1cc7c4f416": {
+   "sector": "consumer",
+   "source": "Wikidata industry: retail"
+  },
+  "c89d7879-8a39-4e55-98a1-609d23408ef9": {
+   "sector": "autos",
+   "source": "Wikidata industry: automotive industry"
+  },
+  "06ddf175-f1ec-4375-b0c8-b5363585f921": {
+   "sector": "consumer",
+   "source": "Wikidata industry: hotel industry"
+  },
+  "b2f734f0-4676-45e5-870f-768d101f0d96": {
+   "sector": "media",
+   "source": "Wikidata industry: media industry"
+  },
+  "ca2599cb-331a-4607-94ae-fb3606629b20": {
+   "sector": "media",
+   "source": "Wikidata industry: media industry"
+  }
+ }
+}

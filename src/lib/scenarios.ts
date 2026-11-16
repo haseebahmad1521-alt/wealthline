@@ -5,27 +5,39 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { Scenario, Shock } from '../../supabase/functions/_shared/scenario.ts';
+import reference from '@/data/sim-reference.json';
 import { db } from '@/lib/supabase';
 import type { Empire } from '@/lib/world';
 
 export type { Scenario, Shock };
 
-/** Sectors (by company id) and World Bank regions (by country), or empty maps until the backend has them. */
+/**
+ * Sectors (by company id) and World Bank regions (by country). Starts from src/data/sim-reference.json (built by
+ * scripts/build-sim-reference.mjs from the World Bank and Wikidata); the backend's own values win once it has them.
+ */
 export function useSimData() {
   return useQuery({
     queryKey: ['world-sim-data'],
     staleTime: 6 * 3600_000,
+    placeholderData: fromReference,
     queryFn: async () => {
       const [cos, regions] = await Promise.all([
         db().from('companies').select('id, sector'),
         db().from('countries').select('iso2, region'),
       ]);
-      return {
-        sectors: new Map<string, string>(cos.error ? [] : (cos.data ?? []).filter((c) => c.sector).map((c) => [c.id as string, c.sector as string])),
-        regions: new Map<string, string>(regions.error ? [] : (regions.data ?? []).filter((c) => c.region).map((c) => [c.iso2 as string, c.region as string])),
-      };
+      const out = fromReference();
+      for (const c of cos.error ? [] : (cos.data ?? [])) if (c.sector) out.sectors.set(c.id as string, c.sector as string);
+      for (const c of regions.error ? [] : (regions.data ?? [])) if (c.region) out.regions.set(c.iso2 as string, c.region as string);
+      return out;
     },
   });
+}
+
+function fromReference() {
+  return {
+    sectors: new Map(Object.entries(reference.sectors).map(([id, s]) => [id, s.sector])),
+    regions: new Map(Object.entries(reference.regions)),
+  };
 }
 
 type Row = Omit<Scenario, 'origin'> & { origin: 'daily' | 'prompt'; created_at?: string };

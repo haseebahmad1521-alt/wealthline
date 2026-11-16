@@ -5,14 +5,14 @@ import { Chip as Tag } from 'heroui-native';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { MEDAL } from '@/components/arena';
-import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
+import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobePulse, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
 import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, revenueLines, type EconomyMode } from '@/components/world-views';
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
 import { askScenario, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
-import { lineCountries, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire } from '@/lib/simulate';
+import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
 import { SimOverlay, SimulatePanel } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
@@ -104,12 +104,23 @@ export default function World() {
     if (tick >= film.length) setTick(0);
     setPlaying(true);
   };
-  // Play: about a second a month; it stops once the last notification has had its moment, and play starts over.
+  // Play: about 1.3 s a month while something is happening; quiet stretches (no notification up or about to come)
+  // run faster. It stops once the last notification has had its moment.
+  const busy = film.notes.some((n) => n.tick <= tick + 1 && n.tick > tick - NOTE_LIFE);
   useEffect(() => {
     if (!playing || !sim) return;
-    const t = setInterval(() => setTick((k) => (k >= film.length ? (setPlaying(false), k) : k + 1)), 330);
-    return () => clearInterval(t);
-  }, [playing, sim, film.length]);
+    const t = setTimeout(() => {
+      if (tick >= film.length) setPlaying(false);
+      else setTick(tick + 1);
+    }, busy ? 420 : 160);
+    return () => clearTimeout(t);
+  }, [playing, sim, tick, busy, film.length]);
+  // The note on screen now (the newest), which the camera follows.
+  const note = [...film.notes].reverse().find((n) => n.tick <= tick && n.tick > tick - NOTE_LIFE) ?? null;
+  const scrub = (k: number) => {
+    setPlaying(false);
+    setTick(k);
+  };
   const pick = (s: Scenario) => {
     setSimId(s.id);
     setTick(0);
@@ -144,11 +155,58 @@ export default function World() {
       const to = empires.find((e) => e.person.id === t.buyer.id)?.hq;
       if (from && to) arcs.push({ key: `sale-${t.seller.id}-${t.company.id}`, from, to, weight: t.done ? 1 : 0.4, group: t.buyer.id });
     }
-    const first = sim.shocks.find((s) => s.kind === 'place');
-    const seller = sim.shocks.find((s) => s.kind === 'transfer');
-    simCentre = (first && countryCentre(first.target)) || (seller && empires.find((e) => e.person.slug === (seller as { person: string }).person)?.hq) || null;
+    // Arcs grow as the change ramps in: weight scaled by how much of the company's final revenue change has happened.
+    const end = new Map((frames[frames.length - 1]?.companies ?? []).map((c) => [c.company.id, Math.abs(c.revenueDelta)]));
+    arcs = arcs.map((a) => {
+      const id = a.key.split(':')[0];
+      const full = end.get(id);
+      return full && moved.has(id) ? { ...a, weight: a.weight * Math.min(Math.abs(moved.get(id)!) / full, 1) } : a;
+    });
   }
+  // The camera follows the notification on screen: in close for a country, company or person, out for the world.
+  const hqOf = (id: string) => {
+    for (const e of empires) {
+      const c = e.companies.find((x) => x.id === id);
+      if (c?.hq_lat != null && c.hq_lng != null) return { lat: c.hq_lat, lng: c.hq_lng };
+    }
+    return null;
+  };
+  const whereIs = (about: SimSubject): { at: { lat: number; lng: number } | null; zoom: number } => {
+    if (about.kind === 'place') return { at: countryCentre(about.iso2), zoom: 0.4 };
+    if (about.kind === 'company') return { at: hqOf(about.id), zoom: 0.35 };
+    if (about.kind === 'person') return { at: empires.find((e) => e.person.slug === about.slug)?.hq ?? null, zoom: 0.35 };
+    if (about.kind === 'sector') {
+      const top = frame?.companies.find((c) => c.company.sector === about.sector);
+      return { at: top ? hqOf(top.company.id) : null, zoom: 0.25 };
+    }
+    if (about.kind === 'start' && sim) {
+      const place = sim.shocks.find((x) => x.kind === 'place');
+      if (place) return { at: countryCentre(place.target), zoom: 0.3 };
+      const sale = sim.shocks.find((x) => x.kind === 'transfer') as { person: string } | undefined;
+      if (sale) return { at: empires.find((e) => e.person.slug === sale.person)?.hq ?? null, zoom: 0.3 };
+    }
+    return { at: null, zoom: 0 };
+  };
+  const shot = simOn && note ? whereIs(note.about) : null;
+  if (shot?.at) simCentre = shot.at;
   const shockCentre = simOn ? simCentre : null;
+  const simZoom = simOn ? (shot?.zoom ?? 0) : null;
+  // Rings where something is happening now: shocked countries (stronger for bigger changes), both sides of a sale,
+  // and wherever the notification on screen is about.
+  const pulses: GlobePulse[] = [];
+  if (simOn && frame) {
+    for (const f of frame.fills) {
+      const at = countryCentre(f.iso2);
+      if (at) pulses.push({ key: `fill-${f.iso2}`, ...at, tone: f.pct < 0 ? 'loss' : 'gain', strength: Math.min(Math.abs(f.pct) / 0.6, 1) });
+    }
+    for (const t of frame.transfers.filter((x) => x.done)) {
+      for (const who of [t.seller, t.buyer]) {
+        const at = empires.find((e) => e.person.id === who.id)?.hq;
+        if (at) pulses.push({ key: `sale-${who.id}`, ...at, tone: 'info', strength: 0.6 });
+      }
+    }
+    if (shot?.at && note && note.about.kind !== 'place') pulses.push({ key: `note-${note.tick}`, ...shot.at, tone: note.tone, strength: 0.8 });
+  }
   // What if and the fortune comparison are about the whole map, so picking a person doesn't fly the globe to them.
   const wide = view === 'whatif' || (view === 'economies' && econ === 'fortune');
 
@@ -190,6 +248,8 @@ export default function World() {
         const text = p.delta != null ? money.format(Math.abs(p.delta)) : simPct(p.pct!);
         return { ...m, change: { text, dir: Math.sign(v) as 1 | -1 | 0, projected: true } };
       })
+      // Everyone the scenario doesn't touch steps back (once it has started moving anyone).
+      .map((m) => (by.size && !by.has(m.key) ? { ...m, dim: true } : m))
       .sort((a, b) => size(b.key) - size(a.key));
   }, [frame, markers, money]);
   const shownMarkers = view === 'places' ? todayMarkers : simOn ? simMarkers : markers;
@@ -304,6 +364,8 @@ export default function World() {
                   markers={shownMarkers}
                   arcs={arcs}
                   fills={fills}
+                  pulses={pulses}
+                  zoomTo={simZoom}
                   focus={wide ? null : (focused?.person.id ?? null)}
                   center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                   onSelect={(id) => select(id)}
@@ -317,7 +379,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} playing={playing} onPlay={playPause} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -330,6 +392,7 @@ export default function World() {
                 markers={shownMarkers}
                 arcs={arcs}
                 fills={fills}
+                pulses={pulses}
                 focus={wide ? null : (focused?.person.id ?? null)}
                 center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                 onSelect={(id) => select(id)}
@@ -339,7 +402,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} playing={playing} onPlay={playPause} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
