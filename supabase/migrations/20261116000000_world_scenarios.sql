@@ -61,7 +61,7 @@ select cron.schedule(
 );
 
 alter table public.companies add column sector text check (sector in (
-  'energy', 'materials', 'industrials', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'
+  'energy', 'materials', 'industrials', 'defense', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'
 ));
 alter table public.companies add column sector_source text;
 

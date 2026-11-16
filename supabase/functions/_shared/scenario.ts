@@ -5,8 +5,9 @@
 // Grok writes the story and a list of changes; it never writes dollar figures. Each change names something tracked (a
 // country by ISO code, a company or person from the list it was given, or a sector), a size, and the months it runs.
 // The app turns changes into dollars from recorded revenue, prices and share counts.
+import { ANALOGS, type Analog } from './events.ts';
 
-export const SECTORS = ['energy', 'materials', 'industrials', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'] as const;
+export const SECTORS = ['energy', 'materials', 'industrials', 'defense', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'] as const;
 export type Sector = (typeof SECTORS)[number];
 
 // Wikidata industry labels (P452) → sector. A company often lists several industries (Tesla: automotive, energy
@@ -14,6 +15,7 @@ export type Sector = (typeof SECTORS)[number];
 // for before what it also does.
 const SECTOR_WORDS: [RegExp, Sector][] = [
   [/\b(automotive|automobile|motor vehicle|car manufactur|electric vehicle)/i, 'autos'],
+  [/\b(defen[cs]e|arms industry|military|weapon|aerospace|space industry|spaceflight|surveillance)/i, 'defense'],
   [/\b(airline|aviation services|shipping|logistics|freight|railway|transport|courier|delivery)/i, 'transport'],
   [/\b(bank|financ|investment|insurance|asset management|private equity|hedge fund|stock exchange|brokerage|payment|fintech|venture capital)/i, 'finance'],
   [/\b(pharmaceutic|biotech|health ?care|medical|hospitals?\b|drug)/i, 'health'],
@@ -23,7 +25,7 @@ const SECTOR_WORDS: [RegExp, Sector][] = [
   [/\b(real estate|property|construction of buildings)/i, 'real_estate'],
   [/\b(steel|mining|metal|chemical|cement|paper|materials)/i, 'materials'],
   [/\b(retail|apparel|fashion|clothing|luxury|food|beverage|brewing|cosmetic|consumer|supermarket|grocery|restaurant|hospitality|hotel|tourism|travel|tobacco)/i, 'consumer'],
-  [/\b(aerospace|defen[cs]e|conglomerate|industr|manufactur|machinery|engineering|construction|infrastructure|equipment rental)/i, 'industrials'],
+  [/\b(conglomerate|industr|manufactur|machinery|engineering|construction|infrastructure|equipment rental)/i, 'industrials'],
 ];
 
 /** The sector for a company's Wikidata industry labels (highest-priority match), with the label it came from. */
@@ -41,17 +43,26 @@ export function sectorFor(labels: string[]): { sector: Sector; label: string } |
  *  company   a company's share price changes by `pct`
  *  sector    every tracked company in a sector: share price changes by `pct`
  *  market    global stocks move by `pct`; each company by its measured sensitivity (beta) to them
+ *  analog    markets move as they did around past events of a kind (target: an `ANALOGS` key), `pct` times as strongly
  *  factor    oil, Chinese stocks or the US dollar move by `pct` (target 'oil' | 'china' | 'usd'); each company by its
  *            measured sensitivity to that factor beyond the market (supabase/functions/_shared/factors.ts)
  *  transfer  `fraction` of `person`'s recorded shares in `company` sold to `buyer` at the market price plus `pct`
  *            (a premium), at month `to`
  */
+/**
+ * Parts of an analog carry `sd` (how much the move varied between the past events, already scaled) and `quiet` (no
+ * notification of their own); factor parts are `direct` (the measured sector moves already include oil's pull on the
+ * sector, so the company's own factor sensitivity is used without the factor links).
+ */
+type Part = { sd?: number; quiet?: boolean; direct?: boolean };
 export type Shock =
   | { kind: 'place'; target: string; pct: number; from: number; to: number }
   | { kind: 'company'; target: string; pct: number; from: number; to: number }
-  | { kind: 'sector'; target: Sector; pct: number; from: number; to: number }
-  | { kind: 'market'; target: ''; pct: number; from: number; to: number }
-  | { kind: 'factor'; target: 'oil' | 'china' | 'usd'; pct: number; from: number; to: number }
+  | ({ kind: 'sector'; target: Sector; pct: number; from: number; to: number } & Part)
+  | ({ kind: 'market'; target: ''; pct: number; from: number; to: number } & Part)
+  | ({ kind: 'factor'; target: 'oil' | 'china' | 'usd'; pct: number; from: number; to: number } & Part)
+  /** Markets move as they did around past events of this kind (events.ts), `pct` times as strongly (1 = as before). */
+  | { kind: 'analog'; target: Analog; pct: number; from: number; to: number }
   | { kind: 'transfer'; target: string; person: string; buyer: string; fraction: number; pct: number; from: number; to: number };
 
 export type Plausibility = 'likely' | 'possible' | 'unlikely';
@@ -122,6 +133,8 @@ export function checkShock(raw: Record<string, unknown>, months: number, cat: Ca
       return { kind, target: '', pct: p, from, to };
     case 'factor':
       return target === 'oil' || target === 'china' || target === 'usd' ? { kind, target, pct: p, from, to } : `unknown factor ${target}`;
+    case 'analog':
+      return target in ANALOGS ? { kind, target: target as Analog, pct: clamp(pct, 0.25, 4), from, to } : `unknown analog ${target}`;
     case 'transfer': {
       const person = typeof raw.person === 'string' ? raw.person : '';
       const buyer = typeof raw.buyer === 'string' ? raw.buyer : '';

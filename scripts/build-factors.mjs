@@ -1,4 +1,4 @@
-// Builds src/data/factors.json (and src/data/backtest.json): each listed company's measured sensitivities to global
+// Builds src/data/factors.json (plus src/data/backtest.json and src/data/events.json): each listed company's measured sensitivities to global
 // stocks, oil, Chinese stocks, the dollar and its sector (supabase/functions/_shared/factors.ts), from ten years of
 // weekly prices (Yahoo Finance, the same source as the live quotes), and a backtest of the model on past shocks.
 //
@@ -11,6 +11,7 @@
 // Run: node scripts/build-factors.mjs (reads the public Supabase config from .env.local).
 import { readFileSync, writeFileSync } from 'node:fs';
 
+import { ANALOGS, EVENTS as PAST_EVENTS, eventWeeks, sumWeeks, summarise } from '../supabase/functions/_shared/events.ts';
 import { FACTORS, FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, shrink, stressWeeks, weekKey, weeklyReturns } from '../supabase/functions/_shared/factors.ts';
 
 const env = Object.fromEntries(
@@ -211,5 +212,46 @@ writeFileSync(
   )}\n`,
 );
 writeFileSync('src/data/backtest.json', `${JSON.stringify(backtest, null, 1)}\n`);
+
+// ——— Event studies: what markets did around past events of each kind ———
+const measured = [];
+for (const ev of PAST_EVENTS) {
+  const weeks = eventWeeks(ev.from, ev.to, weekKey);
+  const moves = {
+    market: sumWeeks(market, weeks),
+    oil: sumWeeks(set.oil, weeks),
+    china: sumWeeks(set.china, weeks),
+    usd: sumWeeks(set.usd, weeks),
+    oilPrice: sumWeeks(raw.oil, weeks),
+    sector: Object.fromEntries(Object.entries(set.sector).map(([k, v]) => [k, sumWeeks(v, weeks)]).filter(([, v]) => v != null)),
+  };
+  if ([moves.market, moves.oil, moves.china, moves.usd, moves.oilPrice].some((v) => v == null)) {
+    console.log(`event ${ev.key}: missing weeks, left out`);
+    continue;
+  }
+  measured.push({ ...ev, weeks: weeks.length, moves });
+  const pct = (v) => `${(v * 100).toFixed(1)}%`;
+  console.log(`${ev.label.padEnd(52)} stocks ${pct(moves.market).padStart(6)}  oil ${pct(moves.oilPrice).padStart(6)}  defence ${pct(moves.sector.defense ?? 0).padStart(6)}  energy ${pct(moves.sector.energy ?? 0).padStart(6)}`);
+}
+const analogs = Object.fromEntries(
+  Object.keys(ANALOGS)
+    .map((a) => [a, summarise(a, measured.filter((m) => m.analog === a))])
+    .filter(([, v]) => v),
+);
+const r4 = (v) => Math.round(v * 10000) / 10000;
+const roundMoves = (m) => ({ market: r4(m.market), oil: r4(m.oil), china: r4(m.china), usd: r4(m.usd), oilPrice: r4(m.oilPrice), sector: Object.fromEntries(Object.entries(m.sector).map(([k, v]) => [k, r4(v)])) });
+writeFileSync(
+  'src/data/events.json',
+  `${JSON.stringify(
+    {
+      built: new Date().toISOString().slice(0, 10),
+      method: 'Weekly log returns summed over each event; oil, China, the dollar and sector funds beyond global stocks (same factors as factors.json). An analog is the average across its events; the spread between them is its uncertainty.',
+      events: measured.map((m) => ({ key: m.key, analog: m.analog, label: m.label, from: m.from, to: m.to, weeks: m.weeks, moves: roundMoves(m.moves) })),
+      analogs: Object.fromEntries(Object.entries(analogs).map(([k, v]) => [k, { events: v.events, mean: roundMoves(v.mean), sd: roundMoves(v.sd) }])),
+    },
+    null,
+    1,
+  )}\n`,
+);
 console.log(`\noverall MAE (log-return points): ${JSON.stringify(backtest.overall)}`);
 console.log(`fitted ${Object.keys(out).length} of ${listed.length}; crisis fits ${Object.values(out).filter((x) => x.stress).length}`);

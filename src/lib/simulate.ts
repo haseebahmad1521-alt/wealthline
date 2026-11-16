@@ -17,7 +17,7 @@ import { ramp, type Scenario, type Shock } from '../../supabase/functions/_share
  * Measured sensitivities (factors.ts) and their standard errors, by factor, and `sd`: the weekly moves the factors
  * don't explain (the company's own news). Backtests showed ranges need that noise to cover real outcomes.
  */
-export type SimFit = { beta: Record<string, number>; se: Record<string, number>; sd?: number };
+export type SimFit = { beta: Record<string, number>; se: Record<string, number>; sd?: number; /** Without the factor links. */ raw?: Record<string, number> };
 export type SimCompany = {
   id: string;
   name: string;
@@ -115,7 +115,8 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       const mean = (f: string) => group.reduce((n, c) => n + (c.fit!.beta[f] ?? 0), 0) / group.length;
       const spread = (f: string) => Math.sqrt(group.reduce((n, c) => n + ((c.fit!.beta[f] ?? 0) - mean(f)) ** 2, 0) / (group.length - 1) / group.length + mean(f) ** 2 * 0.04);
       const sd = group.reduce((n, c) => n + (c.fit!.sd ?? 0), 0) / group.length;
-      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])), sd };
+      const raw = Object.fromEntries(factors.map((f) => [f, group.reduce((n, c) => n + (c.fit!.raw?.[f] ?? c.fit!.beta[f] ?? 0), 0) / group.length]));
+      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])), sd, raw };
     }
     peerCache.set(key, out);
     return out;
@@ -154,14 +155,17 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       if (!m) continue;
       if (s.kind === 'company' && s.target === c.id) price *= 1 + m;
       else if (s.kind === 'sector' && c.sector === s.target) {
-        price *= 1 + (fit.beta.sector ?? 1) * m;
-        variance += ((fit.se.sector ?? 0) * m) ** 2;
+        const b = fit.beta.sector ?? 1;
+        price *= 1 + b * m;
+        variance += ((fit.se.sector ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       } else if (s.kind === 'market') {
-        price *= 1 + (fit.beta.market ?? 1) * m;
-        variance += ((fit.se.market ?? 0) * m) ** 2;
+        const b = fit.beta.market ?? 1;
+        price *= 1 + b * m;
+        variance += ((fit.se.market ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       } else if (s.kind === 'factor') {
-        price *= 1 + (fit.beta[s.target] ?? 0) * m;
-        variance += ((fit.se[s.target] ?? 0) * m) ** 2;
+        const b = (s.direct ? fit.raw?.[s.target] : undefined) ?? fit.beta[s.target] ?? 0;
+        price *= 1 + b * m;
+        variance += ((fit.se[s.target] ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       }
     }
     if (Math.abs(price - 1) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
@@ -289,7 +293,11 @@ export function schedule(events: SimEvent[], months: number): { notes: (SimEvent
   return { notes, length: Math.max(months * TICKS_PER_MONTH, last + NOTE_LIFE - 1) };
 }
 
+const ANALOG_WORD: Record<string, string> = {
+  mideast: 'Middle East escalations', russia: 'invasions', 'us-china': 'US–China trade fights', 'oil-glut': 'oil price wars', pandemic: 'pandemic shocks', banking: 'bank failures',
+};
 const SECTOR_NAME: Record<string, string> = {
+  defense: 'Aerospace and defence',
   energy: 'Energy', materials: 'Materials', industrials: 'Industrial', autos: 'Carmaker', consumer: 'Consumer', health: 'Healthcare',
   finance: 'Bank and finance', technology: 'Tech', media: 'Media', real_estate: 'Property', transport: 'Transport',
 };
@@ -311,8 +319,14 @@ export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id:
     out.push({ month: b.month, text: b.text, tone: b.tone, about: b.person ? { kind: 'person', slug: b.person } : b.country ? { kind: 'place', iso2: b.country } : { kind: 'world' } });
   }
   for (const s of scenario.shocks) {
+    if ('quiet' in s && s.quiet) continue;
     const tone = s.pct < 0 ? 'loss' : 'gain';
     const at = s.kind === 'transfer' ? s.to : s.from;
+    if (s.kind === 'analog') {
+      const times = s.pct >= 1.5 ? `, ${Math.round(s.pct * 10) / 10}× as hard` : s.pct <= 0.75 ? ', more mildly' : '';
+      out.push({ month: at, text: `Markets react as after past ${ANALOG_WORD[s.target] ?? s.target}${times}`, tone: 'info', about: { kind: 'world' } });
+      continue;
+    }
     if (s.kind === 'place') out.push({ month: at, text: `Business in ${countryName(s.target)} ${size(s.pct)}`, tone, about: { kind: 'place', iso2: s.target } });
     if (s.kind === 'sector') out.push({ month: at, text: `${SECTOR_NAME[s.target] ?? s.target} shares ${moveWord(s.pct)}`, tone, about: { kind: 'sector', sector: s.target } });
     if (s.kind === 'market') out.push({ month: at, text: `Markets ${s.pct < 0 ? 'sell off' : 'rally'}`, tone, about: { kind: 'world' } });

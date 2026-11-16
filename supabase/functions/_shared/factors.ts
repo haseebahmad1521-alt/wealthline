@@ -24,7 +24,7 @@ export const FACTOR_LABEL: Record<Factor, string> = {
 export const FIT_SYMBOL: Record<string, string> = { 'RIGD.L': 'RELIANCE.NS', '3750.HK': '300750.SZ' };
 
 export const SECTOR_FUND: Record<string, string> = {
-  energy: 'XLE', materials: 'XLB', industrials: 'XLI', autos: 'CARZ', consumer: 'XLY', health: 'XLV', finance: 'XLF',
+  energy: 'XLE', materials: 'XLB', industrials: 'XLI', defense: 'ITA', autos: 'CARZ', consumer: 'XLY', health: 'XLV', finance: 'XLF',
   technology: 'XLK', media: 'XLC', real_estate: 'XLRE', transport: 'IYT',
 };
 

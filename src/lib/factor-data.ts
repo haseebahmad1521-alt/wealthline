@@ -10,7 +10,7 @@ type Raw = { beta: Record<string, number>; se: Record<string, number>; sector?: 
 export type Links = Record<'oil' | 'china' | 'usd', { oil: number; china: number; usd: number; sector: Record<string, number> }>;
 
 export function effectiveFit(raw: Raw, sector: string | null | undefined, links: Links | null): SimFit {
-  if (!links) return { beta: { ...raw.beta }, se: { ...raw.se }, sd: raw.sd };
+  if (!links) return { beta: { ...raw.beta }, se: { ...raw.se }, sd: raw.sd, raw: { ...raw.beta } };
   const beta = { ...raw.beta };
   const se = { ...raw.se };
   for (const d of ['oil', 'china', 'usd'] as const) {
@@ -21,7 +21,7 @@ export function effectiveFit(raw: Raw, sector: string | null | undefined, links:
     const seSector = (raw.se.sector ?? 0) * (sector ? Math.abs(l.sector[sector] ?? 0) : 0);
     se[d] = Math.sqrt((raw.se[d] ?? 0) ** 2 + seSector ** 2 + others.reduce((n, g) => n + ((raw.se[g] ?? 0) * l[g]) ** 2, 0));
   }
-  return { beta, se, sd: raw.sd };
+  return { beta, se, sd: raw.sd, raw: { ...raw.beta } };
 }
 
 export type Backtest = { overall: Record<'naive' | 'plain' | 'improved' | 'crisis', number>; events: { event: string; improved: number; naive: number; coverage: number | null }[] };
