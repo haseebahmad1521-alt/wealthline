@@ -94,6 +94,13 @@ Run these from the repository, logged in to the Supabase CLI with an account tha
 Invite the developer's Supabase account to the Wealthline organisation (Dashboard → Organization → Team) with a role
 that can run SQL and deploy functions. They can then do steps 1–5.
 
+## For the lobbying ties (optional)
+
+The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on
+sanctions, defence or trade), register for a free API key with the Senate's Lobbying Disclosure Act system
+(lda.senate.gov). Their API refuses automated requests without one. Then store it as a backend secret:
+`npx supabase secrets set LDA_API_KEY=<key> --project-ref qucpeyrbzyfqtmxhmezr`.
+
 ## Two data records to look at (separate from this PR)
 
 - **Andreas von Bechtolsheim** is linked to "Google" (Google LLC, from his Forbes source of wealth), so the World tab

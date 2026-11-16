@@ -729,7 +729,7 @@ export function BriefingPanel({
         <Caption>{sample ? 'Sample' : date ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : ''}</Caption>
       </View>
       {sample && <Caption>The daily briefing starts once Grok is switched on; until then these examples show how it works.</Caption>}
-      {shown.map(({ scenario: s, winners, losers }) => {
+      {shown.map(({ scenario: s, winners, losers, ties }) => {
         const yes = s.odds ? (live.get(s.odds.market) ?? s.odds.yes) : null;
         const fresh = s.odds ? live.has(s.odds.market) : false;
         return (
@@ -753,6 +753,26 @@ export function BriefingPanel({
               <View style={styles.briefPeople}>
                 {winners.map((p) => person(p, true))}
                 {losers.map((p) => person(p, false))}
+              </View>
+            )}
+            {ties && ties.length > 0 && (
+              <View style={styles.ties}>
+                <Text style={[type.caption, styles.rowLabel]}>Documented ties</Text>
+                {ties.map((t) => (
+                  <Pressable
+                    key={t.companyId}
+                    accessibilityRole="link"
+                    accessibilityLabel={`${t.company}: ${money(t.defense)} in US defence contracts since October 2023. Linked to ${t.owners.map((o) => o.name).join(', ')}. Opens USAspending.`}
+                    onPress={() => open(t.url)}
+                    style={styles.tie}>
+                    <Caption style={[styles.flex, { color: color.text }]} numberOfLines={2}>
+                      <Text style={{ fontWeight: '600' }}>{t.company}</Text> · {money(t.defense)} in US defence contracts since Oct 2023 ·{' '}
+                      {t.owners.map((o) => o.name.replace(/ & family$/, '')).join(', ')}
+                    </Caption>
+                    <Icon name={icons.link} size={12} tint={color.action} />
+                  </Pressable>
+                ))}
+                <Caption style={styles.basis}>From the public record (USAspending.gov). A tie shows a documented connection, not a claim that anyone is driving events.</Caption>
               </View>
             )}
             <Pressable accessibilityRole="button" accessibilityLabel={`Watch: ${s.title}`} onPress={() => onWatch(s)} style={styles.watch}>
@@ -990,6 +1010,8 @@ const styles = StyleSheet.create({
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
   brief: { gap: space.sm },
+  ties: { gap: 4, paddingTop: 4, alignSelf: 'stretch', minWidth: 0, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,.12)' },
+  tie: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, minWidth: 0 },
   briefHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   briefItem: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,.1)' },
   briefPeople: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
