@@ -32,7 +32,7 @@ export type SimCompany = {
   name: string;
   sector?: string | null;
   listed: boolean;
-  regions: { region: string; country: string | null; revenue_usd: number }[];
+  regions: ({ region: string; country: string | null; revenue_usd: number } & LineCover)[];
   /** Its own measured sensitivities; without them it borrows its listed sector peers' average (and their spread). */
   fit?: SimFit | null;
   /** Recorded operating margin (operating income / revenue), for the profit step. */
@@ -76,9 +76,23 @@ const NAMED: [RegExp, string][] = [
   [/japan/i, 'JP'],
 ];
 
-/** Countries a reported revenue line covers: its own country, or the countries of a named region. */
-export function lineCountries(line: { region: string; country: string | null }, own: Set<string>, countries: SimCountry[]): string[] {
+/**
+ * Where a line's region name says little ("North Asia", "SAPMENA - SSA", "Other countries"), the line itself can say
+ * which World Bank regions it covers, which countries it adds, and which it leaves out (annual-report lines,
+ * src/data/regions.json).
+ */
+export type LineCover = { covers?: string[]; add?: string[]; except?: string[] };
+
+/** Countries a reported revenue line covers: its own country, its stated cover, or the countries of a named region. */
+export function lineCountries(line: { region: string; country: string | null } & LineCover, own: Set<string>, countries: SimCountry[]): string[] {
   if (line.country) return [line.country];
+  if (line.covers || line.add) {
+    const out = new Set(own);
+    for (const iso of line.except ?? []) out.add(iso);
+    const inRegions = countries.filter((c) => c.region && line.covers?.includes(c.region) && !out.has(c.iso2)).map((c) => c.iso2);
+    const added = (line.add ?? []).filter((iso) => !out.has(iso) && countries.some((c) => c.iso2 === iso));
+    return [...new Set([...inRegions, ...added])];
+  }
   const regions = BUCKETS.find(([re]) => re.test(line.region))?.[1];
   if (!regions) return [];
   const out = new Set(own); // countries the company reports separately

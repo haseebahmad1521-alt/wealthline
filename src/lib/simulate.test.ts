@@ -225,3 +225,19 @@ test('today’s exposure: each person once per side, biggest share of fortune fi
   assert.deepEqual(gain.map((g) => [g.move.person.slug, g.scenario.id]), [['a', 't2'], ['d', 't2'], ['b', 't']]);
   assert.deepEqual(risk.map((g) => g.move.person.slug), ['c', 'a']); // a gains in one storyline and loses in another
 });
+
+test('an annual-report line can say which regions and countries it covers', () => {
+  const cs: SimCountry[] = [
+    { iso2: 'FR', gdp_usd: 3, region: 'ECS' },
+    { iso2: 'DE', gdp_usd: 4, region: 'ECS' },
+    { iso2: 'CN', gdp_usd: 18, region: 'EAS' },
+    { iso2: 'JP', gdp_usd: 4, region: 'EAS' },
+    { iso2: 'AU', gdp_usd: 2, region: 'EAS' },
+  ];
+  // "Europe excluding France": the region, less France.
+  assert.deepEqual(lineCountries({ region: 'Europe excluding France', country: null, covers: ['ECS'], except: ['FR'] }, new Set(), cs), ['DE']);
+  // "North Asia": named countries only.
+  assert.deepEqual(lineCountries({ region: 'North Asia', country: null, add: ['CN', 'JP', 'KR'] }, new Set(), cs).sort(), ['CN', 'JP']);
+  // Countries the company reports on their own lines stay out of a broad line.
+  assert.deepEqual(lineCountries({ region: 'Other', country: null, covers: ['EAS'], add: ['AU'] }, new Set(['CN']), cs).sort(), ['AU', 'JP']);
+});

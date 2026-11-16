@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { metal } from '@/components/arena';
+import donationData from '@/data/donations.json';
 import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
@@ -33,6 +34,11 @@ const ACCURACY = (() => {
     : `${lo}–${hi}% of outcomes fell inside the 80% ranges.`;
   return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${ranges} Private companies use their listed peers.`;
 })();
+
+// Federal political giving on record (FEC), by person id: scripts/build-donations.mjs. At-least figures.
+type Giving = { total: number; from: string | null; top: { committee: string; amount: number }[]; url: string };
+const GIVING = (donationData as { people: Record<string, Giving> }).people;
+const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\bPac\b/g, 'PAC');
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
@@ -807,6 +813,30 @@ export function BriefingPanel({
                 <Caption style={styles.basis}>From the public record (USAspending.gov). A tie shows a documented connection, not a claim that anyone is driving events.</Caption>
               </View>
             )}
+            {(() => {
+              const givers = [...winners, ...losers].filter((p, i, all) => GIVING[p.person.id] && GIVING[p.person.id].total >= 10_000 && all.findIndex((x) => x.person.id === p.person.id) === i);
+              if (!givers.length) return null;
+              return (
+                <View style={styles.ties}>
+                  <Text style={[type.caption, styles.rowLabel]}>On the record</Text>
+                  {givers.map((p) => {
+                    const g = GIVING[p.person.id];
+                    const who = p.person.name.replace(/ & family$/, '');
+                    const since = g.from ? g.from.slice(0, 4) : '2019';
+                    return (
+                      <Pressable key={p.person.id} accessibilityRole="link" accessibilityLabel={`${who}: at least ${money(g.total)} to federal campaigns and political committees since ${since}, largest ${titleCase(g.top[0]?.committee ?? '')}. Opens the FEC records.`} onPress={() => open(g.url)} style={styles.tie}>
+                        <Caption style={[styles.flex, { color: color.text }]} numberOfLines={2}>
+                          <Text style={{ fontWeight: '600' }}>{who}</Text> · at least {money(g.total)} to federal campaigns and committees since {since}
+                          {g.top[0] ? ` · largest: ${titleCase(g.top[0].committee)}` : ''}
+                        </Caption>
+                        <Icon name={icons.link} size={12} tint={color.action} />
+                      </Pressable>
+                    );
+                  })}
+                  <Caption style={styles.basis}>FEC individual contributions, matched strictly by name and employer, so some gifts may be missing. A donation is a public record, not a claim of influence.</Caption>
+                </View>
+              );
+            })()}
             {s.statements && s.statements.length > 0 && (
               <View style={styles.ties}>
                 <Text style={[type.caption, styles.rowLabel]}>In their words</Text>

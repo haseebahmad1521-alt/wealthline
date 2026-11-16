@@ -6,11 +6,12 @@ import { useMemo } from 'react';
 
 import { usePeople, type Person } from '@/lib/data';
 import { db } from '@/lib/supabase';
+import regionReference from '@/data/regions.json';
 import stakeReference from '@/data/stakes.json';
 
 export type SiteKind = 'hq' | 'office' | 'factory' | 'data_center' | 'launch_site' | 'store' | 'research' | 'other';
 export type Site = { company_id: string; kind: SiteKind; name: string; city: string | null; country: string | null; lat: number; lng: number; source_url: string | null };
-export type RegionShare = { company_id: string; fiscal_year: number; region: string; country: string | null; revenue_usd: number; share: number; source_label: string; source_url: string | null };
+export type RegionShare = { company_id: string; fiscal_year: number; region: string; country: string | null; revenue_usd: number; share: number; source_label: string; source_url: string | null; covers?: string[]; add?: string[]; except?: string[]; note?: string | null };
 export type Quote = { ticker: string; as_of: string; price: number; prev_close: number | null; change_pct: number | null; source_label: string; source_url: string | null };
 export type Company = {
   id: string;
@@ -75,6 +76,20 @@ export function useWorld() {
 /** Warm the World query in the background so opening World never waits on the network. */
 export const prefetchWorld = (qc: QueryClient) => qc.prefetchQuery({ queryKey: ['world'], queryFn: loadWorld });
 
+type ReferenceRegions = { fiscal_year: number; source_label: string; source_url: string; note: string | null; lines: Omit<RegionShare, 'company_id' | 'fiscal_year' | 'source_label' | 'source_url'>[] };
+const REGION_REFERENCE = (regionReference as unknown as { companies: Record<string, ReferenceRegions> }).companies;
+
+/**
+ * A company's revenue by place: the database's (SEC 10-K lines), else the annual-report lines in src/data/regions.json
+ * for companies that don't file with the SEC.
+ */
+function regionsFor(companyId: string, rows: RegionShare[]): RegionShare[] {
+  const own = rows.filter((r) => r.company_id === companyId);
+  const ref = REGION_REFERENCE[companyId];
+  if (own.length || !ref) return own;
+  return ref.lines.map((l) => ({ ...l, company_id: companyId, fiscal_year: ref.fiscal_year, source_label: ref.source_label, source_url: ref.source_url, note: ref.note }));
+}
+
 function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof loadWorld>> | undefined): Empire[] | undefined {
   let empires: Empire[] | undefined;
   if (people && w) {
@@ -85,7 +100,7 @@ function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof
         const view: CompanyView = {
           ...c,
           sites: w.sites.filter((s) => s.company_id === c.id),
-          regions: w.regions.filter((r) => r.company_id === c.id),
+          regions: regionsFor(c.id, w.regions),
           quote: c.ticker ? (quoteBy.get(c.ticker) ?? null) : null,
           subsidiaries: subs.length,
           subsidiariesUrl: subs[0]?.source_url ?? null,

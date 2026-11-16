@@ -49,6 +49,15 @@ for (const c of companies) {
   const cn = latest.filter((r) => r.country === 'CN' || /china/i.test(r.region ?? '')).reduce((n, r) => n + Number(r.revenue_usd ?? 0), 0);
   if (total > 0) china.set(c.id, cn / total);
 }
+// Companies without SEC lines: their annual-report lines (src/data/regions.json). China = a CN line, or a named
+// Greater China / PRC line.
+const annualReports = JSON.parse(readFileSync('src/data/regions.json', 'utf8')).companies;
+for (const [id, r] of Object.entries(annualReports)) {
+  if (china.has(id)) continue;
+  const total = r.lines.reduce((n, l) => n + l.revenue_usd, 0);
+  const cn = r.lines.filter((l) => l.country === 'CN' || (l.add?.includes('CN') && /china|prc/i.test(l.region))).reduce((n, l) => n + l.revenue_usd, 0);
+  if (total > 0) china.set(id, cn / total);
+}
 console.log(`companies with recorded revenue by place: ${china.size}; with any China revenue: ${[...china.values()].filter((v) => v > 0).length}`);
 
 const raw = {};
