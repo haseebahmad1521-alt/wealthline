@@ -48,6 +48,17 @@ export default function Profile() {
   // The profile is a zoom-in: while it's open the planet camera flies down to the person's main headquarters, and
   // leaving flies back out. No recorded headquarters: the camera stays where it is.
   const hq = useWorld().data?.find((e) => e.person.id === p?.id)?.hq ?? null;
+  // A profile is for reading: the planet blurs and dims behind it while it's open (planet-scene.web.tsx).
+  useFocusEffect(
+    useCallback(() => {
+      scene.focus = true;
+      scene.invalidate?.();
+      return () => {
+        scene.focus = false;
+        scene.invalidate?.();
+      };
+    }, []),
+  );
   useFocusEffect(
     useCallback(() => {
       if (hq?.lat == null || hq?.lng == null) return;
