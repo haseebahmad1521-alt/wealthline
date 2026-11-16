@@ -21,6 +21,15 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
+_Updated Nov 16, 2026: World tab **Today view** and company board fix, on branch `world-today` (PR, not pushed to main)._
+
+- **Today view** (World's first view, key still `places`): each portrait gets a gain/loss ring and an arrow + amount label for its change since the previous recorded value (same 20-hour baseline as Rankings' movers); bubbles grow taller when labels show and the biggest mover leads. The Everyone panel opens with "Today." (up/down count, top 3 gains and drops; a tap flies the globe there or opens the profile). Logic in `src/lib/today.ts` (+ tests).
+- **Company board fix:** the empire leaderboard counted one company's revenue for every co-owner (Alphabet for Page, Brin and Schmidt). It is now "Companies on the map.", each company once with its owners (`companyBoard`).
+- The name strip is hidden on Today only (a person panel has "‹ Everyone"); it stays on Money, Economies and What if. Web only: the native SVG globe has no rings or labels yet.
+- **Checked:** typecheck, `npm test` 76/76, the production web export (`build:pages` itself fails on Windows: it spawns `npx` without a shell; CI on Linux is unaffected), local dev server in the browser at 375, 320 and 1440 px, no console errors. Not checked on a phone or native.
+- **Data seen (records, not code):** a separate "Google" company (Bechtolsheim) next to Alphabet; Larry Ellison listed as a Tesla owner.
+- **Ask the owner (after "continue"):** merge the World PR? Fix the two records above?
+
 _Updated Nov 2, 2026 (late evening): Pages deploys fixed; **Continue with Google / Apple** built, pushed and the `sign-in` function deployed (by Claude). Buttons stay hidden until the owner switches the providers on._
 
 - **Pages deploys were failing** since 17:27 UTC (CI `tsc` hit the 4 "harmless" persona.ts errors), so github.io still showed the old login. Fixed with a `paths` alias for `npm:@supabase/supabase-js@2` in `tsconfig.json`; `npx tsc --noEmit` is clean now, and the deploy is green. The one-form sign-in is live.
