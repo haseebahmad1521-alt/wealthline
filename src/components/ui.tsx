@@ -48,6 +48,9 @@ export const icons = {
   sparkle: { ios: 'sparkle', android: 'auto_awesome', web: 'auto_awesome' },
   seen: { ios: 'checkmark', android: 'done_all', web: 'done_all' },
   warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
+  play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  pause: { ios: 'pause.fill', android: 'pause', web: 'pause' },
+  replay: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
 } satisfies Record<string, IconName>;
 
 export function Icon({ name, size = 16, tint = color.text }: { name: IconName; size?: number; tint?: string }) {

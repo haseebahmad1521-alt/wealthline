@@ -148,7 +148,7 @@ export function WorldGlobe({
   live.current = { markers, sites, paths, focus, onSelect, onOpen };
 
   // Shaded countries live on the planet itself; cleared when World goes.
-  const fillKey = fills.map((f) => `${f.iso2}:${f.strength}:${f.risk ? 1 : 0}`).join('|');
+  const fillKey = fills.map((f) => `${f.iso2}:${f.strength}:${f.risk ? 1 : 0}${f.gain ? 1 : 0}`).join('|');
   useEffect(() => {
     scene.fills = fills;
     scene.fillsVersion++;
@@ -550,13 +550,17 @@ export function WorldGlobe({
         n.count.style.display = more ? 'block' : 'none';
         if (more) n.count.textContent = `+${more}`;
         const ch = m.change ?? null;
-        const chKey = ch ? `${ch.dir}${ch.text}` : '';
+        const chKey = ch ? `${ch.dir}${ch.text}${ch.projected ? 'p' : ''}` : '';
         if (chKey !== n.change) {
           n.change = chKey;
           const tint = !ch ? '' : ch.dir > 0 ? color.gain : ch.dir < 0 ? color.loss : color.textSecondary;
-          n.face.style.boxShadow = ch ? `0 0 0 2.5px ${tint}` : 'inset 0 0 0 1.5px rgba(255,255,255,.35)';
+          // A simulated change (projected) gets a dashed ring and "≈", so it never reads as a recorded one.
+          n.face.style.boxShadow = ch && !ch.projected ? `0 0 0 2.5px ${tint}` : ch ? 'none' : 'inset 0 0 0 1.5px rgba(255,255,255,.35)';
+          n.face.style.outline = ch?.projected ? `2.5px dashed ${tint}` : 'none';
+          n.face.style.outlineOffset = ch?.projected ? '1px' : '0';
           n.tag.style.color = tint;
-          n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.text}` : '';
+          n.tag.style.border = ch?.projected ? '1px dashed currentColor' : 'none';
+          n.tag.textContent = ch ? `${ch.dir > 0 ? '▲' : ch.dir < 0 ? '▼' : '■'} ${ch.projected ? '≈' : ''}${ch.text}` : '';
         }
         // In a fanned bubble only the bigger portraits keep a label; small ones would cover their neighbours.
         n.tag.style.display = ch && (fp ? fp.d >= 64 : isLeader) ? 'block' : 'none';

@@ -3,7 +3,7 @@
 // reported revenue from SEC filings, World Bank GDP or a tracked net worth; the What if view only multiplies them.
 import * as WebBrowser from 'expo-web-browser';
 import { Chip as Tag, Slider } from 'heroui-native';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { GlobeArc, GlobeFill } from '@/components/globe';
@@ -336,7 +336,7 @@ function RevenueView({ lines, countries, focus }: { lines: Line[]; countries: Co
 
 /** The slider's largest hypothetical fall, in percent. */
 const MAX_DROP = 50;
-export type WhatIfMode = 'place' | 'price';
+export type WhatIfMode = 'simulate' | 'place' | 'price';
 
 export function whatIfTargets(lines: Line[]) {
   const by = new Map<string, { key: string; label: string; revenue: number }>();
@@ -403,7 +403,9 @@ export function WhatIfPanel({
   onTarget,
   onCompany,
   onDrop,
+  simulate,
 }: {
+  simulate: ReactNode;
   lines: Line[];
   empires: Empire[];
   mode: WhatIfMode;
@@ -448,12 +450,14 @@ export function WhatIfPanel({
         </View>
       </View>
       <View accessibilityRole="tablist" style={styles.segments}>
-        {(['place', 'price'] as const).map((m) => (
-          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
-            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'place' ? 'A place' : 'A share price'}</Text>
+        {(['simulate', 'place', 'price'] as const).map((m) => (
+          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, styles.segmentTight, mode === m && styles.segmentOn]}>
+            <Text numberOfLines={1} style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'simulate' ? 'Simulate' : m === 'place' ? 'Place' : 'Share price'}</Text>
           </Pressable>
         ))}
       </View>
+      {mode === 'simulate' ? simulate : (
+      <>
       <Body secondary>
         {mode === 'place'
           ? 'Pick a place and a fall in business there: whose companies lose revenue, and roughly what that could mean for their owners.'
@@ -543,6 +547,8 @@ export function WhatIfPanel({
           ? 'Revenue from annual reports; stakes are recorded shares (SEC Form 4 or Schedule 13G/13D) at the latest price. Share prices don’t move one-for-one with revenue: the wealth figure is a rough scale, not a forecast. Profits, supply chains and other assets aren’t modelled.'
           : 'Stakes are recorded shares (SEC Form 4 or Schedule 13G/13D) at the latest price. Other assets and companies aren’t moved.'}
       </Caption>
+      </>
+      )}
     </Surface>
   );
 }
@@ -567,6 +573,7 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', alignSelf: 'flex-start', padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
   segment: { minHeight: 38, minWidth: 72, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
+  segmentTight: { minWidth: 0, paddingHorizontal: space.sm },
   result: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   price: { alignItems: 'flex-end', gap: 2 },
   hero: { flexDirection: 'row', alignItems: 'center', gap: space.md },

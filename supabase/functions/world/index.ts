@@ -1,10 +1,11 @@
 // World sandbox collectors, called by pg_cron with CRON_SECRET (see migrations/20261101000200_world.sql).
 //   ?job=quotes  every 10 minutes: observed share prices for every listed company (Yahoo Finance chart data).
-//   ?job=facts   daily: company headquarters and facilities (Wikidata), country GDP and population (World Bank).
+//   ?job=facts   daily: company headquarters, facilities and sector (Wikidata), country GDP, population and region (World Bank).
 //   ?job=edgar   hourly: revenue by country/region and subsidiaries from new 10-K filings (edgar.ts).
 // Everything stored is copied from its source with a link back; each source reports to source_health.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { getJson, track } from '../_shared/refresh.ts';
+import { sectorFor } from '../_shared/scenario.ts';
 import { cors, json } from '../_shared/util.ts';
 import { runEdgar } from './edgar.ts';
 
@@ -124,7 +125,22 @@ async function companyPlaces(db: SupabaseClient) {
     sites.push({ company_id: id, kind: 'hq', name: `${b.hqLabel?.value ?? 'Headquarters'} headquarters`, city: b.hqLabel?.value ?? null, country: b.cc?.value ?? null, lat, lng, source_label: 'Wikidata', source_url });
   }
 
-  // 3. Facilities the company owns or operates.
+  // 3. Sector, for the World simulations: the company's Wikidata industries (P452), mapped to a fixed list.
+  const ind = await inChunks((values) =>
+    `SELECT ?co ?indLabel WHERE { VALUES ?co { ${values} } ?co wdt:P452 ?ind . SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }`,
+  );
+  const labels = new Map<string, string[]>();
+  for (const b of ind) {
+    const id = byQ.get(qid(b.co.value));
+    const label = b.indLabel?.value;
+    if (id && label && !/^Q\d+$/.test(label)) labels.set(id, [...(labels.get(id) ?? []), label]);
+  }
+  for (const [id, list] of labels) {
+    const hit = sectorFor(list);
+    if (hit) await db.from('companies').update({ sector: hit.sector, sector_source: `Wikidata industry: ${hit.label}` }).eq('id', id);
+  }
+
+  // 4. Facilities the company owns or operates.
   const fac = await inChunks((values) =>
     `SELECT ?co ?site ?siteLabel ?typeLabel ?coord ?cc ?cityLabel WHERE { VALUES ?co { ${values} } ?site wdt:P127|wdt:P137 ?co ; wdt:P625 ?coord .
        OPTIONAL { ?site wdt:P31 ?type } OPTIONAL { ?site wdt:P17 ?c . ?c wdt:P297 ?cc } OPTIONAL { ?site wdt:P131 ?city }
@@ -166,7 +182,7 @@ async function countries(db: SupabaseClient) {
   const rows = ((list?.[1] ?? []) as { id: string; iso2Code: string; name: string; region: { id: string } }[])
     .filter((c) => c.region?.id !== 'NA' && /^[A-Z]{2}$/.test(c.iso2Code)) // drop aggregates ("Euro area", "World", …)
     .map((c) => ({
-      iso2: c.iso2Code, iso3: c.id, name: c.name,
+      iso2: c.iso2Code, iso3: c.id, name: c.name, region: c.region?.id ?? null,
       gdp_usd: g.get(c.id)?.value ?? null, gdp_year: g.has(c.id) ? Number(g.get(c.id)!.date) : null,
       population: p.get(c.id)?.value ?? null, population_year: p.has(c.id) ? Number(p.get(c.id)!.date) : null,
       source_url: `https://data.worldbank.org/country/${c.iso2Code}`, updated_at: new Date().toISOString(),

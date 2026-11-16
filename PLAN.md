@@ -21,6 +21,21 @@ Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/
 
 ## Resume here
 
+_Updated Nov 16, 2026 (later): **World simulations** built on branch `world-simulations` (PR open, not merged). The backend pieces are written but **not deployed** (Claude's database and function access is refused); the app works without them using three built-in examples._
+
+- **What it is:** What if → Simulate (now the default mode). Ask "what if…", or pick a suggestion: Grok's daily scenarios (ranked likely → unlikely) and three built-in examples (Musk sells Tesla to Page; Iran–Saudi war; US–China trade cut). Play runs month by month: shocked countries shade red/green, revenue arcs from them light up, a sale draws a line between the two headquarters, portraits get dashed "≈" projected labels, and the panel lists fortunes, rank changes and companies at that month.
+- **Integrity:** Grok writes only the story and a list of changes (place / company / sector / market / transfer, with size and months; `supabase/functions/_shared/scenario.ts`). Its prose is rejected if it has figures, every change must name something tracked, sizes are capped, sources are kept only if Grok's search returned them. Dollars come from `src/lib/simulate.ts` (tested): recorded revenue by place × GDP share of regional lines × the change; share price follows revenue; fortunes move only through recorded stakes (others show their company's % move).
+- **Data added (migration `20261116000000_world_scenarios.sql`):** `countries.region` (World Bank region, so "EMEA"-style lines can be split by GDP), `companies.sector` (+ `sector_source`, from Wikidata industry P452 via `sectorFor`), table `world_scenarios` (public read), cron `scenarios` daily 07:05 UTC. The `world` facts job now fills region and sector.
+- **Owner-run, in order (with `!`):**
+  1. `npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261116000000_world_scenarios.sql`
+  2. `npx supabase@latest functions deploy world scenarios --project-ref qucpeyrbzyfqtmxhmezr --use-api --yes`
+  3. Run the facts job once (or wait for its daily run) so sectors and regions fill, then trigger the first daily set (or wait for 07:05 UTC).
+  4. Then merge the PR. Before step 1, the live app logs harmless 400/404s for the missing columns/table if the PR is merged early.
+- **Typed questions:** public (no sign-in, owner Nov 16), cached by normalised question, capped at 40 new questions an hour and stopped once 45% of the monthly xAI ceiling is spent overall.
+- **Checked:** typecheck, `npm test` 82/82 (6 new), functions type-check (temporary tsconfig + Deno stub), browser at 375/320: examples play, war shades IR/SA/AE, sale figures check by hand (≈$526B paid = stake × 1.2), typed question fails politely without the function. Not checked: Grok output (needs the deploy), native app, a phone.
+- **Limits:** no tracked sites in the Middle East; revenue by country exists for ~30 SEC filers; only 6 recorded stakes. Wars reach fortunes mainly through sectors and the market until more data lands. Commodity prices left out (nothing in the calculation would use them yet).
+- **Ask the owner (after "continue"):** run the deploy steps above? Then check the first daily scenarios together.
+
 _Updated Nov 16, 2026: World tab **Today view** and company board fix, on branch `world-today` (PR, not pushed to main)._
 
 - **Today view** (World's first view, key still `places`): each portrait gets a gain/loss ring and an arrow + amount label for its change since the previous recorded value (same 20-hour baseline as Rankings' movers); bubbles grow taller when labels show and the biggest mover leads. The Everyone panel opens with "Today." (up/down count, top 3 gains and drops; a tap flies the globe there or opens the profile). Logic in `src/lib/today.ts` (+ tests).

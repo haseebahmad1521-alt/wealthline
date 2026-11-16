@@ -10,7 +10,10 @@ import { WorldGlobe } from '@/components/world-globe';
 import { EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, fortuneFills, priceTargets, revenueLines, whatIfTargets, type EconomyMode, type WhatIfMode } from '@/components/world-views';
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
-import { countryShape } from '@/lib/geo';
+import { countryCentre, countryShape } from '@/lib/geo';
+import { askScenario, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { lineCountries, simPct, simulate, type SimCountry, type SimEmpire } from '@/lib/simulate';
+import { SimulatePanel } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
@@ -62,12 +65,53 @@ export default function World() {
   const [target, setTarget] = useState<string | null>(null);
   const [drop, setDrop] = useState<number>(0.25);
   const [econ, setEcon] = useState<EconomyMode>('fortune');
-  const [mode, setMode] = useState<WhatIfMode>('place');
+  const [mode, setMode] = useState<WhatIfMode>('simulate');
   const [firm, setFirm] = useState<string | null>(null);
   // Default shock: the biggest market outside the United States; default company: the largest recorded stakes.
   const shock = target ?? targets.find((t) => t.key !== 'US')?.key ?? targets[0]?.key ?? '';
   const firms = useMemo(() => priceTargets(world.data ?? []), [world.data]);
   const company = firm ?? firms[0]?.key ?? '';
+
+  // Simulations: Grok's daily scenarios first (most plausible first), then the built-in examples; a typed question's
+  // answer joins the front. The month is the globe's month too.
+  const simData = useSimData();
+  const daily = useDailyScenarios();
+  const [asked, setAsked] = useState<Scenario[]>([]);
+  const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires)], [asked, daily.data, empires]);
+  const [simId, setSimId] = useState<string | null>(null);
+  const sim = scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null;
+  const [month, setMonth] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const simOn = view === 'whatif' && mode === 'simulate' && !!sim;
+  const simEmpires = useMemo<SimEmpire[]>(
+    () =>
+      empires.map((e) => ({
+        person: e.person,
+        stakes: e.stakes,
+        companies: e.companies.map((c) => ({ id: c.id, name: c.name, sector: simData.data?.sectors.get(c.id) ?? null, listed: !c.is_private && !!c.ticker, regions: c.regions })),
+      })),
+    [empires, simData.data],
+  );
+  const simCountries = useMemo<SimCountry[]>(() => (world.countries ?? []).map((c) => ({ ...c, region: simData.data?.regions.get(c.iso2) ?? null })), [world.countries, simData.data]);
+  const frame = useMemo(() => (simOn && sim ? simulate(sim, simEmpires, simCountries, Math.min(month, sim.months)) : null), [simOn, sim, simEmpires, simCountries, month]);
+  // Play: one month per step; at the end it stops, and play again starts over.
+  useEffect(() => {
+    if (!playing || !sim) return;
+    const t = setInterval(() => setMonth((m) => (m >= sim.months ? (setPlaying(false), m) : m + 1)), 900);
+    return () => clearInterval(t);
+  }, [playing, sim]);
+  const pick = (s: Scenario) => {
+    setSimId(s.id);
+    setMonth(0);
+    setPlaying(!reduceMotion); // with reduced motion, nothing starts moving by itself
+  };
+  const ask = async (prompt: string) => {
+    const r = await askScenario(prompt);
+    if ('error' in r) return r.error;
+    setAsked((a) => [r.scenario, ...a.filter((x) => x.id !== r.scenario.id)]);
+    pick(r.scenario);
+    return null;
+  };
 
   let arcs: GlobeArc[] = [];
   let fills: GlobeFill[] = [];
@@ -78,7 +122,28 @@ export default function World() {
     if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
   }
   if (view === 'whatif' && mode === 'price') arcs = flowArcs(lines, null, (l) => l.company.id === company, true);
-  const shockCentre = view === 'whatif' ? (arcs[0]?.from ?? null) : null;
+  let simCentre: { lat: number; lng: number } | null = null;
+  if (simOn && sim && frame) {
+    fills = frame.fills.map((f) => ({ iso2: f.iso2, strength: Math.min(Math.abs(f.pct) / 0.5, 1), risk: f.pct < 0, gain: f.pct > 0 }));
+    // Money that flows from the shocked countries (directly, or as their share of a regional line).
+    const shocked = new Set(frame.fills.map((f) => f.iso2));
+    const moved = new Map(frame.companies.map((c) => [c.company.id, c.revenueDelta]));
+    arcs = flowArcs(lines, null, (l) => {
+      if (!moved.get(l.company.id)) return false;
+      const own = new Set(l.company.regions.map((r) => r.country).filter((x): x is string => !!x));
+      return lineCountries({ region: l.place, country: l.country }, own, simCountries).some((c) => shocked.has(c));
+    }, true);
+    // A sale: a line from the seller's headquarters to the buyer's.
+    for (const t of frame.transfers) {
+      const from = empires.find((e) => e.person.id === t.seller.id)?.hq;
+      const to = empires.find((e) => e.person.id === t.buyer.id)?.hq;
+      if (from && to) arcs.push({ key: `sale-${t.seller.id}-${t.company.id}`, from, to, weight: t.done ? 1 : 0.4, group: t.buyer.id });
+    }
+    const first = sim.shocks.find((s) => s.kind === 'place');
+    const seller = sim.shocks.find((s) => s.kind === 'transfer');
+    simCentre = (first && countryCentre(first.target)) || (seller && empires.find((e) => e.person.slug === (seller as { person: string }).person)?.hq) || null;
+  }
+  const shockCentre = simOn ? simCentre : view === 'whatif' ? (arcs[0]?.from ?? null) : null;
   // What if and the fortune comparison are about the whole map, so picking a person doesn't fly the globe to them.
   const wide = view === 'whatif' || (view === 'economies' && econ === 'fortune');
 
@@ -107,7 +172,22 @@ export default function World() {
       })
       .sort((a, b) => Math.abs(by.get(b.key) ?? 0) - Math.abs(by.get(a.key) ?? 0));
   }, [markers, empires, money]);
-  const shownMarkers = view === 'places' ? todayMarkers : markers;
+  // Simulation: each touched portrait carries its projected change (dashed, "≈"); the biggest movers lead.
+  const simMarkers = useMemo(() => {
+    if (!frame) return markers;
+    const by = new Map(frame.people.map((p) => [p.person.id, p]));
+    const size = (id: string) => Math.abs(by.get(id)?.delta ?? 0) * 1e3 + Math.abs(by.get(id)?.pct ?? 0);
+    return markers
+      .map((m) => {
+        const p = by.get(m.key);
+        if (!p) return m;
+        const v = p.delta ?? p.pct ?? 0;
+        const text = p.delta != null ? money.format(Math.abs(p.delta)) : simPct(p.pct!);
+        return { ...m, change: { text, dir: Math.sign(v) as 1 | -1 | 0, projected: true } };
+      })
+      .sort((a, b) => size(b.key) - size(a.key));
+  }, [frame, markers, money]);
+  const shownMarkers = view === 'places' ? todayMarkers : simOn ? simMarkers : markers;
 
   // A place picked from search: the camera flies there instead of to the owner's headquarters.
   const [spot, setSpot] = useState<{ lat: number; lng: number } | null>(null);
@@ -200,7 +280,7 @@ export default function World() {
             ))}
           </View>
           {/* Today picks people from its lists and search; the other views keep the strip of names. */}
-          {view !== 'places' && (
+          {view !== 'places' && view !== 'whatif' && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.above} contentContainerStyle={styles.chips} accessibilityRole="tablist">
               <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
               {empires.map((e) => (
@@ -281,6 +361,27 @@ export default function World() {
                   onTarget={setTarget}
                   onCompany={setFirm}
                   onDrop={setDrop}
+                  simulate={
+                    <SimulatePanel
+                      scenarios={scenarios}
+                      scenario={sim}
+                      onPick={pick}
+                      onAsk={ask}
+                      month={month}
+                      onMonth={(m) => {
+                        setPlaying(false);
+                        setMonth(m);
+                      }}
+                      playing={playing}
+                      onPlay={() => {
+                        if (playing) return setPlaying(false);
+                        if (sim && month >= sim.months) setMonth(0);
+                        setPlaying(true);
+                      }}
+                      frame={frame}
+                      tracked={empires.length}
+                    />
+                  }
                 />
               ) : focused ? (
                 <EmpirePanel empire={focused} onClear={() => select(null)} />
@@ -297,7 +398,9 @@ export default function World() {
                         ? econ === 'fortune'
                           ? 'Drag the globe to turn it; pinch to zoom. Lit countries have a yearly GDP smaller than the fortune.'
                           : 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
-                        : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
+                        : mode === 'simulate'
+                          ? 'Drag the globe to turn it; pinch to zoom. Hypothetical: shaded countries are where business falls (red) or grows (green); dashed portraits with ≈ show projected changes, never recorded ones.'
+                          : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
                 </Caption>
               )}
             </View>
