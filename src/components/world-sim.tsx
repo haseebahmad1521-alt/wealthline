@@ -16,6 +16,7 @@ import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, ty
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
+import type { BriefingItem } from '@/lib/briefing';
 import type { Holding } from '@/lib/mine';
 import { color, font, radius, space, type } from '@/theme';
 
@@ -54,7 +55,10 @@ export function SimulatePanel({
   challengeId,
   you,
   mostAsked = [],
+  brief,
 }: {
+  /** Today's briefing, shown at the top of the Scenarios tab. */
+  brief?: ReactNode;
   /** Questions and matches people asked most this week. */
   mostAsked?: (Scenario & { asks?: number })[];
   /** The "You" editor (what the player owns), shown under the tabs. */
@@ -96,6 +100,7 @@ export function SimulatePanel({
       {you}
       {mode === 'dials' ? dials : mode === 'versus' ? versus : (
       <>
+      {brief}
       {score.played > 0 && (
         <Caption>
           ★ {score.points} points · streak {score.streak} · {score.right} of {score.played} called right
@@ -681,6 +686,91 @@ function EndCard({
   );
 }
 
+/**
+ * Today's briefing: each storyline with its odds (a prediction market's, live, when one matches; else Grok's judgement),
+ * the fortunes it would lift and hit most, and a button to watch it play out.
+ */
+export function BriefingPanel({
+  items,
+  sample,
+  live,
+  date,
+  money,
+  onWatch,
+}: {
+  items: BriefingItem[];
+  /** True while the daily briefing isn't on yet: the built-in examples stand in. */
+  sample: boolean;
+  live: Map<string, number>;
+  date: string | null;
+  money: (usd: number) => string;
+  onWatch: (s: Scenario) => void;
+}) {
+  const [all, setAll] = useState(false);
+  if (!items.length) return null;
+  const shown = all ? items : items.slice(0, 3);
+  const person = (p: PersonMove, up: boolean) => (
+    <View key={p.person.id} style={styles.briefPerson} accessible accessibilityLabel={`${p.person.name}, ${up ? 'up' : 'down'} about ${p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct ?? 0)}`}>
+      <Portrait uri={p.person.portrait_url ?? null} name={p.person.name} size={26} />
+      <View style={styles.flex}>
+        <Text style={[type.caption, { color: color.text }]} numberOfLines={1}>
+          {lastName(p.person.name)}
+        </Text>
+        <Text style={[type.caption, { color: up ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]} numberOfLines={1}>
+          {up ? '▲' : '▼'} ≈{p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct ?? 0)}
+        </Text>
+      </View>
+    </View>
+  );
+  return (
+    <View style={styles.brief}>
+      <View style={styles.briefHead}>
+        <Text style={[type.title, { color: color.text, fontSize: 20 }]}>Today’s briefing.</Text>
+        <Caption>{sample ? 'Sample' : date ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : ''}</Caption>
+      </View>
+      {sample && <Caption>The daily briefing starts once Grok is switched on; until then these examples show how it works.</Caption>}
+      {shown.map(({ scenario: s, winners, losers }) => {
+        const yes = s.odds ? (live.get(s.odds.market) ?? s.odds.yes) : null;
+        const fresh = s.odds ? live.has(s.odds.market) : false;
+        return (
+          <View key={s.id} style={styles.briefItem}>
+            <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
+              {s.title.replace(/\.$/, '')}
+            </Text>
+            {s.odds && yes != null ? (
+              <Pressable accessibilityRole="link" accessibilityLabel={`Prediction market: ${Math.round(yes * 100)} percent yes. ${s.odds.question}`} onPress={() => open(s.odds!.url)} style={styles.odds}>
+                <View style={styles.oddsTrack}>
+                  <View style={[styles.oddsFill, { width: `${Math.max(2, Math.round(yes * 100))}%` }]} />
+                </View>
+                <Caption style={{ color: color.text }} numberOfLines={1}>
+                  {Math.round(yes * 100)}% on Polymarket{fresh ? '' : ` (${new Date(s.odds.as_of).toLocaleDateString('en', { day: 'numeric', month: 'short' })})`} · {s.odds.question}
+                </Caption>
+              </Pressable>
+            ) : (
+              <Caption>{s.origin === 'example' ? 'Built-in example' : `${PLAUSIBLE[s.plausibility]}, by Grok’s judgement; no prediction market asks this`}</Caption>
+            )}
+            {(winners.length > 0 || losers.length > 0) && (
+              <View style={styles.briefPeople}>
+                {winners.map((p) => person(p, true))}
+                {losers.map((p) => person(p, false))}
+              </View>
+            )}
+            <Pressable accessibilityRole="button" accessibilityLabel={`Watch: ${s.title}`} onPress={() => onWatch(s)} style={styles.watch}>
+              <Icon name={icons.play} size={14} tint={color.onAction} />
+              <Text style={[type.caption, { color: color.onAction, fontWeight: '600' }]}>Watch</Text>
+            </Pressable>
+          </View>
+        );
+      })}
+      {items.length > 3 && (
+        <Pressable accessibilityRole="button" onPress={() => setAll(!all)} style={styles.source}>
+          <Caption style={{ color: color.action }}>{all ? 'Show fewer' : `Show all ${items.length}`}</Caption>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 /** What a simulation does to what the player owns. */
 function YouLine({ mine, money }: { mine: { delta: number; pct: number }; money: (usd: number) => string }) {
   const up = mine.delta >= 0;
@@ -899,6 +989,15 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
+  brief: { gap: space.sm },
+  briefHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  briefItem: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,.1)' },
+  briefPeople: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
+  briefPerson: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 6 },
+  odds: { gap: 3 },
+  oddsTrack: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden' },
+  oddsFill: { height: 6, borderRadius: 3, backgroundColor: color.action },
+  watch: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: 4, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: color.action },
   range: { ...type.caption, fontSize: 10, lineHeight: 13, color: color.textSecondary, textAlign: 'center', fontVariant: ['tabular-nums'] },
   basis: { fontSize: 10, lineHeight: 13 },
   summary: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(108,184,255,.10)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(108,184,255,.35)' },
