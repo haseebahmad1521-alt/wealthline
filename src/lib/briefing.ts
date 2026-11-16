@@ -3,9 +3,10 @@
 import type { Scenario } from '../../supabase/functions/_shared/scenario.ts';
 import { expandAnalogs, type EventData } from './analogs.ts';
 import { relative } from './guess.ts';
+import type { Tie } from './ties.ts';
 import { simulate, type PersonMove, type SimCountry, type SimEmpire } from './simulate.ts';
 
-export type BriefingItem = { scenario: Scenario; winners: PersonMove[]; losers: PersonMove[]; moved: number };
+export type BriefingItem = { scenario: Scenario; winners: PersonMove[]; losers: PersonMove[]; moved: number; ties?: Tie[] };
 
 /** For each storyline: the two biggest winners and losers at the end (by share of fortune, else share price). */
 export function briefing(scenarios: Scenario[], empires: SimEmpire[], countries: SimCountry[], events: EventData | null, count = 2): BriefingItem[] {

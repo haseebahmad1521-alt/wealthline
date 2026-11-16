@@ -1,0 +1,156 @@
+{
+ "built": "2026-11-16",
+ "source": "USAspending.gov, federal contract obligations (award types A-D)",
+ "window": "Oct 2023 to Sep 2026 (US fiscal years 2024-2026)",
+ "companies": {
+  "73dc826d-1d43-41a4-bfa4-8bf31fe4189d": {
+   "company": "Dell Technologies",
+   "contracts": 9981299497,
+   "defense": 6196049077,
+   "recipients": [
+    "DELL FEDERAL SYSTEMS L.P",
+    "DELL MARKETING L.P."
+   ],
+   "url": "https://www.usaspending.gov/recipient/3612de0a-9635-3846-a5a1-7f555fba52df-C/latest"
+  },
+  "117ba2a7-3f87-4446-9e56-9c3bda87fad7": {
+   "company": "SoftBank Group",
+   "contracts": 1499191,
+   "defense": 1499191,
+   "recipients": [
+    "SOFTBANK CORP."
+   ],
+   "url": "https://www.usaspending.gov/recipient/e3ec31f2-e163-7aaf-7328-559703a63c21-C/latest"
+  },
+  "464d1bb3-afae-4faa-a86c-9622d39b0ee3": {
+   "company": "Microsoft",
+   "contracts": 1605023875,
+   "defense": 1279731779,
+   "recipients": [
+    "MICROSOFT CORPORATION",
+    "MICROSOFT CORPORATION"
+   ],
+   "url": "https://www.usaspending.gov/recipient/dd77b7c3-663e-cb91-229f-5766a50e9b7f-C/latest"
+  },
+  "a9622606-a68d-46ef-8a5b-ca9846583bd3": {
+   "company": "Alphabet",
+   "contracts": 76579972,
+   "defense": 59180715,
+   "recipients": [
+    "GOOGLE PUBLIC SECTOR LLC",
+    "GOOGLE LLC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/fa80ed82-5b68-ffce-2167-5a87592ebb7f-C/latest"
+  },
+  "81f233ea-cda8-4e2f-8344-00a94249f00e": {
+   "company": "SpaceX",
+   "contracts": 9369093489,
+   "defense": 5694834433,
+   "recipients": [
+    "SPACE EXPLORATION TECHNOLOGIES CORP.",
+    "SPACE EXPLORATION TECHNOLOGIES CORP",
+    "SPACE EXPLORATION TECHNOLOGIES CORP"
+   ],
+   "url": "https://www.usaspending.gov/recipient/8a3a5525-3218-a488-db0e-4823241ceb90-C/latest"
+  },
+  "7d718d1d-228f-4f78-84c8-c6c960ad1e10": {
+   "company": "Google",
+   "contracts": 76579972,
+   "defense": 59180715,
+   "recipients": [
+    "GOOGLE PUBLIC SECTOR LLC",
+    "GOOGLE LLC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/fa80ed82-5b68-ffce-2167-5a87592ebb7f-C/latest"
+  },
+  "839e1bc5-17a3-4c2a-8850-579e1bcbf2d6": {
+   "company": "Amazon",
+   "contracts": 1298918966,
+   "defense": 974111603,
+   "recipients": [
+    "AMAZON WEB SERVICES, INC.",
+    "AMAZON WEB SERVICES, INC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/645df5f2-66e3-8d2b-a612-3bff6ed3da30-C/latest"
+  },
+  "7703988d-f5c9-48fe-911a-e6feb89bccce": {
+   "company": "Palantir Technologies",
+   "contracts": 4023310829,
+   "defense": 3510512042,
+   "recipients": [
+    "PALANTIR USG INC",
+    "PALANTIR TECHNOLOGIES INC."
+   ],
+   "url": "https://www.usaspending.gov/recipient/11a97fdb-cb3b-16d2-aa67-a0f7b265b4ae-C/latest"
+  },
+  "d7b5c594-e612-43b0-9979-ace67deff888": {
+   "company": "United Rentals",
+   "contracts": 35029288,
+   "defense": 20776706,
+   "recipients": [
+    "UNITED RENTALS, INC.",
+    "UNITED RENTALS (NORTH AMERICA), INC.",
+    "UNITED RENTALS NORTH AMERICA INC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/d71e3181-5dd2-4be8-2540-38d626163a79-C/latest"
+  },
+  "be3bd941-9d8d-4c13-9841-f36678e46f56": {
+   "company": "Oracle",
+   "contracts": 4174212434,
+   "defense": 145069552,
+   "recipients": [
+    "ORACLE HEALTH GOVERNMENT SERVICES, INC.",
+    "ORACLE AMERICA, INC",
+    "ORACLE AMERICA, INC."
+   ],
+   "url": "https://www.usaspending.gov/recipient/9232b26d-789d-bdd2-5a6d-28714f1dfa2c-C/latest"
+  },
+  "e95a77f4-b5cd-4794-bc60-b674351aa974": {
+   "company": "Glencore",
+   "contracts": 451063188,
+   "defense": 451063188,
+   "recipients": [
+    "GLENCORE LTD."
+   ],
+   "url": "https://www.usaspending.gov/recipient/88bb09b0-163b-4a6f-0fbf-580e955fb704-C/latest"
+  },
+  "e5a2ab43-2ae8-4518-994c-d07c24fd03fe": {
+   "company": "Mediterranean Shipping Company",
+   "contracts": 2459555,
+   "defense": 0,
+   "recipients": [
+    "MEDITERRANEAN SHIPPING COMPANY (USA) INC."
+   ],
+   "url": "https://www.usaspending.gov/recipient/20d808e0-c853-a341-c25e-2fff426c54dc-C/latest"
+  },
+  "f69b816f-6610-4ccf-b13f-ec44f6761ac1": {
+   "company": "SAP",
+   "contracts": 94792159,
+   "defense": 91073497,
+   "recipients": [
+    "SAP NATIONAL SECURITY SERVICES INC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/a0ef059e-42bf-0e69-637c-270e7f0fe556-C/latest"
+  },
+  "c89d7879-8a39-4e55-98a1-609d23408ef9": {
+   "company": "BMW",
+   "contracts": 59593493,
+   "defense": 4508200,
+   "recipients": [
+    "BMW OF NORTH AMERICA LLC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/8a251bdb-bbc1-4af0-eeec-d837f67505ec-C/latest"
+  },
+  "ca2599cb-331a-4607-94ae-fb3606629b20": {
+   "company": "Thomson Reuters",
+   "contracts": 77252039,
+   "defense": 14666317,
+   "recipients": [
+    "THOMSON REUTERS SPECIAL SERVICES LLC",
+    "THOMSON REUTERS (TAX & ACCOUNTING), INC.",
+    "THOMSON REUTERS (MARKETS) LLC"
+   ],
+   "url": "https://www.usaspending.gov/recipient/65494435-f70c-9a3e-15e0-474723c82d88-C/latest"
+  }
+ }
+}

@@ -13,6 +13,8 @@ import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
 import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useLiveOdds, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
 import { briefing } from '@/lib/briefing';
+import { tiesFor, type ContractTie } from '@/lib/ties';
+import tiesData from '@/data/ties.json';
 import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
@@ -289,10 +291,17 @@ export default function World() {
   // Today's briefing: Grok's daily storylines (or the built-in examples until it's on), each with who gains and loses
   // most at the end, and live prediction-market odds where a market matches.
   const briefSource = useMemo(() => ((daily.data?.length ? daily.data : examples(empires)) as Scenario[]), [daily.data, empires]);
-  const briefItems = useMemo(
-    () => (view === 'whatif' && simEmpires.length ? briefing(briefSource, simEmpires, simCountries, eventData as EventData) : []),
-    [view, briefSource, simEmpires, simCountries],
-  );
+  const briefItems = useMemo(() => {
+    if (view !== 'whatif' || !simEmpires.length) return [];
+    // Each company's tracked people, for the documented ties.
+    const owners = new Map<string, { id: string; name: string }[]>();
+    for (const e of empires) for (const c of e.companies) owners.set(c.id, [...(owners.get(c.id) ?? []), { id: e.person.id, name: e.person.name }]);
+    const contracts = (tiesData as { companies: Record<string, ContractTie> }).companies;
+    return briefing(briefSource, simEmpires, simCountries, eventData as EventData).map((item) => ({
+      ...item,
+      ties: tiesFor(expandAnalogs(item.scenario, null), contracts, (id) => owners.get(id) ?? []),
+    }));
+  }, [view, briefSource, simEmpires, simCountries, empires]);
   const liveOdds = useLiveOdds(briefSource.map((s) => s.odds?.market).filter((x): x is string => !!x));
 
   // "…and then?": the story carries on for another year from where it ended; the film resumes there.
