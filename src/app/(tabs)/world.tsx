@@ -28,6 +28,7 @@ import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_
 import { BriefingPanel, DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { REFERENCE } from '@/lib/factor-data';
+import { toSimCountries, toSimEmpires } from '@/lib/sim-inputs';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
@@ -97,16 +98,8 @@ export default function World() {
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
   const simOn = view === 'whatif' && !!sim;
-  const simEmpires = useMemo<SimEmpire[]>(
-    () =>
-      empires.map((e) => ({
-        person: e.person,
-        stakes: e.stakes,
-        companies: e.companies.map((c) => ({ id: c.id, name: c.name, sector: simData.data?.sectors.get(c.id) ?? null, listed: !c.is_private && !!c.ticker, regions: c.regions, fit: simData.data?.fits.get(c.id) ?? null, margin: simData.data?.margins.get(c.id) ?? null })),
-      })),
-    [empires, simData.data],
-  );
-  const simCountries = useMemo<SimCountry[]>(() => (world.countries ?? []).map((c) => ({ ...c, region: simData.data?.regions.get(c.iso2) ?? null })), [world.countries, simData.data]);
+  const simEmpires = useMemo<SimEmpire[]>(() => toSimEmpires(empires, simData.data), [empires, simData.data]);
+  const simCountries = useMemo<SimCountry[]>(() => toSimCountries(world.countries, simData.data), [world.countries, simData.data]);
   // Every month of the film at once (a few dozen small calculations), so notifications can compare months.
   const frames = useMemo(
     () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m, RANGE_Z)) : []),

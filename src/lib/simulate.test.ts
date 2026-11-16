@@ -211,3 +211,17 @@ test('last time this happened: past events behind a scenario, and a replay of on
   assert.equal(r.beats?.[0]?.text, 'Oil prices jump');
   assert.equal(replayScenario('missing', data), null);
 });
+
+test('today’s exposure: each person once per side, biggest share of fortune first', async () => {
+  const { exposure } = await import('./exposure.ts');
+  const mv = (slug: string, worth: number, delta: number | null, pct: number | null = null) => ({ person: person(slug, worth), delta, pct, via: 'x' });
+  const s1 = scenario([]);
+  const s2 = { ...scenario([]), id: 't2' };
+  const items = [
+    { scenario: s1, winners: [mv('a', 100, 10), mv('b', 100, 2)], losers: [mv('c', 100, -30)], moved: 3 },
+    { scenario: s2, winners: [mv('a', 100, 20), mv('d', 100, null, 0.05)], losers: [mv('a', 100, -5)], moved: 3 },
+  ];
+  const { gain, risk } = exposure(items, 3);
+  assert.deepEqual(gain.map((g) => [g.move.person.slug, g.scenario.id]), [['a', 't2'], ['d', 't2'], ['b', 't']]);
+  assert.deepEqual(risk.map((g) => g.move.person.slug), ['c', 'a']); // a gains in one storyline and loses in another
+});
