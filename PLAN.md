@@ -340,6 +340,8 @@ The Projects tab becomes a camera pose on a rocket climbing away from Earth. The
 3. **Daily brief:** Anthropic API key + `CRON_SECRET` as Supabase secrets, and a daily Cron job (`supabase/README.md`).
 4. **X API token** (optional): latest X posts need a paid X API bearer token → `npx supabase secrets set X_BEARER_TOKEN=…`. Without it, X shows a profile link.
 5. **Data:** fix `other_assets_usd` (currently equals each total net worth; would double-count once market data runs); add sourced estimates for ranks 11–20; add projects/events.
+6. **FEC API key (to do, Nov 16):** free personal key from https://api.data.gov/signup/ → `FEC_API_KEY=…` in `.env.local` (never committed, never `EXPO_PUBLIC_`). Then: check the possible double-counting (Musk came out at $566M, about double what's been reported; likely amended filings), run `node scripts/build-donations.mjs`, and show the records in the briefing as "On the record" with the FEC link.
+6. **FEC API key (to do, Nov 16):** free personal key from https://api.data.gov/signup/ → `FEC_API_KEY=…` in `.env.local` (never committed, never `EXPO_PUBLIC_`). Then: check the possible double-counting (Musk came out at $566M, about double reported; likely amended filings), run `node scripts/build-donations.mjs`, and show the records in the briefing as "On the record" with the FEC link.
 
 ## Later
 
