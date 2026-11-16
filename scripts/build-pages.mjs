@@ -1,5 +1,5 @@
 // Builds the GitHub Pages artifact: pages-dist/{index.html (shell + landing), app/** (Expo web export), privacy/, terms/, 404.html, qr.*}.
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 const pagesBase = (process.env.PAGES_BASE ?? '/wealthline').replace(/\/$/, '');
@@ -10,7 +10,13 @@ const appUrl = `${pagesUrl.replace(/\/$/, '')}/app/`;
 const repo = process.env.GITHUB_REPOSITORY ?? 'haseebahmad1521-alt/wealthline';
 const sha =
   process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-const run = (cmd, args, env = {}) => execFileSync(cmd, args, { stdio: 'inherit', env: { ...process.env, ...env } });
+// Windows runs npx through its .cmd shim, which needs a shell, so there the command goes as one line (the arguments
+// here are fixed, never user input).
+const run = (cmd, args, env = {}) => {
+  const opts = { stdio: 'inherit', env: { ...process.env, ...env } };
+  if (process.platform === 'win32') execSync([cmd, ...args].join(' '), opts);
+  else execFileSync(cmd, args, opts);
+};
 
 rmSync('dist', { recursive: true, force: true });
 rmSync('pages-dist', { recursive: true, force: true });

@@ -210,7 +210,7 @@ export default function World() {
           )}
           <View style={[styles.layout, desktop && styles.layoutWide]}>
             {planet ? (
-              <View style={[styles.planetArea, desktop && styles.globeCardWide]}>
+              <View style={[styles.planetArea, desktop && styles.planetWide]}>
                 <WorldGlobe
                   // Desktop: as tall as fits below the header, segments and chips (~360px), so the whole globe is in view.
                   height={desktop ? Math.max(360, Math.min(560, windowHeight - 360)) : Math.min(width - space.md * 2, 420)}
@@ -239,7 +239,7 @@ export default function World() {
               <Globe
                 size={globeSize}
                 sites={view === 'places' ? sites : []}
-                markers={markers}
+                markers={shownMarkers}
                 arcs={arcs}
                 fills={fills}
                 focus={wide ? null : (focused?.person.id ?? null)}
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
   above: { zIndex: 1 },
   // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
   segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill, zIndex: 1, ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object) },
-  segment: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
+  segment: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
   chip: {
     minHeight: minTouch,
@@ -602,10 +602,12 @@ const styles = StyleSheet.create({
   globeCard: { padding: space.md, gap: space.md },
   // No card: the planet behind the page is the globe; the area is just where it sits and where gestures land.
   planetArea: { gap: space.sm },
+  // Desktop: the globe takes the larger column; it sized to its content before and sat in a narrow strip.
+  planetWide: { flex: 3, minWidth: 0 },
   globeCardWide: { padding: space.lg },
   globeNote: { textAlign: 'center', maxWidth: 420, alignSelf: 'center' },
   panel: { gap: space.lg },
-  panelWide: { flex: 1, minWidth: 0 },
+  panelWide: { flex: 2, minWidth: 0 },
   panelCard: { padding: space.lg, gap: space.md },
   figure: { color: color.text, fontVariant: ['tabular-nums'] },
   list: { marginHorizontal: -space.lg },
