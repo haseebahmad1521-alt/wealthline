@@ -379,7 +379,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -402,7 +402,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'

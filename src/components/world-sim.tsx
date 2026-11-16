@@ -4,13 +4,13 @@
 // revenue, GDP and stakes times the scenario's stated changes, drawn dashed with "≈".
 import * as WebBrowser from 'expo-web-browser';
 import { Slider } from 'heroui-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
-import { Caption, Icon, icons, minTouch } from '@/components/ui';
+import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
-import { NOTE_LIFE, type SimEvent } from '@/lib/simulate';
+import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent } from '@/lib/simulate';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
@@ -113,7 +113,16 @@ export function SimOverlay({
   playing,
   onPlay,
   onScrub,
+  ending,
+  months,
+  title,
+  money,
 }: {
+  /** The last month's frame, for the end card. */
+  ending: Frame | null;
+  months: number;
+  title: string;
+  money: (usd: number) => string;
   notes: (SimEvent & { tick: number })[];
   tick: number;
   length: number;
@@ -126,8 +135,17 @@ export function SimOverlay({
   // Each notification stays up for NOTE_LIFE ticks; at most three at once, newest last.
   const shown = notes.filter((e) => e.tick <= tick && e.tick > tick - NOTE_LIFE).slice(-3);
   const done = tick >= length;
+  // The end card shows once the film has finished; closing it reveals the globe, and it comes back on the next ending.
+  const [closed, setClosed] = useState(false);
+  useEffect(() => {
+    if (!done) setClosed(false);
+  }, [done]);
+  const card = done && !closed && ending;
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
+      {card ? (
+        <EndCard frame={ending} months={months} start={start} title={title} money={money} onClose={() => setClosed(true)} />
+      ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
         {shown.map((e) => (
           <Animated.View
@@ -143,6 +161,7 @@ export function SimOverlay({
           </Animated.View>
         ))}
       </View>
+      )}
       <View style={styles.bar}>
         <Pressable accessibilityRole="button" accessibilityLabel={playing ? 'Pause' : done ? 'Play again' : 'Play'} onPress={onPlay} style={styles.play}>
           <Icon name={playing ? icons.pause : done ? icons.replay : icons.play} size={20} tint={color.onAction} />
@@ -158,6 +177,83 @@ export function SimOverlay({
         <Text style={[type.caption, styles.month]}>{month === 0 ? 'Today' : simDate(start, month)}</Text>
       </View>
     </View>
+  );
+}
+
+const regionName = new Intl.DisplayNames(['en'], { type: 'region' });
+const short = (name: string) => name.replace(/ & family$/, '').split(' ').slice(-1)[0];
+
+/** The picture at the end: who gained, who was hit hardest, the new top five, and the countries hit. */
+function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame; months: number; start: string | null; title: string; money: (usd: number) => string; onClose: () => void }) {
+  const value = (p: PersonMove) => p.delta ?? p.pct ?? 0;
+  const text = (p: PersonMove) => (p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct!));
+  const up = frame.people.filter((p) => value(p) > 0).slice(0, 3);
+  const down = frame.people.filter((p) => value(p) < 0).slice(0, 3);
+  const top = frame.ranks.slice(0, 5);
+  const hit = [...frame.fills].sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 4);
+  return (
+    <Animated.View entering={FadeInDown.duration(320).reduceMotion(ReduceMotion.System)} style={styles.card} accessibilityLabel={`${title}: the world after ${months} months`}>
+      <View style={styles.cardHead}>
+        <View style={styles.flex}>
+          <Caption>{simDate(start, months)} · hypothetical</Caption>
+          <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
+            {title.replace(/\.$/, '')}, {months} months on.
+          </Text>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Close the summary" onPress={onClose} hitSlop={8} style={styles.close}>
+          <Icon name={icons.close} size={16} tint={color.textSecondary} />
+        </Pressable>
+      </View>
+      {[
+        { label: 'Gained', people: up, tint: color.gain, icon: icons.up },
+        { label: 'Hit hardest', people: down, tint: color.loss, icon: icons.down },
+      ].map((row) =>
+        row.people.length ? (
+          <View key={row.label} style={styles.cardRow}>
+            <Text style={[type.caption, styles.rowLabel, { color: row.tint }]}>{row.label}</Text>
+            <View style={styles.tiles}>
+              {row.people.map((p) => (
+                <View key={p.person.id} style={styles.tile} accessible accessibilityLabel={`${p.person.name}, ${row.label.toLowerCase()}, about ${text(p)}`}>
+                  <Portrait uri={p.person.portrait_url ?? null} name={p.person.name} size={34} />
+                  <Text style={[type.caption, styles.tileName]} numberOfLines={1}>
+                    {short(p.person.name)}
+                  </Text>
+                  <View style={styles.tileMove}>
+                    <Icon name={row.icon} size={18} tint={row.tint} />
+                    <Text style={[type.caption, { color: row.tint, fontVariant: ['tabular-nums'] }]}>≈{text(p)}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null,
+      )}
+      <View style={styles.cardRow}>
+        <Text style={[type.caption, styles.rowLabel]}>Top five</Text>
+        <View style={styles.tiles}>
+          {top.map((r) => {
+            const move = r.before - r.after;
+            return (
+              <View key={r.person.id} style={styles.rank} accessible accessibilityLabel={`Number ${r.after}: ${r.person.name}${move ? `, ${move > 0 ? 'up' : 'down'} ${Math.abs(move)}` : ''}`}>
+                <Portrait uri={r.person.portrait_url ?? null} name={r.person.name} size={28} />
+                <Text style={[type.caption, { color: color.text }]}>#{r.after}</Text>
+                {move !== 0 && <Icon name={move > 0 ? icons.up : icons.down} size={18} tint={move > 0 ? color.gain : color.loss} />}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+      {hit.length > 0 && (
+        <View style={styles.chips}>
+          {hit.map((f) => (
+            <View key={f.iso2} style={styles.chip}>
+              <Icon name={f.pct < 0 ? icons.down : icons.up} size={18} tint={f.pct < 0 ? color.loss : color.gain} />
+              <Text style={[type.caption, { color: color.text }]}>{regionName.of(f.iso2) ?? f.iso2}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -192,4 +288,26 @@ const styles = StyleSheet.create({
   play: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.action, alignItems: 'center', justifyContent: 'center' },
   month: { color: color.text, minWidth: 64, textAlign: 'right', fontVariant: ['tabular-nums'] },
   flex: { flex: 1, minWidth: 0 },
+  card: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 360,
+    gap: 10,
+    padding: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(14,16,24,.9)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,.14)',
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  close: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.08)' },
+  cardRow: { gap: 4 },
+  rowLabel: { color: color.textSecondary, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6 },
+  tiles: { flexDirection: 'row', gap: 6 },
+  tile: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+  tileName: { color: color.text, maxWidth: '100%' },
+  tileMove: { flexDirection: 'row', alignItems: 'center', gap: 1 },
+  rank: { flex: 1, alignItems: 'center', gap: 2, flexDirection: 'column' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,.08)' },
 });
