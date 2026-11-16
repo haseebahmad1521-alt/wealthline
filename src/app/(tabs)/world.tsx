@@ -13,8 +13,9 @@ import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
 import { askScenario, askVersus, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
+import { dialScenario, type DialValues } from '@/lib/dials';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
-import { SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
+import { DialsPanel, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
@@ -69,10 +70,12 @@ export default function World() {
   const simData = useSimData();
   const daily = useDailyScenarios();
   const [asked, setAsked] = useState<Scenario[]>([]);
-  const [panel, setPanel] = useState<'scenarios' | 'versus'>('scenarios');
+  const [panel, setPanel] = useState<'scenarios' | 'versus' | 'dials'>('scenarios');
+  const [dials, setDials] = useState<DialValues>({});
+  const dialSim = useMemo(() => dialScenario(dials), [dials]);
   const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires)], [asked, daily.data, empires]);
   const [simId, setSimId] = useState<string | null>(null);
-  const sim = scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null;
+  const sim = panel === 'dials' ? dialSim : (scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null);
   // The film's clock: a few ticks per month (TICKS_PER_MONTH); the globe shows the month the clock is in.
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -151,6 +154,12 @@ export default function World() {
     setAsked((x) => [r.scenario, ...x.filter((y) => y.id !== r.scenario.id)]);
     pick(r.scenario);
     return null;
+  };
+  // Dials: the globe jumps to the year's end as they move; play replays it as a film.
+  const turnDials = (v: DialValues) => {
+    setDials(v);
+    setPlaying(false);
+    setTick(Number.MAX_SAFE_INTEGER);
   };
   const ask = async (prompt: string) => {
     const r = await askScenario(prompt);
@@ -408,7 +417,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -431,7 +440,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -462,8 +471,12 @@ export default function World() {
                     onPick={pick}
                     onAsk={ask}
                     mode={panel}
-                    onMode={setPanel}
+                    onMode={(m) => {
+                      setPanel(m);
+                      if (m === 'dials') turnDials(dials);
+                    }}
                     versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} onGrok={fightGrok} />}
+                    dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} />}
                   />
                 </Surface>
               ) : focused ? (

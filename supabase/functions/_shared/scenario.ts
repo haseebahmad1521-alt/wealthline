@@ -59,7 +59,7 @@ export type Beat = { month: number; text: string; tone: 'gain' | 'loss' | 'info'
 
 export type Scenario = {
   id: string;
-  origin: 'example' | 'daily' | 'prompt' | 'versus';
+  origin: 'example' | 'daily' | 'prompt' | 'versus' | 'dials';
   /** Versus mode: the two rivals' slugs. */
   versus?: [string, string] | null;
   /** Story lines shown as notifications, in addition to the ones made from the changes. */

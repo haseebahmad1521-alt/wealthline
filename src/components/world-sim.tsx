@@ -12,6 +12,7 @@ import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
 import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
+import { DIALS, type DialValues } from '@/lib/dials';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
@@ -33,15 +34,17 @@ export function SimulatePanel({
   mode,
   onMode,
   versus,
+  dials,
 }: {
   scenarios: Scenario[];
   scenario: Scenario | null;
   onPick: (s: Scenario) => void;
   onAsk: (prompt: string) => Promise<string | null>;
-  mode: 'scenarios' | 'versus';
-  onMode: (m: 'scenarios' | 'versus') => void;
-  /** The versus picker, shown in its tab. */
+  mode: 'scenarios' | 'versus' | 'dials';
+  onMode: (m: 'scenarios' | 'versus' | 'dials') => void;
+  /** The versus picker and the dials, shown in their tabs. */
   versus: ReactNode;
+  dials: ReactNode;
 }) {
   const [prompt, setPrompt] = useState('');
   const [asking, setAsking] = useState(false);
@@ -59,13 +62,13 @@ export function SimulatePanel({
   return (
     <>
       <View accessibilityRole="tablist" style={styles.segments}>
-        {(['scenarios', 'versus'] as const).map((m) => (
+        {(['scenarios', 'versus', 'dials'] as const).map((m) => (
           <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
-            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'scenarios' ? 'Scenarios' : 'Versus'}</Text>
+            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'scenarios' ? 'Scenarios' : m === 'versus' ? 'Versus' : 'Dials'}</Text>
           </Pressable>
         ))}
       </View>
-      {mode === 'versus' ? versus : (
+      {mode === 'dials' ? dials : mode === 'versus' ? versus : (
       <>
       <View style={styles.inputRow}>
         <TextInput
@@ -103,7 +106,7 @@ export function SimulatePanel({
       </>
       )}
 
-      {scenario && (mode === 'versus') === (scenario.origin === 'versus') && (
+      {scenario && mode !== 'dials' && (mode === 'versus') === (scenario.origin === 'versus') && (
         <View style={styles.foot}>
           <Caption>
             Hypothetical, not a forecast
@@ -257,6 +260,64 @@ export function VersusPicker({
   );
 }
 
+/** The sandbox: one slider per force; the globe shows where the year ends up as they move. */
+export function DialsPanel({ values, onChange, result, money }: { values: DialValues; onChange: (v: DialValues) => void; result: Frame | null; money: (usd: number) => string }) {
+  const touched = DIALS.filter((d) => values[d.key]);
+  const value = (p: PersonMove) => p.delta ?? p.pct ?? 0;
+  const text = (p: PersonMove) => (p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct!));
+  const up = (result?.people ?? []).filter((p) => value(p) > 0).slice(0, 3);
+  const down = (result?.people ?? []).filter((p) => value(p) < 0).slice(0, 3);
+  return (
+    <>
+      {DIALS.map((d) => {
+        const v = values[d.key] ?? 0;
+        return (
+          <View key={d.key} style={styles.dial}>
+            <View style={styles.dialHead}>
+              <Text style={[type.headline, styles.flex, { color: color.text }]}>{d.label}</Text>
+              <Text style={[type.number, { fontSize: 15, color: v > 0 ? color.gain : v < 0 ? color.loss : color.textSecondary }]}>
+                {v > 0 ? '+' : v < 0 ? '−' : ''}
+                {Math.abs(v)}%
+              </Text>
+            </View>
+            {/* No fill: zero sits mid-track, so a fill from the left end would read as a change. */}
+            <Slider value={v} minValue={d.min} maxValue={d.max} step={5} aria-label={d.label} onChange={(x) => onChange({ ...values, [d.key]: Array.isArray(x) ? x[0] : x })}>
+              <Slider.Track>
+                <Slider.Thumb />
+              </Slider.Track>
+            </Slider>
+          </View>
+        );
+      })}
+      {touched.length > 0 && (
+        <>
+          <View style={styles.movers}>
+            {[...up.map((p) => ({ p, gain: true })), ...down.map((p) => ({ p, gain: false }))].map(({ p, gain }) => (
+              <View key={p.person.id} style={styles.mover} accessible accessibilityLabel={`${p.person.name}, ${gain ? 'up' : 'down'} about ${text(p)}`}>
+                <Portrait uri={p.person.portrait_url ?? null} name={p.person.name} size={32} />
+                <Text style={[type.caption, { color: color.text }]} numberOfLines={1}>
+                  {lastName(p.person.name)}
+                </Text>
+                <View style={styles.tileMove}>
+                  <Icon name={gain ? icons.up : icons.down} size={16} tint={gain ? color.gain : color.loss} />
+                  <Text style={[type.caption, { color: gain ? color.gain : color.loss }]}>≈{text(p)}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={styles.choices}>
+            <Pressable accessibilityRole="button" onPress={() => onChange({})} style={styles.chipBtn}>
+              <Text style={[type.headline, { fontSize: 14, color: color.text }]}>Reset</Text>
+            </Pressable>
+          </View>
+          <Caption>A year with these dials, hypothetical. {touched.map((d) => d.rule).join(' ')}</Caption>
+        </>
+      )}
+      {!touched.length && <Caption>Move a dial and the globe shows where the year ends up. Press play to watch it unfold.</Caption>}
+    </>
+  );
+}
+
 /** Versus on the globe: both rivals, their change so far, and a bar leaning toward whoever is ahead. */
 function Scoreboard({ a, b, basis, lead, money }: { a: Corner; b: Corner; basis: 'fortune' | 'shares'; lead: 'a' | 'b' | null; money: (usd: number) => string }) {
   const text = (c: Corner) => (c.delta != null && basis === 'fortune' ? money(Math.abs(c.delta)) : simPct(c.pct ?? 0));
@@ -307,7 +368,10 @@ export function SimOverlay({
   money,
   score,
   finalScore,
+  quiet,
 }: {
+  /** The dials: no notifications or end card while the player is setting them. */
+  quiet?: boolean;
   /** Versus: the scoreboard now, and at the end. */
   score?: VersusScore | null;
   finalScore?: VersusScore | null;
@@ -333,7 +397,7 @@ export function SimOverlay({
   useEffect(() => {
     if (!done) setClosed(false);
   }, [done]);
-  const card = done && !closed && ending;
+  const card = done && !closed && ending && !quiet;
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
       {card ? (
@@ -341,7 +405,7 @@ export function SimOverlay({
       ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
         {score && <Scoreboard {...score} money={money} />}
-        {shown.map((e) => (
+        {(quiet ? [] : shown).map((e) => (
           <Animated.View
             key={`${e.month}:${e.text}`}
             entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
@@ -538,6 +602,10 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3, borderWidth: 2, borderColor: 'transparent' },
   crownOn: { borderColor: '#F5C451' },
+  dial: { gap: 2 },
+  dialHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  movers: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  mover: { width: '31%', alignItems: 'center', gap: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },
   // minWidth 0: web inputs otherwise keep an intrinsic width and push the button out.
   input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
