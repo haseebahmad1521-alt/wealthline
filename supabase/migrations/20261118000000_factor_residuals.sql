@@ -1,4 +1,4 @@
--- The residual ledger (Nov 18, 2026). Additive only.
+-- The residual ledger (Nov 16, 2026). Additive only.
 --
 -- factor_residuals  every week, for each listed company: what the factor model expected its share price to do given
 --                   how the factors actually moved (predicted), what it did (actual), and the gap (residual), all weekly

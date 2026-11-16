@@ -16,7 +16,7 @@ import { briefing } from '@/lib/briefing';
 import { tiesFor, type ContractTie } from '@/lib/ties';
 import tiesData from '@/data/ties.json';
 import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
-import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
+import { callMatch, suggestedMatches, versusScenario, versusScore } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { chain, FOLLOW_UPS } from '@/lib/chain';
 import { expandAnalogs, pastEvents, replayScenario, type EventData } from '@/lib/analogs';
@@ -154,20 +154,23 @@ export default function World() {
   const fighters = useMemo(() => [...empires].filter((e) => e.person.net_worth_usd).sort((a, b) => b.person.net_worth_usd! - a.person.net_worth_usd!).slice(0, 60).map((e) => e.person), [empires]);
   const matchups = useMemo(() => suggestedMatches(fighters), [fighters]);
   const homeOf = (companyId: string) => empires.flatMap((e) => e.companies).find((c) => c.id === companyId)?.country ?? null;
-  const fight = (a: string, b: string, battle: Battle, winner: 'a' | 'b') => {
+  // A match: Grok's call from current context when the backend can make one, else a call on recorded numbers by a
+  // stated rule (callMatch). Each match says which decided it.
+  const fight = async (a: string, b: string) => {
     const ea = simEmpires.find((e) => e.person.slug === a);
     const eb = simEmpires.find((e) => e.person.slug === b);
-    const s = ea && eb ? versusScenario(ea, eb, battle, winner, { home: homeOf, countryName: (iso) => country(iso) ?? iso }) : null;
-    if (!s) return 'Those two share the same main company; pick someone else.';
-    setAsked((x) => [s, ...x.filter((y) => y.id !== s.id)]);
-    pick(s);
-    return null;
-  };
-  const fightGrok = async (a: string, b: string) => {
+    if (!ea || !eb) return 'Pick two people.';
     const r = await askVersus(a, b);
-    if ('error' in r) return r.error;
-    setAsked((x) => [r.scenario, ...x.filter((y) => y.id !== r.scenario.id)]);
-    pick(r.scenario);
+    let s = 'scenario' in r ? r.scenario : null;
+    if (!s) {
+      const call = callMatch(ea, eb, { countryName: (iso) => country(iso) ?? iso });
+      if ('error' in call) return call.error;
+      s = versusScenario(ea, eb, call, { home: homeOf, countryName: (iso) => country(iso) ?? iso });
+    }
+    if (!s) return 'Those two share the same main company; pick someone else.';
+    const match = s;
+    setAsked((x) => [match, ...x.filter((y) => y.id !== match.id)]);
+    pick(match);
     return null;
   };
   // Guess before you play: asked before the film starts, scored when it ends; points and streak stay on this device.
@@ -241,7 +244,7 @@ export default function World() {
     const want = readSimParams({ sim: simParam, vs: vsParam, dials: dialsParam });
     if (want.vs) {
       setPanel('versus');
-      fight(want.vs.a, want.vs.b, want.vs.battle, want.vs.winner);
+      void fight(want.vs.a, want.vs.b); // decided the same way again (the same rule, or Grok's call cached for the month)
     } else if (want.dials) {
       setPanel('dials');
       turnDials(want.dials);
@@ -659,7 +662,7 @@ export default function World() {
                       setPanel(m);
                       if (m === 'dials') turnDials(dials);
                     }}
-                    versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} onGrok={fightGrok} />}
+                    versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} />}
                     dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} names={sectorNames} mine={mineEnd} />}
                   />
                 </Surface>

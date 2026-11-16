@@ -247,8 +247,9 @@ async function factors(db: SupabaseClient, inputs: FactorInputs) {
 async function recordLedger(db: SupabaseClient, inputs: FactorInputs) {
   const live = lastCompleteWeek([...inputs.series.market.keys()], new Date(), weekKey);
   if (!live) throw new Error('No complete week of prices yet.');
-  const targets = [...inputs.series.market.keys()].filter((w) => w <= live).sort().slice(-52);
-  const rows = ledgerRows(inputs.companies, inputs.series, inputs.funds, targets, live);
+  const targets = [...inputs.series.market.keys()].filter((w) => w < live).sort().slice(-51);
+  // The live week on its own, fitted through the week before it; earlier weeks in 13-week blocks.
+  const rows = [...ledgerRows(inputs.companies, inputs.series, inputs.funds, [live], live), ...ledgerRows(inputs.companies, inputs.series, inputs.funds, targets, live)];
   let added = 0;
   for (let i = 0; i < rows.length; i += 500) {
     const { data, error } = await db.from('factor_residuals').upsert(rows.slice(i, i + 500), { onConflict: 'company_id,week', ignoreDuplicates: true }).select('week');
