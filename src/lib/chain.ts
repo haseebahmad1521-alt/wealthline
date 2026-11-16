@@ -16,10 +16,10 @@ export const FOLLOW_UPS: FollowUp[] = [
   {
     key: 'china',
     label: 'China hits back',
-    rule: 'Business in China falls by a third and Chinese stocks by a fifth.',
+    rule: 'Business in China falls by a third, and markets react like past US–China trade escalations.',
     shocks: [
       { kind: 'place', target: 'CN', pct: -0.3, ...year },
-      { kind: 'factor', target: 'china', pct: -0.2, ...year },
+      { kind: 'analog', target: 'us-china', pct: 1, ...year },
     ],
   },
   {

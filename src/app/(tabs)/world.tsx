@@ -16,6 +16,8 @@ import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { chain, FOLLOW_UPS } from '@/lib/chain';
+import { expandAnalogs, type EventData } from '@/lib/analogs';
+import eventData from '@/data/events.json';
 import { MINE_KEY, myChange, readMine, type Holding } from '@/lib/mine';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
 import { getItem, setItem } from '@/lib/device-store';
@@ -81,7 +83,9 @@ export default function World() {
   const dialSim = useMemo(() => dialScenario(dials), [dials]);
   const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires), ...(mostAsked.data ?? []).filter((m) => !asked.some((a) => a.id === m.id))], [asked, daily.data, empires, mostAsked.data]);
   const [simId, setSimId] = useState<string | null>(null);
-  const sim = panel === 'dials' ? dialSim : (scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null);
+  const picked = panel === 'dials' ? dialSim : (scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null);
+  // "Like past events" changes become their measured market moves (src/data/events.json) before simulating.
+  const sim = useMemo(() => (picked ? expandAnalogs(picked, eventData as EventData) : null), [picked]);
   // The film's clock: a few ticks per month (TICKS_PER_MONTH); the globe shows the month the clock is in.
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);

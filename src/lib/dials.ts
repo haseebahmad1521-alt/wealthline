@@ -98,7 +98,7 @@ export function dialScenario(values: DialValues): Scenario {
 }
 
 const SECTOR_WORD: Record<string, string> = {
-  energy: 'Energy companies', transport: 'Transport companies', technology: 'Tech companies', consumer: 'Consumer brands',
+  energy: 'Energy companies', defense: 'Aerospace and defence companies', transport: 'Transport companies', technology: 'Tech companies', consumer: 'Consumer brands',
   materials: 'Materials companies', industrials: 'Industrial companies', autos: 'Carmakers', finance: 'Banks and investors',
   health: 'Healthcare companies', media: 'Media companies', real_estate: 'Property companies',
 };

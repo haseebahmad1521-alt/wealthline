@@ -1,1367 +1,2520 @@
 {
  "built": "2026-11-16",
  "window": {
-  "from": "2023-W47",
+  "from": "2016-W47",
   "to": "2026-W47",
-  "weeks": 157
+  "weeks": 522
  },
+ "method": "Weekly log returns over ten years; weighted least squares (half-life three years), shrunk toward sector peers; crisis fit on the worst fifth of weeks for global stocks.",
  "source": "Yahoo Finance weekly closes; factors: ACWI, Brent (BZ=F), MCHI, DXY, US sector funds",
  "links": {
   "oil": {
    "oil": 1,
-   "china": 0.006,
-   "usd": 0.029,
+   "china": 0.008,
+   "usd": 0.01,
    "sector": {
-    "energy": 0.417,
-    "materials": -0.021,
-    "industrials": -0.002,
-    "autos": 0.014,
-    "consumer": -0.045,
-    "health": -0.046,
-    "finance": 0.012,
-    "technology": 0.071,
-    "media": -0.014,
-    "real_estate": -0.019,
-    "transport": -0.026
+    "energy": 0.415,
+    "materials": 0.021,
+    "industrials": 0.031,
+    "defense": 0.052,
+    "autos": -0.025,
+    "consumer": -0.047,
+    "health": -0.023,
+    "finance": 0.028,
+    "technology": -0.025,
+    "media": -0.011,
+    "real_estate": -0.013,
+    "transport": -0.001
    }
   },
   "china": {
-   "oil": 0.019,
+   "oil": 0.027,
    "china": 1,
-   "usd": -0.047,
+   "usd": -0.026,
    "sector": {
-    "energy": 0,
-    "materials": 0.017,
-    "industrials": -0.088,
-    "autos": 0.062,
-    "consumer": -0.024,
-    "health": -0.025,
-    "finance": -0.053,
-    "technology": -0.129,
-    "media": 0.02,
-    "real_estate": 0.003,
-    "transport": -0.101
+    "energy": -0.134,
+    "materials": -0.025,
+    "industrials": -0.123,
+    "defense": -0.16,
+    "autos": 0.101,
+    "consumer": -0.063,
+    "health": -0.066,
+    "finance": -0.13,
+    "technology": -0.075,
+    "media": 0.03,
+    "real_estate": -0.13,
+    "transport": -0.119
    }
   },
   "usd": {
-   "oil": 1.296,
-   "china": -0.658,
+   "oil": 0.465,
+   "china": -0.35,
    "usd": 1,
    "sector": {
-    "energy": 0.779,
-    "materials": -0.307,
-    "industrials": 0.292,
-    "autos": 0.034,
-    "consumer": 0.175,
-    "health": -0.237,
-    "finance": 0.41,
-    "technology": 0.594,
-    "media": 0.052,
-    "real_estate": -0.238,
-    "transport": 0.26
+    "energy": 0.464,
+    "materials": -0.075,
+    "industrials": 0.193,
+    "defense": 0.127,
+    "autos": -0.186,
+    "consumer": 0.191,
+    "health": 0.085,
+    "finance": 0.265,
+    "technology": 0.557,
+    "media": 0.22,
+    "real_estate": -0.309,
+    "transport": 0.332
    }
   }
+ },
+ "backtest": {
+  "overall": {
+   "naive": 0.117,
+   "plain": 0.101,
+   "improved": 0.092,
+   "crisis": 0.1
+  },
+  "events": [
+   {
+    "event": "COVID crash",
+    "weeks": 5,
+    "companies": 57,
+    "naive": 0.149,
+    "plain": 0.152,
+    "improved": 0.129,
+    "crisis": 0.129,
+    "coverage": 0.6666666666666666
+   },
+   {
+    "event": "Invasion of Ukraine: oil spike",
+    "weeks": 2,
+    "companies": 60,
+    "naive": 0.068,
+    "plain": 0.063,
+    "improved": 0.061,
+    "crisis": 0.061,
+    "coverage": 0.7
+   },
+   {
+    "event": "2022 bear market",
+    "weeks": 40,
+    "companies": 60,
+    "naive": 0.237,
+    "plain": 0.199,
+    "improved": 0.187,
+    "crisis": 0.218,
+    "coverage": 0.8333333333333334
+   },
+   {
+    "event": "China stimulus rally",
+    "weeks": 3,
+    "companies": 64,
+    "naive": 0.091,
+    "plain": 0.061,
+    "improved": 0.057,
+    "crisis": 0.057,
+    "coverage": 0.796875
+   },
+   {
+    "event": "April 2025 tariff shock",
+    "weeks": 1,
+    "companies": 65,
+    "naive": 0.048,
+    "plain": 0.042,
+    "improved": 0.037,
+    "crisis": 0.044,
+    "coverage": 0.7076923076923077
+   }
+  ]
  },
  "companies": {
   "23fc4bae-f96e-4c7d-8c8a-b118c10d6636": {
    "symbol": "300750.SZ",
    "sector": "industrials",
    "beta": {
-    "market": 0.448,
-    "oil": 0.007,
-    "china": 0.841,
-    "usd": 0.527,
-    "sector": 0.491
+    "market": 0.519,
+    "oil": 0.003,
+    "china": 0.594,
+    "usd": 0.394,
+    "sector": 0.105
    },
    "se": {
-    "market": 0.182,
-    "oil": 0.063,
-    "china": 0.114,
-    "usd": 0.43,
-    "sector": 0.284
+    "market": 0.12,
+    "oil": 0.034,
+    "china": 0.078,
+    "usd": 0.292,
+    "sector": 0.205
    },
-   "r2": 0.29,
-   "n": 155
+   "r2": 0.193,
+   "n": 438,
+   "sd": 0.049,
+   "stress": {
+    "beta": {
+     "market": 0.959,
+     "oil": -0.004,
+     "china": 0.36,
+     "usd": -0.022,
+     "sector": -0.037
+    },
+    "se": {
+     "market": 0.167,
+     "oil": 0.043,
+     "china": 0.152,
+     "usd": 0.332,
+     "sector": 0.337
+    }
+   }
   },
   "44f82f0c-70ba-47a3-9075-1b27f88a04e0": {
    "symbol": "META",
    "sector": "technology",
    "beta": {
-    "market": 1.439,
-    "oil": -0.041,
-    "china": -0.096,
-    "usd": 0.249,
-    "sector": 0.404
+    "market": 1.158,
+    "oil": -0.037,
+    "china": 0.159,
+    "usd": -0.102,
+    "sector": 0.705
    },
    "se": {
-    "market": 0.196,
-    "oil": 0.069,
-    "china": 0.123,
-    "usd": 0.469,
-    "sector": 0.23
+    "market": 0.105,
+    "oil": 0.032,
+    "china": 0.079,
+    "usd": 0.049,
+    "sector": 0.14
    },
-   "r2": 0.283,
-   "n": 157
+   "r2": 0.321,
+   "n": 522,
+   "sd": 0.045,
+   "stress": {
+    "beta": {
+     "market": 0.994,
+     "oil": -0.001,
+     "china": 0.155,
+     "usd": 0.135,
+     "sector": 0.549
+    },
+    "se": {
+     "market": 0.147,
+     "oil": 0.035,
+     "china": 0.114,
+     "usd": 0.117,
+     "sector": 0.186
+    }
+   }
   },
   "73dc826d-1d43-41a4-bfa4-8bf31fe4189d": {
    "symbol": "DELL",
    "sector": "technology",
    "beta": {
-    "market": 2.456,
-    "oil": 0.076,
-    "china": -0.155,
-    "usd": 0.011,
-    "sector": 2.053
+    "market": 1.448,
+    "oil": 0.037,
+    "china": -0.184,
+    "usd": -0.099,
+    "sector": 1.419
    },
    "se": {
-    "market": 0.282,
-    "oil": 0.099,
-    "china": 0.177,
-    "usd": 0.675,
-    "sector": 0.331
+    "market": 0.128,
+    "oil": 0.036,
+    "china": 0.099,
+    "usd": 0.05,
+    "sector": 0.174
    },
-   "r2": 0.458,
-   "n": 157
+   "r2": 0.407,
+   "n": 522,
+   "sd": 0.058,
+   "stress": {
+    "beta": {
+     "market": 1.007,
+     "oil": 0.031,
+     "china": -0.318,
+     "usd": 0.123,
+     "sector": 0.882
+    },
+    "se": {
+     "market": 0.165,
+     "oil": 0.04,
+     "china": 0.154,
+     "usd": 0.057,
+     "sector": 0.236
+    }
+   }
   },
   "d98275fb-a50a-4849-a769-8e114dc8952e": {
    "symbol": "NVDA",
    "sector": "technology",
    "beta": {
-    "market": 2.042,
-    "oil": 0.045,
-    "china": 0.136,
-    "usd": -0.01,
-    "sector": 1.617
+    "market": 1.523,
+    "oil": 0.028,
+    "china": 0.203,
+    "usd": -0.092,
+    "sector": 1.579
    },
    "se": {
-    "market": 0.175,
-    "oil": 0.062,
-    "china": 0.109,
-    "usd": 0.418,
-    "sector": 0.205
+    "market": 0.093,
+    "oil": 0.03,
+    "china": 0.07,
+    "usd": 0.049,
+    "sector": 0.124
    },
-   "r2": 0.581,
-   "n": 157
+   "r2": 0.585,
+   "n": 522,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 1.061,
+     "oil": 0.023,
+     "china": 0.061,
+     "usd": 0.135,
+     "sector": 1.15
+    },
+    "se": {
+     "market": 0.142,
+     "oil": 0.037,
+     "china": 0.124,
+     "usd": 0.118,
+     "sector": 0.192
+    }
+   }
   },
   "117ba2a7-3f87-4446-9e56-9c3bda87fad7": {
    "symbol": "9984.T",
    "sector": "technology",
    "beta": {
-    "market": 2.114,
-    "oil": 0.096,
-    "china": -0.018,
-    "usd": -1.288,
-    "sector": 1.904
+    "market": 1.452,
+    "oil": 0.054,
+    "china": 0.119,
+    "usd": -0.093,
+    "sector": 1.055
    },
    "se": {
-    "market": 0.291,
-    "oil": 0.103,
-    "china": 0.182,
-    "usd": 0.696,
-    "sector": 0.341
+    "market": 0.137,
+    "oil": 0.038,
+    "china": 0.108,
+    "usd": 0.05,
+    "sector": 0.188
    },
-   "r2": 0.372,
-   "n": 157
+   "r2": 0.303,
+   "n": 522,
+   "sd": 0.063,
+   "stress": {
+    "beta": {
+     "market": 1.037,
+     "oil": 0.047,
+     "china": 0.048,
+     "usd": 0.137,
+     "sector": 0.552
+    },
+    "se": {
+     "market": 0.152,
+     "oil": 0.042,
+     "china": 0.174,
+     "usd": 0.113,
+     "sector": 0.261
+    }
+   }
   },
   "396e57d2-44d4-484a-9866-827472b706b7": {
    "symbol": "9983.T",
    "sector": "consumer",
    "beta": {
-    "market": 0.885,
-    "oil": -0.204,
-    "china": -0.111,
-    "usd": 0.069,
-    "sector": 0.107
+    "market": 0.715,
+    "oil": -0.089,
+    "china": -0.025,
+    "usd": -0.072,
+    "sector": 0.185
    },
    "se": {
-    "market": 0.159,
-    "oil": 0.056,
-    "china": 0.097,
-    "usd": 0.374,
-    "sector": 0.188
+    "market": 0.089,
+    "oil": 0.029,
+    "china": 0.059,
+    "usd": 0.049,
+    "sector": 0.115
    },
-   "r2": 0.24,
-   "n": 157
+   "r2": 0.177,
+   "n": 522,
+   "sd": 0.038,
+   "stress": {
+    "beta": {
+     "market": 0.913,
+     "oil": -0.031,
+     "china": 0.025,
+     "usd": -0.153,
+     "sector": 0.207
+    },
+    "se": {
+     "market": 0.188,
+     "oil": 0.038,
+     "china": 0.093,
+     "usd": 0.183,
+     "sector": 0.177
+    }
+   }
   },
   "c1d6c6f1-d2b8-4c26-ae00-2c1e936d5b5e": {
    "symbol": "9633.HK",
    "sector": null,
    "beta": {
-    "market": 0.545,
-    "oil": -0.072,
-    "china": 0.641,
-    "usd": -0.145,
+    "market": 0.501,
+    "oil": -0.044,
+    "china": 0.539,
+    "usd": -0.13,
     "sector": 0
    },
    "se": {
-    "market": 0.167,
-    "oil": 0.058,
-    "china": 0.102,
-    "usd": 0.39,
+    "market": 0.115,
+    "oil": 0.034,
+    "china": 0.074,
+    "usd": 0.2,
     "sector": 0
    },
-   "r2": 0.261,
-   "n": 157
+   "r2": 0.222,
+   "n": 323,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 0.647,
+     "oil": -0.016,
+     "china": 0.482,
+     "usd": -0.085,
+     "sector": 0
+    },
+    "se": {
+     "market": 0.244,
+     "oil": 0.043,
+     "china": 0.14,
+     "usd": 0.272,
+     "sector": 0
+    }
+   }
   },
   "702f8546-d3ff-4112-981e-496598e055a0": {
    "symbol": "BRK-B",
    "sector": "finance",
    "beta": {
-    "market": 0.352,
-    "oil": -0.033,
-    "china": 0.08,
-    "usd": 0.026,
-    "sector": 0.853
+    "market": 0.723,
+    "oil": -0.007,
+    "china": 0.011,
+    "usd": 0.116,
+    "sector": 0.797
    },
    "se": {
-    "market": 0.069,
-    "oil": 0.024,
-    "china": 0.042,
-    "usd": 0.163,
-    "sector": 0.081
+    "market": 0.038,
+    "oil": 0.014,
+    "china": 0.025,
+    "usd": 0.045,
+    "sector": 0.048
    },
-   "r2": 0.489,
-   "n": 157
+   "r2": 0.607,
+   "n": 522,
+   "sd": 0.016,
+   "stress": {
+    "beta": {
+     "market": 0.841,
+     "oil": 0.023,
+     "china": 0.033,
+     "usd": 0.273,
+     "sector": 0.882
+    },
+    "se": {
+     "market": 0.08,
+     "oil": 0.02,
+     "china": 0.046,
+     "usd": 0.048,
+     "sector": 0.08
+    }
+   }
   },
   "2d4f6ee5-18f8-407d-aa91-d94b049dd211": {
    "symbol": "NKE",
    "sector": "consumer",
    "beta": {
-    "market": 0.96,
-    "oil": -0.071,
-    "china": 0.218,
-    "usd": -0.444,
-    "sector": 0.473
+    "market": 1.053,
+    "oil": -0.043,
+    "china": 0.116,
+    "usd": -0.047,
+    "sector": 0.438
    },
    "se": {
-    "market": 0.205,
-    "oil": 0.072,
-    "china": 0.125,
-    "usd": 0.481,
-    "sector": 0.242
+    "market": 0.092,
+    "oil": 0.03,
+    "china": 0.062,
+    "usd": 0.049,
+    "sector": 0.12
    },
-   "r2": 0.175,
-   "n": 157
+   "r2": 0.287,
+   "n": 522,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 0.97,
+     "oil": -0.029,
+     "china": 0.017,
+     "usd": -0.155,
+     "sector": 0.369
+    },
+    "se": {
+     "market": 0.166,
+     "oil": 0.035,
+     "china": 0.086,
+     "usd": 0.184,
+     "sector": 0.163
+    }
+   }
   },
   "464d1bb3-afae-4faa-a86c-9622d39b0ee3": {
    "symbol": "MSFT",
    "sector": "technology",
    "beta": {
-    "market": 1.02,
-    "oil": -0.056,
-    "china": 0.033,
-    "usd": -0.439,
-    "sector": 0.702
+    "market": 0.878,
+    "oil": -0.026,
+    "china": 0.047,
+    "usd": -0.078,
+    "sector": 0.795
    },
    "se": {
-    "market": 0.131,
-    "oil": 0.046,
-    "china": 0.082,
-    "usd": 0.313,
-    "sector": 0.153
+    "market": 0.065,
+    "oil": 0.022,
+    "china": 0.047,
+    "usd": 0.048,
+    "sector": 0.086
    },
-   "r2": 0.353,
-   "n": 157
+   "r2": 0.462,
+   "n": 522,
+   "sd": 0.027,
+   "stress": {
+    "beta": {
+     "market": 0.875,
+     "oil": 0.03,
+     "china": 0.057,
+     "usd": 0.198,
+     "sector": 0.835
+    },
+    "se": {
+     "market": 0.11,
+     "oil": 0.026,
+     "china": 0.07,
+     "usd": 0.049,
+     "sector": 0.118
+    }
+   }
   },
   "87ec911d-2c90-462e-806c-15e0c42c8c00": {
    "symbol": "HCLTECH.NS",
    "sector": "technology",
    "beta": {
-    "market": 0.523,
-    "oil": 0.006,
-    "china": -0.096,
-    "usd": 0.262,
-    "sector": -0.17
+    "market": 0.596,
+    "oil": 0.009,
+    "china": -0.097,
+    "usd": -0.099,
+    "sector": -0.2
    },
    "se": {
-    "market": 0.162,
-    "oil": 0.057,
-    "china": 0.101,
-    "usd": 0.387,
-    "sector": 0.19
+    "market": 0.084,
+    "oil": 0.027,
+    "china": 0.062,
+    "usd": 0.049,
+    "sector": 0.111
    },
-   "r2": 0.075,
-   "n": 157
+   "r2": 0.109,
+   "n": 522,
+   "sd": 0.036,
+   "stress": {
+    "beta": {
+     "market": 0.867,
+     "oil": 0.001,
+     "china": -0.269,
+     "usd": 0.108,
+     "sector": -0.257
+    },
+    "se": {
+     "market": 0.142,
+     "oil": 0.033,
+     "china": 0.103,
+     "usd": 0.05,
+     "sector": 0.166
+    }
+   }
   },
   "a9622606-a68d-46ef-8a5b-ca9846583bd3": {
    "symbol": "GOOGL",
    "sector": "technology",
    "beta": {
-    "market": 1.188,
+    "market": 1.06,
     "oil": -0.026,
-    "china": 0.182,
-    "usd": -0.02,
-    "sector": 0.265
+    "china": 0.137,
+    "usd": -0.101,
+    "sector": 0.418
    },
    "se": {
-    "market": 0.165,
-    "oil": 0.058,
-    "china": 0.103,
-    "usd": 0.394,
-    "sector": 0.193
+    "market": 0.082,
+    "oil": 0.027,
+    "china": 0.06,
+    "usd": 0.049,
+    "sector": 0.109
    },
-   "r2": 0.271,
-   "n": 157
+   "r2": 0.355,
+   "n": 522,
+   "sd": 0.035,
+   "stress": {
+    "beta": {
+     "market": 0.779,
+     "oil": 0,
+     "china": 0.006,
+     "usd": 0.137,
+     "sector": 0.293
+    },
+    "se": {
+     "market": 0.125,
+     "oil": 0.03,
+     "china": 0.085,
+     "usd": 0.116,
+     "sector": 0.143
+    }
+   }
   },
   "f82bcafe-0117-4987-a1ec-90268e69e2b3": {
    "symbol": "0001.HK",
    "sector": "industrials",
    "beta": {
-    "market": 0.398,
-    "oil": -0.023,
-    "china": 0.357,
-    "usd": -1.098,
-    "sector": 0.087
+    "market": 0.547,
+    "oil": 0.004,
+    "china": 0.305,
+    "usd": -0.439,
+    "sector": 0.15
    },
    "se": {
-    "market": 0.145,
-    "oil": 0.05,
-    "china": 0.091,
-    "usd": 0.344,
-    "sector": 0.226
+    "market": 0.072,
+    "oil": 0.024,
+    "china": 0.052,
+    "usd": 0.165,
+    "sector": 0.126
    },
-   "r2": 0.21,
-   "n": 157
+   "r2": 0.228,
+   "n": 522,
+   "sd": 0.03,
+   "stress": {
+    "beta": {
+     "market": 0.854,
+     "oil": 0.009,
+     "china": 0.167,
+     "usd": -0.111,
+     "sector": 0.323
+    },
+    "se": {
+     "market": 0.12,
+     "oil": 0.032,
+     "china": 0.094,
+     "usd": 0.191,
+     "sector": 0.224
+    }
+   }
   },
   "0335850d-8236-4ffc-8719-52b9dd496638": {
    "symbol": "0700.HK",
    "sector": "technology",
    "beta": {
-    "market": 0.462,
-    "oil": -0.048,
-    "china": 1.134,
-    "usd": 0.126,
-    "sector": 0.103
+    "market": 0.583,
+    "oil": -0.017,
+    "china": 1.131,
+    "usd": -0.099,
+    "sector": 0.014
    },
    "se": {
-    "market": 0.131,
-    "oil": 0.046,
-    "china": 0.082,
-    "usd": 0.313,
-    "sector": 0.154
+    "market": 0.07,
+    "oil": 0.024,
+    "china": 0.051,
+    "usd": 0.049,
+    "sector": 0.093
    },
-   "r2": 0.586,
-   "n": 157
+   "r2": 0.611,
+   "n": 522,
+   "sd": 0.029,
+   "stress": {
+    "beta": {
+     "market": 0.691,
+     "oil": 0,
+     "china": 1.028,
+     "usd": 0.104,
+     "sector": -0.107
+    },
+    "se": {
+     "market": 0.137,
+     "oil": 0.033,
+     "china": 0.103,
+     "usd": 0.05,
+     "sector": 0.168
+    }
+   }
   },
   "9b1b8380-f6e4-4ca8-aa61-c2b0e14c5565": {
    "symbol": "ITX.MC",
    "sector": "consumer",
    "beta": {
-    "market": 0.93,
-    "oil": -0.119,
-    "china": 0.018,
-    "usd": 0.078,
-    "sector": 0.21
+    "market": 0.799,
+    "oil": -0.072,
+    "china": -0.018,
+    "usd": -0.069,
+    "sector": 0.141
    },
    "se": {
-    "market": 0.132,
-    "oil": 0.046,
-    "china": 0.081,
-    "usd": 0.31,
-    "sector": 0.156
+    "market": 0.074,
+    "oil": 0.025,
+    "china": 0.051,
+    "usd": 0.049,
+    "sector": 0.098
    },
-   "r2": 0.283,
-   "n": 157
+   "r2": 0.259,
+   "n": 522,
+   "sd": 0.032,
+   "stress": {
+    "beta": {
+     "market": 0.778,
+     "oil": -0.029,
+     "china": -0.019,
+     "usd": -0.159,
+     "sector": 0.133
+    },
+    "se": {
+     "market": 0.184,
+     "oil": 0.037,
+     "china": 0.086,
+     "usd": 0.189,
+     "sector": 0.161
+    }
+   }
   },
   "30b9f62d-f88e-4525-b4b9-5f1fb829be0f": {
    "symbol": "AWC.BK",
    "sector": null,
    "beta": {
-    "market": 0.474,
-    "oil": -0.241,
-    "china": 0.041,
-    "usd": 0.048,
+    "market": 0.59,
+    "oil": -0.048,
+    "china": -0.013,
+    "usd": -0.052,
     "sector": 0
    },
    "se": {
-    "market": 0.199,
-    "oil": 0.069,
-    "china": 0.122,
-    "usd": 0.465,
+    "market": 0.117,
+    "oil": 0.035,
+    "china": 0.083,
+    "usd": 0.208,
     "sector": 0
    },
-   "r2": 0.108,
-   "n": 157
+   "r2": 0.083,
+   "n": 371,
+   "sd": 0.047,
+   "stress": {
+    "beta": {
+     "market": 0.981,
+     "oil": 0.02,
+     "china": -0.056,
+     "usd": 0.053,
+     "sector": 0
+    },
+    "se": {
+     "market": 0.22,
+     "oil": 0.043,
+     "china": 0.169,
+     "usd": 0.275,
+     "sector": 0
+    }
+   }
   },
   "cd895ec0-bbbb-4a8e-a8b4-547e77809095": {
    "symbol": "CNI",
    "sector": "transport",
    "beta": {
-    "market": 0.447,
-    "oil": -0.01,
-    "china": -0.08,
-    "usd": -0.431,
-    "sector": 0.538
+    "market": 0.699,
+    "oil": 0.028,
+    "china": -0.042,
+    "usd": -0.268,
+    "sector": 0.504
    },
    "se": {
-    "market": 0.087,
-    "oil": 0.03,
-    "china": 0.054,
-    "usd": 0.205,
-    "sector": 0.086
+    "market": 0.053,
+    "oil": 0.019,
+    "china": 0.038,
+    "usd": 0.127,
+    "sector": 0.062
    },
-   "r2": 0.328,
-   "n": 157
+   "r2": 0.39,
+   "n": 522,
+   "sd": 0.022,
+   "stress": {
+    "beta": {
+     "market": 0.757,
+     "oil": 0.03,
+     "china": -0.01,
+     "usd": -0.071,
+     "sector": 0.465
+    },
+    "se": {
+     "market": 0.108,
+     "oil": 0.026,
+     "china": 0.071,
+     "usd": 0.197,
+     "sector": 0.104
+    }
+   }
   },
   "72444632-89d7-49c2-b17b-70db5629d244": {
    "symbol": "000333.SZ",
    "sector": "industrials",
    "beta": {
-    "market": 0.139,
-    "oil": 0.057,
-    "china": 0.185,
-    "usd": 0.201,
-    "sector": -0.073
+    "market": 0.314,
+    "oil": 0.029,
+    "china": 0.403,
+    "usd": 0.055,
+    "sector": 0.047
    },
    "se": {
-    "market": 0.11,
-    "oil": 0.038,
-    "china": 0.069,
-    "usd": 0.26,
-    "sector": 0.172
+    "market": 0.074,
+    "oil": 0.024,
+    "china": 0.053,
+    "usd": 0.194,
+    "sector": 0.128
    },
-   "r2": 0.079,
-   "n": 155
+   "r2": 0.173,
+   "n": 520,
+   "sd": 0.031,
+   "stress": {
+    "beta": {
+     "market": 0.871,
+     "oil": -0.007,
+     "china": 0.238,
+     "usd": -0.198,
+     "sector": 0.259
+    },
+    "se": {
+     "market": 0.108,
+     "oil": 0.032,
+     "china": 0.045,
+     "usd": 0.27,
+     "sector": 0.216
+    }
+   }
   },
   "6f24ec88-a752-4dc7-a455-c71c0597015f": {
    "symbol": "KEN",
    "sector": null,
    "beta": {
-    "market": 0.669,
-    "oil": 0.088,
-    "china": -0.08,
-    "usd": -0.563,
+    "market": 0.92,
+    "oil": 0.043,
+    "china": -0.169,
+    "usd": -0.356,
     "sector": 0
    },
    "se": {
-    "market": 0.214,
-    "oil": 0.074,
-    "china": 0.131,
-    "usd": 0.5,
+    "market": 0.131,
+    "oil": 0.038,
+    "china": 0.095,
+    "usd": 0.212,
     "sector": 0
    },
-   "r2": 0.074,
-   "n": 157
+   "r2": 0.127,
+   "n": 522,
+   "sd": 0.057,
+   "stress": {
+    "beta": {
+     "market": 0.695,
+     "oil": 0.031,
+     "china": -0.378,
+     "usd": -0.183,
+     "sector": 0
+    },
+    "se": {
+     "market": 0.21,
+     "oil": 0.042,
+     "china": 0.155,
+     "usd": 0.268,
+     "sector": 0
+    }
+   }
   },
   "428a332c-1c29-4d50-b1d1-3e44c5c2e9ec": {
    "symbol": "JIOFIN.NS",
    "sector": "finance",
    "beta": {
-    "market": 0.432,
-    "oil": -0.2,
-    "china": 0.101,
-    "usd": -0.199,
-    "sector": -0.049
+    "market": 0.425,
+    "oil": -0.092,
+    "china": 0.045,
+    "usd": 0.068,
+    "sector": 0.346
    },
    "se": {
-    "market": 0.187,
-    "oil": 0.064,
-    "china": 0.115,
-    "usd": 0.444,
-    "sector": 0.219
+    "market": 0.179,
+    "oil": 0.044,
+    "china": 0.046,
+    "usd": 0.05,
+    "sector": 0.158
    },
-   "r2": 0.103,
-   "n": 157
+   "r2": 0.111,
+   "n": 169,
+   "sd": 0.042
   },
   "cc2cdca0-b86b-4e5a-b370-0f22c98c6526": {
    "symbol": "RELIANCE.NS",
    "sector": "energy",
    "beta": {
-    "market": 0.371,
-    "oil": -0.084,
-    "china": -0.032,
-    "usd": -0.032,
-    "sector": -0.069
+    "market": 0.46,
+    "oil": -0.046,
+    "china": 0.068,
+    "usd": -0.058,
+    "sector": 0.072
    },
    "se": {
-    "market": 0.129,
-    "oil": 0.06,
-    "china": 0.079,
-    "usd": 0.301,
-    "sector": 0.1
+    "market": 0.077,
+    "oil": 0.032,
+    "china": 0.055,
+    "usd": 0.166,
+    "sector": 0.062
    },
-   "r2": 0.095,
-   "n": 157
+   "r2": 0.093,
+   "n": 522,
+   "sd": 0.032,
+   "stress": {
+    "beta": {
+     "market": 0.89,
+     "oil": -0.042,
+     "china": 0.165,
+     "usd": 0.041,
+     "sector": 0.258
+    },
+    "se": {
+     "market": 0.183,
+     "oil": 0.04,
+     "china": 0.124,
+     "usd": 0.255,
+     "sector": 0.115
+    }
+   }
   },
   "bb1ea52a-096f-4772-a4e3-9f7afab527f6": {
    "symbol": "AMX",
    "sector": "media",
    "beta": {
-    "market": 0.456,
-    "oil": -0.018,
-    "china": 0.104,
-    "usd": -1.083,
-    "sector": -0.352
+    "market": 0.67,
+    "oil": 0.054,
+    "china": -0.021,
+    "usd": -0.509,
+    "sector": 0.02
    },
    "se": {
-    "market": 0.146,
-    "oil": 0.051,
-    "china": 0.09,
-    "usd": 0.342,
-    "sector": 0.175
+    "market": 0.073,
+    "oil": 0.027,
+    "china": 0.039,
+    "usd": 0.049,
+    "sector": 0.092
    },
-   "r2": 0.157,
-   "n": 157
+   "r2": 0.182,
+   "n": 439,
+   "sd": 0.034,
+   "stress": {
+    "beta": {
+     "market": 0.974,
+     "oil": 0.024,
+     "china": -0.14,
+     "usd": -0.506,
+     "sector": 0.366
+    },
+    "se": {
+     "market": 0.123,
+     "oil": 0.034,
+     "china": 0.046,
+     "usd": 0.05,
+     "sector": 0.049
+    }
+   }
   },
   "721d5639-7a03-4db9-bed4-79664920535d": {
    "symbol": "2038.HK",
    "sector": null,
    "beta": {
-    "market": 0.77,
-    "oil": 0.017,
-    "china": 0.768,
-    "usd": 1.194,
+    "market": 0.79,
+    "oil": 0.012,
+    "china": 0.575,
+    "usd": 0.085,
     "sector": 0
    },
    "se": {
-    "market": 0.339,
-    "oil": 0.117,
-    "china": 0.207,
-    "usd": 0.79,
+    "market": 0.149,
+    "oil": 0.041,
+    "china": 0.109,
+    "usd": 0.223,
     "sector": 0
    },
-   "r2": 0.116,
-   "n": 157
+   "r2": 0.125,
+   "n": 522,
+   "sd": 0.067,
+   "stress": {
+    "beta": {
+     "market": 0.95,
+     "oil": 0.006,
+     "china": 0.36,
+     "usd": 0.029,
+     "sector": 0
+    },
+    "se": {
+     "market": 0.253,
+     "oil": 0.046,
+     "china": 0.21,
+     "usd": 0.285,
+     "sector": 0
+    }
+   }
   },
   "839e1bc5-17a3-4c2a-8850-579e1bcbf2d6": {
    "symbol": "AMZN",
    "sector": "technology",
    "beta": {
-    "market": 1.41,
-    "oil": -0.05,
-    "china": 0,
-    "usd": 0.114,
-    "sector": 0.258
+    "market": 1.093,
+    "oil": -0.053,
+    "china": 0.086,
+    "usd": -0.099,
+    "sector": 0.522
    },
    "se": {
-    "market": 0.146,
-    "oil": 0.052,
-    "china": 0.091,
-    "usd": 0.35,
-    "sector": 0.172
+    "market": 0.083,
+    "oil": 0.027,
+    "china": 0.061,
+    "usd": 0.049,
+    "sector": 0.109
    },
-   "r2": 0.389,
-   "n": 157
+   "r2": 0.386,
+   "n": 522,
+   "sd": 0.035,
+   "stress": {
+    "beta": {
+     "market": 0.773,
+     "oil": -0.003,
+     "china": -0.021,
+     "usd": 0.137,
+     "sector": 0.45
+    },
+    "se": {
+     "market": 0.152,
+     "oil": 0.036,
+     "china": 0.119,
+     "usd": 0.117,
+     "sector": 0.192
+    }
+   }
   },
   "533f8726-fe36-4e5e-a546-ed6a23535bb5": {
    "symbol": "KMI",
    "sector": "energy",
    "beta": {
-    "market": 0.281,
-    "oil": -0.172,
-    "china": -0.105,
-    "usd": 0.198,
-    "sector": 0.811
+    "market": 0.825,
+    "oil": -0.077,
+    "china": -0.079,
+    "usd": 0.028,
+    "sector": 0.723
    },
    "se": {
-    "market": 0.101,
-    "oil": 0.047,
-    "china": 0.062,
-    "usd": 0.237,
-    "sector": 0.078
+    "market": 0.055,
+    "oil": 0.025,
+    "china": 0.039,
+    "usd": 0.131,
+    "sector": 0.044
    },
-   "r2": 0.493,
-   "n": 157
+   "r2": 0.604,
+   "n": 522,
+   "sd": 0.023,
+   "stress": {
+    "beta": {
+     "market": 1.054,
+     "oil": -0.027,
+     "china": -0.028,
+     "usd": -0.144,
+     "sector": 0.721
+    },
+    "se": {
+     "market": 0.122,
+     "oil": 0.031,
+     "china": 0.076,
+     "usd": 0.206,
+     "sector": 0.07
+    }
+   }
   },
   "eb4acf98-9a6b-416b-8353-1702d7cad5a2": {
    "symbol": "NWS",
    "sector": "media",
    "beta": {
-    "market": 0.761,
-    "oil": 0.153,
-    "china": -0.078,
-    "usd": -0.806,
-    "sector": 0.528
+    "market": 0.741,
+    "oil": 0.122,
+    "china": -0.045,
+    "usd": -0.594,
+    "sector": 0.497
    },
    "se": {
-    "market": 0.131,
-    "oil": 0.045,
-    "china": 0.08,
-    "usd": 0.305,
-    "sector": 0.156
+    "market": 0.043,
+    "oil": 0.026,
+    "china": 0.038,
+    "usd": 0.139,
+    "sector": 0.103
    },
-   "r2": 0.282,
-   "n": 157
+   "r2": 0.357,
+   "n": 439,
+   "sd": 0.033,
+   "stress": {
+    "beta": {
+     "market": 0.962,
+     "oil": 0.123,
+     "china": -0.142,
+     "usd": -0.639,
+     "sector": 0.325
+    },
+    "se": {
+     "market": 0.12,
+     "oil": 0.038,
+     "china": 0.045,
+     "usd": 0.05,
+     "sector": 0.084
+    }
+   }
   },
   "2909998e-67e2-4d37-9ee5-22cbb1bd52a8": {
    "symbol": "NU",
    "sector": "finance",
    "beta": {
-    "market": 1.539,
-    "oil": 0.037,
-    "china": -0.165,
-    "usd": -0.214,
-    "sector": 0.557
+    "market": 1.38,
+    "oil": -0.007,
+    "china": 0.014,
+    "usd": 0.062,
+    "sector": 0.599
    },
    "se": {
-    "market": 0.237,
-    "oil": 0.082,
-    "china": 0.145,
-    "usd": 0.563,
-    "sector": 0.278
+    "market": 0.187,
+    "oil": 0.052,
+    "china": 0.047,
+    "usd": 0.05,
+    "sector": 0.183
    },
-   "r2": 0.241,
-   "n": 157
+   "r2": 0.196,
+   "n": 258,
+   "sd": 0.062,
+   "stress": {
+    "beta": {
+     "market": 0.94,
+     "oil": 0.026,
+     "china": 0.045,
+     "usd": 0.279,
+     "sector": 0.783
+    },
+    "se": {
+     "market": 0.242,
+     "oil": 0.047,
+     "china": 0.076,
+     "usd": 0.05,
+     "sector": 0.228
+    }
+   }
   },
   "cfbff0ef-a4f7-4689-8f94-ab7ec3bd9b02": {
    "symbol": "300433.SZ",
    "sector": "industrials",
    "beta": {
-    "market": 0.821,
-    "oil": -0.176,
-    "china": 0.521,
-    "usd": 1.88,
-    "sector": 0.766
+    "market": 0.69,
+    "oil": -0.019,
+    "china": 0.37,
+    "usd": 0.649,
+    "sector": 0.421
    },
    "se": {
-    "market": 0.318,
-    "oil": 0.11,
-    "china": 0.199,
-    "usd": 0.752,
-    "sector": 0.496
+    "market": 0.163,
+    "oil": 0.039,
+    "china": 0.107,
+    "usd": 0.321,
+    "sector": 0.269
    },
-   "r2": 0.126,
-   "n": 155
+   "r2": 0.092,
+   "n": 520,
+   "sd": 0.07,
+   "stress": {
+    "beta": {
+     "market": 0.979,
+     "oil": -0.013,
+     "china": 0.271,
+     "usd": -0.215,
+     "sector": 0.137
+    },
+    "se": {
+     "market": 0.155,
+     "oil": 0.043,
+     "china": 0.157,
+     "usd": 0.05,
+     "sector": 0.366
+    }
+   }
   },
   "62048172-6096-4d90-8944-f2e0d345a43f": {
    "symbol": "PDD",
    "sector": "technology",
    "beta": {
-    "market": 1.096,
-    "oil": 0.058,
-    "china": 1.445,
-    "usd": 0.397,
-    "sector": 0.159
+    "market": 1.086,
+    "oil": 0.015,
+    "china": 1.503,
+    "usd": -0.099,
+    "sector": 0.236
    },
    "se": {
-    "market": 0.239,
-    "oil": 0.084,
-    "china": 0.149,
-    "usd": 0.571,
-    "sector": 0.28
+    "market": 0.142,
+    "oil": 0.038,
+    "china": 0.111,
+    "usd": 0.05,
+    "sector": 0.193
    },
-   "r2": 0.44,
-   "n": 157
+   "r2": 0.42,
+   "n": 434,
+   "sd": 0.063,
+   "stress": {
+    "beta": {
+     "market": 0.822,
+     "oil": 0,
+     "china": 1.515,
+     "usd": 0.136,
+     "sector": 0.074
+    },
+    "se": {
+     "market": 0.186,
+     "oil": 0.043,
+     "china": 0.187,
+     "usd": 0.107,
+     "sector": 0.277
+    }
+   }
   },
   "7703988d-f5c9-48fe-911a-e6feb89bccce": {
    "symbol": "PLTR",
-   "sector": "technology",
+   "sector": "defense",
    "beta": {
-    "market": 2.219,
-    "oil": 0.123,
-    "china": 0.185,
-    "usd": -0.241,
-    "sector": 1.668
+    "market": 1.787,
+    "oil": 0.033,
+    "china": 0.01,
+    "usd": 0.001,
+    "sector": 0.127
    },
    "se": {
-    "market": 0.341,
-    "oil": 0.12,
-    "china": 0.213,
-    "usd": 0.815,
-    "sector": 0.4
+    "market": 0.211,
+    "oil": 0.047,
+    "china": 0.143,
+    "usd": 0.242,
+    "sector": 0.21
    },
-   "r2": 0.299,
-   "n": 157
+   "r2": 0.229,
+   "n": 320,
+   "sd": 0.082,
+   "stress": {
+    "beta": {
+     "market": 0.838,
+     "oil": 0.042,
+     "china": -0.013,
+     "usd": -0.063,
+     "sector": 0.115
+    },
+    "se": {
+     "market": 0.279,
+     "oil": 0.047,
+     "china": 0.2,
+     "usd": 0.29,
+     "sector": 0.281
+    }
+   }
   },
   "be2badd3-0adc-42d8-8c50-19608fe19123": {
    "symbol": "CRWD",
    "sector": "technology",
    "beta": {
-    "market": 1.851,
-    "oil": 0.085,
-    "china": -0.195,
-    "usd": 0.291,
-    "sector": 1.692
+    "market": 1.175,
+    "oil": 0.031,
+    "china": -0.063,
+    "usd": -0.097,
+    "sector": 1.472
    },
    "se": {
-    "market": 0.242,
-    "oil": 0.085,
-    "china": 0.152,
-    "usd": 0.58,
-    "sector": 0.284
+    "market": 0.143,
+    "oil": 0.038,
+    "china": 0.111,
+    "usd": 0.05,
+    "sector": 0.192
    },
-   "r2": 0.427,
-   "n": 157
+   "r2": 0.338,
+   "n": 388,
+   "sd": 0.061,
+   "stress": {
+    "beta": {
+     "market": 0.717,
+     "oil": 0.049,
+     "china": 0.126,
+     "usd": 0.126,
+     "sector": 0.337
+    },
+    "se": {
+     "market": 0.175,
+     "oil": 0.045,
+     "china": 0.219,
+     "usd": 0.05,
+     "sector": 0.304
+    }
+   }
   },
   "a45c77cd-fa08-40cf-8c73-24339fd8a3ae": {
    "symbol": "UI",
    "sector": "technology",
    "beta": {
-    "market": 1.574,
-    "oil": -0.094,
-    "china": -0.067,
-    "usd": 1.139,
-    "sector": -0.48
+    "market": 1.14,
+    "oil": -0.025,
+    "china": 0.011,
+    "usd": -0.102,
+    "sector": -0.023
    },
    "se": {
-    "market": 0.292,
-    "oil": 0.103,
-    "china": 0.183,
-    "usd": 0.699,
-    "sector": 0.343
+    "market": 0.142,
+    "oil": 0.038,
+    "china": 0.111,
+    "usd": 0.05,
+    "sector": 0.194
    },
-   "r2": 0.183,
-   "n": 157
+   "r2": 0.145,
+   "n": 522,
+   "sd": 0.065,
+   "stress": {
+    "beta": {
+     "market": 0.744,
+     "oil": 0.036,
+     "china": 0.144,
+     "usd": 0.125,
+     "sector": 0.28
+    },
+    "se": {
+     "market": 0.175,
+     "oil": 0.042,
+     "china": 0.17,
+     "usd": 0.059,
+     "sector": 0.257
+    }
+   }
   },
   "d7b5c594-e612-43b0-9979-ace67deff888": {
    "symbol": "URI",
    "sector": "industrials",
    "beta": {
-    "market": 1.439,
-    "oil": 0.084,
-    "china": -0.075,
-    "usd": 0.056,
-    "sector": 1.829
+    "market": 1.048,
+    "oil": 0.061,
+    "china": 0.093,
+    "usd": 0.214,
+    "sector": 0.232
    },
    "se": {
-    "market": 0.177,
-    "oil": 0.061,
-    "china": 0.111,
-    "usd": 0.42,
-    "sector": 0.276
+    "market": 0.065,
+    "oil": 0.029,
+    "china": 0.059,
+    "usd": 0.239,
+    "sector": 0.048
    },
-   "r2": 0.439,
-   "n": 157
+   "r2": 0.53,
+   "n": 522,
+   "sd": 0.039,
+   "stress": {
+    "beta": {
+     "market": 0.842,
+     "oil": 0.026,
+     "china": 0.116,
+     "usd": 0.001,
+     "sector": 0.182
+    },
+    "se": {
+     "market": 0.048,
+     "oil": 0.034,
+     "china": 0.097,
+     "usd": 0.281,
+     "sector": 0.049
+    }
+   }
   },
   "59a94d42-929d-4c5b-a25b-77c7c522d661": {
    "symbol": "APO",
    "sector": "finance",
    "beta": {
-    "market": 1.626,
-    "oil": 0.177,
-    "china": 0.042,
-    "usd": 0.69,
-    "sector": 1.198
+    "market": 1.618,
+    "oil": 0.084,
+    "china": 0.024,
+    "usd": 0.045,
+    "sector": 0.803
    },
    "se": {
-    "market": 0.155,
-    "oil": 0.054,
-    "china": 0.095,
-    "usd": 0.368,
-    "sector": 0.182
+    "market": 0.091,
+    "oil": 0.032,
+    "china": 0.042,
+    "usd": 0.049,
+    "sector": 0.11
    },
-   "r2": 0.544,
-   "n": 157
+   "r2": 0.489,
+   "n": 522,
+   "sd": 0.038,
+   "stress": {
+    "beta": {
+     "market": 1.195,
+     "oil": 0.034,
+     "china": 0.076,
+     "usd": 0.282,
+     "sector": 0.77
+    },
+    "se": {
+     "market": 0.165,
+     "oil": 0.038,
+     "china": 0.073,
+     "usd": 0.05,
+     "sector": 0.172
+    }
+   }
   },
   "09afcd95-2bd9-470a-8a87-aa11d5691387": {
    "symbol": "SPOT",
    "sector": "technology",
    "beta": {
-    "market": 0.845,
-    "oil": 0.072,
-    "china": -0.063,
-    "usd": 0.495,
-    "sector": -0.228
+    "market": 1.099,
+    "oil": 0.015,
+    "china": 0.067,
+    "usd": -0.093,
+    "sector": 0.215
    },
    "se": {
-    "market": 0.233,
-    "oil": 0.082,
-    "china": 0.146,
-    "usd": 0.556,
-    "sector": 0.273
+    "market": 0.126,
+    "oil": 0.036,
+    "china": 0.097,
+    "usd": 0.05,
+    "sector": 0.17
    },
-   "r2": 0.092,
-   "n": 157
+   "r2": 0.175,
+   "n": 450,
+   "sd": 0.055,
+   "stress": {
+    "beta": {
+     "market": 0.937,
+     "oil": 0.015,
+     "china": 0.347,
+     "usd": 0.15,
+     "sector": 0.447
+    },
+    "se": {
+     "market": 0.178,
+     "oil": 0.042,
+     "china": 0.17,
+     "usd": 0.05,
+     "sector": 0.256
+    }
+   }
   },
   "c559490d-8b14-490c-a8bc-a2e33f5659a7": {
    "symbol": "MT",
    "sector": "materials",
    "beta": {
-    "market": 1.579,
-    "oil": -0.105,
-    "china": 0.219,
-    "usd": -1.306,
-    "sector": 0.61
+    "market": 1.709,
+    "oil": -0.021,
+    "china": 0.165,
+    "usd": -0.581,
+    "sector": 0.855
    },
    "se": {
-    "market": 0.161,
-    "oil": 0.056,
-    "china": 0.098,
-    "usd": 0.379,
-    "sector": 0.175
+    "market": 0.095,
+    "oil": 0.031,
+    "china": 0.068,
+    "usd": 0.175,
+    "sector": 0.122
    },
-   "r2": 0.483,
-   "n": 157
+   "r2": 0.52,
+   "n": 522,
+   "sd": 0.041,
+   "stress": {
+    "beta": {
+     "market": 1.418,
+     "oil": -0.023,
+     "china": 0.048,
+     "usd": -0.287,
+     "sector": 0.835
+    },
+    "se": {
+     "market": 0.189,
+     "oil": 0.039,
+     "china": 0.135,
+     "usd": 0.248,
+     "sector": 0.216
+    }
+   }
   },
   "a5ed8ba9-8439-4dfb-ae2d-199aeb55e789": {
    "symbol": "TSLA",
    "sector": "autos",
    "beta": {
-    "market": 1.786,
-    "oil": 0.059,
+    "market": 1.188,
+    "oil": 0.041,
     "china": -0.069,
-    "usd": 0.743,
-    "sector": 1.136
+    "usd": -0.463,
+    "sector": 0.589
    },
    "se": {
-    "market": 0.265,
-    "oil": 0.091,
-    "china": 0.163,
-    "usd": 0.617,
-    "sector": 0.273
+    "market": 0.089,
+    "oil": 0.038,
+    "china": 0.106,
+    "usd": 0.05,
+    "sector": 0.12
    },
-   "r2": 0.304,
-   "n": 157
+   "r2": 0.35,
+   "n": 522,
+   "sd": 0.063,
+   "stress": {
+    "beta": {
+     "market": 1.508,
+     "oil": 0.021,
+     "china": -0.167,
+     "usd": -0.473,
+     "sector": 0.351
+    },
+    "se": {
+     "market": 0.205,
+     "oil": 0.044,
+     "china": 0.184,
+     "usd": 0.05,
+     "sector": 0.049
+    }
+   }
   },
   "e2297038-0e64-41e7-82b3-bfd53d87e270": {
    "symbol": "XPO",
    "sector": "transport",
    "beta": {
-    "market": 1.587,
-    "oil": 0.099,
-    "china": -0.132,
-    "usd": 0.337,
-    "sector": 1.788
+    "market": 1.711,
+    "oil": 0.002,
+    "china": -0.048,
+    "usd": 0.013,
+    "sector": 1.558
    },
    "se": {
-    "market": 0.195,
-    "oil": 0.068,
-    "china": 0.121,
-    "usd": 0.457,
-    "sector": 0.193
+    "market": 0.106,
+    "oil": 0.033,
+    "china": 0.077,
+    "usd": 0.198,
+    "sector": 0.123
    },
-   "r2": 0.521,
-   "n": 157
+   "r2": 0.54,
+   "n": 522,
+   "sd": 0.046,
+   "stress": {
+    "beta": {
+     "market": 1.628,
+     "oil": -0.05,
+     "china": -0.104,
+     "usd": -0.268,
+     "sector": 0.848
+    },
+    "se": {
+     "market": 0.181,
+     "oil": 0.039,
+     "china": 0.136,
+     "usd": 0.251,
+     "sector": 0.19
+    }
+   }
   },
   "50feeeaf-ab6e-4925-995b-23236edf954e": {
    "symbol": "WDAY",
    "sector": "technology",
    "beta": {
-    "market": 0.886,
-    "oil": 0.042,
-    "china": -0.09,
-    "usd": 0.242,
-    "sector": 0.215
+    "market": 1.041,
+    "oil": 0.018,
+    "china": 0.019,
+    "usd": -0.096,
+    "sector": 0.532
    },
    "se": {
-    "market": 0.233,
-    "oil": 0.082,
-    "china": 0.146,
-    "usd": 0.558,
-    "sector": 0.274
+    "market": 0.115,
+    "oil": 0.034,
+    "china": 0.087,
+    "usd": 0.049,
+    "sector": 0.155
    },
-   "r2": 0.101,
-   "n": 157
+   "r2": 0.206,
+   "n": 522,
+   "sd": 0.051,
+   "stress": {
+    "beta": {
+     "market": 0.763,
+     "oil": 0.025,
+     "china": -0.083,
+     "usd": 0.137,
+     "sector": 0.309
+    },
+    "se": {
+     "market": 0.163,
+     "oil": 0.039,
+     "china": 0.137,
+     "usd": 0.112,
+     "sector": 0.217
+    }
+   }
   },
   "c9c96e92-b549-4e0a-b8a9-44c9c0b5fe9d": {
    "symbol": "BABA",
    "sector": "technology",
    "beta": {
-    "market": 1.188,
-    "oil": -0.058,
-    "china": 1.395,
-    "usd": -0.17,
-    "sector": 0.068
+    "market": 1.067,
+    "oil": -0.021,
+    "china": 1.426,
+    "usd": -0.102,
+    "sector": 0.099
    },
    "se": {
-    "market": 0.156,
-    "oil": 0.055,
-    "china": 0.098,
-    "usd": 0.373,
-    "sector": 0.183
+    "market": 0.086,
+    "oil": 0.028,
+    "china": 0.064,
+    "usd": 0.049,
+    "sector": 0.114
    },
-   "r2": 0.649,
-   "n": 157
+   "r2": 0.648,
+   "n": 522,
+   "sd": 0.037,
+   "stress": {
+    "beta": {
+     "market": 0.789,
+     "oil": 0.023,
+     "china": 1.33,
+     "usd": 0.128,
+     "sector": -0.094
+    },
+    "se": {
+     "market": 0.145,
+     "oil": 0.034,
+     "china": 0.106,
+     "usd": 0.084,
+     "sector": 0.174
+    }
+   }
   },
   "be3bd941-9d8d-4c13-9841-f36678e46f56": {
    "symbol": "ORCL",
    "sector": "technology",
    "beta": {
-    "market": 1.743,
-    "oil": -0.004,
-    "china": 0.09,
-    "usd": -0.527,
-    "sector": 1.583
+    "market": 1.09,
+    "oil": 0.001,
+    "china": 0.061,
+    "usd": -0.092,
+    "sector": 1.204
    },
    "se": {
-    "market": 0.24,
-    "oil": 0.085,
-    "china": 0.15,
-    "usd": 0.575,
-    "sector": 0.282
+    "market": 0.109,
+    "oil": 0.033,
+    "china": 0.082,
+    "usd": 0.049,
+    "sector": 0.146
    },
-   "r2": 0.363,
-   "n": 157
+   "r2": 0.345,
+   "n": 522,
+   "sd": 0.048,
+   "stress": {
+    "beta": {
+     "market": 0.674,
+     "oil": 0.031,
+     "china": -0.093,
+     "usd": 0.121,
+     "sector": 0.807
+    },
+    "se": {
+     "market": 0.14,
+     "oil": 0.035,
+     "china": 0.11,
+     "usd": 0.066,
+     "sector": 0.179
+    }
+   }
   },
   "42b2ea26-c881-40c3-818b-967d34fe42b5": {
    "symbol": "SCHW",
    "sector": "finance",
    "beta": {
-    "market": 0.873,
-    "oil": 0.039,
-    "china": 0.083,
-    "usd": -0.092,
-    "sector": 0.972
+    "market": 1.16,
+    "oil": 0.023,
+    "china": 0.054,
+    "usd": 0.05,
+    "sector": 1.113
    },
    "se": {
-    "market": 0.134,
-    "oil": 0.046,
-    "china": 0.082,
-    "usd": 0.319,
-    "sector": 0.158
+    "market": 0.077,
+    "oil": 0.027,
+    "china": 0.037,
+    "usd": 0.049,
+    "sector": 0.09
    },
-   "r2": 0.353,
-   "n": 157
+   "r2": 0.481,
+   "n": 522,
+   "sd": 0.032,
+   "stress": {
+    "beta": {
+     "market": 0.762,
+     "oil": 0.019,
+     "china": 0.083,
+     "usd": 0.227,
+     "sector": 1.03
+    },
+    "se": {
+     "market": 0.159,
+     "oil": 0.037,
+     "china": 0.058,
+     "usd": 0.05,
+     "sector": 0.141
+    }
+   }
   },
   "68b8f24c-2d96-4127-8cae-bd43e462ff01": {
    "symbol": "RL",
    "sector": "consumer",
    "beta": {
-    "market": 1.228,
-    "oil": -0.07,
-    "china": 0.052,
-    "usd": 0.334,
-    "sector": 0.328
+    "market": 1.233,
+    "oil": -0.03,
+    "china": 0.019,
+    "usd": -0.064,
+    "sector": 0.284
    },
    "se": {
-    "market": 0.172,
-    "oil": 0.06,
-    "china": 0.105,
-    "usd": 0.403,
-    "sector": 0.203
+    "market": 0.091,
+    "oil": 0.03,
+    "china": 0.062,
+    "usd": 0.049,
+    "sector": 0.12
    },
-   "r2": 0.273,
-   "n": 157
+   "r2": 0.339,
+   "n": 522,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 1.374,
+     "oil": -0.015,
+     "china": -0.001,
+     "usd": -0.059,
+     "sector": 0.264
+    },
+    "se": {
+     "market": 0.169,
+     "oil": 0.036,
+     "china": 0.088,
+     "usd": 0.05,
+     "sector": 0.173
+    }
+   }
   },
   "e95a77f4-b5cd-4794-bc60-b674351aa974": {
    "symbol": "GLEN.L",
    "sector": "finance",
    "beta": {
-    "market": 1.023,
-    "oil": 0.251,
-    "china": 0.193,
-    "usd": -0.218,
-    "sector": -0.151
+    "market": 1.112,
+    "oil": 0.162,
+    "china": 0.071,
+    "usd": 0.072,
+    "sector": 0.309
    },
    "se": {
-    "market": 0.162,
-    "oil": 0.056,
-    "china": 0.099,
-    "usd": 0.384,
-    "sector": 0.19
+    "market": 0.092,
+    "oil": 0.029,
+    "china": 0.04,
+    "usd": 0.049,
+    "sector": 0.102
    },
-   "r2": 0.303,
-   "n": 157
+   "r2": 0.326,
+   "n": 522,
+   "sd": 0.039,
+   "stress": {
+    "beta": {
+     "market": 1.196,
+     "oil": 0.068,
+     "china": 0.072,
+     "usd": 0.271,
+     "sector": 0.549
+    },
+    "se": {
+     "market": 0.161,
+     "oil": 0.038,
+     "china": 0.047,
+     "usd": 0.05,
+     "sector": 0.146
+    }
+   }
   },
   "d6c409ea-7b66-49df-85c4-fa1a555d24cb": {
    "symbol": "PAG",
    "sector": "autos",
    "beta": {
-    "market": 0.656,
-    "oil": 0.008,
-    "china": -0.021,
-    "usd": -0.611,
-    "sector": -0.328
+    "market": 1.095,
+    "oil": 0.046,
+    "china": -0.166,
+    "usd": -0.444,
+    "sector": -0.029
    },
    "se": {
-    "market": 0.143,
-    "oil": 0.049,
-    "china": 0.088,
-    "usd": 0.333,
-    "sector": 0.147
+    "market": 0.094,
+    "oil": 0.029,
+    "china": 0.068,
+    "usd": 0.184,
+    "sector": 0.107
    },
-   "r2": 0.164,
-   "n": 157
+   "r2": 0.281,
+   "n": 522,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 1.336,
+     "oil": -0.001,
+     "china": -0.074,
+     "usd": -0.048,
+     "sector": 0.275
+    },
+    "se": {
+     "market": 0.049,
+     "oil": 0.041,
+     "china": 0.157,
+     "usd": 0.05,
+     "sector": 0.176
+    }
+   }
   },
   "e67a07f3-23fc-4ed2-b40c-bdf373880a7e": {
    "symbol": "0285.HK",
    "sector": "technology",
    "beta": {
-    "market": 1.155,
-    "oil": 0.011,
-    "china": 0.854,
-    "usd": -0.048,
-    "sector": 0.415
+    "market": 0.975,
+    "oil": 0.003,
+    "china": 0.951,
+    "usd": -0.096,
+    "sector": 0.334
    },
    "se": {
-    "market": 0.254,
-    "oil": 0.09,
-    "china": 0.159,
-    "usd": 0.607,
-    "sector": 0.298
+    "market": 0.138,
+    "oil": 0.038,
+    "china": 0.107,
+    "usd": 0.05,
+    "sector": 0.188
    },
-   "r2": 0.25,
-   "n": 157
+   "r2": 0.252,
+   "n": 522,
+   "sd": 0.063,
+   "stress": {
+    "beta": {
+     "market": 0.964,
+     "oil": 0.018,
+     "china": 0.815,
+     "usd": 0.137,
+     "sector": 0.296
+    },
+    "se": {
+     "market": 0.184,
+     "oil": 0.045,
+     "china": 0.209,
+     "usd": 0.112,
+     "sector": 0.297
+    }
+   }
   },
   "952146a0-887a-45ec-9586-38431da1baf6": {
    "symbol": "ABNB",
    "sector": "consumer",
    "beta": {
-    "market": 1.171,
-    "oil": -0.026,
-    "china": 0.064,
-    "usd": 0.242,
-    "sector": 0.777
+    "market": 1.272,
+    "oil": -0.024,
+    "china": 0.093,
+    "usd": -0.054,
+    "sector": 0.729
    },
    "se": {
-    "market": 0.18,
-    "oil": 0.063,
-    "china": 0.11,
-    "usd": 0.423,
-    "sector": 0.213
+    "market": 0.126,
+    "oil": 0.036,
+    "china": 0.075,
+    "usd": 0.05,
+    "sector": 0.124
    },
-   "r2": 0.275,
-   "n": 157
+   "r2": 0.367,
+   "n": 310,
+   "sd": 0.046,
+   "stress": {
+    "beta": {
+     "market": 1.232,
+     "oil": -0.027,
+     "china": 0.101,
+     "usd": -0.178,
+     "sector": 0.256
+    },
+    "se": {
+     "market": 0.277,
+     "oil": 0.044,
+     "china": 0.105,
+     "usd": 0.194,
+     "sector": 0.049
+    }
+   }
   },
   "48cd0018-3c4a-4560-81e8-6993d54b3739": {
    "symbol": "NYT",
    "sector": "media",
    "beta": {
-    "market": 0.32,
-    "oil": 0.098,
-    "china": -0.04,
-    "usd": -0.662,
-    "sector": 0.267
+    "market": 0.674,
+    "oil": 0.094,
+    "china": -0.031,
+    "usd": -0.583,
+    "sector": 0.223
    },
    "se": {
-    "market": 0.15,
-    "oil": 0.052,
-    "china": 0.092,
-    "usd": 0.351,
-    "sector": 0.179
+    "market": 0.077,
+    "oil": 0.029,
+    "china": 0.04,
+    "usd": 0.143,
+    "sector": 0.117
    },
-   "r2": 0.075,
-   "n": 157
+   "r2": 0.144,
+   "n": 439,
+   "sd": 0.037,
+   "stress": {
+    "beta": {
+     "market": 0.905,
+     "oil": 0.043,
+     "china": -0.139,
+     "usd": -0.541,
+     "sector": 0.319
+    },
+    "se": {
+     "market": 0.123,
+     "oil": 0.039,
+     "china": 0.045,
+     "usd": 0.05,
+     "sector": 0.106
+    }
+   }
   },
   "66e02fcd-4f63-4d52-ae9e-abfb6c4410a4": {
    "symbol": "ZAL.DE",
    "sector": "consumer",
    "beta": {
-    "market": 0.816,
-    "oil": 0.046,
-    "china": 0.346,
-    "usd": 0.338,
-    "sector": 0.67
+    "market": 1.104,
+    "oil": -0.025,
+    "china": 0.211,
+    "usd": -0.057,
+    "sector": 0.415
    },
    "se": {
-    "market": 0.238,
-    "oil": 0.084,
-    "china": 0.146,
-    "usd": 0.559,
-    "sector": 0.282
+    "market": 0.12,
+    "oil": 0.036,
+    "china": 0.077,
+    "usd": 0.05,
+    "sector": 0.149
    },
-   "r2": 0.133,
-   "n": 157
+   "r2": 0.202,
+   "n": 522,
+   "sd": 0.055,
+   "stress": {
+    "beta": {
+     "market": 1.045,
+     "oil": -0.041,
+     "china": 0.081,
+     "usd": -0.164,
+     "sector": 0.199
+    },
+    "se": {
+     "market": 0.23,
+     "oil": 0.042,
+     "china": 0.106,
+     "usd": 0.195,
+     "sector": 0.195
+    }
+   }
   },
   "caf676b8-7b17-4041-ba58-35d225a406da": {
    "symbol": "BX",
    "sector": "finance",
    "beta": {
-    "market": 1.285,
-    "oil": 0.006,
-    "china": -0.074,
-    "usd": 0.059,
-    "sector": 0.986
+    "market": 1.489,
+    "oil": -0.004,
+    "china": -0.015,
+    "usd": 0.076,
+    "sector": 0.585
    },
    "se": {
-    "market": 0.159,
-    "oil": 0.055,
-    "china": 0.098,
-    "usd": 0.379,
-    "sector": 0.187
+    "market": 0.091,
+    "oil": 0.032,
+    "china": 0.04,
+    "usd": 0.049,
+    "sector": 0.109
    },
-   "r2": 0.389,
-   "n": 157
+   "r2": 0.438,
+   "n": 522,
+   "sd": 0.038,
+   "stress": {
+    "beta": {
+     "market": 1.117,
+     "oil": 0.009,
+     "china": 0.039,
+     "usd": 0.344,
+     "sector": 0.55
+    },
+    "se": {
+     "market": 0.158,
+     "oil": 0.036,
+     "china": 0.053,
+     "usd": 0.05,
+     "sector": 0.142
+    }
+   }
   },
   "5c42fb11-4dc4-437f-94cb-9b9c6871da2a": {
    "symbol": "KKR",
    "sector": "finance",
    "beta": {
-    "market": 1.635,
-    "oil": 0.128,
-    "china": -0.057,
-    "usd": 0.357,
-    "sector": 1.285
+    "market": 1.673,
+    "oil": 0.053,
+    "china": 0.019,
+    "usd": 0.056,
+    "sector": 0.812
    },
    "se": {
-    "market": 0.158,
-    "oil": 0.054,
-    "china": 0.097,
-    "usd": 0.375,
-    "sector": 0.185
+    "market": 0.085,
+    "oil": 0.03,
+    "china": 0.04,
+    "usd": 0.049,
+    "sector": 0.103
    },
-   "r2": 0.532,
-   "n": 157
+   "r2": 0.534,
+   "n": 522,
+   "sd": 0.036,
+   "stress": {
+    "beta": {
+     "market": 1.21,
+     "oil": 0.014,
+     "china": 0.08,
+     "usd": 0.305,
+     "sector": 0.751
+    },
+    "se": {
+     "market": 0.141,
+     "oil": 0.034,
+     "china": 0.068,
+     "usd": 0.05,
+     "sector": 0.148
+    }
+   }
   },
   "8cad09bb-3ab1-46b1-9d4e-af700ccc0af6": {
    "symbol": "1810.HK",
    "sector": "autos",
    "beta": {
-    "market": 0.722,
-    "oil": 0.052,
-    "china": 0.999,
-    "usd": 0.07,
-    "sector": -0.313
+    "market": 0.801,
+    "oil": 0.033,
+    "china": 0.71,
+    "usd": -0.306,
+    "sector": -0.07
    },
    "se": {
-    "market": 0.197,
-    "oil": 0.068,
-    "china": 0.121,
-    "usd": 0.46,
-    "sector": 0.203
+    "market": 0.11,
+    "oil": 0.033,
+    "china": 0.073,
+    "usd": 0.24,
+    "sector": 0.127
    },
-   "r2": 0.358,
-   "n": 157
+   "r2": 0.337,
+   "n": 436,
+   "sd": 0.047,
+   "stress": {
+    "beta": {
+     "market": 1.445,
+     "oil": 0.004,
+     "china": 0.244,
+     "usd": -0.312,
+     "sector": 0.312
+    },
+    "se": {
+     "market": 0.134,
+     "oil": 0.04,
+     "china": 0.081,
+     "usd": 0.349,
+     "sector": 0.182
+    }
+   }
   },
   "45077dd7-f805-4179-b190-e840bbb15d67": {
    "symbol": "EBAY",
    "sector": "technology",
    "beta": {
-    "market": 0.481,
-    "oil": 0.117,
-    "china": 0.09,
-    "usd": -0.185,
-    "sector": -0.337
+    "market": 0.994,
+    "oil": 0.034,
+    "china": 0.1,
+    "usd": -0.094,
+    "sector": -0.161
    },
    "se": {
-    "market": 0.166,
-    "oil": 0.059,
-    "china": 0.104,
-    "usd": 0.398,
-    "sector": 0.195
+    "market": 0.088,
+    "oil": 0.028,
+    "china": 0.065,
+    "usd": 0.049,
+    "sector": 0.117
    },
-   "r2": 0.099,
-   "n": 157
+   "r2": 0.249,
+   "n": 522,
+   "sd": 0.038,
+   "stress": {
+    "beta": {
+     "market": 1.035,
+     "oil": -0.002,
+     "china": 0.035,
+     "usd": 0.164,
+     "sector": 0.29
+    },
+    "se": {
+     "market": 0.145,
+     "oil": 0.036,
+     "china": 0.117,
+     "usd": 0.05,
+     "sector": 0.19
+    }
+   }
   },
   "59e32250-36a0-415e-be58-9077e967650f": {
    "symbol": "TEAM",
    "sector": "technology",
    "beta": {
-    "market": 1.64,
-    "oil": 0.189,
-    "china": -0.196,
-    "usd": -0.511,
-    "sector": 0.942
+    "market": 1.225,
+    "oil": 0.035,
+    "china": -0.022,
+    "usd": -0.091,
+    "sector": 1.272
    },
    "se": {
-    "market": 0.342,
-    "oil": 0.121,
-    "china": 0.214,
-    "usd": 0.819,
-    "sector": 0.402
+    "market": 0.157,
+    "oil": 0.04,
+    "china": 0.127,
+    "usd": 0.05,
+    "sector": 0.217
    },
-   "r2": 0.187,
-   "n": 157
+   "r2": 0.225,
+   "n": 522,
+   "sd": 0.075,
+   "stress": {
+    "beta": {
+     "market": 0.792,
+     "oil": 0.034,
+     "china": -0.004,
+     "usd": 0.151,
+     "sector": 0.808
+    },
+    "se": {
+     "market": 0.184,
+     "oil": 0.043,
+     "china": 0.188,
+     "usd": 0.05,
+     "sector": 0.274
+    }
+   }
   },
   "0ab7fea8-1dd3-4979-b711-d2d4892985a6": {
    "symbol": "002415.SZ",
    "sector": "technology",
    "beta": {
-    "market": 0.213,
-    "oil": -0.056,
-    "china": 0.686,
-    "usd": 0.121,
-    "sector": 0.204
+    "market": 0.375,
+    "oil": 0.015,
+    "china": 0.656,
+    "usd": -0.098,
+    "sector": 0.169
    },
    "se": {
-    "market": 0.137,
-    "oil": 0.048,
-    "china": 0.086,
-    "usd": 0.328,
-    "sector": 0.162
+    "market": 0.089,
+    "oil": 0.029,
+    "china": 0.067,
+    "usd": 0.049,
+    "sector": 0.12
    },
-   "r2": 0.312,
-   "n": 155
+   "r2": 0.228,
+   "n": 520,
+   "sd": 0.039,
+   "stress": {
+    "beta": {
+     "market": 0.814,
+     "oil": 0.034,
+     "china": 0.456,
+     "usd": 0.136,
+     "sector": 0.159
+    },
+    "se": {
+     "market": 0.164,
+     "oil": 0.038,
+     "china": 0.136,
+     "usd": 0.118,
+     "sector": 0.215
+    }
+   }
   },
   "f69b816f-6610-4ccf-b13f-ec44f6761ac1": {
    "symbol": "SAP",
    "sector": "technology",
    "beta": {
-    "market": 1.02,
-    "oil": -0.059,
-    "china": -0.049,
-    "usd": -0.06,
-    "sector": 0.055
+    "market": 1.066,
+    "oil": -0.029,
+    "china": -0.056,
+    "usd": -0.083,
+    "sector": 0.06
    },
    "se": {
-    "market": 0.158,
-    "oil": 0.056,
-    "china": 0.099,
-    "usd": 0.378,
-    "sector": 0.185
+    "market": 0.081,
+    "oil": 0.026,
+    "china": 0.059,
+    "usd": 0.049,
+    "sector": 0.107
    },
-   "r2": 0.223,
-   "n": 157
+   "r2": 0.336,
+   "n": 522,
+   "sd": 0.034,
+   "stress": {
+    "beta": {
+     "market": 0.878,
+     "oil": 0.034,
+     "china": -0.221,
+     "usd": 0.176,
+     "sector": 0.021
+    },
+    "se": {
+     "market": 0.151,
+     "oil": 0.035,
+     "china": 0.115,
+     "usd": 0.05,
+     "sector": 0.185
+    }
+   }
   },
   "860eeae9-1701-4774-bfec-50e6c511d301": {
    "symbol": "OR.PA",
    "sector": "consumer",
    "beta": {
-    "market": 0.324,
-    "oil": -0.079,
-    "china": 0.183,
-    "usd": -0.301,
-    "sector": 0.113
+    "market": 0.546,
+    "oil": -0.051,
+    "china": 0.131,
+    "usd": -0.051,
+    "sector": 0.187
    },
    "se": {
-    "market": 0.128,
-    "oil": 0.045,
-    "china": 0.079,
-    "usd": 0.302,
-    "sector": 0.152
+    "market": 0.066,
+    "oil": 0.023,
+    "china": 0.046,
+    "usd": 0.048,
+    "sector": 0.088
    },
-   "r2": 0.109,
-   "n": 157
+   "r2": 0.184,
+   "n": 522,
+   "sd": 0.028,
+   "stress": {
+    "beta": {
+     "market": 0.606,
+     "oil": -0.041,
+     "china": 0.048,
+     "usd": -0.236,
+     "sector": 0.179
+    },
+    "se": {
+     "market": 0.145,
+     "oil": 0.033,
+     "china": 0.081,
+     "usd": 0.051,
+     "sector": 0.152
+    }
+   }
   },
   "8e31c9c2-e25d-4d02-84c4-0129e08235f1": {
    "symbol": "MC.PA",
    "sector": "consumer",
    "beta": {
-    "market": 1.006,
-    "oil": -0.098,
-    "china": 0.361,
-    "usd": 0.446,
-    "sector": 0.422
+    "market": 0.918,
+    "oil": -0.078,
+    "china": 0.216,
+    "usd": -0.074,
+    "sector": 0.369
    },
    "se": {
-    "market": 0.153,
-    "oil": 0.054,
-    "china": 0.094,
-    "usd": 0.36,
-    "sector": 0.182
+    "market": 0.076,
+    "oil": 0.026,
+    "china": 0.052,
+    "usd": 0.049,
+    "sector": 0.101
    },
-   "r2": 0.309,
-   "n": 157
+   "r2": 0.341,
+   "n": 522,
+   "sd": 0.033,
+   "stress": {
+    "beta": {
+     "market": 0.772,
+     "oil": -0.045,
+     "china": 0.096,
+     "usd": -0.15,
+     "sector": 0.182
+    },
+    "se": {
+     "market": 0.17,
+     "oil": 0.035,
+     "china": 0.088,
+     "usd": 0.179,
+     "sector": 0.165
+    }
+   }
   },
   "5636902e-a927-4134-8938-3e0d9f072120": {
    "symbol": "SUNPHARMA.NS",
    "sector": "health",
    "beta": {
-    "market": 0.156,
-    "oil": -0.029,
-    "china": 0.084,
-    "usd": 0.086,
-    "sector": 0.278
+    "market": 0.354,
+    "oil": 0.011,
+    "china": 0.036,
+    "usd": 0.011,
+    "sector": 0.297
    },
    "se": {
-    "market": 0.113,
-    "oil": 0.039,
-    "china": 0.069,
-    "usd": 0.264,
-    "sector": 0.111
+    "market": 0.074,
+    "oil": 0.025,
+    "china": 0.053,
+    "usd": 0.161,
+    "sector": 0.087
    },
-   "r2": 0.064,
-   "n": 157
+   "r2": 0.068,
+   "n": 522,
+   "sd": 0.031,
+   "stress": {
+    "beta": {
+     "market": 0.48,
+     "oil": 0.009,
+     "china": -0.019,
+     "usd": 0.204,
+     "sector": 0.418
+    },
+    "se": {
+     "market": 0.163,
+     "oil": 0.036,
+     "china": 0.112,
+     "usd": 0.237,
+     "sector": 0.166
+    }
+   }
   },
   "b6a8d1d5-475a-4fcb-9d36-c9af844d2205": {
    "symbol": "HD",
    "sector": "consumer",
    "beta": {
-    "market": 0.826,
-    "oil": -0.113,
-    "china": -0.027,
-    "usd": -0.062,
-    "sector": 0.74
+    "market": 0.956,
+    "oil": -0.071,
+    "china": -0.047,
+    "usd": -0.049,
+    "sector": 0.589
    },
    "se": {
-    "market": 0.111,
-    "oil": 0.039,
-    "china": 0.068,
-    "usd": 0.26,
-    "sector": 0.131
+    "market": 0.062,
+    "oil": 0.022,
+    "china": 0.043,
+    "usd": 0.048,
+    "sector": 0.082
    },
-   "r2": 0.407,
-   "n": 157
+   "r2": 0.472,
+   "n": 522,
+   "sd": 0.026,
+   "stress": {
+    "beta": {
+     "market": 1.37,
+     "oil": -0.047,
+     "china": 0.029,
+     "usd": -0.194,
+     "sector": 0.441
+    },
+    "se": {
+     "market": 0.134,
+     "oil": 0.031,
+     "china": 0.077,
+     "usd": 0.174,
+     "sector": 0.134
+    }
+   }
   },
   "a6c65bca-bd8d-4e49-8a9d-6d1cc7c4f416": {
    "symbol": "DMART.NS",
    "sector": "consumer",
    "beta": {
-    "market": 0.113,
-    "oil": -0.083,
-    "china": 0.018,
-    "usd": 0.192,
-    "sector": -0.134
+    "market": 0.377,
+    "oil": -0.046,
+    "china": 0.043,
+    "usd": -0.071,
+    "sector": 0.05
    },
    "se": {
-    "market": 0.179,
-    "oil": 0.063,
-    "china": 0.11,
-    "usd": 0.422,
-    "sector": 0.213
+    "market": 0.097,
+    "oil": 0.031,
+    "china": 0.066,
+    "usd": 0.049,
+    "sector": 0.123
    },
-   "r2": 0.015,
-   "n": 157
+   "r2": 0.029,
+   "n": 504,
+   "sd": 0.043,
+   "stress": {
+    "beta": {
+     "market": 0.703,
+     "oil": -0.051,
+     "china": 0.096,
+     "usd": -0.176,
+     "sector": 0.221
+    },
+    "se": {
+     "market": 0.175,
+     "oil": 0.036,
+     "china": 0.091,
+     "usd": 0.19,
+     "sector": 0.172
+    }
+   }
   },
   "c89d7879-8a39-4e55-98a1-609d23408ef9": {
    "symbol": "BMW.DE",
    "sector": "autos",
    "beta": {
-    "market": 0.811,
-    "oil": -0.048,
-    "china": 0.305,
-    "usd": -0.466,
-    "sector": 0.143
+    "market": 0.841,
+    "oil": 0.005,
+    "china": 0.168,
+    "usd": -0.385,
+    "sector": 0.309
    },
    "se": {
-    "market": 0.161,
-    "oil": 0.056,
-    "china": 0.099,
-    "usd": 0.376,
-    "sector": 0.166
+    "market": 0.083,
+    "oil": 0.027,
+    "china": 0.061,
+    "usd": 0.201,
+    "sector": 0.096
    },
-   "r2": 0.213,
-   "n": 157
+   "r2": 0.26,
+   "n": 522,
+   "sd": 0.035,
+   "stress": {
+    "beta": {
+     "market": 1.401,
+     "oil": 0.003,
+     "china": 0.154,
+     "usd": -0.278,
+     "sector": 0.497
+    },
+    "se": {
+     "market": 0.163,
+     "oil": 0.036,
+     "china": 0.118,
+     "usd": 0.317,
+     "sector": 0.152
+    }
+   }
   },
   "06ddf175-f1ec-4375-b0c8-b5363585f921": {
    "symbol": "0069.HK",
    "sector": "consumer",
    "beta": {
-    "market": 0.297,
-    "oil": -0.045,
-    "china": 0.405,
-    "usd": 0.067,
-    "sector": 0.169
+    "market": 0.483,
+    "oil": -0.02,
+    "china": 0.296,
+    "usd": -0.06,
+    "sector": 0.167
    },
    "se": {
-    "market": 0.137,
-    "oil": 0.048,
-    "china": 0.084,
-    "usd": 0.323,
-    "sector": 0.163
+    "market": 0.082,
+    "oil": 0.028,
+    "china": 0.052,
+    "usd": 0.049,
+    "sector": 0.108
    },
-   "r2": 0.166,
-   "n": 157
+   "r2": 0.156,
+   "n": 522,
+   "sd": 0.036,
+   "stress": {
+    "beta": {
+     "market": 0.986,
+     "oil": -0.051,
+     "china": 0.092,
+     "usd": -0.15,
+     "sector": 0.3
+    },
+    "se": {
+     "market": 0.174,
+     "oil": 0.036,
+     "china": 0.046,
+     "usd": 0.179,
+     "sector": 0.171
+    }
+   }
   },
   "b2f734f0-4676-45e5-870f-768d101f0d96": {
    "symbol": "FOXA",
    "sector": "media",
    "beta": {
-    "market": 0.375,
-    "oil": 0.065,
-    "china": 0.15,
-    "usd": 0.011,
-    "sector": 1.131
+    "market": 0.7,
+    "oil": 0.1,
+    "china": -0.01,
+    "usd": -0.676,
+    "sector": 0.684
    },
    "se": {
-    "market": 0.16,
-    "oil": 0.055,
-    "china": 0.098,
-    "usd": 0.373,
-    "sector": 0.191
+    "market": 0.081,
+    "oil": 0.03,
+    "china": 0.041,
+    "usd": 0.049,
+    "sector": 0.118
    },
-   "r2": 0.229,
-   "n": 157
+   "r2": 0.215,
+   "n": 401,
+   "sd": 0.038,
+   "stress": {
+    "beta": {
+     "market": 0.941,
+     "oil": 0.125,
+     "china": -0.143,
+     "usd": -0.688,
+     "sector": 0.26
+    },
+    "se": {
+     "market": 0.082,
+     "oil": 0.042,
+     "china": 0.046,
+     "usd": 0.05,
+     "sector": 0.049
+    }
+   }
   },
   "ca2599cb-331a-4607-94ae-fb3606629b20": {
    "symbol": "TRI",
    "sector": "media",
    "beta": {
-    "market": 0.375,
-    "oil": 0.108,
-    "china": -0.105,
-    "usd": -0.884,
-    "sector": 0.585
+    "market": 0.669,
+    "oil": 0.081,
+    "china": -0.046,
+    "usd": -0.595,
+    "sector": 0.432
    },
    "se": {
-    "market": 0.196,
-    "oil": 0.068,
-    "china": 0.12,
-    "usd": 0.458,
-    "sector": 0.234
+    "market": 0.08,
+    "oil": 0.03,
+    "china": 0.041,
+    "usd": 0.143,
+    "sector": 0.123
    },
-   "r2": 0.088,
-   "n": 157
+   "r2": 0.145,
+   "n": 439,
+   "sd": 0.04,
+   "stress": {
+    "beta": {
+     "market": 0.991,
+     "oil": 0.16,
+     "china": -0.138,
+     "usd": -0.643,
+     "sector": 0.321
+    },
+    "se": {
+     "market": 0.048,
+     "oil": 0.038,
+     "china": 0.045,
+     "usd": 0.05,
+     "sector": 0.102
+    }
+   }
   }
  }
 }

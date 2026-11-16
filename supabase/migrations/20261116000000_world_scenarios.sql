@@ -22,6 +22,7 @@ create table public.company_factors (
   symbol text not null,
   beta jsonb not null,
   se jsonb not null,
+  sd double precision, -- weekly moves the factors don't explain, for ranges
   r2 double precision not null,
   weeks int not null,
   fitted_at timestamptz not null default now()
@@ -60,7 +61,7 @@ select cron.schedule(
 );
 
 alter table public.companies add column sector text check (sector in (
-  'energy', 'materials', 'industrials', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'
+  'energy', 'materials', 'industrials', 'defense', 'autos', 'consumer', 'health', 'finance', 'technology', 'media', 'real_estate', 'transport'
 ));
 alter table public.companies add column sector_source text;
 

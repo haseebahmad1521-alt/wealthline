@@ -13,8 +13,11 @@
 //  - transfer: the shares change hands at month `to` at that month's price plus the premium, paid in cash.
 import { ramp, type Scenario, type Shock } from '../../supabase/functions/_shared/scenario.ts';
 
-/** Measured sensitivities (factors.ts) and their standard errors, by factor. */
-export type SimFit = { beta: Record<string, number>; se: Record<string, number> };
+/**
+ * Measured sensitivities (factors.ts) and their standard errors, by factor, and `sd`: the weekly moves the factors
+ * don't explain (the company's own news). Backtests showed ranges need that noise to cover real outcomes.
+ */
+export type SimFit = { beta: Record<string, number>; se: Record<string, number>; sd?: number; /** Without the factor links. */ raw?: Record<string, number> };
 export type SimCompany = {
   id: string;
   name: string;
@@ -111,13 +114,18 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       const factors = Object.keys(group[0].fit!.beta);
       const mean = (f: string) => group.reduce((n, c) => n + (c.fit!.beta[f] ?? 0), 0) / group.length;
       const spread = (f: string) => Math.sqrt(group.reduce((n, c) => n + ((c.fit!.beta[f] ?? 0) - mean(f)) ** 2, 0) / (group.length - 1) / group.length + mean(f) ** 2 * 0.04);
-      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])) };
+      const sd = group.reduce((n, c) => n + (c.fit!.sd ?? 0), 0) / group.length;
+      const raw = Object.fromEntries(factors.map((f) => [f, group.reduce((n, c) => n + (c.fit!.raw?.[f] ?? c.fit!.beta[f] ?? 0), 0) / group.length]));
+      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])), sd, raw };
     }
     peerCache.set(key, out);
     return out;
   };
   const RULE: SimFit = { beta: { market: 1, sector: 1, oil: 0, china: 0, usd: 0 }, se: { market: 0, sector: 0, oil: 0, china: 0, usd: 0 } };
   const Z80 = 1.2816;
+  // How long the scenario takes to play out (its longest ramp, at least a month), in weeks: the company's own news over
+  // that time widens every range, as the backtest on past shocks required (80% ranges then held 63-85% of outcomes).
+  const horizonWeeks = Math.max(1, ...scenario.shocks.map((s) => s.to - s.from)) * 4.345;
 
   // Revenue: each place shock moves the country's share of every line that covers it.
   const places = scenario.shocks.filter((s): s is Extract<Shock, { kind: 'place' }> => s.kind === 'place');
@@ -147,16 +155,20 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       if (!m) continue;
       if (s.kind === 'company' && s.target === c.id) price *= 1 + m;
       else if (s.kind === 'sector' && c.sector === s.target) {
-        price *= 1 + (fit.beta.sector ?? 1) * m;
-        variance += ((fit.se.sector ?? 0) * m) ** 2;
+        const b = fit.beta.sector ?? 1;
+        price *= 1 + b * m;
+        variance += ((fit.se.sector ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       } else if (s.kind === 'market') {
-        price *= 1 + (fit.beta.market ?? 1) * m;
-        variance += ((fit.se.market ?? 0) * m) ** 2;
+        const b = fit.beta.market ?? 1;
+        price *= 1 + b * m;
+        variance += ((fit.se.market ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       } else if (s.kind === 'factor') {
-        price *= 1 + (fit.beta[s.target] ?? 0) * m;
-        variance += ((fit.se[s.target] ?? 0) * m) ** 2;
+        const b = (s.direct ? fit.raw?.[s.target] : undefined) ?? fit.beta[s.target] ?? 0;
+        price *= 1 + b * m;
+        variance += ((fit.se[s.target] ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
       }
     }
+    if (Math.abs(price - 1) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
     moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: price - 1 - Z80 * sd, hi: price - 1 + Z80 * sd, basis });
   }
@@ -281,7 +293,11 @@ export function schedule(events: SimEvent[], months: number): { notes: (SimEvent
   return { notes, length: Math.max(months * TICKS_PER_MONTH, last + NOTE_LIFE - 1) };
 }
 
+const ANALOG_WORD: Record<string, string> = {
+  mideast: 'Middle East escalations', russia: 'invasions', 'us-china': 'US–China trade fights', 'oil-glut': 'oil price wars', pandemic: 'pandemic shocks', banking: 'bank failures',
+};
 const SECTOR_NAME: Record<string, string> = {
+  defense: 'Aerospace and defence',
   energy: 'Energy', materials: 'Materials', industrials: 'Industrial', autos: 'Carmaker', consumer: 'Consumer', health: 'Healthcare',
   finance: 'Bank and finance', technology: 'Tech', media: 'Media', real_estate: 'Property', transport: 'Transport',
 };
@@ -303,8 +319,14 @@ export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id:
     out.push({ month: b.month, text: b.text, tone: b.tone, about: b.person ? { kind: 'person', slug: b.person } : b.country ? { kind: 'place', iso2: b.country } : { kind: 'world' } });
   }
   for (const s of scenario.shocks) {
+    if ('quiet' in s && s.quiet) continue;
     const tone = s.pct < 0 ? 'loss' : 'gain';
     const at = s.kind === 'transfer' ? s.to : s.from;
+    if (s.kind === 'analog') {
+      const times = s.pct >= 1.5 ? `, ${Math.round(s.pct * 10) / 10}× as hard` : s.pct <= 0.75 ? ', more mildly' : '';
+      out.push({ month: at, text: `Markets react as after past ${ANALOG_WORD[s.target] ?? s.target}${times}`, tone: 'info', about: { kind: 'world' } });
+      continue;
+    }
     if (s.kind === 'place') out.push({ month: at, text: `Business in ${countryName(s.target)} ${size(s.pct)}`, tone, about: { kind: 'place', iso2: s.target } });
     if (s.kind === 'sector') out.push({ month: at, text: `${SECTOR_NAME[s.target] ?? s.target} shares ${moveWord(s.pct)}`, tone, about: { kind: 'sector', sector: s.target } });
     if (s.kind === 'market') out.push({ month: at, text: `Markets ${s.pct < 0 ? 'sell off' : 'rally'}`, tone, about: { kind: 'world' } });

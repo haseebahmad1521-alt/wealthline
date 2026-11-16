@@ -130,3 +130,25 @@ test('measured sensitivities move each company; a private one borrows its peers;
   assert.ok(Math.abs(a.delta! - 15) < 1e-9);
   assert.ok(a.range![0] < 15 && a.range![1] > 15);
 });
+
+test('an analog becomes its measured market moves, scaled, with the spread between events as uncertainty', async () => {
+  const { expandAnalogs } = await import('./analogs.ts');
+  const data = {
+    events: [],
+    analogs: {
+      mideast: { events: ['A', 'B'], mean: { market: -0.02, oil: 0.05, china: 0, usd: 0.0005, oilPrice: 0.06, sector: { energy: 0.03, defense: 0.02 } }, sd: { market: 0.01, oil: 0.04, china: 0, usd: 0, oilPrice: 0.05, sector: { energy: 0.02, defense: 0.01 } } },
+    },
+  };
+  const s = expandAnalogs(scenario([{ kind: 'analog', target: 'mideast', pct: 2, from: 0, to: 0 }]), data);
+  const kinds = s.shocks.map((x) => `${x.kind}:${x.target}:${Math.round(x.pct * 1000) / 1000}`);
+  assert.deepEqual(kinds, ['analog:mideast:2', 'market::-0.04', 'factor:oil:0.1', 'sector:energy:0.06', 'sector:defense:0.04']);
+  assert.match(s.assumptions.at(-1)!, /^Market moves as around 2 past middle east escalations, 2× as strongly: A; B\.$/);
+  // Expanding again (a continued scenario) doesn't double anything.
+  assert.deepEqual(expandAnalogs(s, data).shocks.length, s.shocks.length);
+  // An energy company moves with its sector part; the spread between events widens its range.
+  const fit = { beta: { market: 1, oil: 0, china: 0, usd: 0, sector: 1 }, se: { market: 0, oil: 0, china: 0, usd: 0, sector: 0 } };
+  const e: SimEmpire[] = [{ person: person('o', 100), companies: [{ id: 'oilco', name: 'oilco', sector: 'energy', listed: true, regions: [], fit }], stakes: [] }];
+  const f = simulate(s, e, countries, 1).companies[0];
+  assert.ok(Math.abs(f.price - ((1 - 0.04) * (1 + 0.06) - 1)) < 1e-9);
+  assert.ok(f.hi - f.lo > 0.05);
+});
