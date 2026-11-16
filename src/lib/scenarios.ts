@@ -71,6 +71,19 @@ export async function askScenario(prompt: string): Promise<{ scenario: Scenario 
   }
 }
 
+/** The questions and matches asked most in the last week (answers stored by the backend); empty until there are some. */
+export function useMostAsked() {
+  return useQuery({
+    queryKey: ['world-most-asked'],
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 7 * 864e5).toISOString();
+      const { data, error } = await db().from('world_scenarios').select('*').in('origin', ['prompt', 'versus']).gte('created_at', since).order('asks', { ascending: false }).order('created_at', { ascending: false }).limit(8);
+      return error || !data ? ([] as (Scenario & { asks?: number })[]) : (data as (Row & { asks?: number })[]).map((r) => ({ ...fromRow(r), asks: r.asks }));
+    },
+  });
+}
+
 /** A stored scenario by id (a shared link to a Grok scenario); null when it isn't there. */
 export async function fetchScenario(id: string): Promise<Scenario | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;

@@ -210,7 +210,11 @@ Deno.serve(async (req) => {
     if (prompt.length < 8 || prompt.length > MAX_PROMPT) return json({ error: `Ask in 8 to ${MAX_PROMPT} characters.` }, 400);
     const pk = versus ? `versus:${versus[0]}|${versus[1]}` : promptKey(prompt);
     const hit = await db.from('world_scenarios').select('*').eq('prompt_key', pk).maybeSingle();
-    if (hit.data) return json({ scenario: hit.data, cached: true });
+    if (hit.data) {
+      // Counted for "Most asked"; a lost update under load only undercounts.
+      await db.from('world_scenarios').update({ asks: (hit.data.asks ?? 1) + 1 }).eq('id', hit.data.id);
+      return json({ scenario: hit.data, cached: true });
+    }
     if (!key) return json({ error: 'Simulations aren’t switched on yet.' }, 503);
     const hour = await db.from('world_scenarios').select('id', { count: 'exact', head: true }).eq('origin', 'prompt').gte('created_at', new Date(Date.now() - 36e5).toISOString());
     if ((hour.count ?? 0) >= PROMPTS_PER_HOUR) return json({ error: 'Lots of questions right now. Try one of the suggestions, or ask again in a while.' }, 429);

@@ -11,7 +11,7 @@ import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, reven
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
-import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
 import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
@@ -74,11 +74,12 @@ export default function World() {
   // answer joins the front. The month is the globe's month too.
   const simData = useSimData();
   const daily = useDailyScenarios();
+  const mostAsked = useMostAsked();
   const [asked, setAsked] = useState<Scenario[]>([]);
   const [panel, setPanel] = useState<'scenarios' | 'versus' | 'dials'>('scenarios');
   const [dials, setDials] = useState<DialValues>({});
   const dialSim = useMemo(() => dialScenario(dials), [dials]);
-  const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires)], [asked, daily.data, empires]);
+  const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires), ...(mostAsked.data ?? []).filter((m) => !asked.some((a) => a.id === m.id))], [asked, daily.data, empires, mostAsked.data]);
   const [simId, setSimId] = useState<string | null>(null);
   const sim = panel === 'dials' ? dialSim : (scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null);
   // The film's clock: a few ticks per month (TICKS_PER_MONTH); the globe shows the month the clock is in.
@@ -610,6 +611,7 @@ export default function World() {
                     mode={panel}
                     score={game}
                     challengeId={challenge?.id ?? null}
+                    mostAsked={mostAsked.data ?? []}
                     you={<MineEditor holdings={mine} companies={ownable} onChange={saveMine} money={money.format} />}
                     onMode={(m) => {
                       setPanel(m);

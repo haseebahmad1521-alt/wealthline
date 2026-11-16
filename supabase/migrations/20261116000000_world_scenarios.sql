@@ -26,6 +26,8 @@ create table public.world_scenarios (
   -- Typed questions: the normalised question, so a repeat is answered from here without another Grok call.
   prompt text check (length(prompt) <= 200),
   prompt_key text unique,
+  -- How many times a question or match was asked (the first ask plus each answer served from here), for "Most asked".
+  asks int not null default 1 check (asks >= 1),
   title text not null check (length(title) between 1 and 120),
   summary text not null check (length(summary) <= 900),
   plausibility text not null check (plausibility in ('likely', 'possible', 'unlikely')),
@@ -42,6 +44,7 @@ create table public.world_scenarios (
   created_at timestamptz not null default now()
 );
 create index world_scenarios_daily on public.world_scenarios (origin, run_date desc, position);
+create index world_scenarios_asked on public.world_scenarios (asks desc, created_at desc) where origin in ('prompt', 'versus');
 
 alter table public.world_scenarios enable row level security;
 create policy "public read" on public.world_scenarios for select using (true);

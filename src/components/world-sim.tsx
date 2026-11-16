@@ -41,7 +41,10 @@ export function SimulatePanel({
   score,
   challengeId,
   you,
+  mostAsked = [],
 }: {
+  /** Questions and matches people asked most this week. */
+  mostAsked?: (Scenario & { asks?: number })[];
   /** The "You" editor (what the player owns), shown under the tabs. */
   you: ReactNode;
   score: Score;
@@ -107,7 +110,7 @@ export function SimulatePanel({
       {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
-        {scenarios.filter((s) => s.origin !== 'versus').map((s) => {
+        {scenarios.filter((s) => s.origin !== 'versus' && !mostAsked.some((m) => m.id === s.id)).map((s) => {
           const on = s.id === scenario?.id;
           return (
             <Pressable key={s.id} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onPick(s)} style={[styles.pill, on && styles.pillOn]}>
@@ -124,6 +127,21 @@ export function SimulatePanel({
       </>
       )}
 
+      {mode === 'scenarios' && mostAsked.length > 0 && (
+        <>
+          <Text style={[type.caption, styles.rowLabel]}>Most asked this week</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
+            {mostAsked.map((s) => (
+              <Pressable key={s.id} accessibilityRole="button" onPress={() => onPick(s)} style={[styles.pill, s.id === scenario?.id && styles.pillOn]}>
+                <Text numberOfLines={1} style={[type.headline, { fontSize: 14, color: color.text }]}>
+                  {s.prompt && s.origin === 'prompt' ? s.prompt : s.title.replace(/\.$/, '')}
+                </Text>
+                <Caption style={{ fontSize: 11 }}>{s.asks && s.asks > 1 ? `Asked ${s.asks} times` : 'Asked this week'}</Caption>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      )}
       {scenario && mode !== 'dials' && (mode === 'versus') === (scenario.origin === 'versus') && (
         <View style={styles.foot}>
           <Caption>
