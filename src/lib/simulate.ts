@@ -16,6 +16,13 @@
 import { ramp, type Scenario, type Shock } from '../../supabase/functions/_shared/scenario.ts';
 
 /**
+ * Half-width of an 80% range, in standard deviations, on a bell curve. Real moves have fatter tails, so the app passes
+ * the calibrated width instead (factors.json backtest.ranges.z80: the multiple that held 80% of the model's misses on
+ * past shocks, scripts/build-factors.mjs).
+ */
+export const Z80 = 1.2816;
+
+/**
  * Measured sensitivities (factors.ts) and their standard errors, by factor, and `sd`: the weekly moves the factors
  * don't explain (the company's own news). Backtests showed ranges need that noise to cover real outcomes.
  */
@@ -113,7 +120,7 @@ export type Frame = {
   transfers: { seller: SimPerson; buyer: SimPerson; company: SimCompany; paid: number; buyerShort: boolean; done: boolean }[];
 };
 
-export function simulate(scenario: Scenario, empires: SimEmpire[], countries: SimCountry[], month: number): Frame {
+export function simulate(scenario: Scenario, empires: SimEmpire[], countries: SimCountry[], month: number, z80 = Z80): Frame {
   const gdp = new Map(countries.map((c) => [c.iso2, c.gdp_usd ?? 0]));
   const companies = new Map<string, SimCompany>();
   for (const e of empires) for (const c of e.companies) companies.set(c.id, c);
@@ -141,7 +148,6 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     return out;
   };
   const RULE: SimFit = { beta: { market: 1, sector: 1, oil: 0, china: 0, usd: 0 }, se: { market: 0, sector: 0, oil: 0, china: 0, usd: 0 } };
-  const Z80 = 1.2816;
   // How long the scenario takes to play out (its longest ramp, at least a month), in weeks: the company's own news over
   // that time widens every range, as the backtest on past shocks required (80% ranges then held 63-85% of outcomes).
   const horizonWeeks = Math.max(1, ...scenario.shocks.map((s) => s.to - s.from)) * 4.345;
@@ -197,7 +203,7 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     if (Math.abs(logMove) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
     const price = Math.exp(logMove);
-    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, leverage, price: price - 1, lo: Math.exp(logMove - Z80 * sd) - 1, hi: Math.exp(logMove + Z80 * sd) - 1, basis });
+    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, leverage, price: price - 1, lo: Math.exp(logMove - z80 * sd) - 1, hi: Math.exp(logMove + z80 * sd) - 1, basis });
   }
   const move = (id: string) => moves.get(id)?.price ?? 0;
 
@@ -206,7 +212,7 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
   const salePrice = new Map<Shock, number>();
   if (sales.length) {
     const rest = { ...scenario, shocks: scenario.shocks.filter((s) => s.kind !== 'transfer') };
-    for (const s of sales) salePrice.set(s, 1 + (simulate(rest, empires, countries, s.to).companies.find((x) => x.company.id === s.target)?.price ?? 0));
+    for (const s of sales) salePrice.set(s, 1 + (simulate(rest, empires, countries, s.to, z80).companies.find((x) => x.company.id === s.target)?.price ?? 0));
   }
   const transfers: Frame['transfers'] = [];
   const deltas = new Map<string, number>();

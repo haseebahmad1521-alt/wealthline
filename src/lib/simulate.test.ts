@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { checkShock, cleanProse, promptKey, ramp, sectorFor, type Catalog, type Scenario } from '../../supabase/functions/_shared/scenario.ts';
-import { lineCountries, operatingLeverage, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
+import { Z80, lineCountries, operatingLeverage, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
 
 const countries: SimCountry[] = [
   { iso2: 'US', gdp_usd: 30, region: 'NAC' },
@@ -127,7 +127,7 @@ test('measured sensitivities move each company; a private one borrows its peers;
   assert.ok(Math.abs(move('private-oil').price - (1.5 ** 0.4 - 1)) < 1e-9); // the peers' average sensitivity, 0.4
   // 80% range, in log terms: ± 1.28 × se × log(1.5); never below -100%.
   const d = move('drill');
-  assert.ok(Math.abs(Math.log(1 + d.hi) - Math.log(1 + d.lo) - 2 * 1.2816 * 0.1 * Math.log(1.5)) < 1e-9);
+  assert.ok(Math.abs(Math.log(1 + d.hi) - Math.log(1 + d.lo) - 2 * Z80 * 0.1 * Math.log(1.5)) < 1e-9);
   const a = f.people.find((p) => p.person.slug === 'a')!;
   assert.ok(Math.abs(a.delta! - 50 * (1.5 ** 0.6 - 1)) < 1e-9);
   assert.ok(a.range![0] < 15 && a.range![1] > 15);

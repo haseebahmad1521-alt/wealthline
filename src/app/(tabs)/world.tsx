@@ -27,6 +27,7 @@ import { getItem, setItem } from '@/lib/device-store';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
 import { BriefingPanel, DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
+import { REFERENCE } from '@/lib/factor-data';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
@@ -48,6 +49,9 @@ const KIND: Record<SiteKind, [string, string]> = {
   store: ['Store', 'Stores'],
   other: ['Site', 'Sites'],
 };
+
+// The 80% range width calibrated on past shocks (fat tails), else the bell-curve one.
+const RANGE_Z = REFERENCE.backtest?.ranges?.z80;
 
 const VIEWS = [
   { key: 'places', label: 'Today' },
@@ -105,7 +109,7 @@ export default function World() {
   const simCountries = useMemo<SimCountry[]>(() => (world.countries ?? []).map((c) => ({ ...c, region: simData.data?.regions.get(c.iso2) ?? null })), [world.countries, simData.data]);
   // Every month of the film at once (a few dozen small calculations), so notifications can compare months.
   const frames = useMemo(
-    () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m)) : []),
+    () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m, RANGE_Z)) : []),
     [simOn, sim, simEmpires, simCountries],
   );
   const month = sim ? Math.min(Math.floor(tick / TICKS_PER_MONTH), sim.months) : 0;
@@ -297,7 +301,7 @@ export default function World() {
     const owners = new Map<string, { id: string; name: string }[]>();
     for (const e of empires) for (const c of e.companies) owners.set(c.id, [...(owners.get(c.id) ?? []), { id: e.person.id, name: e.person.name }]);
     const contracts = (tiesData as { companies: Record<string, ContractTie> }).companies;
-    return briefing(briefSource, simEmpires, simCountries, eventData as EventData).map((item) => ({
+    return briefing(briefSource, simEmpires, simCountries, eventData as EventData, 2, RANGE_Z).map((item) => ({
       ...item,
       ties: tiesFor(expandAnalogs(item.scenario, null), contracts, (id) => owners.get(id) ?? []),
     }));

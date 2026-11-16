@@ -170,6 +170,25 @@ for (const ev of EVENTS) {
   for (const k of ['naive', 'plain', 'improved', 'crisis']) console.log(`  ${k.padEnd(9)} ${f(summary[k])}`);
 }
 
+// ——— Range width, calibrated on the past shocks ———
+// Real moves have fatter tails than a bell curve: ranges of ±1.28 standard deviations held only 63-85% of outcomes.
+// The width is instead the multiple of the model's standard deviation that held 80% of past misses. Each event's
+// coverage is scored with a width calibrated on the OTHER events only, so the reported coverage is out of sample.
+const standardized = (rows) => rows.map((r) => Math.abs(r.crisis.pred - r.actual) / Math.sqrt(r.crisis.sd ** 2 + r.crisis.noise ** 2)).filter(Number.isFinite);
+const quantile = (v, q) => {
+  const s = [...v].sort((a, b) => a - b);
+  const i = (s.length - 1) * q;
+  return s[Math.floor(i)] + (s[Math.ceil(i)] - s[Math.floor(i)]) * (i - Math.floor(i));
+};
+const z80 = quantile(standardized(results.flatMap((r) => r.rows)), 0.8);
+const outOfSample = results.map((r) => {
+  const z = quantile(standardized(results.filter((x) => x !== r).flatMap((x) => x.rows)), 0.8);
+  const own = standardized(r.rows);
+  return { event: r.event, z: Math.round(z * 1000) / 1000, coverage: Math.round((own.filter((v) => v <= z).length / own.length) * 1000) / 1000 };
+});
+const pooled = outOfSample.reduce((n, e, i) => n + e.coverage * results[i].rows.length, 0) / results.reduce((n, r) => n + r.rows.length, 0);
+console.log(`\nrange width: ${z80.toFixed(3)} sd for 80% (normal: 1.282); out of sample: ${outOfSample.map((e) => `${e.event} ${(e.coverage * 100).toFixed(0)}%`).join(', ')}; pooled ${(pooled * 100).toFixed(0)}%`);
+
 // ——— The model the app uses: all ten years ———
 const set = factorSet();
 const final = fitAll(set);
@@ -191,6 +210,7 @@ const overall = (key) => {
 const backtest = {
   events: results.map(({ rows, ...s }) => s),
   overall: { naive: overall('naive'), plain: overall('plain'), improved: overall('improved'), crisis: overall('crisis') },
+  ranges: { z80: Math.round(z80 * 1000) / 1000, outOfSample, pooledCoverage: Math.round(pooled * 1000) / 1000 },
 };
 writeFileSync(
   'src/data/factors.json',
@@ -203,6 +223,7 @@ writeFileSync(
       links,
       backtest: {
         overall: backtest.overall,
+        ranges: backtest.ranges,
         events: backtest.events.map((e) => ({ event: e.event, weeks: e.weeks, companies: e.companies, naive: r3(e.naive.mae), plain: r3(e.plain.mae), improved: r3(e.improved.mae), crisis: r3(e.crisis.mae), coverage: e.crisis.coverageWithNoise })),
       },
       companies: out,

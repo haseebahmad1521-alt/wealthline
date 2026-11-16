@@ -26,7 +26,7 @@
      "finance": -0.0012,
      "technology": -0.0181,
      "media": -0.0049,
-     "real_estate": 0.0367,
+     "real_estate": 0.0366,
      "transport": -0.0206
     }
    }
@@ -69,7 +69,7 @@
    "weeks": 2,
    "moves": {
     "market": -0.017,
-    "oil": 0.0365,
+    "oil": 0.0366,
     "china": -0.0566,
     "usd": 0.0046,
     "oilPrice": 0.0277,
@@ -335,7 +335,7 @@
     "oilPrice": -0.0558,
     "sector": {
      "energy": -0.014,
-     "materials": 0.0153,
+     "materials": 0.0152,
      "industrials": 0.003,
      "defense": 0.0329,
      "autos": 0.0137,
@@ -692,7 +692,7 @@
    },
    "sd": {
     "market": 0.1935,
-    "oil": 0.273,
+    "oil": 0.2729,
     "china": 0.0671,
     "usd": 0.0179,
     "oilPrice": 0.3768,
@@ -739,7 +739,7 @@
    },
    "sd": {
     "market": 0.0207,
-    "oil": 0.0702,
+    "oil": 0.0701,
     "china": 0.0162,
     "usd": 0.0081,
     "oilPrice": 0.0812,

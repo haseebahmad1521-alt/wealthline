@@ -24,7 +24,12 @@ export function effectiveFit(raw: Raw, sector: string | null | undefined, links:
   return { beta, se, sd: raw.sd, raw: { ...raw.beta } };
 }
 
-export type Backtest = { overall: Record<'naive' | 'plain' | 'improved' | 'crisis', number>; events: { event: string; improved: number; naive: number; coverage: number | null }[] };
+export type Backtest = {
+  overall: Record<'naive' | 'plain' | 'improved' | 'crisis', number>;
+  events: { event: string; improved: number; naive: number; coverage: number | null }[];
+  /** Range width calibrated on past misses; each event's coverage scored with a width fitted on the others. */
+  ranges?: { z80: number; outOfSample: { event: string; coverage: number }[]; pooledCoverage: number };
+};
 
 /** The shipped reference: fits by company id, the factor links, the window they were measured over, and the backtest. */
 export const REFERENCE = {

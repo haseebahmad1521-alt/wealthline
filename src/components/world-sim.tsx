@@ -25,10 +25,13 @@ import { color, font, radius, space, type } from '@/theme';
 const ACCURACY = (() => {
   const b = REFERENCE.backtest;
   if (!b) return 'Ranges are 80%, from how each company’s shares have moved with stocks, oil, China, the dollar and its sector; private companies use their listed peers.';
-  const cover = b.events.map((e) => e.coverage).filter((x): x is number => x != null);
+  const cover = (b.ranges?.outOfSample.map((e) => e.coverage) ?? b.events.map((e) => e.coverage)).filter((x): x is number => x != null);
   const lo = Math.round(Math.min(...cover) * 100);
   const hi = Math.round(Math.max(...cover) * 100);
-  return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${lo}–${hi}% of outcomes fell inside the 80% ranges. Private companies use their listed peers.`;
+  const ranges = b.ranges
+    ? `ranges are widened for fat tails, as past misses required: tested on shocks they weren’t fitted on, ${Math.round(b.ranges.pooledCoverage * 100)}% of outcomes fell inside (${lo}–${hi}% by shock; crashes run wider).`
+    : `${lo}–${hi}% of outcomes fell inside the 80% ranges.`;
+  return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${ranges} Private companies use their listed peers.`;
 })();
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
