@@ -27,14 +27,14 @@ export function useSimData() {
       const [cos, regions, factors, model] = await Promise.all([
         db().from('companies').select('id, sector'),
         db().from('countries').select('iso2, region'),
-        db().from('company_factors').select('company_id, beta, se'),
+        db().from('company_factors').select('company_id, beta, se, sd'),
         db().from('factor_model').select('links, window_from, window_to').order('fitted_at', { ascending: false }).limit(1),
       ]);
       const out = fromReference();
       for (const c of cos.error ? [] : (cos.data ?? [])) if (c.sector) out.sectors.set(c.id as string, c.sector as string);
       for (const c of regions.error ? [] : (regions.data ?? [])) if (c.region) out.regions.set(c.iso2 as string, c.region as string);
       const raw = new Map(REFERENCE.raw);
-      for (const f of factors.error ? [] : (factors.data ?? [])) raw.set(f.company_id as string, { beta: f.beta, se: f.se });
+      for (const f of factors.error ? [] : (factors.data ?? [])) raw.set(f.company_id as string, { beta: f.beta, se: f.se, sd: (f.sd as number | null) ?? undefined });
       const links = (!model.error && model.data?.[0]?.links) || REFERENCE.links;
       return withFits(out, raw, links);
     },

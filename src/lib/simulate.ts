@@ -13,8 +13,11 @@
 //  - transfer: the shares change hands at month `to` at that month's price plus the premium, paid in cash.
 import { ramp, type Scenario, type Shock } from '../../supabase/functions/_shared/scenario.ts';
 
-/** Measured sensitivities (factors.ts) and their standard errors, by factor. */
-export type SimFit = { beta: Record<string, number>; se: Record<string, number> };
+/**
+ * Measured sensitivities (factors.ts) and their standard errors, by factor, and `sd`: the weekly moves the factors
+ * don't explain (the company's own news). Backtests showed ranges need that noise to cover real outcomes.
+ */
+export type SimFit = { beta: Record<string, number>; se: Record<string, number>; sd?: number };
 export type SimCompany = {
   id: string;
   name: string;
@@ -111,13 +114,17 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
       const factors = Object.keys(group[0].fit!.beta);
       const mean = (f: string) => group.reduce((n, c) => n + (c.fit!.beta[f] ?? 0), 0) / group.length;
       const spread = (f: string) => Math.sqrt(group.reduce((n, c) => n + ((c.fit!.beta[f] ?? 0) - mean(f)) ** 2, 0) / (group.length - 1) / group.length + mean(f) ** 2 * 0.04);
-      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])) };
+      const sd = group.reduce((n, c) => n + (c.fit!.sd ?? 0), 0) / group.length;
+      out = { beta: Object.fromEntries(factors.map((f) => [f, mean(f)])), se: Object.fromEntries(factors.map((f) => [f, spread(f)])), sd };
     }
     peerCache.set(key, out);
     return out;
   };
   const RULE: SimFit = { beta: { market: 1, sector: 1, oil: 0, china: 0, usd: 0 }, se: { market: 0, sector: 0, oil: 0, china: 0, usd: 0 } };
   const Z80 = 1.2816;
+  // How long the scenario takes to play out (its longest ramp, at least a month), in weeks: the company's own news over
+  // that time widens every range, as the backtest on past shocks required (80% ranges then held 63-85% of outcomes).
+  const horizonWeeks = Math.max(1, ...scenario.shocks.map((s) => s.to - s.from)) * 4.345;
 
   // Revenue: each place shock moves the country's share of every line that covers it.
   const places = scenario.shocks.filter((s): s is Extract<Shock, { kind: 'place' }> => s.kind === 'place');
@@ -157,6 +164,7 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
         variance += ((fit.se[s.target] ?? 0) * m) ** 2;
       }
     }
+    if (Math.abs(price - 1) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
     moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: price - 1 - Z80 * sd, hi: price - 1 + Z80 * sd, basis });
   }

@@ -1,0 +1,170 @@
+{
+ "events": [
+  {
+   "event": "COVID crash",
+   "key": "covid",
+   "weeks": 5,
+   "market": -0.38691258722932365,
+   "crash": true,
+   "companies": 57,
+   "naive": {
+    "mae": 0.14861582345385368,
+    "corr": 3.090822208384024e-16,
+    "coverage": null,
+    "coverageWithNoise": null
+   },
+   "plain": {
+    "mae": 0.15199277111019202,
+    "corr": 0.555005881313424,
+    "coverage": 0.5087719298245614,
+    "coverageWithNoise": 0.631578947368421
+   },
+   "improved": {
+    "mae": 0.12870273024399168,
+    "corr": 0.4902522260157174,
+    "coverage": 0.47368421052631576,
+    "coverageWithNoise": 0.6666666666666666
+   },
+   "crisis": {
+    "mae": 0.12870273024399168,
+    "corr": 0.4902522260157174,
+    "coverage": 0.47368421052631576,
+    "coverageWithNoise": 0.6666666666666666
+   }
+  },
+  {
+   "event": "Invasion of Ukraine: oil spike",
+   "key": "invasion",
+   "weeks": 2,
+   "market": -0.03479423526145524,
+   "crash": false,
+   "companies": 60,
+   "naive": {
+    "mae": 0.06791637169404195,
+    "corr": -2.604985157234839e-16,
+    "coverage": null,
+    "coverageWithNoise": null
+   },
+   "plain": {
+    "mae": 0.06328885521211881,
+    "corr": 0.34263201140212507,
+    "coverage": 0.3333333333333333,
+    "coverageWithNoise": 0.7166666666666667
+   },
+   "improved": {
+    "mae": 0.06094931129834076,
+    "corr": 0.4264417477394647,
+    "coverage": 0.2,
+    "coverageWithNoise": 0.7
+   },
+   "crisis": {
+    "mae": 0.06094931129834076,
+    "corr": 0.4264417477394647,
+    "coverage": 0.2,
+    "coverageWithNoise": 0.7
+   }
+  },
+  {
+   "event": "2022 bear market",
+   "key": "bear2022",
+   "weeks": 40,
+   "market": -0.28240221703096485,
+   "crash": true,
+   "companies": 60,
+   "naive": {
+    "mae": 0.2370257426942776,
+    "corr": 7.80543352801754e-17,
+    "coverage": null,
+    "coverageWithNoise": null
+   },
+   "plain": {
+    "mae": 0.19871344556450643,
+    "corr": 0.4291384968203279,
+    "coverage": 0.2833333333333333,
+    "coverageWithNoise": 0.85
+   },
+   "improved": {
+    "mae": 0.18675886717266765,
+    "corr": 0.4863278946795856,
+    "coverage": 0.23333333333333334,
+    "coverageWithNoise": 0.85
+   },
+   "crisis": {
+    "mae": 0.21776260988130663,
+    "corr": 0.3021333584031304,
+    "coverage": 0.2833333333333333,
+    "coverageWithNoise": 0.8333333333333334
+   }
+  },
+  {
+   "event": "China stimulus rally",
+   "key": "china2024",
+   "weeks": 3,
+   "market": 0.02775016974395018,
+   "crash": false,
+   "companies": 64,
+   "naive": {
+    "mae": 0.09066100107925708,
+    "corr": 3.349666086375342e-16,
+    "coverage": null,
+    "coverageWithNoise": null
+   },
+   "plain": {
+    "mae": 0.06079496211823131,
+    "corr": 0.7786662452823458,
+    "coverage": 0.484375,
+    "coverageWithNoise": 0.796875
+   },
+   "improved": {
+    "mae": 0.056527905888021715,
+    "corr": 0.8041173999831016,
+    "coverage": 0.296875,
+    "coverageWithNoise": 0.796875
+   },
+   "crisis": {
+    "mae": 0.056527905888021715,
+    "corr": 0.8041173999831016,
+    "coverage": 0.296875,
+    "coverageWithNoise": 0.796875
+   }
+  },
+  {
+   "event": "April 2025 tariff shock",
+   "key": "tariffs2025",
+   "weeks": 1,
+   "market": -0.09221796919440083,
+   "crash": true,
+   "companies": 65,
+   "naive": {
+    "mae": 0.048002928581203815,
+    "corr": -5.742118942432914e-16,
+    "coverage": null,
+    "coverageWithNoise": null
+   },
+   "plain": {
+    "mae": 0.041590016574296826,
+    "corr": 0.6448226676956479,
+    "coverage": 0.3076923076923077,
+    "coverageWithNoise": 0.6615384615384615
+   },
+   "improved": {
+    "mae": 0.03652471494353684,
+    "corr": 0.6857528879344171,
+    "coverage": 0.15384615384615385,
+    "coverageWithNoise": 0.7384615384615385
+   },
+   "crisis": {
+    "mae": 0.04353130003321758,
+    "corr": 0.47143776661050296,
+    "coverage": 0.23076923076923078,
+    "coverageWithNoise": 0.7076923076923077
+   }
+  }
+ ],
+ "overall": {
+  "naive": 0.117,
+  "plain": 0.101,
+  "improved": 0.092,
+  "crisis": 0.1
+ }
+}

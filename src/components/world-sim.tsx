@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { metal } from '@/components/arena';
+import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
@@ -17,6 +18,17 @@ import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
 import type { Holding } from '@/lib/mine';
 import { color, font, radius, space, type } from '@/theme';
+
+// How the model did on real past shocks (scripts/build-factors.mjs): its typical miss against simply assuming every
+// stock moves with the market, and how often outcomes landed in its ranges.
+const ACCURACY = (() => {
+  const b = REFERENCE.backtest;
+  if (!b) return 'Ranges are 80%, from how each company’s shares have moved with stocks, oil, China, the dollar and its sector; private companies use their listed peers.';
+  const cover = b.events.map((e) => e.coverage).filter((x): x is number => x != null);
+  const lo = Math.round(Math.min(...cover) * 100);
+  const hi = Math.round(Math.max(...cover) * 100);
+  return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${lo}–${hi}% of outcomes fell inside the 80% ranges. Private companies use their listed peers.`;
+})();
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
@@ -654,9 +666,7 @@ function EndCard({
           </View>
         </View>
       )}
-      <Caption style={styles.basis}>
-        Ranges are 80%, from how each company’s shares have moved with stocks, oil, China, the dollar and its sector over the last three years; private companies use their listed peers.
-      </Caption>
+      <Caption style={styles.basis}>{ACCURACY}</Caption>
       {!versus && hit.length > 0 && (
         <View style={styles.chips}>
           {hit.map((f) => (

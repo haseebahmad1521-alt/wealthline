@@ -78,56 +78,81 @@ function solve(A: number[][], b: number[]): { x: number[]; inv: number[][] } | n
   return { x: M.map((row) => row[2 * n]), inv: M.map((row) => row.slice(n, 2 * n)) };
 }
 
-/** Least squares with an intercept: coefficients (without the intercept), their standard errors, R² and residual sd. */
-export function ols(X: number[][], y: number[]): { beta: number[]; se: number[]; r2: number; sd: number } | null {
+/**
+ * Least squares with an intercept, optionally weighted (weights are rescaled to average 1): coefficients (without the
+ * intercept), their standard errors, R² and the residual standard deviation. Degrees of freedom use the effective
+ * number of observations, so heavy down-weighting widens the errors as it should.
+ */
+export function ols(X: number[][], y: number[], weights?: number[]): { beta: number[]; se: number[]; r2: number; sd: number } | null {
   const n = y.length;
   const k = (X[0]?.length ?? 0) + 1;
   if (n <= k + 5) return null;
+  const raw = weights ?? y.map(() => 1);
+  const meanW = raw.reduce((s, v) => s + v, 0) / n;
+  const w = raw.map((v) => v / meanW);
+  const nEff = n ** 2 / w.reduce((s, v) => s + v * v, 0);
+  if (nEff <= k + 5) return null;
   const rows = X.map((r) => [1, ...r]);
-  const XtX = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => rows.reduce((s, r) => s + r[i] * r[j], 0)));
-  const Xty = Array.from({ length: k }, (_, i) => rows.reduce((s, r, t) => s + r[i] * y[t], 0));
+  const XtX = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => rows.reduce((s, r, t) => s + w[t] * r[i] * r[j], 0)));
+  const Xty = Array.from({ length: k }, (_, i) => rows.reduce((s, r, t) => s + w[t] * r[i] * y[t], 0));
   const sol = solve(XtX, Xty);
   if (!sol) return null;
   const fitted = rows.map((r) => r.reduce((s, v, i) => s + v * sol.x[i], 0));
   const resid = y.map((v, t) => v - fitted[t]);
-  const sse = resid.reduce((s, e) => s + e * e, 0);
-  const mean = y.reduce((s, v) => s + v, 0) / n;
-  const sst = y.reduce((s, v) => s + (v - mean) ** 2, 0);
-  const s2 = sse / (n - k);
+  const sse = resid.reduce((s, e, t) => s + w[t] * e * e, 0);
+  const mean = y.reduce((s, v, t) => s + w[t] * v, 0) / n;
+  const sst = y.reduce((s, v, t) => s + w[t] * (v - mean) ** 2, 0);
+  const s2 = (sse / n) * (nEff / (nEff - k));
+  // Scale the inverse to the effective sample: with weights averaging 1, (XᵀWX)⁻¹ already reflects n observations.
+  const scale = n / nEff;
   return {
     beta: sol.x.slice(1),
-    se: sol.inv.slice(1).map((row, i) => Math.sqrt(Math.max(row[i + 1] * s2, 0))),
+    se: sol.inv.slice(1).map((row, i) => Math.sqrt(Math.max(row[i + 1] * s2 * scale, 0))),
     r2: sst ? 1 - sse / sst : 0,
     sd: Math.sqrt(s2),
   };
 }
 
-/** A factor's own weekly moves: what's left after global stocks explain what they can. */
-export function residualize(f: Map<string, number>, market: Map<string, number>): Map<string, number> {
+/**
+ * A factor's own weekly moves: what's left after global stocks explain what they can. The slope is learned on `train`
+ * weeks (all by default) and applied to every week, so a backtest can strip the market out of an event it hasn't seen.
+ */
+export function residualize(f: Map<string, number>, market: Map<string, number>, train?: (week: string) => boolean): Map<string, number> {
   const weeks = [...f.keys()].filter((w) => market.has(w));
+  const fitWeeks = train ? weeks.filter(train) : weeks;
   const fit = ols(
-    weeks.map((w) => [market.get(w)!]),
-    weeks.map((w) => f.get(w)!),
+    fitWeeks.map((w) => [market.get(w)!]),
+    fitWeeks.map((w) => f.get(w)!),
   );
   if (!fit) return new Map();
-  const a = weeks.reduce((s, w) => s + f.get(w)! - fit.beta[0] * market.get(w)!, 0) / weeks.length;
+  const a = fitWeeks.reduce((s, w) => s + f.get(w)! - fit.beta[0] * market.get(w)!, 0) / fitWeeks.length;
   return new Map(weeks.map((w) => [w, f.get(w)! - a - fit.beta[0] * market.get(w)!]));
 }
 
 const MIN_WEEKS = 80;
 const CLAMP = 4;
 
+export type FitOptions = {
+  /** Only these weeks count (a training window, or the crisis weeks). */
+  only?: (week: string) => boolean;
+  /** Recent weeks weigh more: a week this many weeks older counts half as much. */
+  halfLife?: number;
+  minWeeks?: number;
+};
+
 /**
  * One company's sensitivities to the factors (market raw; the others with the market stripped out). Weeks where any
- * series is missing are left out; fewer than MIN_WEEKS common weeks gives no fit.
+ * series is missing are left out; fewer than `minWeeks` (default 80) common weeks gives no fit.
  */
-export function fitCompany(company: Map<string, number>, factors: Record<Factor, Map<string, number> | null>): Fit | null {
+export function fitCompany(company: Map<string, number>, factors: Record<Factor, Map<string, number> | null>, opts: FitOptions = {}): Fit | null {
   const used = FACTORS.filter((f) => factors[f] && factors[f]!.size);
-  const weeks = [...company.keys()].filter((w) => used.every((f) => factors[f]!.has(w)));
-  if (weeks.length < MIN_WEEKS || !used.includes('market')) return null;
+  const weeks = [...company.keys()].filter((w) => used.every((f) => factors[f]!.has(w)) && (!opts.only || opts.only(w))).sort();
+  if (weeks.length < (opts.minWeeks ?? MIN_WEEKS) || !used.includes('market')) return null;
+  const weights = opts.halfLife ? weeks.map((_, i) => Math.pow(0.5, (weeks.length - 1 - i) / opts.halfLife!)) : undefined;
   const fit = ols(
     weeks.map((w) => used.map((f) => factors[f]!.get(w)!)),
     weeks.map((w) => company.get(w)!),
+    weights,
   );
   if (!fit) return null;
   const beta = Object.fromEntries(FACTORS.map((f) => [f, 0])) as Record<Factor, number>;
@@ -164,4 +189,46 @@ export function factorLinks(own: Record<'oil' | 'china' | 'usd', Map<string, num
       },
     ]),
   ) as Links;
+}
+
+/**
+ * Shrinkage toward sector peers (the standard Bayesian adjustment risk models make): each company's sensitivity is
+ * pulled toward its sector peers' precision-weighted average (itself left out) in proportion to how unreliable it is. A
+ * precise estimate barely moves; a noisy one ends near its peers. Sectors with fewer than three fitted companies use
+ * everyone as the peer group. The prior's spread is the peers' spread minus their sampling noise (floored).
+ */
+export function shrink(fits: { id: string; sector: string | null; fit: Fit }[]): Map<string, Fit> {
+  const out = new Map<string, Fit>();
+  const groupOf = (sector: string | null) => {
+    const g = fits.filter((x) => sector && x.sector === sector);
+    return g.length >= 3 ? g : fits;
+  };
+  for (const x of fits) {
+    const group = groupOf(x.sector);
+    const beta = { ...x.fit.beta };
+    const se = { ...x.fit.se };
+    for (const f of FACTORS) {
+      if (!x.fit.se[f]) continue; // not estimated (no sector fund)
+      // The company's peers without itself, each weighted by its precision, so one noisy estimate can't drag the prior.
+      const peers = group.filter((g) => g.id !== x.id && g.fit.se[f]);
+      if (peers.length < 2) continue;
+      const w = peers.map((g) => 1 / g.fit.se[f] ** 2);
+      const W = w.reduce((n, v) => n + v, 0);
+      const mean = peers.reduce((n, g, i) => n + w[i] * g.fit.beta[f], 0) / W;
+      const spread = peers.reduce((n, g, i) => n + w[i] * (g.fit.beta[f] - mean) ** 2, 0) / W;
+      const noise = peers.length / W; // the peers' typical sampling variance (harmonic mean)
+      const tau2 = Math.max(spread - noise, 0.05 ** 2);
+      const v = x.fit.se[f] ** 2;
+      beta[f] = (x.fit.beta[f] / v + mean / tau2) / (1 / v + 1 / tau2);
+      se[f] = Math.sqrt(1 / (1 / v + 1 / tau2));
+    }
+    out.set(x.id, { ...x.fit, beta, se });
+  }
+  return out;
+}
+
+/** The crisis weeks: the worst `share` of weeks for global stocks. */
+export function stressWeeks(market: Map<string, number>, share = 0.2): Set<string> {
+  const sorted = [...market.entries()].sort((a, b) => a[1] - b[1]);
+  return new Set(sorted.slice(0, Math.max(1, Math.floor(sorted.length * share))).map(([w]) => w));
 }

@@ -6,11 +6,11 @@
 import reference from '@/data/factors.json';
 import type { SimFit } from '@/lib/simulate';
 
-type Raw = { beta: Record<string, number>; se: Record<string, number>; sector?: string | null };
+type Raw = { beta: Record<string, number>; se: Record<string, number>; sector?: string | null; sd?: number };
 export type Links = Record<'oil' | 'china' | 'usd', { oil: number; china: number; usd: number; sector: Record<string, number> }>;
 
 export function effectiveFit(raw: Raw, sector: string | null | undefined, links: Links | null): SimFit {
-  if (!links) return { beta: { ...raw.beta }, se: { ...raw.se } };
+  if (!links) return { beta: { ...raw.beta }, se: { ...raw.se }, sd: raw.sd };
   const beta = { ...raw.beta };
   const se = { ...raw.se };
   for (const d of ['oil', 'china', 'usd'] as const) {
@@ -21,11 +21,14 @@ export function effectiveFit(raw: Raw, sector: string | null | undefined, links:
     const seSector = (raw.se.sector ?? 0) * (sector ? Math.abs(l.sector[sector] ?? 0) : 0);
     se[d] = Math.sqrt((raw.se[d] ?? 0) ** 2 + seSector ** 2 + others.reduce((n, g) => n + ((raw.se[g] ?? 0) * l[g]) ** 2, 0));
   }
-  return { beta, se };
+  return { beta, se, sd: raw.sd };
 }
 
-/** The shipped reference: fits by company id, the factor links, and the window they were measured over. */
+export type Backtest = { overall: Record<'naive' | 'plain' | 'improved' | 'crisis', number>; events: { event: string; improved: number; naive: number; coverage: number | null }[] };
+
+/** The shipped reference: fits by company id, the factor links, the window they were measured over, and the backtest. */
 export const REFERENCE = {
+  backtest: (reference as { backtest?: Backtest }).backtest ?? null,
   links: (reference as { links?: Links }).links ?? null,
   window: (reference as { window?: { from: string; to: string } }).window ?? null,
   raw: new Map(Object.entries((reference as { companies: Record<string, Raw> }).companies)),

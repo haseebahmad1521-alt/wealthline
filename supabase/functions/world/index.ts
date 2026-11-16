@@ -8,7 +8,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { getJson, track } from '../_shared/refresh.ts';
 import { sectorFor } from '../_shared/scenario.ts';
-import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, weeklyReturns, type Bar } from '../_shared/factors.ts';
+import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, shrink, weeklyReturns, type Bar, type Fit } from '../_shared/factors.ts';
 import { cors, json } from '../_shared/util.ts';
 import { runEdgar } from './edgar.ts';
 
@@ -172,14 +172,18 @@ async function companyPlaces(db: SupabaseClient) {
 }
 
 async function weeklyBars(symbol: string): Promise<Bar[]> {
-  const body = await getJson(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3y&interval=1wk`, BROWSER).catch(() => null);
+  const body = await getJson(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=10y&interval=1wk`, BROWSER).catch(() => null);
   const r = body?.chart?.result?.[0];
   const t: number[] = r?.timestamp ?? [];
   const c: (number | null)[] = r?.indicators?.adjclose?.[0]?.adjclose ?? r?.indicators?.quote?.[0]?.close ?? [];
   return t.flatMap((ts, i) => (c[i] != null ? [{ t: ts, c: c[i]! }] : []));
 }
 
-/** Weekly: re-measures every listed company's sensitivities and the factor links (same code as the app's reference). */
+/**
+ * Weekly: re-measures every listed company's sensitivities and the factor links, the same method as the app's reference
+ * (scripts/build-factors.mjs, which also backtests it): ten years of weekly prices, recent weeks weighted more
+ * (half-life three years), shrunk toward sector peers. Crisis-only fits were tested and predicted worse, so they're out.
+ */
 async function factors(db: SupabaseClient) {
   const { data: companies, error } = await db.from('companies').select('id, ticker, quote_symbol, sector').not('ticker', 'is', null).eq('is_private', false);
   if (error) throw new Error(error.message);
@@ -190,13 +194,18 @@ async function factors(db: SupabaseClient) {
   const own = { oil: residualize(series.oil, market), china: residualize(series.china, market), usd: residualize(series.usd, market) };
   const sectorOwn: Record<string, Map<string, number>> = {};
   for (const [sector, sym] of Object.entries(SECTOR_FUND)) sectorOwn[sector] = residualize(weeklyReturns(await weeklyBars(sym)), market);
-  const rows = [];
+  const fitted: { id: string; sector: string | null; symbol: string; fit: Fit }[] = [];
   for (const c of companies ?? []) {
     const quoted = (c.quote_symbol as string | null) ?? yahooSymbol(c.ticker as string);
     const symbol = FIT_SYMBOL[quoted] ?? quoted;
-    const fit = fitCompany(weeklyReturns(await weeklyBars(symbol)), { market, ...own, sector: c.sector ? (sectorOwn[c.sector as string] ?? null) : null });
-    if (fit) rows.push({ company_id: c.id, symbol, beta: fit.beta, se: fit.se, r2: fit.r2, weeks: fit.n, fitted_at: new Date().toISOString() });
+    const fit = fitCompany(weeklyReturns(await weeklyBars(symbol)), { market, ...own, sector: c.sector ? (sectorOwn[c.sector as string] ?? null) : null }, { halfLife: 156 });
+    if (fit) fitted.push({ id: c.id as string, sector: (c.sector as string | null) ?? null, symbol, fit });
   }
+  const shrunk = shrink(fitted);
+  const rows = fitted.map((x) => {
+    const f = shrunk.get(x.id)!;
+    return { company_id: x.id, symbol: x.symbol, beta: f.beta, se: f.se, sd: f.sd, r2: f.r2, weeks: f.n, fitted_at: new Date().toISOString() };
+  });
   if (rows.length) {
     const { error: e } = await db.from('company_factors').upsert(rows, { onConflict: 'company_id' });
     if (e) throw new Error(e.message);

@@ -22,6 +22,7 @@ create table public.company_factors (
   symbol text not null,
   beta jsonb not null,
   se jsonb not null,
+  sd double precision, -- weekly moves the factors don't explain, for ranges
   r2 double precision not null,
   weeks int not null,
   fitted_at timestamptz not null default now()
