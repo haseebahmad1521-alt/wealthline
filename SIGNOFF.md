@@ -17,14 +17,27 @@ data (revenue by place, GDP, recorded share counts) and is shown dashed with "�
   question, without signing in.
 - **Typed questions:** each new question is answered once and then cached. New questions stop after 40 an hour, or
   once 45% of the monthly xAI ceiling (`XAI_MONTHLY_USD`, default $20) is spent overall.
-- **Estimated cost:** about $0.15 a day for the daily set, plus a few cents per new question.
+- **Estimated cost:** about $0.15 a day for the daily set, plus a few cents per new question or Grok-written match.
+- **Also in this PR (work without the backend):**
+  - **Versus:** two rivals fight it out (price war, market grab, talent war), with a scoreboard and a winner card.
+  - **Dials:** a sandbox with sliders for oil, AI, China trade, the US economy and luxury, plus a plain-language
+    summary.
+  - **Guessing:** a question before each scenario, with points, a streak and a daily challenge (kept on the device).
+  - **Share links** that reopen a result.
+  - **"…and then?":** follow-ups that carry a scenario on for another year.
+  - **"You":** what a scenario does to what you own (kept on the device).
+  - **Metallic gold, silver and bronze** for ranks 1–3 on every page.
+- **Needs the backend:** Grok-written scenarios and matches, typed questions, and "Most asked this week" (from how
+  often each stored question is asked).
 
 ## Steps, in order
 
 Run these from the repository, logged in to the Supabase CLI with an account that can manage the Wealthline project.
 
-1. **Apply the migration.** It is additive only. It adds `countries.region`, `companies.sector` and
-   `companies.sector_source`, the public-read `world_scenarios` table, and a daily `scenarios` cron at 07:05 UTC.
+1. **Apply the migration.** It is additive only. It adds:
+   - `countries.region`, `companies.sector` and `companies.sector_source`;
+   - the public-read `world_scenarios` table (with story `beats`, the `versus` pair and an `asks` count);
+   - a daily `scenarios` cron at 07:05 UTC.
 
    ```bash
    npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261116000000_world_scenarios.sql
