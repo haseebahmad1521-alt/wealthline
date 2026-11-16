@@ -310,7 +310,7 @@ The Projects tab becomes a camera pose on a rocket climbing away from Earth. The
 **Batch D — legibility and design review**
 - [ ] Measure text contrast over the brightest and darkest planet frames (sampled screenshots), adapt tint where needed
 - [ ] Impeccable audit → critique → polish → document; refresh DESIGN.md for the dark-glass system
-- [ ] Data check: Today's movers shows +876% for Marc Andreessen "since Mar 10, 2026" (baseline looks wrong)
+- [x] Data check: Today's movers showed +876% for Marc Andreessen "since Mar 10, 2026". Cause: the baseline (latest value ≥20 h older) can come from another method: his March yearly-list estimate ($1.9B) against the real-time feed's first value ($18.5B, Nov 1). Fixed in the app (Nov 16, `src/lib/baseline.ts`): a baseline more than two days older whose kind differs from the latest value's is dropped, so no change shows until a same-kind value exists. Today this drops 65 of 207 older baselines (mostly ~0% changes, but they fed rank moves and overtakes, e.g. "Bloomberg passed Peterffy"). **Ask the owner:** Forbes disagrees with itself on Andreessen: its real-time feed says $18.5B (rank 146), its profile record says $1.7B. Our value follows the real-time feed; which should stand?
 
 **Batch E — live Earth and assets**
 - [ ] NASA GIBS daily cloud layer with its capture date (never presented as real-time)
