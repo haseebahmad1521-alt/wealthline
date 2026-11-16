@@ -107,6 +107,16 @@ npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase
 Three look partial (one share class or one trust only): the Atlassian founders (275,940 shares each), a Palantir
 holder (53,487) and Workday's founder (105,049). Worth a look before applying; the app leaves them out.
 
+## Operating margins (recommended)
+
+The simulations now pass revenue changes through profit (operating leverage, damped). Margins come from Wikidata for
+30 companies today; the `world` function's SEC job reads them from each company's latest 10-K once this additive
+migration is applied and the function redeployed:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000000_company_margins.sql
+```
+
 ## For the lobbying ties (optional)
 
 The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on

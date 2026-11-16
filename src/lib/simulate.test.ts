@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { checkShock, cleanProse, promptKey, ramp, sectorFor, type Catalog, type Scenario } from '../../supabase/functions/_shared/scenario.ts';
-import { lineCountries, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
+import { lineCountries, operatingLeverage, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
 
 const countries: SimCountry[] = [
   { iso2: 'US', gdp_usd: 30, region: 'NAC' },
@@ -163,4 +163,27 @@ test('no price falls below zero, however hard the shock', () => {
   const c = f.companies[0];
   assert.ok(c.price > -1 && c.lo > -1 && c.hi > c.lo, JSON.stringify([c.price, c.lo, c.hi]));
   assert.ok(f.people[0].range![0] > -100);
+});
+
+test('profit moves more than revenue, damped for thin margins', () => {
+  // 20% margin, 30% of costs fixed: profit moves (0.2 + 0.3 x 0.8) / 0.2 = 2.2 times revenue.
+  assert.ok(Math.abs(operatingLeverage(0.2) - 2.2) < 1e-9);
+  assert.ok(Math.abs(operatingLeverage(0.6) - (0.6 + 0.3 * 0.4) / 0.6) < 1e-9);
+  assert.equal(operatingLeverage(0.06), 3); // capped
+  assert.equal(operatingLeverage(0.04), 1); // too thin to say: price follows revenue
+  assert.equal(operatingLeverage(-0.1), 1); // a loss
+  assert.equal(operatingLeverage(null), 1);
+});
+
+test('a revenue loss reaches the price through profit', () => {
+  const company = (margin: number | null) => ({ id: `c${margin}`, name: 'c', sector: null, listed: true, regions: [{ region: 'Germany', country: 'DE', revenue_usd: 100 }], margin });
+  const e: SimEmpire[] = [
+    { person: person('a', 100), companies: [company(0.2)], stakes: [{ company: { id: 'c0.2' }, value: 100 }] },
+    { person: person('b', 100), companies: [company(null)], stakes: [{ company: { id: 'cnull' }, value: 100 }] },
+  ];
+  const f = simulate(scenario([{ kind: 'place', target: 'DE', pct: -0.1, from: 0, to: 0 }]), e, [{ iso2: 'DE', gdp_usd: 1, region: 'ECS' }], 1);
+  const by = (id: string) => f.companies.find((c) => c.company.id === id)!;
+  assert.ok(Math.abs(by('c0.2').price - (1 - 0.22 - 1)) < 1e-9, String(by('c0.2').price));
+  assert.ok(Math.abs(by('cnull').price - -0.1) < 1e-9);
+  assert.ok(Math.abs(by('c0.2').leverage - 2.2) < 1e-9);
 });

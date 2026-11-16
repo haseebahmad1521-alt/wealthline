@@ -25,15 +25,18 @@ export function useSimData() {
     staleTime: 6 * 3600_000,
     placeholderData: () => withFits(fromReference(), REFERENCE.raw, REFERENCE.links),
     queryFn: async () => {
-      const [cos, regions, factors, model] = await Promise.all([
+      const [cos, regions, factors, model, margins] = await Promise.all([
         db().from('companies').select('id, sector'),
         db().from('countries').select('iso2, region'),
         db().from('company_factors').select('company_id, beta, se, sd'),
         db().from('factor_model').select('links, window_from, window_to').order('fitted_at', { ascending: false }).limit(1),
+        // Its own query: until the column exists (migration 20261117000000) this one fails alone.
+        db().from('companies').select('id, operating_margin').not('operating_margin', 'is', null),
       ]);
       const out = fromReference();
       for (const c of cos.error ? [] : (cos.data ?? [])) if (c.sector) out.sectors.set(c.id as string, c.sector as string);
       for (const c of regions.error ? [] : (regions.data ?? [])) if (c.region) out.regions.set(c.iso2 as string, c.region as string);
+      for (const c of margins.error ? [] : (margins.data ?? [])) out.margins.set(c.id as string, Number(c.operating_margin));
       const raw = new Map(REFERENCE.raw);
       for (const f of factors.error ? [] : (factors.data ?? [])) raw.set(f.company_id as string, { beta: f.beta, se: f.se, sd: (f.sd as number | null) ?? undefined });
       const links = (!model.error && model.data?.[0]?.links) || REFERENCE.links;
@@ -46,6 +49,7 @@ function fromReference() {
   return {
     sectors: new Map(Object.entries(reference.sectors).map(([id, s]) => [id, s.sector])),
     regions: new Map(Object.entries(reference.regions)),
+    margins: new Map(Object.entries((reference as { margins?: Record<string, { margin: number }> }).margins ?? {}).map(([id, m]) => [id, m.margin])),
   };
 }
 

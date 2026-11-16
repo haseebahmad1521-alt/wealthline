@@ -32,6 +32,32 @@ for (const b of res.results.bindings) {
   const l = b.indLabel?.value;
   if (c && l && !/^Q\d+$/.test(l)) labels.set(c.id, [...(labels.get(c.id) ?? []), l]);
 }
+// Operating margins: Wikidata's total revenue (P2139) and operating income (P3362) for the same year (P585) and
+// currency, the latest such year since 2020. The profit step in src/lib/simulate.ts uses them; the backend's own (from
+// the latest 10-K, world/edgar.ts) win once it has them.
+const fin = await fetch(
+  `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(`SELECT ?co ?p ?amt ?unit ?t WHERE { VALUES ?co { ${[...byQ.keys()].map((q) => `wd:${q}`).join(' ')} }
+  VALUES ?p { p:P2139 p:P3362 } ?co ?p ?st . ?st ?psv ?v . ?v wikibase:quantityAmount ?amt ; wikibase:quantityUnit ?unit .
+  FILTER(STRSTARTS(STR(?psv), "http://www.wikidata.org/prop/statement/value/")) ?st pq:P585 ?t }`)}`,
+  { headers: { ...UA, Accept: 'application/sparql-results+json' } },
+).then((r) => r.json());
+const figures = new Map(); // company id -> "year|unit" -> { rev, oi }
+for (const b of fin.results.bindings) {
+  const qid = b.co.value.split('/').pop();
+  const c = byQ.get(qid);
+  const year = Number(b.t.value.slice(0, 4));
+  if (!c || year < 2020) continue;
+  const slot = `${year}|${b.unit.value.split('/').pop()}`;
+  const m = figures.get(c.id) ?? new Map();
+  m.set(slot, { ...m.get(slot), [b.p.value.endsWith('P2139') ? 'rev' : 'oi']: Number(b.amt.value), year, qid });
+  figures.set(c.id, m);
+}
+const margins = {};
+for (const [id, m] of figures) {
+  const best = [...m.values()].filter((x) => x.rev > 0 && x.oi != null).sort((a, b) => b.year - a.year)[0];
+  if (best) margins[id] = { margin: Math.round((best.oi / best.rev) * 1000) / 1000, year: best.year, source: `https://www.wikidata.org/wiki/${best.qid}` };
+}
+
 const sectors = {};
 const unmapped = [];
 for (const c of companies) {
@@ -42,7 +68,7 @@ for (const c of companies) {
 
 writeFileSync(
   'src/data/sim-reference.json',
-  `${JSON.stringify({ built: new Date().toISOString().slice(0, 10), sources: ['World Bank country API (region)', 'Wikidata P452 (industry)'], regions, sectors }, null, 1)}\n`,
+  `${JSON.stringify({ built: new Date().toISOString().slice(0, 10), sources: ['World Bank country API (region)', 'Wikidata P452 (industry)', 'Wikidata P2139/P3362 (revenue, operating income)'], regions, sectors, margins }, null, 1)}\n`,
 );
-console.log(`regions ${Object.keys(regions).length}, sectors ${Object.keys(sectors).length} of ${companies.length}`);
+console.log(`regions ${Object.keys(regions).length}, sectors ${Object.keys(sectors).length}, margins ${Object.keys(margins).length} of ${companies.length}`);
 console.log(`unmapped: ${unmapped.join('; ')}`);

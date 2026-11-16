@@ -6,6 +6,7 @@ import { track } from '../_shared/refresh.ts';
 
 const BATCH = 2; // 10-K documents are 2–10 MB; two per run keeps well inside the function time limit
 const REVENUE = new Set(['us-gaap:Revenues', 'us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax']);
+const OPERATING = 'us-gaap:OperatingIncomeLoss';
 
 function headers() {
   const contact = Deno.env.get('SEC_CONTACT');
@@ -37,15 +38,29 @@ function contexts(doc: string): Map<string, Ctx> {
   return out;
 }
 
-function revenueFacts(doc: string) {
+function revenueFacts(doc: string, names: Set<string> = REVENUE) {
   return [...doc.matchAll(/<ix:nonFraction([^>]*)>([^<]*)<\/ix:nonFraction>/g)].flatMap(([, attrs, text]) => {
     const name = attrs.match(/name="([^"]+)"/)?.[1];
     const ctx = attrs.match(/contextRef="([^"]+)"/)?.[1];
-    if (!name || !ctx || !REVENUE.has(name)) return [];
+    if (!name || !ctx || !names.has(name)) return [];
     const digits = text.replace(/[,\s$]/g, '');
-    const value = /^[\d.]+$/.test(digits) ? Number(digits) * 10 ** Number(attrs.match(/scale="(-?\d+)"/)?.[1] ?? 0) : 0;
+    const sign = /sign="-"/.test(attrs) ? -1 : 1; // inline XBRL shows a loss as a positive number with sign="-"
+    const value = /^[\d.]+$/.test(digits) ? sign * Number(digits) * 10 ** Number(attrs.match(/scale="(-?\d+)"/)?.[1] ?? 0) : 0;
     return [{ name, ctx, value }];
   });
+}
+
+/** Operating income / total revenue for the fiscal year ending reportDate (no dimensions), or null when not tagged. */
+export function operatingMargin(doc: string, reportDate: string): number | null {
+  const ctx = contexts(doc);
+  const whole = (id: string) => {
+    const c = ctx.get(id);
+    return !!c && c.members.length === 0 && !!c.start && c.end === reportDate && Date.parse(c.end) - Date.parse(c.start) > 300 * 86_400_000;
+  };
+  const facts = revenueFacts(doc, new Set([...REVENUE, OPERATING])).filter((f) => whole(f.ctx));
+  const revenue = Math.max(0, ...facts.filter((f) => REVENUE.has(f.name)).map((f) => f.value));
+  const income = facts.find((f) => f.name === OPERATING)?.value;
+  return revenue > 0 && income != null ? Math.round((income / revenue) * 1000) / 1000 : null;
 }
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
@@ -159,7 +174,7 @@ export function subsidiaryRows(doc: string) {
 }
 
 export async function edgar(db: SupabaseClient) {
-  const { data: companies, error } = await db.from('companies').select('id, name, ticker, cik, edgar_10k').not('ticker', 'is', null);
+  const { data: companies, error } = await db.from('companies').select('id, name, ticker, cik, edgar_10k, margin_10k').not('ticker', 'is', null);
   if (error) throw new Error(error.message);
 
   // CIKs from SEC's ticker list (class shares use a dash there: BRK.B → BRK-B).
@@ -181,14 +196,18 @@ export async function edgar(db: SupabaseClient) {
     const sub = await (await sec(`https://data.sec.gov/submissions/CIK${String(c.cik).padStart(10, '0')}.json`)).json();
     const r = sub.filings.recent;
     const i = (r.form as string[]).findIndex((f) => f === '10-K');
-    if (i < 0 || r.accessionNumber[i] === c.edgar_10k) continue;
+    // Skip a 10-K already read, unless its operating margin hasn't been (added Nov 2026, after most were read).
+    if (i < 0 || (r.accessionNumber[i] === c.edgar_10k && r.accessionNumber[i] === c.margin_10k)) continue;
     const acc = String(r.accessionNumber[i]);
     const base = `https://www.sec.gov/Archives/edgar/data/${c.cik}/${acc.replace(/-/g, '')}`;
     const docUrl = `${base}/${r.primaryDocument[i]}`;
     const fiscalYear = Number(String(r.reportDate[i]).slice(0, 4));
     const label = `SEC Form 10-K, fiscal ${fiscalYear}`;
 
-    const lines = geography(await (await sec(docUrl)).text(), r.reportDate[i]);
+    const doc = await (await sec(docUrl)).text();
+    const lines = geography(doc, r.reportDate[i]);
+    const margin = operatingMargin(doc, r.reportDate[i]);
+    await db.from('companies').update({ operating_margin: margin, margin_fiscal_year: margin == null ? null : fiscalYear, margin_source_url: margin == null ? null : docUrl, margin_10k: acc }).eq('id', c.id);
     if (lines.length) {
       await db.from('company_regions').delete().eq('company_id', c.id).eq('fiscal_year', fiscalYear);
       const { error: e } = await db.from('company_regions').insert(

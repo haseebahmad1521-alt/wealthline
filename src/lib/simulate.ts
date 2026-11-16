@@ -6,8 +6,10 @@
 //    Pacific") is split between the countries in it by recorded GDP (World Bank), leaving out countries the company
 //    reports on their own line; only the country's share moves.
 //  - company / sector / market: the share price moves by the change.
-//  - a company's share price also follows its revenue: losing a tenth of revenue takes a tenth off the price (the
-//    same assumption the place mode of What if states).
+//  - a company's share price also follows its profit, which moves more than its revenue: with an operating margin m,
+//    and about 30% of costs fixed over a scenario's months, a revenue change r changes profit by
+//    r x (m + 0.3(1 - m)) / m (operating leverage). Damped so thin margins can't swing wildly: at most 3x, and
+//    one-for-one when the margin is under 5%, a loss, or not recorded (see operatingLeverage).
 //  - a person's fortune moves only through recorded stakes (shares × price). Everyone else touched is shown with
 //    their company's percentage move, never a dollar figure.
 //  - transfer: the shares change hands at month `to` at that month's price plus the premium, paid in cash.
@@ -26,7 +28,22 @@ export type SimCompany = {
   regions: { region: string; country: string | null; revenue_usd: number }[];
   /** Its own measured sensitivities; without them it borrows its listed sector peers' average (and their spread). */
   fit?: SimFit | null;
+  /** Recorded operating margin (operating income / revenue), for the profit step. */
+  margin?: number | null;
 };
+
+/** Share of costs that stay put over a scenario's months (staff, rent, depreciation): a stated assumption. */
+export const FIXED_COSTS = 0.3;
+/**
+ * How much a company's profit moves for each 1% its revenue moves. A lost dollar of revenue takes its variable costs
+ * with it but not the fixed ones, so profit falls faster than revenue, more so for thin margins. Damped: at most 3x,
+ * and 1 (price follows revenue) when the margin is under 5%, a loss, or unknown, where the ratio says little.
+ */
+export function operatingLeverage(margin: number | null | undefined): number {
+  if (margin == null || !(margin >= 0.05)) return 1;
+  const m = Math.min(margin, 1);
+  return Math.min(3, (m + FIXED_COSTS * (1 - m)) / m);
+}
 export type SimPerson = { id: string; slug: string; name: string; net_worth_usd: number | null; portrait_url?: string | null };
 export type SimEmpire = { person: SimPerson; companies: SimCompany[]; stakes: { company: { id: string }; value: number | null }[] };
 export type SimCountry = { iso2: string; gdp_usd: number | null; region?: string | null };
@@ -67,6 +84,8 @@ export type CompanyMove = {
   company: SimCompany;
   revenueBase: number;
   revenueDelta: number;
+  /** Profit moves this many times the revenue change (operatingLeverage). */
+  leverage: number;
   price: number /* fractional change */;
   /** An 80% range for the price change, from the sensitivities' standard errors (and ±half for revenue effects). */
   lo: number;
@@ -145,13 +164,14 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     const peer = c.fit ? null : fitted.length ? (peers(c.sector) ?? peers(null)) : null;
     const fit = c.fit ?? peer ?? RULE;
     const basis: CompanyMove['basis'] = c.fit ? 'measured' : peer ? 'peers' : 'rule';
-    const revShare = base ? delta / base : 0;
+    const leverage = operatingLeverage(c.margin);
+    const revShare = base ? (delta / base) * leverage : 0;
     // Everything adds up in log terms, the way the sensitivities were measured (weekly log returns): a factor that
     // moves by m moves the company by beta x log(1 + m). So moves compound properly and no price can fall below zero;
     // ranges are formed in log terms too.
     const ln = (v: number) => Math.log(1 + Math.max(v, -0.99));
     let logMove = ln(revShare);
-    // Variance (log terms): revenue effects are uncertain by about half (how far a price follows revenue); each factor
+    // Variance (log terms): revenue effects are uncertain by about half (how far a price follows profit); each factor
     // effect by its sensitivity's standard error, and an analog part by the spread between its past events.
     let variance = (0.39 * logMove) ** 2; // +/- half at 80%
     for (const s of scenario.shocks) {
@@ -177,7 +197,7 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     if (Math.abs(logMove) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
     const price = Math.exp(logMove);
-    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: Math.exp(logMove - Z80 * sd) - 1, hi: Math.exp(logMove + Z80 * sd) - 1, basis });
+    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, leverage, price: price - 1, lo: Math.exp(logMove - Z80 * sd) - 1, hi: Math.exp(logMove + Z80 * sd) - 1, basis });
   }
   const move = (id: string) => moves.get(id)?.price ?? 0;
 
