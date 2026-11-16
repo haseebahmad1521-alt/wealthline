@@ -8,6 +8,8 @@
 -- world_scenarios    Scenarios written by Grok (`scenarios` function): a daily ranked set and answers to typed
 --                    questions. Grok writes only the story and the changes (which country, company, sector or stake;
 --                    how much; which months). Every dollar figure is calculated in the app from recorded values.
+--                    Versus rows (origin 'versus') name the two rivals in `versus`; `beats` are story lines without
+--                    figures, shown as notifications on the globe.
 
 alter table public.countries add column region text;
 
@@ -18,7 +20,7 @@ alter table public.companies add column sector_source text;
 
 create table public.world_scenarios (
   id uuid primary key default gen_random_uuid(),
-  origin text not null check (origin in ('daily', 'prompt')),
+  origin text not null check (origin in ('daily', 'prompt', 'versus')),
   run_date date not null default current_date,
   position int not null default 0 check (position between 0 and 9),
   -- Typed questions: the normalised question, so a repeat is answered from here without another Grok call.
@@ -32,6 +34,8 @@ create table public.world_scenarios (
   shocks jsonb not null,
   assumptions jsonb not null default '[]'::jsonb,
   sources jsonb not null default '[]'::jsonb,
+  beats jsonb not null default '[]'::jsonb,
+  versus text[] check (versus is null or cardinality(versus) = 2),
   -- Set when the question can't be modelled (unrelated, or only touches things that aren't tracked).
   declined text,
   model text not null,

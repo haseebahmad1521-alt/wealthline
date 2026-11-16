@@ -11,9 +11,10 @@ import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, reven
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
-import { askScenario, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { askScenario, askVersus, examples, useDailyScenarios, useSimData, type Scenario } from '@/lib/scenarios';
+import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
-import { SimOverlay, SimulatePanel } from '@/components/world-sim';
+import { SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
@@ -68,6 +69,7 @@ export default function World() {
   const simData = useSimData();
   const daily = useDailyScenarios();
   const [asked, setAsked] = useState<Scenario[]>([]);
+  const [panel, setPanel] = useState<'scenarios' | 'versus'>('scenarios');
   const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires)], [asked, daily.data, empires]);
   const [simId, setSimId] = useState<string | null>(null);
   const sim = scenarios.find((s) => s.id === simId) ?? scenarios[0] ?? null;
@@ -126,6 +128,30 @@ export default function World() {
     setTick(0);
     setPlaying(!reduceMotion); // with reduced motion, nothing starts moving by itself
   };
+  // Versus: the rivals' slugs, scored every month; everyone else steps back.
+  const rivals = sim?.versus ? sim.versus.map((slug) => simEmpires.find((e) => e.person.slug === slug)) : null;
+  const pair = rivals && rivals[0] && rivals[1] ? ([rivals[0], rivals[1]] as const) : null;
+  const score = simOn && pair && frame ? versusScore(frame, pair[0], pair[1]) : null;
+  const finalScore = simOn && pair && frames.length ? versusScore(frames[frames.length - 1], pair[0], pair[1]) : null;
+  const fighters = useMemo(() => [...empires].filter((e) => e.person.net_worth_usd).sort((a, b) => b.person.net_worth_usd! - a.person.net_worth_usd!).slice(0, 60).map((e) => e.person), [empires]);
+  const matchups = useMemo(() => suggestedMatches(fighters), [fighters]);
+  const homeOf = (companyId: string) => empires.flatMap((e) => e.companies).find((c) => c.id === companyId)?.country ?? null;
+  const fight = (a: string, b: string, battle: Battle, winner: 'a' | 'b') => {
+    const ea = simEmpires.find((e) => e.person.slug === a);
+    const eb = simEmpires.find((e) => e.person.slug === b);
+    const s = ea && eb ? versusScenario(ea, eb, battle, winner, { home: homeOf, countryName: (iso) => country(iso) ?? iso }) : null;
+    if (!s) return 'Those two share the same main company; pick someone else.';
+    setAsked((x) => [s, ...x.filter((y) => y.id !== s.id)]);
+    pick(s);
+    return null;
+  };
+  const fightGrok = async (a: string, b: string) => {
+    const r = await askVersus(a, b);
+    if ('error' in r) return r.error;
+    setAsked((x) => [r.scenario, ...x.filter((y) => y.id !== r.scenario.id)]);
+    pick(r.scenario);
+    return null;
+  };
   const ask = async (prompt: string) => {
     const r = await askScenario(prompt);
     if ('error' in r) return r.error;
@@ -180,6 +206,7 @@ export default function World() {
       return { at: top ? hqOf(top.company.id) : null, zoom: 0.25 };
     }
     if (about.kind === 'start' && sim) {
+      if (sim.versus) return { at: empires.find((e) => e.person.slug === sim.versus![0])?.hq ?? null, zoom: 0.3 };
       const place = sim.shocks.find((x) => x.kind === 'place');
       if (place) return { at: countryCentre(place.target), zoom: 0.3 };
       const sale = sim.shocks.find((x) => x.kind === 'transfer') as { person: string } | undefined;
@@ -236,6 +263,7 @@ export default function World() {
       .sort((a, b) => Math.abs(by.get(b.key) ?? 0) - Math.abs(by.get(a.key) ?? 0));
   }, [markers, empires, money]);
   // Simulation: each touched portrait carries its projected change (dashed, "≈"); the biggest movers lead.
+  const rivalIds = useMemo(() => (sim?.versus ? new Set(empires.filter((e) => sim.versus!.includes(e.person.slug)).map((e) => e.person.id)) : null), [sim, empires]);
   const simMarkers = useMemo(() => {
     if (!frame) return markers;
     const by = new Map(frame.people.map((p) => [p.person.id, p]));
@@ -248,10 +276,11 @@ export default function World() {
         const text = p.delta != null ? money.format(Math.abs(p.delta)) : simPct(p.pct!);
         return { ...m, change: { text, dir: Math.sign(v) as 1 | -1 | 0, projected: true } };
       })
-      // Everyone the scenario doesn't touch steps back (once it has started moving anyone).
-      .map((m) => (by.size && !by.has(m.key) ? { ...m, dim: true } : m))
+      // Everyone the scenario doesn't touch steps back (once it has started moving anyone); in versus, everyone but
+      // the two rivals.
+      .map((m) => (rivalIds ? (rivalIds.has(m.key) ? m : { ...m, dim: true }) : by.size && !by.has(m.key) ? { ...m, dim: true } : m))
       .sort((a, b) => size(b.key) - size(a.key));
-  }, [frame, markers, money]);
+  }, [frame, markers, money, rivalIds]);
   const shownMarkers = view === 'places' ? todayMarkers : simOn ? simMarkers : markers;
 
   // A place picked from search: the camera flies there instead of to the owner's headquarters.
@@ -379,7 +408,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -402,7 +431,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -427,7 +456,15 @@ export default function World() {
                     <Heading level={2}>What if.</Heading>
                     <Caption>Hypothetical</Caption>
                   </View>
-                  <SimulatePanel scenarios={scenarios} scenario={sim} onPick={pick} onAsk={ask} />
+                  <SimulatePanel
+                    scenarios={scenarios}
+                    scenario={sim}
+                    onPick={pick}
+                    onAsk={ask}
+                    mode={panel}
+                    onMode={setPanel}
+                    versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} onGrok={fightGrok} />}
+                  />
                 </Surface>
               ) : focused ? (
                 <EmpirePanel empire={focused} onClear={() => select(null)} />

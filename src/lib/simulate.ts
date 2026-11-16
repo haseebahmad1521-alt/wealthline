@@ -208,6 +208,10 @@ const moveWord = (p: number) => (Math.abs(p) >= 0.2 ? (p < 0 ? 'tumble' : 'soar'
  */
 export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id: string) => string, personName: (slug: string) => string): SimEvent[] {
   const out: SimEvent[] = [{ month: 0, text: scenario.title.replace(/\.$/, ''), tone: 'info', about: { kind: 'start' } }];
+  // The story's own lines lead; a change that starts the same month as a line still gets its own notification.
+  for (const b of scenario.beats ?? []) {
+    out.push({ month: b.month, text: b.text, tone: b.tone, about: b.person ? { kind: 'person', slug: b.person } : b.country ? { kind: 'place', iso2: b.country } : { kind: 'world' } });
+  }
   for (const s of scenario.shocks) {
     const tone = s.pct < 0 ? 'loss' : 'gain';
     const at = s.kind === 'transfer' ? s.to : s.from;

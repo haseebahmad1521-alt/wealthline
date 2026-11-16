@@ -4,13 +4,14 @@
 // revenue, GDP and stakes times the scenario's stated changes, drawn dashed with "≈".
 import * as WebBrowser from 'expo-web-browser';
 import { Slider } from 'heroui-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
-import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent } from '@/lib/simulate';
+import { NOTE_LIFE, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
+import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
 import { color, font, radius, space, type } from '@/theme';
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
@@ -29,11 +30,18 @@ export function SimulatePanel({
   scenario,
   onPick,
   onAsk,
+  mode,
+  onMode,
+  versus,
 }: {
   scenarios: Scenario[];
   scenario: Scenario | null;
   onPick: (s: Scenario) => void;
   onAsk: (prompt: string) => Promise<string | null>;
+  mode: 'scenarios' | 'versus';
+  onMode: (m: 'scenarios' | 'versus') => void;
+  /** The versus picker, shown in its tab. */
+  versus: ReactNode;
 }) {
   const [prompt, setPrompt] = useState('');
   const [asking, setAsking] = useState(false);
@@ -50,6 +58,15 @@ export function SimulatePanel({
 
   return (
     <>
+      <View accessibilityRole="tablist" style={styles.segments}>
+        {(['scenarios', 'versus'] as const).map((m) => (
+          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
+            <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'scenarios' ? 'Scenarios' : 'Versus'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {mode === 'versus' ? versus : (
+      <>
       <View style={styles.inputRow}>
         <TextInput
           accessibilityLabel="Ask a what-if question"
@@ -71,7 +88,7 @@ export function SimulatePanel({
       {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
-        {scenarios.map((s) => {
+        {scenarios.filter((s) => s.origin !== 'versus').map((s) => {
           const on = s.id === scenario?.id;
           return (
             <Pressable key={s.id} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onPick(s)} style={[styles.pill, on && styles.pillOn]}>
@@ -83,12 +100,19 @@ export function SimulatePanel({
           );
         })}
       </ScrollView>
+      </>
+      )}
 
-      {scenario && (
+      {scenario && (mode === 'versus') === (scenario.origin === 'versus') && (
         <View style={styles.foot}>
           <Caption>
-            Hypothetical, not a forecast{scenario.origin === 'example' ? ' · built-in example' : ` · ${PLAUSIBLE[scenario.plausibility].toLowerCase()}, by Grok`}. Changes are applied to recorded revenue, GDP and share
-            counts.
+            Hypothetical, not a forecast
+            {scenario.origin === 'example'
+              ? ' · built-in example'
+              : scenario.origin === 'versus' && !scenario.sources.length && scenario.id.startsWith('versus:')
+                ? ' · your match, with the sizes stated in it'
+                : ` · ${PLAUSIBLE[scenario.plausibility].toLowerCase()}, by Grok`}
+            . Changes are applied to recorded revenue, GDP and share counts.{scenario.assumptions.length ? ` ${scenario.assumptions.join(' ')}` : ''}
           </Caption>
           {scenario.sources.map((s) => (
             <Pressable key={s.url} accessibilityRole="link" onPress={() => open(s.url)} style={styles.source}>
@@ -100,6 +124,170 @@ export function SimulatePanel({
         </View>
       )}
     </>
+  );
+}
+
+/** Versus: pick two rivals (or a suggested match), the battle and who comes out ahead, then fight. */
+export function VersusPicker({
+  people,
+  suggested,
+  onFight,
+  onGrok,
+}: {
+  people: SimPerson[];
+  suggested: [SimPerson, SimPerson][];
+  onFight: (a: string, b: string, battle: Battle, winner: 'a' | 'b') => string | null;
+  onGrok: (a: string, b: string) => Promise<string | null>;
+}) {
+  const [a, setA] = useState<string | null>(suggested[0]?.[0].slug ?? null);
+  const [b, setB] = useState<string | null>(suggested[0]?.[1].slug ?? null);
+  const [slot, setSlot] = useState<'a' | 'b' | null>(null);
+  const [battle, setBattle] = useState<Battle>('market');
+  const [winner, setWinner] = useState<'a' | 'b'>('a');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pa = people.find((p) => p.slug === a) ?? null;
+  const pb = people.find((p) => p.slug === b) ?? null;
+  const ready = !!pa && !!pb && pa.slug !== pb.slug;
+  const corner = (p: SimPerson | null, which: 'a' | 'b') => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={p ? `${p.name}, change` : `Pick the ${which === 'a' ? 'first' : 'second'} rival`}
+      onPress={() => setSlot(slot === which ? null : which)}
+      style={[styles.corner, slot === which && styles.cornerOn]}>
+      {p ? <Portrait uri={p.portrait_url ?? null} name={p.name} size={52} /> : <View style={styles.empty}><Icon name={icons.plus} size={22} tint={color.textSecondary} /></View>}
+      <Text style={[type.headline, styles.cornerName]} numberOfLines={1}>
+        {p ? lastName(p.name) : 'Pick'}
+      </Text>
+    </Pressable>
+  );
+  return (
+    <>
+      <View style={styles.ring}>
+        {corner(pa, 'a')}
+        <Text style={[type.title, styles.vs]}>vs</Text>
+        {corner(pb, 'b')}
+      </View>
+      {slot && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
+          {people.map((p) => (
+            <Pressable
+              key={p.slug}
+              accessibilityRole="button"
+              accessibilityLabel={p.name}
+              onPress={() => {
+                if (slot === 'a') setA(p.slug);
+                else setB(p.slug);
+                setSlot(null);
+              }}
+              style={styles.pick}>
+              <Portrait uri={p.portrait_url ?? null} name={p.name} size={40} />
+              <Caption numberOfLines={1} style={styles.pickName}>
+                {lastName(p.name)}
+              </Caption>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+      {!slot && suggested.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
+          {suggested.map(([x, y]) => {
+            const on = x.slug === a && y.slug === b;
+            return (
+              <Pressable
+                key={`${x.slug}-${y.slug}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                onPress={() => {
+                  setA(x.slug);
+                  setB(y.slug);
+                }}
+                style={[styles.chipBtn, on && styles.pillOn]}>
+                <Text style={[type.headline, { fontSize: 14, color: on ? color.action : color.text }]}>
+                  {lastName(x.name)} vs {lastName(y.name)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+      <View style={styles.choices}>
+        {BATTLES.map((x) => (
+          <Pressable key={x.key} accessibilityRole="button" accessibilityState={{ selected: battle === x.key }} onPress={() => setBattle(x.key)} style={[styles.chipBtn, battle === x.key && styles.pillOn]}>
+            <Text style={[type.headline, { fontSize: 14, color: battle === x.key ? color.action : color.text }]}>{x.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {ready && (
+        <View style={styles.choices}>
+          {(['a', 'b'] as const).map((w) => {
+            const p = w === 'a' ? pa : pb;
+            return (
+              <Pressable key={w} accessibilityRole="button" accessibilityState={{ selected: winner === w }} onPress={() => setWinner(w)} style={[styles.chipBtn, winner === w && styles.pillOn]}>
+                <Text style={[type.headline, { fontSize: 14, color: winner === w ? color.action : color.text }]}>{lastName(p!.name)} wins</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+      <View style={styles.choices}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!ready || busy}
+          onPress={() => setError(onFight(a!, b!, battle, winner))}
+          style={[styles.fight, (!ready || busy) && styles.dim]}>
+          <Text style={[type.headline, { color: color.onAction }]}>Fight</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!ready || busy}
+          onPress={async () => {
+            setBusy(true);
+            setError(null);
+            setError(await onGrok(a!, b!));
+            setBusy(false);
+          }}
+          style={[styles.chipBtn, (!ready || busy) && styles.dim]}>
+          {busy ? <ActivityIndicator color={color.text} /> : <Text style={[type.headline, { fontSize: 14, color: color.text }]}>Let Grok write it</Text>}
+        </Pressable>
+      </View>
+      {busy && <Caption>Grok is looking at where their businesses really compete, about half a minute.</Caption>}
+      {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
+    </>
+  );
+}
+
+/** Versus on the globe: both rivals, their change so far, and a bar leaning toward whoever is ahead. */
+function Scoreboard({ a, b, basis, lead, money }: { a: Corner; b: Corner; basis: 'fortune' | 'shares'; lead: 'a' | 'b' | null; money: (usd: number) => string }) {
+  const text = (c: Corner) => (c.delta != null && basis === 'fortune' ? money(Math.abs(c.delta)) : simPct(c.pct ?? 0));
+  const value = (c: Corner) => (basis === 'fortune' ? (c.delta ?? 0) : (c.pct ?? 0));
+  const share = Math.min(Math.max(0.5 + (a.score - b.score) * 2, 0.08), 0.92);
+  const side = (c: Corner, mine: 'a' | 'b') => (
+    <View style={[styles.side, mine === 'b' && styles.sideRight]}>
+      <Portrait uri={c.person.portrait_url ?? null} name={c.person.name} size={30} />
+      <View style={mine === 'b' ? styles.alignEnd : null}>
+        <Text style={[type.caption, { color: color.text, fontWeight: lead === mine ? '700' : '400' }]} numberOfLines={1}>
+          {lastName(c.person.name)}
+          {lead === mine ? ' ★' : ''}
+        </Text>
+        <View style={styles.tileMove}>
+          <Icon name={value(c) >= 0 ? icons.up : icons.down} size={16} tint={value(c) >= 0 ? color.gain : color.loss} />
+          <Text style={[type.caption, { color: value(c) >= 0 ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]}>≈{text(c)}</Text>
+        </View>
+      </View>
+    </View>
+  );
+  return (
+    <View pointerEvents="none" style={styles.score} accessible accessibilityLabel={`${a.person.name} ${text(a)}, ${b.person.name} ${text(b)}${lead ? `; ${(lead === 'a' ? a : b).person.name} ahead` : ''}`}>
+      <View style={styles.scoreRow}>
+        {side(a, 'a')}
+        {side(b, 'b')}
+      </View>
+      <View style={styles.tug}>
+        <View style={[styles.tugA, { flex: share }]} />
+        <View style={[styles.tugB, { flex: 1 - share }]} />
+      </View>
+    </View>
   );
 }
 
@@ -117,7 +305,12 @@ export function SimOverlay({
   months,
   title,
   money,
+  score,
+  finalScore,
 }: {
+  /** Versus: the scoreboard now, and at the end. */
+  score?: VersusScore | null;
+  finalScore?: VersusScore | null;
   /** The last month's frame, for the end card. */
   ending: Frame | null;
   months: number;
@@ -132,8 +325,8 @@ export function SimOverlay({
   onPlay: () => void;
   onScrub: (tick: number) => void;
 }) {
-  // Each notification stays up for NOTE_LIFE ticks; at most three at once, newest last.
-  const shown = notes.filter((e) => e.tick <= tick && e.tick > tick - NOTE_LIFE).slice(-3);
+  // Each notification stays up for NOTE_LIFE ticks; at most three at once (two under a scoreboard), newest last.
+  const shown = notes.filter((e) => e.tick <= tick && e.tick > tick - NOTE_LIFE).slice(score ? -2 : -3);
   const done = tick >= length;
   // The end card shows once the film has finished; closing it reveals the globe, and it comes back on the next ending.
   const [closed, setClosed] = useState(false);
@@ -144,9 +337,10 @@ export function SimOverlay({
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
       {card ? (
-        <EndCard frame={ending} months={months} start={start} title={title} money={money} onClose={() => setClosed(true)} />
+        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} onClose={() => setClosed(true)} />
       ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
+        {score && <Scoreboard {...score} money={money} />}
         {shown.map((e) => (
           <Animated.View
             key={`${e.month}:${e.text}`}
@@ -184,7 +378,23 @@ const regionName = new Intl.DisplayNames(['en'], { type: 'region' });
 const short = (name: string) => name.replace(/ & family$/, '').split(' ').slice(-1)[0];
 
 /** The picture at the end: who gained, who was hit hardest, the new top five, and the countries hit. */
-function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame; months: number; start: string | null; title: string; money: (usd: number) => string; onClose: () => void }) {
+function EndCard({
+  frame,
+  months,
+  start,
+  title,
+  money,
+  versus,
+  onClose,
+}: {
+  frame: Frame;
+  months: number;
+  start: string | null;
+  title: string;
+  money: (usd: number) => string;
+  versus: VersusScore | null;
+  onClose: () => void;
+}) {
   const value = (p: PersonMove) => p.delta ?? p.pct ?? 0;
   const text = (p: PersonMove) => (p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct!));
   const up = frame.people.filter((p) => value(p) > 0).slice(0, 3);
@@ -204,7 +414,8 @@ function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame
           <Icon name={icons.close} size={16} tint={color.textSecondary} />
         </Pressable>
       </View>
-      {[
+      {versus && <VersusResult score={versus} frame={frame} money={money} />}
+      {!versus && [
         { label: 'Gained', people: up, tint: color.gain, icon: icons.up },
         { label: 'Hit hardest', people: down, tint: color.loss, icon: icons.down },
       ].map((row) =>
@@ -228,6 +439,7 @@ function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame
           </View>
         ) : null,
       )}
+      {!versus && (
       <View style={styles.cardRow}>
         <Text style={[type.caption, styles.rowLabel]}>Top five</Text>
         <View style={styles.tiles}>
@@ -243,7 +455,8 @@ function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame
           })}
         </View>
       </View>
-      {hit.length > 0 && (
+      )}
+      {!versus && hit.length > 0 && (
         <View style={styles.chips}>
           {hit.map((f) => (
             <View key={f.iso2} style={styles.chip}>
@@ -257,7 +470,74 @@ function EndCard({ frame, months, start, title, money, onClose }: { frame: Frame
   );
 }
 
+type VersusScore = { a: Corner; b: Corner; basis: 'fortune' | 'shares'; lead: 'a' | 'b' | null };
+
+/** The end of a match: the winner, both rivals' final change, and where each now ranks. */
+function VersusResult({ score, frame, money }: { score: VersusScore; frame: Frame; money: (usd: number) => string }) {
+  const { a, b, basis, lead } = score;
+  const rank = (c: Corner) => frame.ranks.find((r) => r.person.id === c.person.id);
+  const text = (c: Corner) => (basis === 'fortune' && c.delta != null ? money(Math.abs(c.delta)) : simPct(c.pct ?? 0));
+  const value = (c: Corner) => (basis === 'fortune' ? (c.delta ?? 0) : (c.pct ?? 0));
+  const winner = lead ? (lead === 'a' ? a : b) : null;
+  const fighter = (c: Corner, mine: 'a' | 'b') => {
+    const r = rank(c);
+    const won = lead === mine;
+    return (
+      <View style={styles.fighter}>
+        <View style={[styles.crownRing, won && styles.crownOn]}>
+          <Portrait uri={c.person.portrait_url ?? null} name={c.person.name} size={won ? 58 : 46} />
+        </View>
+        <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+          {lastName(c.person.name)}
+        </Text>
+        <View style={styles.tileMove}>
+          <Icon name={value(c) >= 0 ? icons.up : icons.down} size={18} tint={value(c) >= 0 ? color.gain : color.loss} />
+          <Text style={[type.caption, { color: value(c) >= 0 ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]}>≈{text(c)}</Text>
+        </View>
+        {r && <Caption>{r.before === r.after ? `#${r.after}` : `#${r.before} → #${r.after}`}</Caption>}
+      </View>
+    );
+  };
+  return (
+    <View style={styles.cardRow}>
+      <Text style={[type.title, { color: color.text, fontSize: 22, textAlign: 'center' }]}>{winner ? `${lastName(winner.person.name)} wins.` : 'A draw.'}</Text>
+      <View style={styles.scoreRow}>
+        {fighter(a, 'a')}
+        <Text style={[type.caption, styles.vsSmall]}>vs</Text>
+        {fighter(b, 'b')}
+      </View>
+      <Caption style={{ textAlign: 'center' }}>{basis === 'fortune' ? 'Scored by share of each fortune, from recorded stakes.' : 'Scored by each main company’s share price; not everyone has recorded shares.'}</Caption>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  segments: { flexDirection: 'row', alignSelf: 'flex-start', padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
+  segment: { minHeight: 38, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
+  segmentOn: { backgroundColor: color.surface },
+  ring: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.md },
+  corner: { alignItems: 'center', gap: 4, padding: space.sm, borderRadius: radius.md, minWidth: 96 },
+  cornerOn: { backgroundColor: color.actionTint },
+  empty: { width: 52, height: 52, borderRadius: 26, borderWidth: 1.5, borderStyle: 'dashed', borderColor: color.textSecondary, alignItems: 'center', justifyContent: 'center' },
+  cornerName: { color: color.text, maxWidth: 110 },
+  vs: { color: color.textSecondary, fontSize: 20 },
+  vsSmall: { color: color.textSecondary, alignSelf: 'center' },
+  pick: { alignItems: 'center', gap: 2, width: 58 },
+  pickName: { maxWidth: 58, textAlign: 'center' },
+  chipBtn: { minHeight: minTouch, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: color.fill },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  fight: { minHeight: minTouch, justifyContent: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: color.action },
+  score: { alignSelf: 'stretch', maxWidth: 360, gap: 6, padding: 10, borderRadius: 18, backgroundColor: 'rgba(14,16,24,.85)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,.12)' },
+  scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.sm },
+  side: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  sideRight: { flexDirection: 'row-reverse' },
+  alignEnd: { alignItems: 'flex-end' },
+  tug: { flexDirection: 'row', height: 6, borderRadius: 3, overflow: 'hidden', gap: 2 },
+  tugA: { backgroundColor: color.action, borderRadius: 3 },
+  tugB: { backgroundColor: '#FFB86B', borderRadius: 3 },
+  fighter: { flex: 1, alignItems: 'center', gap: 3 },
+  crownRing: { borderRadius: 40, padding: 3, borderWidth: 2, borderColor: 'transparent' },
+  crownOn: { borderColor: '#F5C451' },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },
   // minWidth 0: web inputs otherwise keep an intrinsic width and push the button out.
   input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },

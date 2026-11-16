@@ -40,8 +40,8 @@ function fromReference() {
   };
 }
 
-type Row = Omit<Scenario, 'origin'> & { origin: 'daily' | 'prompt'; created_at?: string };
-const fromRow = (r: Row): Scenario => ({ ...r, assumptions: r.assumptions ?? [], sources: r.sources ?? [] });
+type Row = Omit<Scenario, 'origin'> & { origin: 'daily' | 'prompt' | 'versus'; created_at?: string };
+const fromRow = (r: Row): Scenario => ({ ...r, assumptions: r.assumptions ?? [], sources: r.sources ?? [], beats: r.beats ?? [] });
 
 /** The latest daily set from Grok, most plausible first; empty when there is none (or the table isn't there yet). */
 export function useDailyScenarios() {
@@ -68,6 +68,19 @@ export async function askScenario(prompt: string): Promise<{ scenario: Scenario 
     return { error: body?.error ?? 'Simulations from your own question aren’t switched on yet. Try an example.' };
   } catch {
     return { error: 'Couldn’t reach the simulator. Try an example.' };
+  }
+}
+
+/** Asks Grok (through the backend) for a rivalry between two tracked people. */
+export async function askVersus(a: string, b: string): Promise<{ scenario: Scenario } | { error: string }> {
+  try {
+    const { data, error } = await db().functions.invoke('scenarios', { body: { versus: [a, b] } });
+    if (data?.scenario) return { scenario: fromRow(data.scenario as Row) };
+    if (data?.declined) return { error: String(data.declined) };
+    const body = await (error as { context?: Response } | null)?.context?.json?.().catch(() => null);
+    return { error: body?.error ?? 'Grok-written matches aren’t switched on yet. Fight uses the built-in match.' };
+  } catch {
+    return { error: 'Couldn’t reach the simulator. Fight uses the built-in match.' };
   }
 }
 

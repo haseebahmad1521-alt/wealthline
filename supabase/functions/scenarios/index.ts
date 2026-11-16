@@ -5,13 +5,14 @@
 // search returned it in this request. The app calculates every dollar from recorded values.
 //
 //   cron (x-cron-secret)   once a day: up to 5 scenarios from the news, ranked most to least plausible.
+//   POST { versus: [a, b] } anyone: a rivalry between two tracked people (slugs), cached per pair like a question.
 //   POST { prompt }        anyone: one scenario for the question, or a reason it can't be modelled. Answers are kept
 //                          by the normalised question, so a repeat costs nothing; new questions draw on their own
 //                          share of the monthly xAI ceiling and an hourly cap, so chat and the jobs keep their room.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 import { sameUrl, xaiCostMicros, type XaiUsage } from '../_shared/recent.ts';
-import { checkShock, cleanProse, promptKey, SECTORS, type Catalog, type Shock } from '../_shared/scenario.ts';
+import { checkBeats, checkShock, cleanProse, promptKey, SECTORS, type Catalog, type Shock } from '../_shared/scenario.ts';
 import { cors, json } from '../_shared/util.ts';
 import { reserve, xaiKey } from '../_shared/xai.ts';
 
@@ -40,7 +41,7 @@ const shock = {
 const scenario = {
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'summary', 'plausibility', 'reason', 'months', 'shocks', 'assumptions', 'sources'],
+  required: ['title', 'summary', 'plausibility', 'reason', 'months', 'shocks', 'beats', 'assumptions', 'sources'],
   properties: {
     title: { type: 'string', description: 'A short headline, at most 10 words. No figures.' },
     summary: { type: 'string', description: 'Two to four plain sentences: what happens and how it reaches the tracked companies and fortunes. No figures, amounts or percentages.' },
@@ -48,6 +49,22 @@ const scenario = {
     reason: { type: 'string', description: 'One sentence on why it is that plausible. No figures.' },
     months: { type: 'integer', description: 'Length of the simulation in months, 3–36.' },
     shocks: { type: 'array', items: shock },
+    beats: {
+      type: 'array',
+      description: 'Three to six story lines as the months pass, each at most 10 words, no figures. Name a listed person (slug) or a country (ISO code) when the line is about one, else "".',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['month', 'text', 'tone', 'person', 'country'],
+        properties: {
+          month: { type: 'integer' },
+          text: { type: 'string' },
+          tone: { type: 'string', enum: ['gain', 'loss', 'info'] },
+          person: { type: 'string' },
+          country: { type: 'string' },
+        },
+      },
+    },
     assumptions: { type: 'array', items: { type: 'string' }, description: 'Up to 4 short assumptions the changes rest on. No amounts.' },
     sources: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['label', 'url'], properties: { label: { type: 'string' }, url: { type: 'string' } } } },
   },
@@ -170,7 +187,8 @@ function toRow(raw: Record<string, unknown>, cat: Catalog, idOf: Map<string, str
     .filter((s) => typeof s.url === 'string' && /^https:\/\//.test(s.url) && cited.has(sameUrl(s.url)))
     .map((s) => ({ label: (cleanProse(s.label, 120) ?? new URL(s.url as string).hostname).slice(0, 120), url: s.url as string }))
     .slice(0, 4);
-  return { title, summary, plausibility, reason, months, shocks, assumptions, sources, model: MODEL };
+  const beats = checkBeats(raw.beats, months, cat);
+  return { title, summary, plausibility, reason, months, shocks, beats, assumptions, sources, model: MODEL };
 }
 
 Deno.serve(async (req) => {
@@ -182,11 +200,15 @@ Deno.serve(async (req) => {
   const isCron = !!secret && req.headers.get('x-cron-secret') === secret;
 
   if (!isCron) {
-    // A typed question.
     const body = await req.json().catch(() => null);
-    const prompt = typeof body?.prompt === 'string' ? body.prompt.replace(/\s+/g, ' ').trim() : '';
+    // A versus match: two tracked people, asked as a question with its own cache key.
+    const pair = Array.isArray(body?.versus) && body.versus.length === 2 && body.versus.every((v: unknown) => typeof v === 'string' && /^[a-z0-9-]{2,80}$/.test(v)) ? (body.versus as [string, string]) : null;
+    const versus = pair && pair[0] !== pair[1] ? pair : null;
+    const prompt = versus
+      ? `Rivalry: ${versus[0]} versus ${versus[1]}`
+      : typeof body?.prompt === 'string' ? body.prompt.replace(/\s+/g, ' ').trim() : '';
     if (prompt.length < 8 || prompt.length > MAX_PROMPT) return json({ error: `Ask in 8 to ${MAX_PROMPT} characters.` }, 400);
-    const pk = promptKey(prompt);
+    const pk = versus ? `versus:${versus[0]}|${versus[1]}` : promptKey(prompt);
     const hit = await db.from('world_scenarios').select('*').eq('prompt_key', pk).maybeSingle();
     if (hit.data) return json({ scenario: hit.data, cached: true });
     if (!key) return json({ error: 'Simulations aren’t switched on yet.' }, 503);
@@ -197,7 +219,13 @@ Deno.serve(async (req) => {
     const { cat, text, idOf } = await catalog(db);
     let out;
     try {
-      out = await ask(key, `${RULES}\n\n${text}`, `Question: "${prompt}"\n\nReturn exactly one scenario that answers it, or none with a reason in "declined" if it has nothing to do with the economy, companies or fortunes, or would require claims about someone’s private life.`);
+      out = await ask(
+        key,
+        `${RULES}\n\n${text}`,
+        versus
+          ? `Write one rivalry scenario between ${versus[0]} and ${versus[1]} (slugs above): a plausible business battle between their companies (a price war, a fight for a market, a race for talent or technology, a bid), based on where their businesses really compete. Changes should mostly move their own companies; one side should come out ahead. Use beats to tell the story month by month, naming whose move it is. Return exactly one scenario.`
+          : `Question: "${prompt}"\n\nReturn exactly one scenario that answers it, or none with a reason in "declined" if it has nothing to do with the economy, companies or fortunes, or would require claims about someone’s private life.`,
+      );
     } catch (e) {
       await settle(PROMPT_ESTIMATE / 3);
       return json({ error: 'Grok didn’t answer. Try again in a moment.', detail: String(e).slice(0, 200) }, 502);
@@ -207,7 +235,8 @@ Deno.serve(async (req) => {
     const row = raw ? toRow(raw, cat, idOf, out.cited) : null;
     const declined = typeof row === 'object' && row ? null : (cleanProse(out.found.declined, 300) ?? (typeof row === 'string' ? 'That question doesn’t reach anything Wealthline tracks.' : 'Couldn’t build a scenario for that.'));
     if (declined) return json({ declined, why: typeof row === 'string' ? row : null });
-    const ins = await db.from('world_scenarios').insert({ ...(row as object), origin: 'prompt', prompt, prompt_key: pk }).select('*').single();
+    if (versus && !versus.every((v) => cat.people.has(v))) return json({ declined: 'One of those two isn’t tracked.' });
+    const ins = await db.from('world_scenarios').insert({ ...(row as object), origin: versus ? 'versus' : 'prompt', versus, prompt, prompt_key: pk }).select('*').single();
     if (ins.error) return json({ error: ins.error.message }, 500);
     return json({ scenario: ins.data, cost_usd: out.cost / 1e6 });
   }

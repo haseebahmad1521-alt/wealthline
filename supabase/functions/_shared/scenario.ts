@@ -54,9 +54,16 @@ export type Shock =
 export type Plausibility = 'likely' | 'possible' | 'unlikely';
 export type Source = { label: string; url: string };
 
+/** A line of the story at a month, written without figures; it names who or where, so the camera can go there. */
+export type Beat = { month: number; text: string; tone: 'gain' | 'loss' | 'info'; person?: string | null; country?: string | null };
+
 export type Scenario = {
   id: string;
-  origin: 'example' | 'daily' | 'prompt';
+  origin: 'example' | 'daily' | 'prompt' | 'versus';
+  /** Versus mode: the two rivals' slugs. */
+  versus?: [string, string] | null;
+  /** Story lines shown as notifications, in addition to the ones made from the changes. */
+  beats?: Beat[];
   title: string;
   summary: string;
   plausibility: Plausibility;
@@ -122,6 +129,22 @@ export function checkShock(raw: Record<string, unknown>, months: number, cat: Ca
     default:
       return `unknown kind ${String(kind)}`;
   }
+}
+
+/** Checks story beats: prose without figures, months inside the scenario, names that are tracked. */
+export function checkBeats(raw: unknown, months: number, cat: Catalog): Beat[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Beat[] = [];
+  for (const b of raw.slice(0, 8) as Record<string, unknown>[]) {
+    const text = cleanProse(b?.text, 90);
+    const month = Math.round(clamp(num(b?.month), 0, months));
+    if (!text || Number.isNaN(month)) continue;
+    const tone = b.tone === 'gain' || b.tone === 'loss' ? b.tone : 'info';
+    const person = typeof b.person === 'string' && cat.people.has(b.person) ? b.person : null;
+    const country = typeof b.country === 'string' && cat.countries.has(b.country.toUpperCase()) ? b.country.toUpperCase() : null;
+    out.push({ month, text, tone, person, country });
+  }
+  return out.sort((a, b) => a.month - b.month);
 }
 
 /** A normalised question, for the cache: case, spacing and trailing punctuation don't make a new Grok call. */
