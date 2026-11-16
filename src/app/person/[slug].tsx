@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensio
 
 import { EmpireCard } from '@/components/empire-card';
 import { NewsList } from '@/components/news';
+import { WhyItMoved } from '@/components/why';
 import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
 import { WealthChart } from '@/components/wealth-chart';
@@ -197,6 +198,8 @@ export default function Profile() {
           </Surface>
         </>
       )}
+
+      {p && <WhyItMoved personId={p.id} />}
 
       {(!!news.data?.length || refresh.running('news')) && (
         <>
