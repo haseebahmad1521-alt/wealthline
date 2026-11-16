@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { metal } from '@/components/arena';
+import donationData from '@/data/donations.json';
 import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
@@ -25,11 +26,19 @@ import { color, font, radius, space, type } from '@/theme';
 const ACCURACY = (() => {
   const b = REFERENCE.backtest;
   if (!b) return 'Ranges are 80%, from how each company’s shares have moved with stocks, oil, China, the dollar and its sector; private companies use their listed peers.';
-  const cover = b.events.map((e) => e.coverage).filter((x): x is number => x != null);
+  const cover = (b.ranges?.outOfSample.map((e) => e.coverage) ?? b.events.map((e) => e.coverage)).filter((x): x is number => x != null);
   const lo = Math.round(Math.min(...cover) * 100);
   const hi = Math.round(Math.max(...cover) * 100);
-  return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${lo}–${hi}% of outcomes fell inside the 80% ranges. Private companies use their listed peers.`;
+  const ranges = b.ranges
+    ? `ranges are widened for fat tails, as past misses required: tested on shocks they weren’t fitted on, ${Math.round(b.ranges.pooledCoverage * 100)}% of outcomes fell inside (${lo}–${hi}% by shock; crashes run wider).`
+    : `${lo}–${hi}% of outcomes fell inside the 80% ranges.`;
+  return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${ranges} Private companies use their listed peers.`;
 })();
+
+// Federal political giving on record (FEC), by person id: scripts/build-donations.mjs. At-least figures.
+type Giving = { total: number; from: string | null; top: { committee: string; amount: number }[]; url: string };
+const GIVING = (donationData as { people: Record<string, Giving> }).people;
+const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\bPac\b/g, 'PAC');
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
@@ -364,7 +373,7 @@ export function DialsPanel({
             {/* No fill: zero sits mid-track, so a fill from the left end would read as a change. */}
             <Slider value={v} minValue={d.min} maxValue={d.max} step={5} aria-label={d.label} onChange={(x) => onChange({ ...values, [d.key]: Array.isArray(x) ? x[0] : x })}>
               <Slider.Track>
-                <Slider.Thumb />
+                <Slider.Thumb aria-label={`${d.label}: ${v ? d.describe(v) : 'as today'}`} />
               </Slider.Track>
             </Slider>
             {dialEffects(d, v, names).map((line) => (
@@ -460,11 +469,16 @@ export function SimOverlay({
   onShare,
   followUps,
   onContinue,
+  replays,
+  onReplay,
   mine,
 }: {
   mine?: { delta: number; pct: number } | null;
   followUps?: { key: string; label: string }[];
   onContinue?: (key: string) => void;
+  /** "Last time this happened": past events behind the scenario, each playable on today's fortunes. */
+  replays?: { key: string; label: string }[];
+  onReplay?: (key: string) => void;
   /** Shares the result; resolves to a short status ("Link copied"). */
   onShare?: () => Promise<string>;
   /** Guess before you play: the question (while `asking`), and how the answer went (on the end card). */
@@ -516,6 +530,8 @@ export function SimOverlay({
           onShare={onShare}
           followUps={followUps}
           onContinue={onContinue}
+          replays={replays}
+          onReplay={onReplay}
           mine={mine}
           onClose={() => setClosed(true)}
         />
@@ -544,7 +560,7 @@ export function SimOverlay({
           <Slider value={Math.min(tick, length)} minValue={0} maxValue={Math.max(length, 1)} step={1} aria-label="Time in the simulation" onChange={(v) => onScrub(Array.isArray(v) ? v[0] : v)}>
             <Slider.Track>
               <Slider.Fill />
-              <Slider.Thumb />
+              <Slider.Thumb aria-label={`Time in the simulation: ${month === 0 ? 'today' : simDate(start, month)}`} />
             </Slider.Track>
           </Slider>
         </View>
@@ -570,8 +586,12 @@ function EndCard({
   onShare,
   followUps,
   onContinue,
+  replays,
+  onReplay,
   mine,
 }: {
+  replays?: { key: string; label: string }[];
+  onReplay?: (key: string) => void;
   /** What the simulation does to what the player owns. */
   mine?: { delta: number; pct: number } | null;
   /** "…and then?": follow-ups that carry the story on for another year. */
@@ -594,12 +614,12 @@ function EndCard({
   const top = frame.ranks.slice(0, 5);
   const hit = [...frame.fills].sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct)).slice(0, 4);
   return (
-    <Animated.View entering={FadeInDown.duration(320).reduceMotion(ReduceMotion.System)} style={styles.card} accessibilityLabel={`${title}: the world after ${months} months`}>
+    <Animated.View entering={FadeInDown.duration(320).reduceMotion(ReduceMotion.System)} style={[styles.card, styles.cardFit]} accessibilityLabel={`${title}: the world after ${months} months`}>
       <View style={styles.cardHead}>
         <View style={styles.flex}>
           <Caption>{simDate(start, months)} · hypothetical</Caption>
           <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
-            {title.replace(/\.$/, '')}, {months} months on.
+            {title.replace(/\.$/, '')}, {months === 1 ? 'a month' : `${months} months`} on.
           </Text>
         </View>
         {onShare && <ShareButton onShare={onShare} />}
@@ -607,6 +627,8 @@ function EndCard({
           <Icon name={icons.close} size={16} tint={color.textSecondary} />
         </Pressable>
       </View>
+      {/* Below the header the card scrolls, so on a short phone screen nothing ends up behind the panel. */}
+      <ScrollView style={styles.cardBody} contentContainerStyle={styles.cardBodyInner} showsVerticalScrollIndicator={false}>
       {verdict && (
         <View style={[styles.verdict, { borderColor: verdict.right ? color.gain : color.loss }]} accessible>
           <Text style={[type.headline, { color: verdict.right ? color.gain : color.loss }]}>
@@ -671,6 +693,18 @@ function EndCard({
           </View>
         </View>
       )}
+      {replays && onReplay && replays.length > 0 && (
+        <View style={styles.cardRow}>
+          <Text style={[type.caption, styles.rowLabel]}>Last time this happened.</Text>
+          <View style={styles.chips}>
+            {replays.slice(0, 4).map((r) => (
+              <Pressable key={r.key} accessibilityRole="button" accessibilityLabel={`Replay on today’s fortunes: ${r.label}`} onPress={() => onReplay(r.key)} style={styles.then}>
+                <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{r.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
       <Caption style={styles.basis}>{ACCURACY}</Caption>
       {!versus && hit.length > 0 && (
         <View style={styles.chips}>
@@ -682,6 +716,7 @@ function EndCard({
           ))}
         </View>
       )}
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -697,7 +732,10 @@ export function BriefingPanel({
   date,
   money,
   onWatch,
+  nameOf,
 }: {
+  /** A tracked person's name from their slug (for statements). */
+  nameOf: (slug: string) => string;
   items: BriefingItem[];
   /** True while the daily briefing isn't on yet: the built-in examples stand in. */
   sample: boolean;
@@ -773,6 +811,49 @@ export function BriefingPanel({
                   </Pressable>
                 ))}
                 <Caption style={styles.basis}>From the public record (USAspending.gov). A tie shows a documented connection, not a claim that anyone is driving events.</Caption>
+              </View>
+            )}
+            {(() => {
+              const givers = [...winners, ...losers].filter((p, i, all) => GIVING[p.person.id] && GIVING[p.person.id].total >= 10_000 && all.findIndex((x) => x.person.id === p.person.id) === i);
+              if (!givers.length) return null;
+              return (
+                <View style={styles.ties}>
+                  <Text style={[type.caption, styles.rowLabel]}>On the record</Text>
+                  {givers.map((p) => {
+                    const g = GIVING[p.person.id];
+                    const who = p.person.name.replace(/ & family$/, '');
+                    const since = g.from ? g.from.slice(0, 4) : '2019';
+                    return (
+                      <Pressable key={p.person.id} accessibilityRole="link" accessibilityLabel={`${who}: at least ${money(g.total)} to federal campaigns and political committees since ${since}, largest ${titleCase(g.top[0]?.committee ?? '')}. Opens the FEC records.`} onPress={() => open(g.url)} style={styles.tie}>
+                        <Caption style={[styles.flex, { color: color.text }]} numberOfLines={2}>
+                          <Text style={{ fontWeight: '600' }}>{who}</Text> · at least {money(g.total)} to federal campaigns and committees since {since}
+                          {g.top[0] ? ` · largest: ${titleCase(g.top[0].committee)}` : ''}
+                        </Caption>
+                        <Icon name={icons.link} size={12} tint={color.action} />
+                      </Pressable>
+                    );
+                  })}
+                  <Caption style={styles.basis}>FEC individual contributions, matched strictly by name and employer, so some gifts may be missing. A donation is a public record, not a claim of influence.</Caption>
+                </View>
+              );
+            })()}
+            {s.statements && s.statements.length > 0 && (
+              <View style={styles.ties}>
+                <Text style={[type.caption, styles.rowLabel]}>In their words</Text>
+                {s.statements.map((q) => {
+                  const who = nameOf(q.person).replace(/ & family$/, '');
+                  const when = q.said ? new Date(`${q.said}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+                  return (
+                    <Pressable key={`${q.person}:${q.url}`} accessibilityRole="link" accessibilityLabel={`${who}${when ? `, ${when}` : ''}: ${q.quote}. Opens ${q.label}.`} onPress={() => open(q.url)} style={styles.tie}>
+                      <Caption style={[styles.flex, { color: color.text }]} numberOfLines={4}>
+                        “{q.quote}” <Text style={{ fontWeight: '600' }}>{who}</Text>
+                        {when ? `, ${when}` : ''} · {q.label}
+                      </Caption>
+                      <Icon name={icons.link} size={12} tint={color.action} />
+                    </Pressable>
+                  );
+                })}
+                <Caption style={styles.basis}>Each quote was found by Grok’s search and checked word for word against its page.</Caption>
               </View>
             )}
             <Pressable accessibilityRole="button" accessibilityLabel={`Watch: ${s.title}`} onPress={() => onWatch(s)} style={styles.watch}>
@@ -1079,6 +1160,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,.14)',
   },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  cardFit: { flexShrink: 1, minHeight: 0 },
+  cardBody: { flexShrink: 1, minHeight: 0 },
+  cardBodyInner: { gap: 10 },
   close: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,.08)' },
   cardRow: { gap: 4 },
   rowLabel: { color: color.textSecondary, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6 },

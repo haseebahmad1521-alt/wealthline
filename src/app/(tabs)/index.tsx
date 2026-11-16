@@ -4,6 +4,7 @@ import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from
 
 import { Movers, Overtakes, Podium, Races } from '@/components/arena';
 import { BriefCard, TrendingCard } from '@/components/news';
+import { Exposure } from '@/components/exposure';
 import { PageSearch } from '@/components/page-search';
 import { PersonList } from '@/components/person-row';
 import { SavedViews, useAppliedView } from '@/components/saved-views';
@@ -143,6 +144,7 @@ export default function Rankings() {
               <>
                 <Podium people={people.data ?? []} />
                 <Movers people={people.data ?? []} />
+                <Exposure />
                 {feeds}
                 <Races people={people.data ?? []} />
                 <Overtakes people={people.data ?? []} />

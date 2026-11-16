@@ -1,0 +1,1253 @@
+{
+ "built": "2026-11-16",
+ "source": "Companies’ annual reports (scripts/data/annual-report-regions.json)",
+ "companies": {
+  "9b1b8380-f6e4-4ca8-aa61-c2b0e14c5565": {
+   "company": "Inditex",
+   "fiscal_year": 2025,
+   "period_end": "2026-01-31",
+   "source_label": "Inditex consolidated annual accounts 2025, Note 11 (geographical reporting, net sales)",
+   "source_url": "https://www.inditex.com/itxcomweb/api/media/50ba1fc0-3862-4408-8da2-4f973f1be18e/AnnualAccountsDirectorsReportandAuditReportconsolidated.pdf",
+   "note": null,
+   "fx": {
+    "currency": "EUR",
+    "per_usd": 0.88496895841236,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Spain",
+     "country": "ES",
+     "revenue_usd": 7631906109,
+     "share": 0.1694
+    },
+    {
+     "region": "Rest of Europe",
+     "country": null,
+     "revenue_usd": 24304807299,
+     "share": 0.5396,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "ES"
+     ]
+    },
+    {
+     "region": "Americas",
+     "country": null,
+     "revenue_usd": 7877112450,
+     "share": 0.1749,
+     "covers": [
+      "NAC",
+      "LCN"
+     ]
+    },
+    {
+     "region": "Asia and rest of the world",
+     "country": null,
+     "revenue_usd": 5231821925,
+     "share": 0.1161,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA",
+      "SSF"
+     ]
+    }
+   ]
+  },
+  "e95a77f4-b5cd-4794-bc60-b674351aa974": {
+   "company": "Glencore",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Glencore Annual Report 2025, Note 2 (revenue from third parties by geography, p. 166)",
+   "source_url": "https://www.glencore.com/.rest/api/v1/documents/static/9b103e11-72e7-40bf-ae7c-eabe57361522/GLEN-2025-Annual-Report.pdf",
+   "note": "By country of incorporation of the sales counterparty, not final destination.",
+   "fx": {
+    "currency": "USD",
+    "per_usd": 1,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "United States",
+     "country": "US",
+     "revenue_usd": 22922000000,
+     "share": 0.0926
+    },
+    {
+     "region": "The Americas excluding the United States",
+     "country": null,
+     "revenue_usd": 16271000000,
+     "share": 0.0657,
+     "covers": [
+      "NAC",
+      "LCN"
+     ],
+     "except": [
+      "US"
+     ],
+     "derived": "The Americas 39,193 less United States 22,922"
+    },
+    {
+     "region": "United Kingdom",
+     "country": "GB",
+     "revenue_usd": 27623000000,
+     "share": 0.1116
+    },
+    {
+     "region": "Europe excluding the United Kingdom",
+     "country": null,
+     "revenue_usd": 39220000000,
+     "share": 0.1584,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "GB"
+     ],
+     "derived": "Europe 66,843 less United Kingdom 27,623"
+    },
+    {
+     "region": "Singapore",
+     "country": "SG",
+     "revenue_usd": 34617000000,
+     "share": 0.1398
+    },
+    {
+     "region": "China",
+     "country": "CN",
+     "revenue_usd": 31407000000,
+     "share": 0.1269
+    },
+    {
+     "region": "Asia excluding Singapore and China",
+     "country": null,
+     "revenue_usd": 55550000000,
+     "share": 0.2244,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA"
+     ],
+     "except": [
+      "SG",
+      "CN",
+      "AU",
+      "NZ",
+      "PG",
+      "FJ"
+     ],
+     "derived": "Asia 121,574 less Singapore 34,617 and China 31,407"
+    },
+    {
+     "region": "Africa",
+     "country": null,
+     "revenue_usd": 12330000000,
+     "share": 0.0498,
+     "covers": [
+      "SSF"
+     ],
+     "add": [
+      "DZ",
+      "EG",
+      "LY",
+      "MA",
+      "TN"
+     ]
+    },
+    {
+     "region": "Oceania",
+     "country": null,
+     "revenue_usd": 7595000000,
+     "share": 0.0307,
+     "add": [
+      "AU",
+      "NZ",
+      "PG",
+      "FJ"
+     ]
+    }
+   ]
+  },
+  "860eeae9-1701-4774-bfec-50e6c511d301": {
+   "company": "L'Oréal",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "L'Oréal 2025 Universal Registration Document, Note 3.1.2 (information by region)",
+   "source_url": "https://www.loreal-finance.com/eng/2025-universal-registration-document/en/article/302/",
+   "note": null,
+   "fx": {
+    "currency": "EUR",
+    "per_usd": 0.88496895841236,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "France",
+     "country": "FR",
+     "revenue_usd": 3627923860,
+     "share": 0.0729
+    },
+    {
+     "region": "Europe excluding France",
+     "country": null,
+     "revenue_usd": 13168710483,
+     "share": 0.2645,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "FR"
+     ],
+     "derived": "Europe 14,864.5 less France 3,210.6"
+    },
+    {
+     "region": "North America",
+     "country": null,
+     "revenue_usd": 13241255401,
+     "share": 0.266,
+     "covers": [
+      "NAC"
+     ]
+    },
+    {
+     "region": "North Asia",
+     "country": null,
+     "revenue_usd": 11384806104,
+     "share": 0.2287,
+     "add": [
+      "CN",
+      "JP",
+      "KR",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "region": "SAPMENA - SSA",
+     "country": null,
+     "revenue_usd": 4649089622,
+     "share": 0.0934,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA",
+      "SSF"
+     ],
+     "except": [
+      "CN",
+      "JP",
+      "KR",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "region": "Latin America",
+     "country": null,
+     "revenue_usd": 3706231692,
+     "share": 0.0745,
+     "covers": [
+      "LCN"
+     ]
+    }
+   ]
+  },
+  "8e31c9c2-e25d-4d02-84c4-0129e08235f1": {
+   "company": "LVMH",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "LVMH Financial Documents, December 31, 2025, Note 24.2 (revenue by region of delivery)",
+   "source_url": "https://assets.main.pro2.maf.media-server.com/d468eefc816c4023a2e9f62749613b98/Financial_documents_-_December_31_2025.pdf",
+   "note": null,
+   "fx": {
+    "currency": "EUR",
+    "per_usd": 0.88496895841236,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "France",
+     "country": "FR",
+     "revenue_usd": 7607046480,
+     "share": 0.0833
+    },
+    {
+     "region": "Europe (excl. France)",
+     "country": null,
+     "revenue_usd": 16418654984,
+     "share": 0.1798,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "FR"
+     ]
+    },
+    {
+     "region": "United States",
+     "country": "US",
+     "revenue_usd": 23374831177,
+     "share": 0.256
+    },
+    {
+     "region": "Japan",
+     "country": "JP",
+     "revenue_usd": 7207032449,
+     "share": 0.0789
+    },
+    {
+     "region": "Asia (excl. Japan)",
+     "country": null,
+     "revenue_usd": 24169209323,
+     "share": 0.2647,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "except": [
+      "JP",
+      "AU",
+      "NZ"
+     ]
+    },
+    {
+     "region": "Other countries",
+     "country": null,
+     "revenue_usd": 12532642975,
+     "share": 0.1373,
+     "covers": [
+      "LCN",
+      "MEA",
+      "SSF"
+     ],
+     "add": [
+      "CA",
+      "AU",
+      "NZ"
+     ]
+    }
+   ]
+  },
+  "c89d7879-8a39-4e55-98a1-609d23408ef9": {
+   "company": "BMW",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "BMW Group Financial Statements 2025, Note 46 (external revenues by region)",
+   "source_url": "https://www.bmwgroup.com/en/report/2025/downloads/BMW-Group-Financial-Statements-2025-en.pdf",
+   "note": null,
+   "fx": {
+    "currency": "EUR",
+    "per_usd": 0.88496895841236,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Germany",
+     "country": "DE",
+     "revenue_usd": 20889998258,
+     "share": 0.1385
+    },
+    {
+     "region": "Europe excluding Germany",
+     "country": null,
+     "revenue_usd": 46503326031,
+     "share": 0.3084,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "DE"
+     ],
+     "derived": "Europe 59,641 less Germany 18,487"
+    },
+    {
+     "region": "China",
+     "country": "CN",
+     "revenue_usd": 28034881635,
+     "share": 0.1859
+    },
+    {
+     "region": "Asia excluding China",
+     "country": null,
+     "revenue_usd": 15525968306,
+     "share": 0.103,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "except": [
+      "CN",
+      "AU",
+      "NZ"
+     ],
+     "derived": "Asia 38,550 less China 24,810"
+    },
+    {
+     "region": "United States",
+     "country": "US",
+     "revenue_usd": 30484685077,
+     "share": 0.2022
+    },
+    {
+     "region": "Americas excluding the United States",
+     "country": null,
+     "revenue_usd": 5678165265,
+     "share": 0.0377,
+     "covers": [
+      "NAC",
+      "LCN"
+     ],
+     "except": [
+      "US"
+     ],
+     "derived": "Americas 32,003 less USA 26,978"
+    },
+    {
+     "region": "Other regions",
+     "country": null,
+     "revenue_usd": 3682615044,
+     "share": 0.0244,
+     "covers": [
+      "MEA",
+      "SSF"
+     ],
+     "add": [
+      "AU",
+      "NZ"
+     ]
+    }
+   ]
+  },
+  "117ba2a7-3f87-4446-9e56-9c3bda87fad7": {
+   "company": "SoftBank Group",
+   "fiscal_year": 2025,
+   "period_end": "2026-03-31",
+   "source_label": "SoftBank Group Financial Report 2026, geographical information (net sales to external customers, p. 32)",
+   "source_url": "https://group.softbank/media/Project/sbg/sbg/pdf/ir/financials/annual_reports/financial-report_fy2026_en.pdf",
+   "note": null,
+   "fx": {
+    "currency": "JPY",
+    "per_usd": 149.657926890951,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Japan",
+     "country": "JP",
+     "revenue_usd": 45306320493,
+     "share": 0.8694
+    },
+    {
+     "region": "Other",
+     "country": null,
+     "revenue_usd": 6803515331,
+     "share": 0.1306,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "JP"
+     ]
+    }
+   ]
+  },
+  "396e57d2-44d4-484a-9866-827472b706b7": {
+   "company": "Fast Retailing",
+   "fiscal_year": 2025,
+   "period_end": "2025-08-31",
+   "source_label": "Fast Retailing, revenue by major regional market, fiscal 2025 (p. 24)",
+   "source_url": "https://www.fastretailing.com/eng/ir/stockinfo/pdf/disclosure_2025Aug_eng.pdf",
+   "note": "UNIQLO lines are by customer location; GU, Global Brands and Others are brand lines without a place, so they count in the total but move with no country.",
+   "fx": {
+    "currency": "JPY",
+    "per_usd": 149.657926890951,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Japan",
+     "country": "JP",
+     "revenue_usd": 6856275650,
+     "share": 0.3017
+    },
+    {
+     "region": "Greater China",
+     "country": null,
+     "revenue_usd": 4344788235,
+     "share": 0.1912,
+     "add": [
+      "CN",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "region": "South Korea, Southeast Asia, India & Australia",
+     "country": null,
+     "revenue_usd": 4138885343,
+     "share": 0.1822,
+     "add": [
+      "KR",
+      "ID",
+      "MY",
+      "PH",
+      "SG",
+      "TH",
+      "VN",
+      "IN",
+      "AU",
+      "NZ"
+     ]
+    },
+    {
+     "region": "North America",
+     "country": null,
+     "revenue_usd": 1811664812,
+     "share": 0.0797,
+     "covers": [
+      "NAC"
+     ]
+    },
+    {
+     "region": "Europe",
+     "country": null,
+     "revenue_usd": 2469023911,
+     "share": 0.1087,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "region": "GU (brand)",
+     "country": null,
+     "revenue_usd": 2209712555,
+     "share": 0.0972
+    },
+    {
+     "region": "Global Brands",
+     "country": null,
+     "revenue_usd": 878951104,
+     "share": 0.0387
+    },
+    {
+     "region": "Others",
+     "country": null,
+     "revenue_usd": 12762438,
+     "share": 0.0006
+    }
+   ]
+  },
+  "87ec911d-2c90-462e-806c-15e0c42c8c00": {
+   "company": "HCL Technologies",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "source_label": "HCLTech Annual Report 2024-25, geographical mix (p. 100)",
+   "source_url": "https://www.hcltech.com/sites/default/files/document/open/annual-report/2025-08/Annual-Report-2024-25_0.pdf",
+   "note": null,
+   "fx": {
+    "currency": "INR",
+    "per_usd": 83.669281580941,
+    "year": 2024,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "United States of America",
+     "country": "US",
+     "revenue_usd": 8125682295,
+     "share": 0.5808
+    },
+    {
+     "region": "Europe",
+     "country": null,
+     "revenue_usd": 3733747847,
+     "share": 0.2669,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "region": "India",
+     "country": "IN",
+     "revenue_usd": 438273155,
+     "share": 0.0313
+    },
+    {
+     "region": "Rest of the world",
+     "country": null,
+     "revenue_usd": 1692496904,
+     "share": 0.121,
+     "covers": [
+      "EAS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "US",
+      "IN"
+     ]
+    }
+   ]
+  },
+  "cc2cdca0-b86b-4e5a-b370-0f22c98c6526": {
+   "company": "Reliance Industries Limited",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "source_label": "Reliance Integrated Annual Report 2024-25, secondary segment information (external turnover, pp. 258-259)",
+   "source_url": "https://www.ril.com/ar2024-25/pdf/RIL-IAR-2025.pdf",
+   "note": null,
+   "fx": {
+    "currency": "INR",
+    "per_usd": 83.669281580941,
+    "year": 2024,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Within India",
+     "country": "IN",
+     "revenue_usd": 82053292084,
+     "share": 0.6409
+    },
+    {
+     "region": "Outside India",
+     "country": null,
+     "revenue_usd": 45971471576,
+     "share": 0.3591,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "IN"
+     ]
+    }
+   ]
+  },
+  "5636902e-a927-4134-8938-3e0d9f072120": {
+   "company": "Sun Pharmaceutical",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "source_label": "Sun Pharma Annual Report 2024-25, Note 52 (revenue by geography, p. 282)",
+   "source_url": "https://sunpharma.com/wp-content/uploads/2025/07/SPIL-Annual-Report-2024-25.pdf",
+   "note": "Emerging markets and rest of world as Sun Pharma uses them (rest of world: Western Europe, Canada, Japan, Australia and New Zealand, Israel and others).",
+   "fx": {
+    "currency": "INR",
+    "per_usd": 83.669281580941,
+    "year": 2024,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "India",
+     "country": "IN",
+     "revenue_usd": 2076697645,
+     "share": 0.3339
+    },
+    {
+     "region": "United States of America",
+     "country": "US",
+     "revenue_usd": 2032724517,
+     "share": 0.3268
+    },
+    {
+     "region": "Emerging markets",
+     "country": null,
+     "revenue_usd": 1189919384,
+     "share": 0.1913,
+     "covers": [
+      "LCN",
+      "MEA",
+      "SSF",
+      "SAS",
+      "EAS"
+     ],
+     "except": [
+      "IN",
+      "JP",
+      "AU",
+      "NZ",
+      "KR",
+      "IL"
+     ]
+    },
+    {
+     "region": "Rest of the world",
+     "country": null,
+     "revenue_usd": 920533779,
+     "share": 0.148,
+     "covers": [
+      "ECS"
+     ],
+     "add": [
+      "CA",
+      "JP",
+      "AU",
+      "NZ",
+      "IL"
+     ]
+    }
+   ]
+  },
+  "a6c65bca-bd8d-4e49-8a9d-6d1cc7c4f416": {
+   "company": "DMart",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "source_label": "Avenue Supermarts Annual Report 2024-25, Note 40 (single segment: retail in India)",
+   "source_url": "https://api.dmartindia.com/corporate/content/file/v1/6/vLobSX3O9BXYtJt1WfpFGuYr1752926697/Annual%20Report%202024-25.pdf",
+   "note": null,
+   "fx": {
+    "currency": "INR",
+    "per_usd": 83.669281580941,
+    "year": 2024,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "India",
+     "country": "IN",
+     "revenue_usd": 7094365922,
+     "share": 1,
+     "statement": "The Group is into the business of retail in India"
+    }
+   ]
+  },
+  "30b9f62d-f88e-4525-b4b9-5f1fb829be0f": {
+   "company": "Asset World Corporation",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Asset World Corporation One Report 2025, geographical segments (p. 368)",
+   "source_url": "https://hub.optiwise.io/storage/8/annual-report/2025/awc-one-report2025-en.pdf",
+   "note": null,
+   "fx": {
+    "currency": "THB",
+    "per_usd": 32.882809252867,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Thailand",
+     "country": "TH",
+     "revenue_usd": 701441194,
+     "share": 1,
+     "statement": "There are no material revenues derived from, or assets located in, foreign countries"
+    }
+   ]
+  },
+  "428a332c-1c29-4d50-b1d1-3e44c5c2e9ec": {
+   "company": "Jio Financial",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "source_label": "Jio Financial Services Annual Report 2024-25, Note 32 (operations predominantly in India)",
+   "source_url": "https://www.jfs.in/docs/cms/assets/jfs/investor-relations/financials/annual-reports/fy-2024-2025/annual-report-2024-2025.pdf",
+   "note": null,
+   "fx": {
+    "currency": "INR",
+    "per_usd": 83.669281580941,
+    "year": 2024,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "India",
+     "country": "IN",
+     "revenue_usd": 244164879,
+     "share": 1,
+     "statement": "The operations of the Group ... are predominantly conducted within India"
+    }
+   ]
+  },
+  "23fc4bae-f96e-4c7d-8c8a-b118c10d6636": {
+   "company": "Contemporary Amperex Technology Co. Limited",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "CATL 2025 Annual Report, operating revenue by region (分地区)",
+   "source_url": "https://www.catl.com/uploads/1/file/public/202603/20260310105829_c5p2l3q9ll.pdf",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Domestic (境内)",
+     "country": "CN",
+     "revenue_usd": 40899418402,
+     "share": 0.694
+    },
+    {
+     "region": "Overseas (境外)",
+     "country": null,
+     "revenue_usd": 18031155775,
+     "share": 0.306,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "0335850d-8236-4ffc-8719-52b9dd496638": {
+   "company": "Tencent",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Tencent 2025 Annual Report, Note 6 (revenues by geographical location)",
+   "source_url": "https://static.www.tencent.com/uploads/2026/04/09/62d786fcf3d3c8cb7e54791ee95439ac.pdf",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Chinese Mainland",
+     "country": "CN",
+     "revenue_usd": 92090828297,
+     "share": 0.8808
+    },
+    {
+     "region": "Others",
+     "country": null,
+     "revenue_usd": 12468553967,
+     "share": 0.1192,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "72444632-89d7-49c2-b17b-70db5629d244": {
+   "company": "Midea",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Midea Group 2025 Annual Report, operating revenue by region (pp. 48-49)",
+   "source_url": "https://www.midea.com.cn/content/dam/mideacn-aem/投资者关系/2025年度报告.pdf.coredownload.inline.pdf",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Domestic (国内)",
+     "country": "CN",
+     "revenue_usd": 36232206951,
+     "share": 0.5707
+    },
+    {
+     "region": "Overseas (海外)",
+     "country": null,
+     "revenue_usd": 27253387006,
+     "share": 0.4293,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "cfbff0ef-a4f7-4689-8f94-ab7ec3bd9b02": {
+   "company": "Lens Technology",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Lens Technology 2025 Annual Report, revenue by region (p. 24; Sina Finance copy of the filing)",
+   "source_url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESZ_STOCK/2026/2026-3/2026-03-31/12048838.PDF",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Domestic sales (国内销售)",
+     "country": "CN",
+     "revenue_usd": 4653021768,
+     "share": 0.4496
+    },
+    {
+     "region": "Overseas sales (国外销售)",
+     "country": null,
+     "revenue_usd": 5696256573,
+     "share": 0.5504,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "0ab7fea8-1dd3-4979-b711-d2d4892985a6": {
+   "company": "Hikvision",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Hikvision 2025 Annual Report, revenue by region (p. 87; Sina Finance copy of the filing)",
+   "source_url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESZ_STOCK/2026/2026-4/2026-04-18/12113888.PDF",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Domestic (境内)",
+     "country": "CN",
+     "revenue_usd": 8097763408,
+     "share": 0.6294
+    },
+    {
+     "region": "Overseas (境外)",
+     "country": null,
+     "revenue_usd": 4768684412,
+     "share": 0.3706,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "8cad09bb-3ab1-46b1-9d4e-af700ccc0af6": {
+   "company": "Xiaomi",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Xiaomi 2025 Annual Results, Note 2 (revenue by region)",
+   "source_url": "https://ir.mi.com/system/files-encrypted/nasdaq_kms/assets/2026/03/24/5-35-03/25Q4%20EN%20AC%20Xiaomi.pdf",
+   "note": "Xiaomi: revenue outside the Chinese Mainland is mainly from Europe and India.",
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Chinese Mainland",
+     "country": "CN",
+     "revenue_usd": 42591048887,
+     "share": 0.6697
+    },
+    {
+     "region": "Rest of the world",
+     "country": null,
+     "revenue_usd": 21010674934,
+     "share": 0.3303,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  "e67a07f3-23fc-4ed2-b40c-bdf373880a7e": {
+   "company": "BYD Electronic",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "BYD Electronic 2025 Annual Results, revenue from external customers by customer location (p. 11)",
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0327/2026032702072.pdf",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "PRC (including Hong Kong, Macau and Taiwan)",
+     "country": null,
+     "revenue_usd": 8406164256,
+     "share": 0.3368,
+     "add": [
+      "CN",
+      "HK",
+      "MO",
+      "TW"
+     ]
+    },
+    {
+     "region": "Overseas",
+     "country": null,
+     "revenue_usd": 16556452426,
+     "share": 0.6632,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN",
+      "HK",
+      "MO",
+      "TW"
+     ]
+    }
+   ]
+  },
+  "06ddf175-f1ec-4375-b0c8-b5363585f921": {
+   "company": "Shangri-La Hotels and Resorts",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Shangri-La Asia 2025 Final Results, Note 3 (revenue by location, p. 45)",
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0326/2026032600950.pdf",
+   "note": null,
+   "fx": {
+    "currency": "USD",
+    "per_usd": 1,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Hong Kong",
+     "country": "HK",
+     "revenue_usd": 400857000,
+     "share": 0.1794
+    },
+    {
+     "region": "Other countries",
+     "country": null,
+     "revenue_usd": 1833215000,
+     "share": 0.8206,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "HK"
+     ]
+    }
+   ]
+  },
+  "c1d6c6f1-d2b8-4c26-ae00-2c1e936d5b5e": {
+   "company": "Nongfu Spring",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "Nongfu Spring 2025 Annual Results, Note 2 (over 99% of revenue from the Chinese Mainland)",
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0324/2026032401065.pdf",
+   "note": null,
+   "fx": {
+    "currency": "RMB",
+    "per_usd": 7.18984737402171,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Chinese Mainland",
+     "country": "CN",
+     "revenue_usd": 7309322057,
+     "share": 1,
+     "statement": "Over 99% of the Group's revenue and operating profits are derived from customers based in Chinese Mainland"
+    }
+   ]
+  },
+  "721d5639-7a03-4db9-bed4-79664920535d": {
+   "company": "FIH Mobile Limited",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "FIH Mobile Annual Report 2025, Note 5 (segment revenue by customer location, p. 97)",
+   "source_url": "https://www.fihmobile.com/assets/upload/images/2026/04/16/629c4ed47115395098d0af3f.pdf",
+   "note": null,
+   "fx": {
+    "currency": "USD",
+    "per_usd": 1,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Asia",
+     "country": null,
+     "revenue_usd": 2363042000,
+     "share": 0.3549,
+     "covers": [
+      "EAS",
+      "SAS"
+     ]
+    },
+    {
+     "region": "Europe",
+     "country": null,
+     "revenue_usd": 1936218000,
+     "share": 0.2908,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "region": "America",
+     "country": null,
+     "revenue_usd": 2358403000,
+     "share": 0.3542,
+     "covers": [
+      "NAC",
+      "LCN"
+     ]
+    }
+   ]
+  },
+  "f82bcafe-0117-4987-a1ec-90268e69e2b3": {
+   "company": "CK Hutchison Holdings",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "source_label": "CK Hutchison 2025 Annual Results, Note 5(b)(ii) (revenue by geographical location, p. 35)",
+   "source_url": "https://doc.irasia.com/listco/hk/ckh/announcement/a332438-e_pressannouncement_2025.pdf",
+   "note": "Needs a visual check: the table's text came out scrambled and labels were matched to amounts by the sums. Finance & Investments and Others has no place.",
+   "fx": {
+    "currency": "HKD",
+    "per_usd": 7.79708333333333,
+    "year": 2025,
+    "source": "World Bank PA.NUS.FCRF (annual average)"
+   },
+   "lines": [
+    {
+     "region": "Hong Kong",
+     "country": "HK",
+     "revenue_usd": 3809501416,
+     "share": 0.1061
+    },
+    {
+     "region": "Chinese Mainland",
+     "country": "CN",
+     "revenue_usd": 2128359964,
+     "share": 0.0593
+    },
+    {
+     "region": "Europe",
+     "country": null,
+     "revenue_usd": 19989012986,
+     "share": 0.5566,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "region": "Canada",
+     "country": "CA",
+     "revenue_usd": 11414525,
+     "share": 0.0003
+    },
+    {
+     "region": "Asia, Australia and Others",
+     "country": null,
+     "revenue_usd": 8017741677,
+     "share": 0.2232,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "add": [
+      "AU",
+      "NZ"
+     ],
+     "except": [
+      "HK",
+      "CN"
+     ]
+    },
+    {
+     "region": "Finance & Investments and Others",
+     "country": null,
+     "revenue_usd": 1959450649,
+     "share": 0.0546
+    }
+   ]
+  }
+ }
+}

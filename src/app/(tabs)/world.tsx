@@ -19,7 +19,7 @@ import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { chain, FOLLOW_UPS } from '@/lib/chain';
-import { expandAnalogs, type EventData } from '@/lib/analogs';
+import { expandAnalogs, pastEvents, replayScenario, type EventData } from '@/lib/analogs';
 import eventData from '@/data/events.json';
 import { MINE_KEY, myChange, readMine, type Holding } from '@/lib/mine';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
@@ -27,6 +27,8 @@ import { getItem, setItem } from '@/lib/device-store';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
 import { BriefingPanel, DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
+import { REFERENCE } from '@/lib/factor-data';
+import { toSimCountries, toSimEmpires } from '@/lib/sim-inputs';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
@@ -48,6 +50,9 @@ const KIND: Record<SiteKind, [string, string]> = {
   store: ['Store', 'Stores'],
   other: ['Site', 'Sites'],
 };
+
+// The 80% range width calibrated on past shocks (fat tails), else the bell-curve one.
+const RANGE_Z = REFERENCE.backtest?.ranges?.z80;
 
 const VIEWS = [
   { key: 'places', label: 'Today' },
@@ -93,19 +98,11 @@ export default function World() {
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
   const simOn = view === 'whatif' && !!sim;
-  const simEmpires = useMemo<SimEmpire[]>(
-    () =>
-      empires.map((e) => ({
-        person: e.person,
-        stakes: e.stakes,
-        companies: e.companies.map((c) => ({ id: c.id, name: c.name, sector: simData.data?.sectors.get(c.id) ?? null, listed: !c.is_private && !!c.ticker, regions: c.regions, fit: simData.data?.fits.get(c.id) ?? null })),
-      })),
-    [empires, simData.data],
-  );
-  const simCountries = useMemo<SimCountry[]>(() => (world.countries ?? []).map((c) => ({ ...c, region: simData.data?.regions.get(c.iso2) ?? null })), [world.countries, simData.data]);
+  const simEmpires = useMemo<SimEmpire[]>(() => toSimEmpires(empires, simData.data), [empires, simData.data]);
+  const simCountries = useMemo<SimCountry[]>(() => toSimCountries(world.countries, simData.data), [world.countries, simData.data]);
   // Every month of the film at once (a few dozen small calculations), so notifications can compare months.
   const frames = useMemo(
-    () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m)) : []),
+    () => (simOn && sim ? Array.from({ length: sim.months + 1 }, (_, m) => simulate(sim, simEmpires, simCountries, m, RANGE_Z)) : []),
     [simOn, sim, simEmpires, simCountries],
   );
   const month = sim ? Math.min(Math.floor(tick / TICKS_PER_MONTH), sim.months) : 0;
@@ -297,12 +294,23 @@ export default function World() {
     const owners = new Map<string, { id: string; name: string }[]>();
     for (const e of empires) for (const c of e.companies) owners.set(c.id, [...(owners.get(c.id) ?? []), { id: e.person.id, name: e.person.name }]);
     const contracts = (tiesData as { companies: Record<string, ContractTie> }).companies;
-    return briefing(briefSource, simEmpires, simCountries, eventData as EventData).map((item) => ({
+    return briefing(briefSource, simEmpires, simCountries, eventData as EventData, 2, RANGE_Z).map((item) => ({
       ...item,
       ties: tiesFor(expandAnalogs(item.scenario, null), contracts, (id) => owners.get(id) ?? []),
     }));
   }, [view, briefSource, simEmpires, simCountries, empires]);
   const liveOdds = useLiveOdds(briefSource.map((s) => s.odds?.market).filter((x): x is string => !!x));
+
+  // "Last time this happened": the past events behind the scenario's analogs, each replayed on today's fortunes.
+  const replays = useMemo(() => (picked ? pastEvents(picked, eventData as EventData) : []), [picked]);
+  const replay = (key: string) => {
+    const s = replayScenario(key, eventData as EventData);
+    if (!s) return;
+    setAsked((x) => [s, ...x.filter((y) => y.id !== s.id)]);
+    setSimId(s.id);
+    setTick(0);
+    setPlaying(!reduceMotion);
+  };
 
   // "…and then?": the story carries on for another year from where it ended; the film resumes there.
   const followUps = sim && sim.origin !== 'dials' && sim.months < 36 ? FOLLOW_UPS : undefined;
@@ -578,7 +586,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} mine={mineEnd} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -601,7 +609,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} mine={mineEnd} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -637,6 +645,7 @@ export default function World() {
                     mostAsked={mostAsked.data ?? []}
                     brief={
                       <BriefingPanel
+                        nameOf={(slug) => empires.find((e) => e.person.slug === slug)?.person.name ?? slug}
                         items={briefItems}
                         sample={!daily.data?.length}
                         live={liveOdds.data ?? new Map()}

@@ -6,10 +6,12 @@ import { useMemo } from 'react';
 
 import { usePeople, type Person } from '@/lib/data';
 import { db } from '@/lib/supabase';
+import regionReference from '@/data/regions.json';
+import stakeReference from '@/data/stakes.json';
 
 export type SiteKind = 'hq' | 'office' | 'factory' | 'data_center' | 'launch_site' | 'store' | 'research' | 'other';
 export type Site = { company_id: string; kind: SiteKind; name: string; city: string | null; country: string | null; lat: number; lng: number; source_url: string | null };
-export type RegionShare = { company_id: string; fiscal_year: number; region: string; country: string | null; revenue_usd: number; share: number; source_label: string; source_url: string | null };
+export type RegionShare = { company_id: string; fiscal_year: number; region: string; country: string | null; revenue_usd: number; share: number; source_label: string; source_url: string | null; covers?: string[]; add?: string[]; except?: string[]; note?: string | null };
 export type Quote = { ticker: string; as_of: string; price: number; prev_close: number | null; change_pct: number | null; source_label: string; source_url: string | null };
 export type Company = {
   id: string;
@@ -26,6 +28,7 @@ export type CompanyView = Company & { sites: Site[]; regions: RegionShare[]; quo
 /** A recorded share count (SEC Form 4 or Schedule 13G/13D) valued at the latest observed price. */
 export type Stake = { company: CompanyView; shares: number; value: number | null; asOf: string | null; label: string | null; url: string | null; note: string | null };
 export type Empire = { person: Person; companies: CompanyView[]; hq: { lat: number; lng: number } | null; stakes: Stake[] };
+type ReferenceStake = { person_id: string; company_id: string; shares: number; label: string | null; url: string | null; as_of: string | null; note: string | null };
 type ShareRow = { person_id: string; company_id: string; shares_owned: number; shares_as_of: string | null; shares_source_label: string | null; shares_source_url: string | null; shares_note: string | null };
 export type Country = { iso2: string; name: string; gdp_usd: number | null; gdp_year: number | null; source_url: string | null };
 
@@ -73,6 +76,20 @@ export function useWorld() {
 /** Warm the World query in the background so opening World never waits on the network. */
 export const prefetchWorld = (qc: QueryClient) => qc.prefetchQuery({ queryKey: ['world'], queryFn: loadWorld });
 
+type ReferenceRegions = { fiscal_year: number; source_label: string; source_url: string; note: string | null; lines: Omit<RegionShare, 'company_id' | 'fiscal_year' | 'source_label' | 'source_url'>[] };
+const REGION_REFERENCE = (regionReference as unknown as { companies: Record<string, ReferenceRegions> }).companies;
+
+/**
+ * A company's revenue by place: the database's (SEC 10-K lines), else the annual-report lines in src/data/regions.json
+ * for companies that don't file with the SEC.
+ */
+function regionsFor(companyId: string, rows: RegionShare[]): RegionShare[] {
+  const own = rows.filter((r) => r.company_id === companyId);
+  const ref = REGION_REFERENCE[companyId];
+  if (own.length || !ref) return own;
+  return ref.lines.map((l) => ({ ...l, company_id: companyId, fiscal_year: ref.fiscal_year, source_label: ref.source_label, source_url: ref.source_url, note: ref.note }));
+}
+
 function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof loadWorld>> | undefined): Empire[] | undefined {
   let empires: Empire[] | undefined;
   if (people && w) {
@@ -83,7 +100,7 @@ function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof
         const view: CompanyView = {
           ...c,
           sites: w.sites.filter((s) => s.company_id === c.id),
-          regions: w.regions.filter((r) => r.company_id === c.id),
+          regions: regionsFor(c.id, w.regions),
           quote: c.ticker ? (quoteBy.get(c.ticker) ?? null) : null,
           subsidiaries: subs.length,
           subsidiariesUrl: subs[0]?.source_url ?? null,
@@ -106,6 +123,17 @@ function buildEmpires(people: Person[] | undefined, w: Awaited<ReturnType<typeof
             const shares = Number(h.shares_owned);
             return { company, shares, value: company.quote ? shares * company.quote.price : null, asOf: h.shares_as_of, label: h.shares_source_label, url: h.shares_source_url, note: h.shares_note };
           });
+        // Share counts the ownership import found in SEC filings but the database doesn't have yet
+        // (src/data/stakes.json, from supabase/import/ownership.sql). Used only where it's substantial: worth at least a
+        // tenth of the recorded fortune, since a Form 4 that covers one share class or one trust can be far from the
+        // whole stake.
+        for (const r of (stakeReference as { stakes: ReferenceStake[] }).stakes) {
+          if (r.person_id !== person.id || stakes.some((x) => x.company.id === r.company_id)) continue;
+          const company = companies.get(r.company_id);
+          const value = company?.quote ? r.shares * company.quote.price : null;
+          if (!company || value == null || !person.net_worth_usd || value < 0.1 * person.net_worth_usd) continue;
+          stakes.push({ company, shares: r.shares, value, asOf: r.as_of, label: r.label, url: r.url, note: r.note ?? 'From the SEC ownership import; not yet in the database.' });
+        }
         return { person, companies: owned, hq: main ? { lat: main.hq_lat!, lng: main.hq_lng! } : null, stakes };
       })
       .filter((e) => e.companies.length > 0);

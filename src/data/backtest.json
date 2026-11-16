@@ -4,30 +4,30 @@
    "event": "COVID crash",
    "key": "covid",
    "weeks": 5,
-   "market": -0.3869129780511674,
+   "market": -0.3869128458544852,
    "crash": true,
    "companies": 57,
    "naive": {
-    "mae": 0.14861591197865795,
-    "corr": -6.385996233372793e-17,
+    "mae": 0.1486158740982298,
+    "corr": 3.034625972054987e-16,
     "coverage": null,
     "coverageWithNoise": null
    },
    "plain": {
-    "mae": 0.15199269950955527,
-    "corr": 0.5550077293508422,
+    "mae": 0.15199267998584287,
+    "corr": 0.5550066294011092,
     "coverage": 0.5087719298245614,
     "coverageWithNoise": 0.631578947368421
    },
    "improved": {
-    "mae": 0.12870242956911784,
-    "corr": 0.49025450878718274,
+    "mae": 0.12870284836502136,
+    "corr": 0.49025252997836877,
     "coverage": 0.47368421052631576,
     "coverageWithNoise": 0.6666666666666666
    },
    "crisis": {
-    "mae": 0.12870242956911784,
-    "corr": 0.49025450878718274,
+    "mae": 0.12870284836502136,
+    "corr": 0.49025252997836877,
     "coverage": 0.47368421052631576,
     "coverageWithNoise": 0.6666666666666666
    }
@@ -36,30 +36,30 @@
    "event": "Invasion of Ukraine: oil spike",
    "key": "invasion",
    "weeks": 2,
-   "market": -0.03479423526145524,
+   "market": -0.034794154640247724,
    "crash": false,
    "companies": 60,
    "naive": {
-    "mae": 0.06791637012880393,
-    "corr": -2.570708788698843e-16,
+    "mae": 0.0679163690433323,
+    "corr": 0,
     "coverage": null,
     "coverageWithNoise": null
    },
    "plain": {
-    "mae": 0.06328880201482659,
-    "corr": 0.34263248399313206,
+    "mae": 0.06328881559137871,
+    "corr": 0.3426325426100951,
     "coverage": 0.3333333333333333,
     "coverageWithNoise": 0.7166666666666667
    },
    "improved": {
-    "mae": 0.060949305987652136,
-    "corr": 0.42644151970200134,
+    "mae": 0.06094934321496547,
+    "corr": 0.4264417815683626,
     "coverage": 0.2,
     "coverageWithNoise": 0.7
    },
    "crisis": {
-    "mae": 0.060949305987652136,
-    "corr": 0.42644151970200134,
+    "mae": 0.06094934321496547,
+    "corr": 0.4264417815683626,
     "coverage": 0.2,
     "coverageWithNoise": 0.7
    }
@@ -68,30 +68,30 @@
    "event": "2022 bear market",
    "key": "bear2022",
    "weeks": 40,
-   "market": -0.2824022170309647,
+   "market": -0.2824020612952939,
    "crash": true,
    "companies": 60,
    "naive": {
-    "mae": 0.23702575867912035,
-    "corr": -4.897527017334573e-16,
+    "mae": 0.23702575473616058,
+    "corr": 1.34681992527854e-16,
     "coverage": null,
     "coverageWithNoise": null
    },
    "plain": {
-    "mae": 0.1987132724152685,
-    "corr": 0.4291401141789683,
+    "mae": 0.19871320892421468,
+    "corr": 0.42914118608919044,
     "coverage": 0.2833333333333333,
     "coverageWithNoise": 0.85
    },
    "improved": {
-    "mae": 0.1867588738798842,
-    "corr": 0.4863284577289659,
+    "mae": 0.18675882341646236,
+    "corr": 0.4863286405452499,
     "coverage": 0.23333333333333334,
     "coverageWithNoise": 0.85
    },
    "crisis": {
-    "mae": 0.2177625838508669,
-    "corr": 0.30213333738391,
+    "mae": 0.21776309282672723,
+    "corr": 0.3021316988349542,
     "coverage": 0.2833333333333333,
     "coverageWithNoise": 0.8333333333333334
    }
@@ -104,26 +104,26 @@
    "crash": false,
    "companies": 64,
    "naive": {
-    "mae": 0.0906610704718856,
-    "corr": -1.1550572299107909e-16,
+    "mae": 0.09066106521008267,
+    "corr": -2.3101144711451485e-16,
     "coverage": null,
     "coverageWithNoise": null
    },
    "plain": {
-    "mae": 0.06100913730874071,
-    "corr": 0.7778771218407994,
+    "mae": 0.061009147562326733,
+    "corr": 0.7778772031912736,
     "coverage": 0.46875,
     "coverageWithNoise": 0.796875
    },
    "improved": {
-    "mae": 0.056790663115448635,
-    "corr": 0.8035754520226176,
+    "mae": 0.056790628381527125,
+    "corr": 0.8035757298666096,
     "coverage": 0.296875,
     "coverageWithNoise": 0.796875
    },
    "crisis": {
-    "mae": 0.056790663115448635,
-    "corr": 0.8035754520226176,
+    "mae": 0.056790628381527125,
+    "corr": 0.8035757298666096,
     "coverage": 0.296875,
     "coverageWithNoise": 0.796875
    }
@@ -136,26 +136,26 @@
    "crash": true,
    "companies": 65,
    "naive": {
-    "mae": 0.048002927990572264,
-    "corr": -3.1740356059144875e-16,
+    "mae": 0.04800291947842469,
+    "corr": -5.309297519726054e-16,
     "coverage": null,
     "coverageWithNoise": null
    },
    "plain": {
-    "mae": 0.04174072716735684,
-    "corr": 0.6441369026728886,
+    "mae": 0.041740725452970445,
+    "corr": 0.6441368135074959,
     "coverage": 0.3076923076923077,
     "coverageWithNoise": 0.6615384615384615
    },
    "improved": {
-    "mae": 0.03659252999566231,
-    "corr": 0.6854545079968778,
+    "mae": 0.03659251292846898,
+    "corr": 0.6854546027786319,
     "coverage": 0.15384615384615385,
     "coverageWithNoise": 0.7384615384615385
    },
    "crisis": {
-    "mae": 0.043631401890586646,
-    "corr": 0.46536522437669103,
+    "mae": 0.04363142033537548,
+    "corr": 0.46536480402343205,
     "coverage": 0.23076923076923078,
     "coverageWithNoise": 0.7076923076923077
    }
@@ -166,5 +166,36 @@
   "plain": 0.101,
   "improved": 0.092,
   "crisis": 0.1
+ },
+ "ranges": {
+  "z80": 1.485,
+  "outOfSample": [
+   {
+    "event": "COVID crash",
+    "z": 1.408,
+    "coverage": 0.684
+   },
+   {
+    "event": "Invasion of Ukraine: oil spike",
+    "z": 1.463,
+    "coverage": 0.783
+   },
+   {
+    "event": "2022 bear market",
+    "z": 1.607,
+    "coverage": 0.883
+   },
+   {
+    "event": "China stimulus rally",
+    "z": 1.609,
+    "coverage": 0.906
+   },
+   {
+    "event": "April 2025 tariff shock",
+    "z": 1.463,
+    "coverage": 0.785
+   }
+  ],
+  "pooledCoverage": 0.81
  }
 }

@@ -6,12 +6,21 @@
 //    Pacific") is split between the countries in it by recorded GDP (World Bank), leaving out countries the company
 //    reports on their own line; only the country's share moves.
 //  - company / sector / market: the share price moves by the change.
-//  - a company's share price also follows its revenue: losing a tenth of revenue takes a tenth off the price (the
-//    same assumption the place mode of What if states).
+//  - a company's share price also follows its profit, which moves more than its revenue: with an operating margin m,
+//    and about 30% of costs fixed over a scenario's months, a revenue change r changes profit by
+//    r x (m + 0.3(1 - m)) / m (operating leverage). Damped so thin margins can't swing wildly: at most 3x, and
+//    one-for-one when the margin is under 5%, a loss, or not recorded (see operatingLeverage).
 //  - a person's fortune moves only through recorded stakes (shares × price). Everyone else touched is shown with
 //    their company's percentage move, never a dollar figure.
 //  - transfer: the shares change hands at month `to` at that month's price plus the premium, paid in cash.
 import { ramp, type Scenario, type Shock } from '../../supabase/functions/_shared/scenario.ts';
+
+/**
+ * Half-width of an 80% range, in standard deviations, on a bell curve. Real moves have fatter tails, so the app passes
+ * the calibrated width instead (factors.json backtest.ranges.z80: the multiple that held 80% of the model's misses on
+ * past shocks, scripts/build-factors.mjs).
+ */
+export const Z80 = 1.2816;
 
 /**
  * Measured sensitivities (factors.ts) and their standard errors, by factor, and `sd`: the weekly moves the factors
@@ -23,10 +32,25 @@ export type SimCompany = {
   name: string;
   sector?: string | null;
   listed: boolean;
-  regions: { region: string; country: string | null; revenue_usd: number }[];
+  regions: ({ region: string; country: string | null; revenue_usd: number } & LineCover)[];
   /** Its own measured sensitivities; without them it borrows its listed sector peers' average (and their spread). */
   fit?: SimFit | null;
+  /** Recorded operating margin (operating income / revenue), for the profit step. */
+  margin?: number | null;
 };
+
+/** Share of costs that stay put over a scenario's months (staff, rent, depreciation): a stated assumption. */
+export const FIXED_COSTS = 0.3;
+/**
+ * How much a company's profit moves for each 1% its revenue moves. A lost dollar of revenue takes its variable costs
+ * with it but not the fixed ones, so profit falls faster than revenue, more so for thin margins. Damped: at most 3x,
+ * and 1 (price follows revenue) when the margin is under 5%, a loss, or unknown, where the ratio says little.
+ */
+export function operatingLeverage(margin: number | null | undefined): number {
+  if (margin == null || !(margin >= 0.05)) return 1;
+  const m = Math.min(margin, 1);
+  return Math.min(3, (m + FIXED_COSTS * (1 - m)) / m);
+}
 export type SimPerson = { id: string; slug: string; name: string; net_worth_usd: number | null; portrait_url?: string | null };
 export type SimEmpire = { person: SimPerson; companies: SimCompany[]; stakes: { company: { id: string }; value: number | null }[] };
 export type SimCountry = { iso2: string; gdp_usd: number | null; region?: string | null };
@@ -52,9 +76,23 @@ const NAMED: [RegExp, string][] = [
   [/japan/i, 'JP'],
 ];
 
-/** Countries a reported revenue line covers: its own country, or the countries of a named region. */
-export function lineCountries(line: { region: string; country: string | null }, own: Set<string>, countries: SimCountry[]): string[] {
+/**
+ * Where a line's region name says little ("North Asia", "SAPMENA - SSA", "Other countries"), the line itself can say
+ * which World Bank regions it covers, which countries it adds, and which it leaves out (annual-report lines,
+ * src/data/regions.json).
+ */
+export type LineCover = { covers?: string[]; add?: string[]; except?: string[] };
+
+/** Countries a reported revenue line covers: its own country, its stated cover, or the countries of a named region. */
+export function lineCountries(line: { region: string; country: string | null } & LineCover, own: Set<string>, countries: SimCountry[]): string[] {
   if (line.country) return [line.country];
+  if (line.covers || line.add) {
+    const out = new Set(own);
+    for (const iso of line.except ?? []) out.add(iso);
+    const inRegions = countries.filter((c) => c.region && line.covers?.includes(c.region) && !out.has(c.iso2)).map((c) => c.iso2);
+    const added = (line.add ?? []).filter((iso) => !out.has(iso) && countries.some((c) => c.iso2 === iso));
+    return [...new Set([...inRegions, ...added])];
+  }
   const regions = BUCKETS.find(([re]) => re.test(line.region))?.[1];
   if (!regions) return [];
   const out = new Set(own); // countries the company reports separately
@@ -67,6 +105,8 @@ export type CompanyMove = {
   company: SimCompany;
   revenueBase: number;
   revenueDelta: number;
+  /** Profit moves this many times the revenue change (operatingLeverage). */
+  leverage: number;
   price: number /* fractional change */;
   /** An 80% range for the price change, from the sensitivities' standard errors (and ±half for revenue effects). */
   lo: number;
@@ -94,7 +134,7 @@ export type Frame = {
   transfers: { seller: SimPerson; buyer: SimPerson; company: SimCompany; paid: number; buyerShort: boolean; done: boolean }[];
 };
 
-export function simulate(scenario: Scenario, empires: SimEmpire[], countries: SimCountry[], month: number): Frame {
+export function simulate(scenario: Scenario, empires: SimEmpire[], countries: SimCountry[], month: number, z80 = Z80): Frame {
   const gdp = new Map(countries.map((c) => [c.iso2, c.gdp_usd ?? 0]));
   const companies = new Map<string, SimCompany>();
   for (const e of empires) for (const c of e.companies) companies.set(c.id, c);
@@ -122,7 +162,6 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     return out;
   };
   const RULE: SimFit = { beta: { market: 1, sector: 1, oil: 0, china: 0, usd: 0 }, se: { market: 0, sector: 0, oil: 0, china: 0, usd: 0 } };
-  const Z80 = 1.2816;
   // How long the scenario takes to play out (its longest ramp, at least a month), in weeks: the company's own news over
   // that time widens every range, as the backtest on past shocks required (80% ranges then held 63-85% of outcomes).
   const horizonWeeks = Math.max(1, ...scenario.shocks.map((s) => s.to - s.from)) * 4.345;
@@ -145,32 +184,40 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
     const peer = c.fit ? null : fitted.length ? (peers(c.sector) ?? peers(null)) : null;
     const fit = c.fit ?? peer ?? RULE;
     const basis: CompanyMove['basis'] = c.fit ? 'measured' : peer ? 'peers' : 'rule';
-    const revShare = base ? delta / base : 0;
-    let price = 1 + revShare;
-    // Variance of the change: revenue effects are uncertain by about half (how far a price follows revenue), and each
-    // factor effect by its sensitivity's standard error times the factor's move.
-    let variance = (0.39 * revShare) ** 2; // ±half at 80%
+    const leverage = operatingLeverage(c.margin);
+    const revShare = base ? (delta / base) * leverage : 0;
+    // Everything adds up in log terms, the way the sensitivities were measured (weekly log returns): a factor that
+    // moves by m moves the company by beta x log(1 + m). So moves compound properly and no price can fall below zero;
+    // ranges are formed in log terms too.
+    const ln = (v: number) => Math.log(1 + Math.max(v, -0.99));
+    let logMove = ln(revShare);
+    // Variance (log terms): revenue effects are uncertain by about half (how far a price follows profit); each factor
+    // effect by its sensitivity's standard error, and an analog part by the spread between its past events.
+    let variance = (0.39 * logMove) ** 2; // +/- half at 80%
     for (const s of scenario.shocks) {
-      const m = at(s);
-      if (!m) continue;
-      if (s.kind === 'company' && s.target === c.id) price *= 1 + m;
+      const r = ramp(s, month);
+      if (!r) continue;
+      const L = ln(s.pct) * r;
+      const spread = (b: number) => (b * (('sd' in s ? s.sd : 0) ?? 0) * r) ** 2;
+      if (s.kind === 'company' && s.target === c.id) logMove += L;
       else if (s.kind === 'sector' && c.sector === s.target) {
         const b = fit.beta.sector ?? 1;
-        price *= 1 + b * m;
-        variance += ((fit.se.sector ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se.sector ?? 0) * L) ** 2 + spread(b);
       } else if (s.kind === 'market') {
         const b = fit.beta.market ?? 1;
-        price *= 1 + b * m;
-        variance += ((fit.se.market ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se.market ?? 0) * L) ** 2 + spread(b);
       } else if (s.kind === 'factor') {
         const b = (s.direct ? fit.raw?.[s.target] : undefined) ?? fit.beta[s.target] ?? 0;
-        price *= 1 + b * m;
-        variance += ((fit.se[s.target] ?? 0) * m) ** 2 + (b * (s.sd ?? 0) * (m / s.pct)) ** 2;
+        logMove += b * L;
+        variance += ((fit.se[s.target] ?? 0) * L) ** 2 + spread(b);
       }
     }
-    if (Math.abs(price - 1) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
+    if (Math.abs(logMove) > 1e-6) variance += (fit.sd ?? 0) ** 2 * horizonWeeks;
     const sd = Math.sqrt(variance);
-    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, price: price - 1, lo: price - 1 - Z80 * sd, hi: price - 1 + Z80 * sd, basis });
+    const price = Math.exp(logMove);
+    moves.set(c.id, { company: c, revenueBase: base, revenueDelta: delta, leverage, price: price - 1, lo: Math.exp(logMove - z80 * sd) - 1, hi: Math.exp(logMove + z80 * sd) - 1, basis });
   }
   const move = (id: string) => moves.get(id)?.price ?? 0;
 
@@ -179,7 +226,7 @@ export function simulate(scenario: Scenario, empires: SimEmpire[], countries: Si
   const salePrice = new Map<Shock, number>();
   if (sales.length) {
     const rest = { ...scenario, shocks: scenario.shocks.filter((s) => s.kind !== 'transfer') };
-    for (const s of sales) salePrice.set(s, 1 + (simulate(rest, empires, countries, s.to).companies.find((x) => x.company.id === s.target)?.price ?? 0));
+    for (const s of sales) salePrice.set(s, 1 + (simulate(rest, empires, countries, s.to, z80).companies.find((x) => x.company.id === s.target)?.price ?? 0));
   }
   const transfers: Frame['transfers'] = [];
   const deltas = new Map<string, number>();
@@ -355,7 +402,7 @@ export function simEvents(scenario: Scenario, frames: Frame[], companyName: (id:
     const top = last.people.find((p) => p.delta != null && p.delta > 0) ?? last.people.find((p) => (p.pct ?? 0) > 0);
     const low = last.people.find((p) => (p.delta ?? p.pct ?? 0) < 0); // people come sorted biggest move first
     const parts = [top && `${first(top.person.name)} up most`, low && `${first(low.person.name)} hit hardest`].filter(Boolean);
-    out.push({ month: frames.length - 1, text: `${scenario.months} months on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info', about: { kind: 'world' } });
+    out.push({ month: frames.length - 1, text: `${scenario.months === 1 ? 'A month' : `${scenario.months} months`} on${parts.length ? `: ${parts.join(', ')}` : ''}`, tone: 'info', about: { kind: 'world' } });
   }
   return out.sort((a, b) => a.month - b.month);
 }

@@ -94,6 +94,39 @@ Run these from the repository, logged in to the Supabase CLI with an account tha
 Invite the developer's Supabase account to the Wealthline organisation (Dashboard → Organization → Team) with a role
 that can run SQL and deploy functions. They can then do steps 1–5.
 
+## Recorded share counts (recommended)
+
+`supabase/import/ownership.sql` (generated Nov 1 from SEC Form 4 and Schedule 13G/13D filings) has 23 share counts,
+but the database holds only 6 of them. The app already uses the substantial ones from a copy
+(`src/data/stakes.json`); applying the file puts them in the database properly:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/import/ownership.sql
+```
+
+Three look partial (one share class or one trust only): the Atlassian founders (275,940 shares each), a Palantir
+holder (53,487) and Workday's founder (105,049). Worth a look before applying; the app leaves them out.
+
+## Operating margins (recommended)
+
+The simulations now pass revenue changes through profit (operating leverage, damped). Margins come from Wikidata for
+30 companies today; the `world` function's SEC job reads them from each company's latest 10-K once this additive
+migration is applied and the function redeployed:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000000_company_margins.sql
+```
+
+## People's own words (with the next function deploy)
+
+The daily briefing can now show what tracked people said publicly about a storyline. Grok proposes quotes from its own
+search; the `scenarios` function keeps one only if those exact words are on the cited page (X posts via X's embed),
+near the person's name. Apply the additive column, then redeploy `scenarios`:
+
+```bash
+npx supabase@latest db query --remote=qucpeyrbzyfqtmxhmezr --yes --file supabase/migrations/20261117000100_scenario_statements.sql
+```
+
 ## For the lobbying ties (optional)
 
 The briefing's "Documented ties" use public US government contracts today. To add lobbying filings (who lobbied on

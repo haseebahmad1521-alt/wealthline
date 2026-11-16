@@ -14,7 +14,8 @@ export function convertCompact(value: number, code: string, rate: number, digits
   const abs = Math.abs(v);
   const [div, unit] =
     abs >= 1e12 ? [1e12, 'T'] : abs >= 1e9 ? [1e9, 'B'] : abs >= 1e6 ? [1e6, 'M'] : [1, ''];
-  const n = (v / div).toFixed(unit ? digits : 0).replace('-', '');
+  // Under a million there's no unit, so group the digits: $5,000, not $5000.
+  const n = unit ? (v / div).toFixed(digits).replace('-', '') : Math.round(abs).toLocaleString('en-US');
   const sym = symbol(code);
   return `${v < 0 ? '−' : ''}${sym}${/\p{L}$/u.test(sym) ? ' ' : ''}${n}${unit}`;
 }

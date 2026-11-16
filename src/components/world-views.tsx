@@ -134,7 +134,10 @@ export function MoneyPanel({ lines, focus }: { lines: Line[]; focus: Empire | nu
           </View>
         ))}
       </View>
-      <SourceLink label={`SEC annual reports (Form 10-K), fiscal ${Math.max(...mine.map((l) => l.fiscalYear))}`} url={mine[0].company.regions[0]?.source_url ?? null} />
+      <SourceLink
+        label={`${mine.every((l) => l.company.regions[0]?.source_label?.startsWith('SEC')) ? 'SEC annual reports (Form 10-K)' : 'Companies’ annual reports (SEC Form 10-K or their own)'}, fiscal ${Math.max(...mine.map((l) => l.fiscalYear))}`}
+        url={mine[0].company.regions[0]?.source_url ?? null}
+      />
     </Surface>
   );
 }

@@ -1,0 +1,1032 @@
+{
+ "about": "Revenue by place from companies' own annual reports, for companies that don't file with the SEC. Amounts as reported (currency, unit). Each line names the country it is, or the World Bank regions it covers (covers), countries it adds (add) and leaves out (except); the cover of a broad line is our reading of the label, stated here. A line marked derived is a reported region less a country the report gives inside it ('thereof'). Built into src/data/regions.json by scripts/build-regions.mjs.",
+ "companies": [
+  {
+   "match": "Inditex",
+   "fiscal_year": 2025,
+   "period_end": "2026-01-31",
+   "currency": "EUR",
+   "unit": "million",
+   "total": 39864,
+   "source_url": "https://www.inditex.com/itxcomweb/api/media/50ba1fc0-3862-4408-8da2-4f973f1be18e/AnnualAccountsDirectorsReportandAuditReportconsolidated.pdf",
+   "source_label": "Inditex consolidated annual accounts 2025, Note 11 (geographical reporting, net sales)",
+   "lines": [
+    {
+     "label": "Spain",
+     "amount": 6754,
+     "country": "ES"
+    },
+    {
+     "label": "Rest of Europe",
+     "amount": 21509,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "ES"
+     ]
+    },
+    {
+     "label": "Americas",
+     "amount": 6971,
+     "covers": [
+      "NAC",
+      "LCN"
+     ]
+    },
+    {
+     "label": "Asia and rest of the world",
+     "amount": 4630,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA",
+      "SSF"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Glencore",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "USD",
+   "unit": "million",
+   "total": 247535,
+   "source_url": "https://www.glencore.com/.rest/api/v1/documents/static/9b103e11-72e7-40bf-ae7c-eabe57361522/GLEN-2025-Annual-Report.pdf",
+   "source_label": "Glencore Annual Report 2025, Note 2 (revenue from third parties by geography, p. 166)",
+   "note": "By country of incorporation of the sales counterparty, not final destination.",
+   "lines": [
+    {
+     "label": "United States",
+     "amount": 22922,
+     "country": "US"
+    },
+    {
+     "label": "The Americas excluding the United States",
+     "amount": 16271,
+     "covers": [
+      "NAC",
+      "LCN"
+     ],
+     "except": [
+      "US"
+     ],
+     "derived": "The Americas 39,193 less United States 22,922"
+    },
+    {
+     "label": "United Kingdom",
+     "amount": 27623,
+     "country": "GB"
+    },
+    {
+     "label": "Europe excluding the United Kingdom",
+     "amount": 39220,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "GB"
+     ],
+     "derived": "Europe 66,843 less United Kingdom 27,623"
+    },
+    {
+     "label": "Singapore",
+     "amount": 34617,
+     "country": "SG"
+    },
+    {
+     "label": "China",
+     "amount": 31407,
+     "country": "CN"
+    },
+    {
+     "label": "Asia excluding Singapore and China",
+     "amount": 55550,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA"
+     ],
+     "except": [
+      "SG",
+      "CN",
+      "AU",
+      "NZ",
+      "PG",
+      "FJ"
+     ],
+     "derived": "Asia 121,574 less Singapore 34,617 and China 31,407"
+    },
+    {
+     "label": "Africa",
+     "amount": 12330,
+     "covers": [
+      "SSF"
+     ],
+     "add": [
+      "DZ",
+      "EG",
+      "LY",
+      "MA",
+      "TN"
+     ]
+    },
+    {
+     "label": "Oceania",
+     "amount": 7595,
+     "add": [
+      "AU",
+      "NZ",
+      "PG",
+      "FJ"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "L'Oréal",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "EUR",
+   "unit": "million",
+   "total": 44052.0,
+   "source_url": "https://www.loreal-finance.com/eng/2025-universal-registration-document/en/article/302/",
+   "source_label": "L'Oréal 2025 Universal Registration Document, Note 3.1.2 (information by region)",
+   "lines": [
+    {
+     "label": "France",
+     "amount": 3210.6,
+     "country": "FR"
+    },
+    {
+     "label": "Europe excluding France",
+     "amount": 11653.9,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "FR"
+     ],
+     "derived": "Europe 14,864.5 less France 3,210.6"
+    },
+    {
+     "label": "North America",
+     "amount": 11718.1,
+     "covers": [
+      "NAC"
+     ]
+    },
+    {
+     "label": "North Asia",
+     "amount": 10075.2,
+     "add": [
+      "CN",
+      "JP",
+      "KR",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "label": "SAPMENA - SSA",
+     "amount": 4114.3,
+     "covers": [
+      "EAS",
+      "SAS",
+      "MEA",
+      "SSF"
+     ],
+     "except": [
+      "CN",
+      "JP",
+      "KR",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "label": "Latin America",
+     "amount": 3279.9,
+     "covers": [
+      "LCN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "LVMH",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "EUR",
+   "unit": "million",
+   "total": 80807,
+   "source_url": "https://assets.main.pro2.maf.media-server.com/d468eefc816c4023a2e9f62749613b98/Financial_documents_-_December_31_2025.pdf",
+   "source_label": "LVMH Financial Documents, December 31, 2025, Note 24.2 (revenue by region of delivery)",
+   "lines": [
+    {
+     "label": "France",
+     "amount": 6732,
+     "country": "FR"
+    },
+    {
+     "label": "Europe (excl. France)",
+     "amount": 14530,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "FR"
+     ]
+    },
+    {
+     "label": "United States",
+     "amount": 20686,
+     "country": "US"
+    },
+    {
+     "label": "Japan",
+     "amount": 6378,
+     "country": "JP"
+    },
+    {
+     "label": "Asia (excl. Japan)",
+     "amount": 21389,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "except": [
+      "JP",
+      "AU",
+      "NZ"
+     ]
+    },
+    {
+     "label": "Other countries",
+     "amount": 11091,
+     "covers": [
+      "LCN",
+      "MEA",
+      "SSF"
+     ],
+     "add": [
+      "CA",
+      "AU",
+      "NZ"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "BMW",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "EUR",
+   "unit": "million",
+   "total": 133453,
+   "source_url": "https://www.bmwgroup.com/en/report/2025/downloads/BMW-Group-Financial-Statements-2025-en.pdf",
+   "source_label": "BMW Group Financial Statements 2025, Note 46 (external revenues by region)",
+   "lines": [
+    {
+     "label": "Germany",
+     "amount": 18487,
+     "country": "DE"
+    },
+    {
+     "label": "Europe excluding Germany",
+     "amount": 41154,
+     "covers": [
+      "ECS"
+     ],
+     "except": [
+      "DE"
+     ],
+     "derived": "Europe 59,641 less Germany 18,487"
+    },
+    {
+     "label": "China",
+     "amount": 24810,
+     "country": "CN"
+    },
+    {
+     "label": "Asia excluding China",
+     "amount": 13740,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "except": [
+      "CN",
+      "AU",
+      "NZ"
+     ],
+     "derived": "Asia 38,550 less China 24,810"
+    },
+    {
+     "label": "United States",
+     "amount": 26978,
+     "country": "US"
+    },
+    {
+     "label": "Americas excluding the United States",
+     "amount": 5025,
+     "covers": [
+      "NAC",
+      "LCN"
+     ],
+     "except": [
+      "US"
+     ],
+     "derived": "Americas 32,003 less USA 26,978"
+    },
+    {
+     "label": "Other regions",
+     "amount": 3259,
+     "covers": [
+      "MEA",
+      "SSF"
+     ],
+     "add": [
+      "AU",
+      "NZ"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "SoftBank Group",
+   "fiscal_year": 2025,
+   "period_end": "2026-03-31",
+   "currency": "JPY",
+   "unit": "million",
+   "total": 7798650,
+   "source_url": "https://group.softbank/media/Project/sbg/sbg/pdf/ir/financials/annual_reports/financial-report_fy2026_en.pdf",
+   "source_label": "SoftBank Group Financial Report 2026, geographical information (net sales to external customers, p. 32)",
+   "lines": [
+    {
+     "label": "Japan",
+     "amount": 6780450,
+     "country": "JP"
+    },
+    {
+     "label": "Other",
+     "amount": 1018200,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "JP"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Fast Retailing",
+   "fiscal_year": 2025,
+   "period_end": "2025-08-31",
+   "currency": "JPY",
+   "unit": "million",
+   "total": 3400539,
+   "source_url": "https://www.fastretailing.com/eng/ir/stockinfo/pdf/disclosure_2025Aug_eng.pdf",
+   "source_label": "Fast Retailing, revenue by major regional market, fiscal 2025 (p. 24)",
+   "note": "UNIQLO lines are by customer location; GU, Global Brands and Others are brand lines without a place, so they count in the total but move with no country.",
+   "lines": [
+    {
+     "label": "Japan",
+     "amount": 1026096,
+     "country": "JP"
+    },
+    {
+     "label": "Greater China",
+     "amount": 650232,
+     "add": [
+      "CN",
+      "HK",
+      "TW",
+      "MO"
+     ]
+    },
+    {
+     "label": "South Korea, Southeast Asia, India & Australia",
+     "amount": 619417,
+     "add": [
+      "KR",
+      "ID",
+      "MY",
+      "PH",
+      "SG",
+      "TH",
+      "VN",
+      "IN",
+      "AU",
+      "NZ"
+     ]
+    },
+    {
+     "label": "North America",
+     "amount": 271130,
+     "covers": [
+      "NAC"
+     ]
+    },
+    {
+     "label": "Europe",
+     "amount": 369509,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "label": "GU (brand)",
+     "amount": 330701
+    },
+    {
+     "label": "Global Brands",
+     "amount": 131542
+    },
+    {
+     "label": "Others",
+     "amount": 1910
+    }
+   ]
+  },
+  {
+   "match": "HCL Technologies",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "currency": "INR",
+   "unit": "crore",
+   "total": 117055,
+   "source_url": "https://www.hcltech.com/sites/default/files/document/open/annual-report/2025-08/Annual-Report-2024-25_0.pdf",
+   "source_label": "HCLTech Annual Report 2024-25, geographical mix (p. 100)",
+   "lines": [
+    {
+     "label": "United States of America",
+     "amount": 67987,
+     "country": "US"
+    },
+    {
+     "label": "Europe",
+     "amount": 31240,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "label": "India",
+     "amount": 3667,
+     "country": "IN"
+    },
+    {
+     "label": "Rest of the world",
+     "amount": 14161,
+     "covers": [
+      "EAS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "US",
+      "IN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Reliance Industries",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "currency": "INR",
+   "unit": "crore",
+   "total": 1071174,
+   "source_url": "https://www.ril.com/ar2024-25/pdf/RIL-IAR-2025.pdf",
+   "source_label": "Reliance Integrated Annual Report 2024-25, secondary segment information (external turnover, pp. 258-259)",
+   "lines": [
+    {
+     "label": "Within India",
+     "amount": 686534,
+     "country": "IN"
+    },
+    {
+     "label": "Outside India",
+     "amount": 384640,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "IN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Sun Pharmaceutical",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "currency": "INR",
+   "unit": "million",
+   "total": 520412.5,
+   "source_url": "https://sunpharma.com/wp-content/uploads/2025/07/SPIL-Annual-Report-2024-25.pdf",
+   "source_label": "Sun Pharma Annual Report 2024-25, Note 52 (revenue by geography, p. 282)",
+   "note": "Emerging markets and rest of world as Sun Pharma uses them (rest of world: Western Europe, Canada, Japan, Australia and New Zealand, Israel and others).",
+   "lines": [
+    {
+     "label": "India",
+     "amount": 173755.8,
+     "country": "IN"
+    },
+    {
+     "label": "United States of America",
+     "amount": 170076.6,
+     "country": "US"
+    },
+    {
+     "label": "Emerging markets",
+     "amount": 99559.7,
+     "covers": [
+      "LCN",
+      "MEA",
+      "SSF",
+      "SAS",
+      "EAS"
+     ],
+     "except": [
+      "IN",
+      "JP",
+      "AU",
+      "NZ",
+      "KR",
+      "IL"
+     ]
+    },
+    {
+     "label": "Rest of the world",
+     "amount": 77020.4,
+     "covers": [
+      "ECS"
+     ],
+     "add": [
+      "CA",
+      "JP",
+      "AU",
+      "NZ",
+      "IL"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "DMart",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "currency": "INR",
+   "unit": "crore",
+   "total": 59358.05,
+   "source_url": "https://api.dmartindia.com/corporate/content/file/v1/6/vLobSX3O9BXYtJt1WfpFGuYr1752926697/Annual%20Report%202024-25.pdf",
+   "source_label": "Avenue Supermarts Annual Report 2024-25, Note 40 (single segment: retail in India)",
+   "lines": [
+    {
+     "label": "India",
+     "amount": 59358.05,
+     "country": "IN",
+     "statement": "The Group is into the business of retail in India"
+    }
+   ]
+  },
+  {
+   "match": "Asset World",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "THB",
+   "unit": "thousand",
+   "total": 23065357,
+   "source_url": "https://hub.optiwise.io/storage/8/annual-report/2025/awc-one-report2025-en.pdf",
+   "source_label": "Asset World Corporation One Report 2025, geographical segments (p. 368)",
+   "lines": [
+    {
+     "label": "Thailand",
+     "amount": 23065357,
+     "country": "TH",
+     "statement": "There are no material revenues derived from, or assets located in, foreign countries"
+    }
+   ]
+  },
+  {
+   "match": "Jio Financial",
+   "fiscal_year": 2025,
+   "period_end": "2025-03-31",
+   "currency": "INR",
+   "unit": "crore",
+   "total": 2042.91,
+   "source_url": "https://www.jfs.in/docs/cms/assets/jfs/investor-relations/financials/annual-reports/fy-2024-2025/annual-report-2024-2025.pdf",
+   "source_label": "Jio Financial Services Annual Report 2024-25, Note 32 (operations predominantly in India)",
+   "lines": [
+    {
+     "label": "India",
+     "amount": 2042.91,
+     "country": "IN",
+     "statement": "The operations of the Group ... are predominantly conducted within India"
+    }
+   ]
+  },
+  {
+   "match": "Contemporary Amperex",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "thousand",
+   "total": 423701834,
+   "source_url": "https://www.catl.com/uploads/1/file/public/202603/20260310105829_c5p2l3q9ll.pdf",
+   "source_label": "CATL 2025 Annual Report, operating revenue by region (分地区)",
+   "lines": [
+    {
+     "label": "Domestic (境内)",
+     "amount": 294060576,
+     "country": "CN"
+    },
+    {
+     "label": "Overseas (境外)",
+     "amount": 129641258,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Tencent",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "million",
+   "total": 751766,
+   "source_url": "https://static.www.tencent.com/uploads/2026/04/09/62d786fcf3d3c8cb7e54791ee95439ac.pdf",
+   "source_label": "Tencent 2025 Annual Report, Note 6 (revenues by geographical location)",
+   "lines": [
+    {
+     "label": "Chinese Mainland",
+     "amount": 662119,
+     "country": "CN"
+    },
+    {
+     "label": "Others",
+     "amount": 89647,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Midea",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "thousand",
+   "total": 456451731,
+   "source_url": "https://www.midea.com.cn/content/dam/mideacn-aem/投资者关系/2025年度报告.pdf.coredownload.inline.pdf",
+   "source_label": "Midea Group 2025 Annual Report, operating revenue by region (pp. 48-49)",
+   "lines": [
+    {
+     "label": "Domestic (国内)",
+     "amount": 260504038,
+     "country": "CN"
+    },
+    {
+     "label": "Overseas (海外)",
+     "amount": 195947693,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Lens Technology",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "yuan",
+   "total": 74409731699.21,
+   "source_url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESZ_STOCK/2026/2026-3/2026-03-31/12048838.PDF",
+   "source_label": "Lens Technology 2025 Annual Report, revenue by region (p. 24; Sina Finance copy of the filing)",
+   "lines": [
+    {
+     "label": "Domestic sales (国内销售)",
+     "amount": 33454516337.67,
+     "country": "CN"
+    },
+    {
+     "label": "Overseas sales (国外销售)",
+     "amount": 40955215361.54,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Hikvision",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "yuan",
+   "total": 92507796069.94,
+   "source_url": "http://file.finance.sina.com.cn/211.154.219.97:9494/MRGG/CNSESZ_STOCK/2026/2026-4/2026-04-18/12113888.PDF",
+   "source_label": "Hikvision 2025 Annual Report, revenue by region (p. 87; Sina Finance copy of the filing)",
+   "lines": [
+    {
+     "label": "Domestic (境内)",
+     "amount": 58221682972.42,
+     "country": "CN"
+    },
+    {
+     "label": "Overseas (境外)",
+     "amount": 34286113097.52,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Xiaomi",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "thousand",
+   "total": 457286687,
+   "source_url": "https://ir.mi.com/system/files-encrypted/nasdaq_kms/assets/2026/03/24/5-35-03/25Q4%20EN%20AC%20Xiaomi.pdf",
+   "source_label": "Xiaomi 2025 Annual Results, Note 2 (revenue by region)",
+   "lines": [
+    {
+     "label": "Chinese Mainland",
+     "amount": 306223141,
+     "country": "CN"
+    },
+    {
+     "label": "Rest of the world",
+     "amount": 151063546,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN"
+     ]
+    }
+   ],
+   "note": "Xiaomi: revenue outside the Chinese Mainland is mainly from Europe and India."
+  },
+  {
+   "match": "BYD Electronic",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "thousand",
+   "total": 179477404,
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0327/2026032702072.pdf",
+   "source_label": "BYD Electronic 2025 Annual Results, revenue from external customers by customer location (p. 11)",
+   "lines": [
+    {
+     "label": "PRC (including Hong Kong, Macau and Taiwan)",
+     "amount": 60439038,
+     "add": [
+      "CN",
+      "HK",
+      "MO",
+      "TW"
+     ]
+    },
+    {
+     "label": "Overseas",
+     "amount": 119038366,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "CN",
+      "HK",
+      "MO",
+      "TW"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Shangri-La",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "USD",
+   "unit": "thousand",
+   "total": 2234072,
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0326/2026032600950.pdf",
+   "source_label": "Shangri-La Asia 2025 Final Results, Note 3 (revenue by location, p. 45)",
+   "lines": [
+    {
+     "label": "Hong Kong",
+     "amount": 400857,
+     "country": "HK"
+    },
+    {
+     "label": "Other countries",
+     "amount": 1833215,
+     "covers": [
+      "EAS",
+      "ECS",
+      "LCN",
+      "MEA",
+      "NAC",
+      "SAS",
+      "SSF"
+     ],
+     "except": [
+      "HK"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "Nongfu Spring",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "RMB",
+   "unit": "thousand",
+   "total": 52552910,
+   "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0324/2026032401065.pdf",
+   "source_label": "Nongfu Spring 2025 Annual Results, Note 2 (over 99% of revenue from the Chinese Mainland)",
+   "lines": [
+    {
+     "label": "Chinese Mainland",
+     "amount": 52552910,
+     "country": "CN",
+     "statement": "Over 99% of the Group's revenue and operating profits are derived from customers based in Chinese Mainland"
+    }
+   ]
+  },
+  {
+   "match": "FIH Mobile",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "USD",
+   "unit": "thousand",
+   "total": 6657663,
+   "source_url": "https://www.fihmobile.com/assets/upload/images/2026/04/16/629c4ed47115395098d0af3f.pdf",
+   "source_label": "FIH Mobile Annual Report 2025, Note 5 (segment revenue by customer location, p. 97)",
+   "lines": [
+    {
+     "label": "Asia",
+     "amount": 2363042,
+     "covers": [
+      "EAS",
+      "SAS"
+     ]
+    },
+    {
+     "label": "Europe",
+     "amount": 1936218,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "label": "America",
+     "amount": 2358403,
+     "covers": [
+      "NAC",
+      "LCN"
+     ]
+    }
+   ]
+  },
+  {
+   "match": "CK Hutchison",
+   "fiscal_year": 2025,
+   "period_end": "2025-12-31",
+   "currency": "HKD",
+   "unit": "million",
+   "total": 280036,
+   "source_url": "https://doc.irasia.com/listco/hk/ckh/announcement/a332438-e_pressannouncement_2025.pdf",
+   "source_label": "CK Hutchison 2025 Annual Results, Note 5(b)(ii) (revenue by geographical location, p. 35)",
+   "note": "Needs a visual check: the table's text came out scrambled and labels were matched to amounts by the sums. Finance & Investments and Others has no place.",
+   "lines": [
+    {
+     "label": "Hong Kong",
+     "amount": 29703,
+     "country": "HK"
+    },
+    {
+     "label": "Chinese Mainland",
+     "amount": 16595,
+     "country": "CN"
+    },
+    {
+     "label": "Europe",
+     "amount": 155856,
+     "covers": [
+      "ECS"
+     ]
+    },
+    {
+     "label": "Canada",
+     "amount": 89,
+     "country": "CA"
+    },
+    {
+     "label": "Asia, Australia and Others",
+     "amount": 62515,
+     "covers": [
+      "EAS",
+      "SAS"
+     ],
+     "add": [
+      "AU",
+      "NZ"
+     ],
+     "except": [
+      "HK",
+      "CN"
+     ]
+    },
+    {
+     "label": "Finance & Investments and Others",
+     "amount": 15278
+    }
+   ]
+  }
+ ]
+}

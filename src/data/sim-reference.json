@@ -2,7 +2,8 @@
  "built": "2026-11-16",
  "sources": [
   "World Bank country API (region)",
-  "Wikidata P452 (industry)"
+  "Wikidata P452 (industry)",
+  "Wikidata P2139/P3362 (revenue, operating income)"
  ],
  "regions": {
   "AW": "LCN",
@@ -543,6 +544,158 @@
   "ca2599cb-331a-4607-94ae-fb3606629b20": {
    "sector": "media",
    "source": "Wikidata industry: media industry"
+  }
+ },
+ "margins": {
+  "be3bd941-9d8d-4c13-9841-f36678e46f56": {
+   "margin": 0.308,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q19900"
+  },
+  "464d1bb3-afae-4faa-a86c-9622d39b0ee3": {
+   "margin": 0.468,
+   "year": 2026,
+   "source": "https://www.wikidata.org/wiki/Q2283"
+  },
+  "d98275fb-a50a-4849-a769-8e114dc8952e": {
+   "margin": 0.604,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q182477"
+  },
+  "44f82f0c-70ba-47a3-9075-1b27f88a04e0": {
+   "margin": 0.414,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q380"
+  },
+  "c559490d-8b14-490c-a8bc-a2e33f5659a7": {
+   "margin": 0.059,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q27893"
+  },
+  "c89d7879-8a39-4e55-98a1-609d23408ef9": {
+   "margin": 0.098,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q26678"
+  },
+  "839e1bc5-17a3-4c2a-8850-579e1bcbf2d6": {
+   "margin": 0.112,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q3884"
+  },
+  "ca2599cb-331a-4607-94ae-fb3606629b20": {
+   "margin": 0.322,
+   "year": 2020,
+   "source": "https://www.wikidata.org/wiki/Q1141267"
+  },
+  "c9c96e92-b549-4e0a-b8a9-44c9c0b5fe9d": {
+   "margin": 0.141,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q1359568"
+  },
+  "2d4f6ee5-18f8-407d-aa91-d94b049dd211": {
+   "margin": 0.142,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q483915"
+  },
+  "f69b816f-6610-4ccf-b13f-ec44f6761ac1": {
+   "margin": 0.262,
+   "year": 2023,
+   "source": "https://www.wikidata.org/wiki/Q552581"
+  },
+  "952146a0-887a-45ec-9586-38431da1baf6": {
+   "margin": 0.23,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q63327"
+  },
+  "a5ed8ba9-8439-4dfb-ae2d-199aeb55e789": {
+   "margin": 0.046,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q478214"
+  },
+  "45077dd7-f805-4179-b190-e840bbb15d67": {
+   "margin": 0.205,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q58024"
+  },
+  "b6a8d1d5-475a-4fcb-9d36-c9af844d2205": {
+   "margin": 0.135,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q864407"
+  },
+  "bb1ea52a-096f-4772-a4e3-9f7afab527f6": {
+   "margin": 0.206,
+   "year": 2023,
+   "source": "https://www.wikidata.org/wiki/Q482267"
+  },
+  "d7b5c594-e612-43b0-9979-ace67deff888": {
+   "margin": 0.278,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q7889101"
+  },
+  "a9622606-a68d-46ef-8a5b-ca9846583bd3": {
+   "margin": 0.32,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q20800404"
+  },
+  "702f8546-d3ff-4112-981e-496598e055a0": {
+   "margin": 0.297,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q217583"
+  },
+  "9b1b8380-f6e4-4ca8-aa61-c2b0e14c5565": {
+   "margin": 0.169,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q44504"
+  },
+  "8e31c9c2-e25d-4d02-84c4-0129e08235f1": {
+   "margin": 0.212,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q504998"
+  },
+  "81f233ea-cda8-4e2f-8344-00a94249f00e": {
+   "margin": -0.139,
+   "year": 2025,
+   "source": "https://www.wikidata.org/wiki/Q193701"
+  },
+  "62048172-6096-4d90-8944-f2e0d345a43f": {
+   "margin": 0.275,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q124461238"
+  },
+  "533f8726-fe36-4e5e-a546-ed6a23535bb5": {
+   "margin": 0.212,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q931032"
+  },
+  "7703988d-f5c9-48fe-911a-e6feb89bccce": {
+   "margin": 0.108,
+   "year": 2024,
+   "source": "https://www.wikidata.org/wiki/Q2047336"
+  },
+  "04ebd6c2-3305-43e0-b322-bcd20ff6fb9a": {
+   "margin": 0.565,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q5165314"
+  },
+  "e67a07f3-23fc-4ed2-b40c-bdf373880a7e": {
+   "margin": 0.061,
+   "year": 2023,
+   "source": "https://www.wikidata.org/wiki/Q4836868"
+  },
+  "09afcd95-2bd9-470a-8a87-aa11d5691387": {
+   "margin": 0.01,
+   "year": 2021,
+   "source": "https://www.wikidata.org/wiki/Q60269744"
+  },
+  "b2f734f0-4676-45e5-870f-768d101f0d96": {
+   "margin": 0.121,
+   "year": 2022,
+   "source": "https://www.wikidata.org/wiki/Q60238941"
+  },
+  "735d021c-b0b4-4154-8adb-a5f51f078032": {
+   "margin": 0.188,
+   "year": 2023,
+   "source": "https://www.wikidata.org/wiki/Q309865"
   }
  }
 }

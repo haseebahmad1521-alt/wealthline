@@ -1,0 +1,529 @@
+{
+ "built": "2026-11-16",
+ "since": "2019-01-01",
+ "source": "FEC individual contributions (api.open.fec.gov), memo entries excluded",
+ "people": {
+  "3c543b3c-a26d-4308-9f66-cc22a01b55fa": {
+   "name": "Elon Musk",
+   "total": 565488380,
+   "count": 84,
+   "from": "2019-01-11",
+   "to": "2026-09-28",
+   "top": [
+    {
+     "committee": "AMERICA PAC",
+     "amount": 300579462
+    },
+    {
+     "committee": "SLF PAC",
+     "amount": 168000000
+    },
+    {
+     "committee": "CLF",
+     "amount": 30000000
+    }
+   ],
+   "cycles": {
+    "2020": 5018,
+    "2024": 232911637,
+    "2026": 332571725
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=MUSK%2C%20ELON&min_date=01%2F01%2F2019"
+  },
+  "8c011c9f-5aea-4b57-a338-f36f8848d79e": {
+   "name": "Michael Dell",
+   "total": 30000,
+   "count": 6,
+   "from": "2019-04-01",
+   "to": "2024-07-03",
+   "top": [
+    {
+     "committee": "DELL TECHNOLOGIES, INC. POLITICAL ACTION COMMITTEE",
+     "amount": 30000
+    }
+   ],
+   "cycles": {
+    "2020": 10000,
+    "2022": 10000,
+    "2024": 10000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=DELL%2C%20MICHAEL&min_date=01%2F01%2F2019"
+  },
+  "1af869b0-1b6b-4bb5-a5e1-eb2b50e3d8c2": {
+   "name": "Leon Black",
+   "total": 43600,
+   "count": 12,
+   "from": "2019-02-13",
+   "to": "2025-03-26",
+   "top": [
+    {
+     "committee": "SULLIVAN TILLIS MAJORITY COMMITTEE",
+     "amount": 5600
+    },
+    {
+     "committee": "TEAM GRAHAM, INC.",
+     "amount": 5600
+    },
+    {
+     "committee": "FRIENDS OF MARK WARNER",
+     "amount": 5600
+    }
+   ],
+   "cycles": {
+    "2020": 41100,
+    "2026": 2500
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=BLACK%2C%20LEON&min_date=01%2F01%2F2019"
+  },
+  "264ee63a-396e-4966-9afc-3517158538d4": {
+   "name": "George Roberts",
+   "total": 265400,
+   "count": 11,
+   "from": "2019-04-10",
+   "to": "2026-04-17",
+   "top": [
+    {
+     "committee": "HONOR PENNSYLVANIA, INC.",
+     "amount": 200000
+    },
+    {
+     "committee": "GOTTHEIMER HORSFORD VICTORY FUND 2026",
+     "amount": 28000
+    },
+    {
+     "committee": "BEATTY GOTTHEIMER VICTORY FUND",
+     "amount": 11600
+    }
+   ],
+   "cycles": {
+    "2020": 5000,
+    "2022": 222400,
+    "2026": 38000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=ROBERTS%2C%20GEORGE&min_date=01%2F01%2F2019"
+  },
+  "89cc545b-cdb4-444e-9c77-36f73a748b55": {
+   "name": "Henry Samueli",
+   "total": 3300,
+   "count": 1,
+   "from": "2024-04-04",
+   "to": "2024-04-04",
+   "top": [
+    {
+     "committee": "ROSEN FOR NEVADA",
+     "amount": 3300
+    }
+   ],
+   "cycles": {
+    "2024": 3300
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=SAMUELI%2C%20HENRY&min_date=01%2F01%2F2019"
+  },
+  "2f5c48fe-0d14-41dd-8b5b-1ec96c68aff8": {
+   "name": "Arthur Blank",
+   "total": 15000,
+   "count": 3,
+   "from": "2019-12-06",
+   "to": "2022-12-29",
+   "top": [
+    {
+     "committee": "THE HOME DEPOT INC. POLITICAL ACTION COMMITTEE",
+     "amount": 15000
+    }
+   ],
+   "cycles": {
+    "2020": 5000,
+    "2022": 10000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=BLANK%2C%20ARTHUR&min_date=01%2F01%2F2019"
+  },
+  "b2b0d761-7a7a-4c26-b0f5-f306efa0748d": {
+   "name": "Warren Buffett",
+   "total": 254100,
+   "count": 6,
+   "from": "2019-02-24",
+   "to": "2019-11-01",
+   "top": [
+    {
+     "committee": "DCCC",
+     "amount": 248500
+    },
+    {
+     "committee": "MARK KELLY FOR SENATE",
+     "amount": 5600
+    }
+   ],
+   "cycles": {
+    "2020": 254100
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=BUFFETT%2C%20WARREN&min_date=01%2F01%2F2019"
+  },
+  "c3c7d57b-7f05-41f9-8f2a-1aa28f9e628b": {
+   "name": "Charles Schwab",
+   "total": 15258800,
+   "count": 274,
+   "from": "2023-05-02",
+   "to": "2026-07-31",
+   "top": [
+    {
+     "committee": "SENATE LEADERSHIP FUND",
+     "amount": 5000000
+    },
+    {
+     "committee": "WINRED",
+     "amount": 2082600
+    },
+    {
+     "committee": "CONGRESSIONAL LEADERSHIP FUND",
+     "amount": 2005000
+    }
+   ],
+   "cycles": {
+    "2024": 10615500,
+    "2026": 4643300
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=SCHWAB%2C%20CHARLES&min_date=01%2F01%2F2019"
+  },
+  "6ebffee9-ec81-4d0b-b121-bc4a4b179eb8": {
+   "name": "Roger Penske",
+   "total": 10830200,
+   "count": 47,
+   "from": "2019-08-02",
+   "to": "2026-07-15",
+   "top": [
+    {
+     "committee": "CLF",
+     "amount": 4000000
+    },
+    {
+     "committee": "GROW THE MAJORITY",
+     "amount": 1510000
+    },
+    {
+     "committee": "SLF PAC",
+     "amount": 1350000
+    }
+   ],
+   "cycles": {
+    "2020": 217100,
+    "2022": 29500,
+    "2024": 2840600,
+    "2026": 7743000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=PENSKE%2C%20ROGER&min_date=01%2F01%2F2019"
+  },
+  "f9079ec9-211c-4b74-86c3-50dae814bb08": {
+   "name": "Josh Harris",
+   "total": 2800,
+   "count": 1,
+   "from": "2020-08-17",
+   "to": "2020-08-17",
+   "top": [
+    {
+     "committee": "BOOKER VICTORY FUND",
+     "amount": 2800
+    }
+   ],
+   "cycles": {
+    "2020": 2800
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=HARRIS%2C%20JOSH&min_date=01%2F01%2F2019"
+  },
+  "edd9cce7-b8fe-4ae9-8556-d0b152fc975a": {
+   "name": "Stephen Schwarzman",
+   "total": 33893700,
+   "count": 262,
+   "from": "2025-03-25",
+   "to": "2026-10-06",
+   "top": [
+    {
+     "committee": "SLF PAC",
+     "amount": 20000000
+    },
+    {
+     "committee": "MAGA INC.",
+     "amount": 5000000
+    },
+    {
+     "committee": "PINE TREE RESULTS PAC",
+     "amount": 4000000
+    }
+   ],
+   "cycles": {
+    "2026": 33893700
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=SCHWARZMAN%2C%20STEPHEN&min_date=01%2F01%2F2019"
+  },
+  "7affd3b5-1a8b-4cb4-b838-0721e7c7b6a2": {
+   "name": "Eric Schmidt",
+   "total": 5054507,
+   "count": 224,
+   "from": "2019-02-14",
+   "to": "2024-10-21",
+   "top": [
+    {
+     "committee": "FF PAC",
+     "amount": 1600000
+    },
+    {
+     "committee": "ACTBLUE",
+     "amount": 573090
+    },
+    {
+     "committee": "DEMOCRATIC GRASSROOTS VICTORY FUND",
+     "amount": 523950
+    }
+   ],
+   "cycles": {
+    "2020": 1254618,
+    "2022": 1003690,
+    "2024": 2796200
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=SCHMIDT%2C%20ERIC&min_date=01%2F01%2F2019"
+  },
+  "6b580b71-1689-4634-bef0-653cb612219f": {
+   "name": "Mark Zuckerberg",
+   "total": 30000,
+   "count": 6,
+   "from": "2019-06-12",
+   "to": "2026-01-06",
+   "top": [
+    {
+     "committee": "META PLATFORMS, INC. PAC",
+     "amount": 20000
+    },
+    {
+     "committee": "FACEBOOK INC. PAC",
+     "amount": 10000
+    }
+   ],
+   "cycles": {
+    "2020": 10000,
+    "2022": 5000,
+    "2024": 10000,
+    "2026": 5000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=ZUCKERBERG%2C%20MARK&min_date=01%2F01%2F2019"
+  },
+  "32a51d17-5f5e-4872-97e0-5dcdad0b7ba0": {
+   "name": "Bill Gates",
+   "total": 52400,
+   "count": 14,
+   "from": "2020-09-11",
+   "to": "2020-09-30",
+   "top": [
+    {
+     "committee": "DEFENSE, ECONOMIC RENEWAL, EDUCATION AND KNOWLEDGE PAC",
+     "amount": 5000
+    },
+    {
+     "committee": "JOBS, ENERGY AND OUR FOUNDING FATHERS PAC-JEFF PAC",
+     "amount": 5000
+    },
+    {
+     "committee": "PROMOTING OUR REPUBLICAN TEAM PAC",
+     "amount": 5000
+    }
+   ],
+   "cycles": {
+    "2020": 52400
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=GATES%2C%20BILL&min_date=01%2F01%2F2019"
+  },
+  "6639d374-c2f3-4404-ae5f-154fd27417d2": {
+   "name": "Greg Brockman",
+   "total": 25000000,
+   "count": 2,
+   "from": "2025-09-12",
+   "to": "2025-09-12",
+   "top": [
+    {
+     "committee": "LEADING THE FUTURE",
+     "amount": 12500000
+    },
+    {
+     "committee": "MAGA INC.",
+     "amount": 12500000
+    }
+   ],
+   "cycles": {
+    "2026": 25000000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=BROCKMAN%2C%20GREG&min_date=01%2F01%2F2019"
+  },
+  "6766c06e-b5b9-47d9-87b3-2dd1adbe76a9": {
+   "name": "Richard Kinder",
+   "total": 287200,
+   "count": 28,
+   "from": "2019-02-08",
+   "to": "2026-07-05",
+   "top": [
+    {
+     "committee": "CORNYN MAJORITY TEXAS",
+     "amount": 96200
+    },
+    {
+     "committee": "CORNYN VICTORY COMMITTEE",
+     "amount": 95600
+    },
+    {
+     "committee": "TAKE BACK THE HOUSE 2020",
+     "amount": 25000
+    }
+   ],
+   "cycles": {
+    "2020": 142900,
+    "2022": 64700,
+    "2024": 58700,
+    "2026": 20900
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=KINDER%2C%20RICHARD&min_date=01%2F01%2F2019"
+  },
+  "c1756037-eced-4a5c-8a2f-afa94b5a824a": {
+   "name": "Larry Ellison",
+   "total": 2050000,
+   "count": 3,
+   "from": "2020-10-29",
+   "to": "2026-03-27",
+   "top": [
+    {
+     "committee": "TENNESSEE CONSERVATIVES PAC",
+     "amount": 1000000
+    },
+    {
+     "committee": "BETTER FUTURE MI FUND",
+     "amount": 1000000
+    },
+    {
+     "committee": "ONE TEAM SENATE MAJORITY",
+     "amount": 50000
+    }
+   ],
+   "cycles": {
+    "2020": 1000000,
+    "2022": 1000000,
+    "2026": 50000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=ELLISON%2C%20LARRY&min_date=01%2F01%2F2019"
+  },
+  "d51109c3-d7da-4abb-adad-f273c70efc9d": {
+   "name": "Jan Koum",
+   "total": 207759,
+   "count": 3,
+   "from": "2025-12-29",
+   "to": "2026-06-04",
+   "top": [
+    {
+     "committee": "GROW THE MAJORITY",
+     "amount": 151459
+    },
+    {
+     "committee": "NRSC",
+     "amount": 44300
+    },
+    {
+     "committee": "SUSAN COLLINS FOR MAINE",
+     "amount": 12000
+    }
+   ],
+   "cycles": {
+    "2026": 207759
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=KOUM%2C%20JAN&min_date=01%2F01%2F2019"
+  },
+  "a0685a9c-39ad-4000-9962-7454a61568ec": {
+   "name": "Brian Chesky",
+   "total": 25800,
+   "count": 6,
+   "from": "2019-12-17",
+   "to": "2024-10-28",
+   "top": [
+    {
+     "committee": "AIRBNB INC. PAC (AIRBNB PAC)",
+     "amount": 20000
+    },
+    {
+     "committee": "FRIENDS OF SCHUMER",
+     "amount": 5800
+    }
+   ],
+   "cycles": {
+    "2020": 5000,
+    "2022": 15800,
+    "2024": 5000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=CHESKY%2C%20BRIAN&min_date=01%2F01%2F2019"
+  },
+  "790d0731-1b83-4e70-8580-dfc6fad4a7a0": {
+   "name": "Henry Kravis",
+   "total": 614100,
+   "count": 11,
+   "from": "2020-07-31",
+   "to": "2026-04-07",
+   "top": [
+    {
+     "committee": "SENATE LEADERSHIP FUND",
+     "amount": 500000
+    },
+    {
+     "committee": "MARYLAND'S FUTURE",
+     "amount": 50000
+    },
+    {
+     "committee": "GOTTHEIMER HORSFORD VICTORY FUND 2026",
+     "amount": 28000
+    }
+   ],
+   "cycles": {
+    "2020": 505600,
+    "2022": 29000,
+    "2024": 50000,
+    "2026": 29500
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=KRAVIS%2C%20HENRY&min_date=01%2F01%2F2019"
+  },
+  "a521400c-c49b-44bc-811e-8937102687af": {
+   "name": "David Duffield",
+   "total": 581800,
+   "count": 2,
+   "from": "2020-08-31",
+   "to": "2022-10-05",
+   "top": [
+    {
+     "committee": "TRUMP VICTORY",
+     "amount": 576800
+    },
+    {
+     "committee": "AMODEI FOR NEVADA",
+     "amount": 5000
+    }
+   ],
+   "cycles": {
+    "2020": 576800,
+    "2022": 5000
+   },
+   "capped": false,
+   "url": "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=DUFFIELD%2C%20DAVID&min_date=01%2F01%2F2019"
+  }
+ }
+}

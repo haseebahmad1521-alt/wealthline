@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { checkShock, cleanProse, promptKey, ramp, sectorFor, type Catalog, type Scenario } from '../../supabase/functions/_shared/scenario.ts';
-import { lineCountries, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
+import { Z80, lineCountries, operatingLeverage, schedule, simEvents, simulate, type SimCountry, type SimEmpire } from './simulate.ts';
 
 const countries: SimCountry[] = [
   { iso2: 'US', gdp_usd: 30, region: 'NAC' },
@@ -119,15 +119,17 @@ test('measured sensitivities move each company; a private one borrows its peers;
   ];
   const f = simulate(scenario([{ kind: 'factor', target: 'oil', pct: 0.5, from: 0, to: 0 }]), people, countries, 1);
   const move = (id: string) => f.companies.find((c) => c.company.id === id)!;
-  assert.ok(Math.abs(move('drill').price - 0.3) < 1e-9);
-  assert.ok(Math.abs(move('pipe').price - 0.1) < 1e-9);
+  // In log terms, as measured: a sensitivity b to a 50% oil rise moves the price by 1.5^b - 1.
+  assert.ok(Math.abs(move('drill').price - (1.5 ** 0.6 - 1)) < 1e-9);
+  assert.ok(Math.abs(move('pipe').price - (1.5 ** 0.2 - 1)) < 1e-9);
   assert.equal(move('drill').basis, 'measured');
   assert.equal(move('private-oil').basis, 'peers');
-  assert.ok(Math.abs(move('private-oil').price - 0.2) < 1e-9); // the peers' average sensitivity, 0.4
-  // 80% range: ± 1.28 × se × move.
-  assert.ok(Math.abs(move('drill').hi - move('drill').lo - 2 * 1.2816 * 0.1 * 0.5) < 1e-6);
+  assert.ok(Math.abs(move('private-oil').price - (1.5 ** 0.4 - 1)) < 1e-9); // the peers' average sensitivity, 0.4
+  // 80% range, in log terms: ± 1.28 × se × log(1.5); never below -100%.
+  const d = move('drill');
+  assert.ok(Math.abs(Math.log(1 + d.hi) - Math.log(1 + d.lo) - 2 * Z80 * 0.1 * Math.log(1.5)) < 1e-9);
   const a = f.people.find((p) => p.person.slug === 'a')!;
-  assert.ok(Math.abs(a.delta! - 15) < 1e-9);
+  assert.ok(Math.abs(a.delta! - 50 * (1.5 ** 0.6 - 1)) < 1e-9);
   assert.ok(a.range![0] < 15 && a.range![1] > 15);
 });
 
@@ -141,7 +143,8 @@ test('an analog becomes its measured market moves, scaled, with the spread betwe
   };
   const s = expandAnalogs(scenario([{ kind: 'analog', target: 'mideast', pct: 2, from: 0, to: 0 }]), data);
   const kinds = s.shocks.map((x) => `${x.kind}:${x.target}:${Math.round(x.pct * 1000) / 1000}`);
-  assert.deepEqual(kinds, ['analog:mideast:2', 'market::-0.04', 'factor:oil:0.1', 'sector:energy:0.06', 'sector:defense:0.04']);
+  // Measured moves are log returns: a part's price change is e^(2 x mean) - 1.
+  assert.deepEqual(kinds, ['analog:mideast:2', 'market::-0.039', 'factor:oil:0.105', 'sector:energy:0.062', 'sector:defense:0.041']);
   assert.match(s.assumptions.at(-1)!, /^Market moves as around 2 past middle east escalations, 2× as strongly: A; B\.$/);
   // Expanding again (a continued scenario) doesn't double anything.
   assert.deepEqual(expandAnalogs(s, data).shocks.length, s.shocks.length);
@@ -149,6 +152,92 @@ test('an analog becomes its measured market moves, scaled, with the spread betwe
   const fit = { beta: { market: 1, oil: 0, china: 0, usd: 0, sector: 1 }, se: { market: 0, oil: 0, china: 0, usd: 0, sector: 0 } };
   const e: SimEmpire[] = [{ person: person('o', 100), companies: [{ id: 'oilco', name: 'oilco', sector: 'energy', listed: true, regions: [], fit }], stakes: [] }];
   const f = simulate(s, e, countries, 1).companies[0];
-  assert.ok(Math.abs(f.price - ((1 - 0.04) * (1 + 0.06) - 1)) < 1e-9);
+  assert.ok(Math.abs(f.price - (Math.exp(-0.04 + 0.06) - 1)) < 1e-9);
   assert.ok(f.hi - f.lo > 0.05);
+});
+
+test('no price falls below zero, however hard the shock', () => {
+  const fit = { beta: { market: 2.5, oil: 0, china: 0, usd: 0, sector: 0 }, se: { market: 0.5, oil: 0, china: 0, usd: 0, sector: 0 }, sd: 0.08 };
+  const e: SimEmpire[] = [{ person: person('x', 100), companies: [{ id: 'risky', name: 'risky', sector: null, listed: true, regions: [], fit }], stakes: [{ company: { id: 'risky' }, value: 100 }] }];
+  const f = simulate(scenario([{ kind: 'market', target: '', pct: -0.6, from: 0, to: 0 }]), e, countries, 1);
+  const c = f.companies[0];
+  assert.ok(c.price > -1 && c.lo > -1 && c.hi > c.lo, JSON.stringify([c.price, c.lo, c.hi]));
+  assert.ok(f.people[0].range![0] > -100);
+});
+
+test('profit moves more than revenue, damped for thin margins', () => {
+  // 20% margin, 30% of costs fixed: profit moves (0.2 + 0.3 x 0.8) / 0.2 = 2.2 times revenue.
+  assert.ok(Math.abs(operatingLeverage(0.2) - 2.2) < 1e-9);
+  assert.ok(Math.abs(operatingLeverage(0.6) - (0.6 + 0.3 * 0.4) / 0.6) < 1e-9);
+  assert.equal(operatingLeverage(0.06), 3); // capped
+  assert.equal(operatingLeverage(0.04), 1); // too thin to say: price follows revenue
+  assert.equal(operatingLeverage(-0.1), 1); // a loss
+  assert.equal(operatingLeverage(null), 1);
+});
+
+test('a revenue loss reaches the price through profit', () => {
+  const company = (margin: number | null) => ({ id: `c${margin}`, name: 'c', sector: null, listed: true, regions: [{ region: 'Germany', country: 'DE', revenue_usd: 100 }], margin });
+  const e: SimEmpire[] = [
+    { person: person('a', 100), companies: [company(0.2)], stakes: [{ company: { id: 'c0.2' }, value: 100 }] },
+    { person: person('b', 100), companies: [company(null)], stakes: [{ company: { id: 'cnull' }, value: 100 }] },
+  ];
+  const f = simulate(scenario([{ kind: 'place', target: 'DE', pct: -0.1, from: 0, to: 0 }]), e, [{ iso2: 'DE', gdp_usd: 1, region: 'ECS' }], 1);
+  const by = (id: string) => f.companies.find((c) => c.company.id === id)!;
+  assert.ok(Math.abs(by('c0.2').price - (1 - 0.22 - 1)) < 1e-9, String(by('c0.2').price));
+  assert.ok(Math.abs(by('cnull').price - -0.1) < 1e-9);
+  assert.ok(Math.abs(by('c0.2').leverage - 2.2) < 1e-9);
+});
+
+test('last time this happened: past events behind a scenario, and a replay of one', async () => {
+  const { pastEvents, replayScenario } = await import('./analogs.ts');
+  const moves = (m: number, oilPrice: number) => ({ market: m, oil: 0.1, china: 0, usd: 0, oilPrice, sector: { energy: 0.05, defense: 0.01 } });
+  const data = {
+    analogs: {},
+    events: [
+      { key: 'old', analog: 'mideast', label: 'Old one', from: '2019-01-01', weeks: 2, moves: moves(-0.02, 0.05) },
+      { key: 'new', analog: 'mideast', label: 'New one', from: '2024-01-01', weeks: 1, moves: moves(-0.03, 0.1) },
+      { key: 'other', analog: 'banking', label: 'Other', from: '2023-01-01', weeks: 2, moves: moves(-0.04, 0) },
+    ],
+  };
+  const s = scenario([{ kind: 'analog', target: 'mideast', pct: 1, from: 0, to: 1 }]);
+  assert.deepEqual(pastEvents(s, data).map((e) => e.key), ['new', 'old']);
+  assert.deepEqual(pastEvents(scenario([]), data), []);
+  const r = replayScenario('new', data)!;
+  assert.equal(r.id, 'replay:new');
+  // Measured log moves become price moves; small sector moves stay quiet; oil gets a story line.
+  assert.ok(Math.abs(r.shocks.find((x) => x.kind === 'market')!.pct - (Math.exp(-0.03) - 1)) < 1e-12);
+  assert.equal(r.shocks.some((x) => x.kind === 'sector' && x.target === 'energy' && !('quiet' in x && x.quiet)), true);
+  assert.equal(r.shocks.some((x) => x.kind === 'sector' && x.target === 'defense' && 'quiet' in x && x.quiet), true);
+  assert.equal(r.beats?.[0]?.text, 'Oil prices jump');
+  assert.equal(replayScenario('missing', data), null);
+});
+
+test('today’s exposure: each person once per side, biggest share of fortune first', async () => {
+  const { exposure } = await import('./exposure.ts');
+  const mv = (slug: string, worth: number, delta: number | null, pct: number | null = null) => ({ person: person(slug, worth), delta, pct, via: 'x' });
+  const s1 = scenario([]);
+  const s2 = { ...scenario([]), id: 't2' };
+  const items = [
+    { scenario: s1, winners: [mv('a', 100, 10), mv('b', 100, 2)], losers: [mv('c', 100, -30)], moved: 3 },
+    { scenario: s2, winners: [mv('a', 100, 20), mv('d', 100, null, 0.05)], losers: [mv('a', 100, -5)], moved: 3 },
+  ];
+  const { gain, risk } = exposure(items, 3);
+  assert.deepEqual(gain.map((g) => [g.move.person.slug, g.scenario.id]), [['a', 't2'], ['d', 't2'], ['b', 't']]);
+  assert.deepEqual(risk.map((g) => g.move.person.slug), ['c', 'a']); // a gains in one storyline and loses in another
+});
+
+test('an annual-report line can say which regions and countries it covers', () => {
+  const cs: SimCountry[] = [
+    { iso2: 'FR', gdp_usd: 3, region: 'ECS' },
+    { iso2: 'DE', gdp_usd: 4, region: 'ECS' },
+    { iso2: 'CN', gdp_usd: 18, region: 'EAS' },
+    { iso2: 'JP', gdp_usd: 4, region: 'EAS' },
+    { iso2: 'AU', gdp_usd: 2, region: 'EAS' },
+  ];
+  // "Europe excluding France": the region, less France.
+  assert.deepEqual(lineCountries({ region: 'Europe excluding France', country: null, covers: ['ECS'], except: ['FR'] }, new Set(), cs), ['DE']);
+  // "North Asia": named countries only.
+  assert.deepEqual(lineCountries({ region: 'North Asia', country: null, add: ['CN', 'JP', 'KR'] }, new Set(), cs).sort(), ['CN', 'JP']);
+  // Countries the company reports on their own lines stay out of a broad line.
+  assert.deepEqual(lineCountries({ region: 'Other', country: null, covers: ['EAS'], add: ['AU'] }, new Set(['CN']), cs).sort(), ['AU', 'JP']);
 });

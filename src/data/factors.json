@@ -73,6 +73,37 @@
    "improved": 0.092,
    "crisis": 0.1
   },
+  "ranges": {
+   "z80": 1.485,
+   "outOfSample": [
+    {
+     "event": "COVID crash",
+     "z": 1.408,
+     "coverage": 0.684
+    },
+    {
+     "event": "Invasion of Ukraine: oil spike",
+     "z": 1.463,
+     "coverage": 0.783
+    },
+    {
+     "event": "2022 bear market",
+     "z": 1.607,
+     "coverage": 0.883
+    },
+    {
+     "event": "China stimulus rally",
+     "z": 1.609,
+     "coverage": 0.906
+    },
+    {
+     "event": "April 2025 tariff shock",
+     "z": 1.463,
+     "coverage": 0.785
+    }
+   ],
+   "pooledCoverage": 0.81
+  },
   "events": [
    {
     "event": "COVID crash",
@@ -134,7 +165,7 @@
     "market": 0.519,
     "oil": 0.003,
     "china": 0.594,
-    "usd": 0.394,
+    "usd": 0.393,
     "sector": 0.105
    },
    "se": {
@@ -280,7 +311,7 @@
    "sector": "technology",
    "beta": {
     "market": 1.452,
-    "oil": 0.054,
+    "oil": 0.055,
     "china": 0.119,
     "usd": -0.093,
     "sector": 1.055
@@ -578,7 +609,7 @@
     "market": 0.547,
     "oil": 0.004,
     "china": 0.305,
-    "usd": -0.439,
+    "usd": -0.44,
     "sector": 0.15
    },
    "se": {
@@ -656,7 +687,7 @@
     "sector": 0.141
    },
    "se": {
-    "market": 0.074,
+    "market": 0.075,
     "oil": 0.025,
     "china": 0.051,
     "usd": 0.049,
@@ -687,7 +718,7 @@
    "sector": null,
    "beta": {
     "market": 0.59,
-    "oil": -0.048,
+    "oil": -0.049,
     "china": -0.013,
     "usd": -0.052,
     "sector": 0
@@ -763,8 +794,8 @@
     "market": 0.314,
     "oil": 0.029,
     "china": 0.403,
-    "usd": 0.055,
-    "sector": 0.047
+    "usd": 0.054,
+    "sector": 0.048
    },
    "se": {
     "market": 0.074,
@@ -932,7 +963,7 @@
     "market": 0.79,
     "oil": 0.012,
     "china": 0.575,
-    "usd": 0.085,
+    "usd": 0.086,
     "sector": 0
    },
    "se": {
@@ -1337,7 +1368,7 @@
    "sector": "finance",
    "beta": {
     "market": 1.618,
-    "oil": 0.084,
+    "oil": 0.083,
     "china": 0.024,
     "usd": 0.045,
     "sector": 0.803
@@ -2412,7 +2443,7 @@
     "market": 0.483,
     "oil": -0.02,
     "china": 0.296,
-    "usd": -0.06,
+    "usd": -0.061,
     "sector": 0.167
    },
    "se": {
