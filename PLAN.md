@@ -3,7 +3,7 @@
 From-scratch rebuild of Wealthline, now on `main`. The original prototype (built on the Bilt platform) is archived at tag `archive/bilt-final`; nothing in the app depends on Bilt.
 Requirements: `CLAUDE.md`, `HANDOFF.md`, `PRODUCT.md`. Backend setup: `supabase/README.md`.
 
-**Live:** https://haseebahmad1521-alt.github.io/wealthline/ is a static coming-soon page (`soon/`, auto-deploys on push to `main`). No web app for now: Android and iOS builds only, published by Arctic Imaginarium (`no.arctim.wealthline`); McKack deploys the landing page at wealthline.arctim.no (owner, Nov 17, 2026). `npm run build:pages` / `preview:phone` still build the web app locally for testing.
+**Live:** https://haseebahmad1521-alt.github.io/wealthline/ is a static coming-soon page (`soon/`, auto-deploys on push to `main`). No web app for now: Android and iOS builds only, published by Arctic Imaginarium (`no.arctim.wealthline`); McKack deploys the landing page at wealthline.arctim.no (owner, Nov 17, 2026). Later: Wealthline gets its own domain and host, serving the web app plus Android and iOS links, and wealthline.arctim.no redirects there. Until then, Supabase `site_url` (`supabase/config.toml`) points at a page that doesn't exist; set it to the new domain when that lands. `npm run build:pages` / `preview:phone` still build the web app locally for testing.
 
 ## Current state (for a fresh session — read this first)
 
