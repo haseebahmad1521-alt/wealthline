@@ -7,8 +7,11 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimen
 import { MEDAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
-import { DROPS, EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, priceTargets, revenueLines, whatIfTargets, type WhatIfMode } from '@/components/world-views';
+import { EconomiesPanel, MoneyPanel, WhatIfPanel, economyFills, flowArcs, fortuneFills, priceTargets, revenueLines, whatIfTargets, type EconomyMode, type WhatIfMode } from '@/components/world-views';
+import { useMoney } from '@/lib/currency';
+import { usePeople, type Person } from '@/lib/data';
 import { countryShape } from '@/lib/geo';
+import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
 import { formatDate, formatTime, usd } from '@/lib/format';
@@ -32,7 +35,7 @@ const KIND: Record<SiteKind, [string, string]> = {
 };
 
 const VIEWS = [
-  { key: 'places', label: 'Places' },
+  { key: 'places', label: 'Today' },
   { key: 'money', label: 'Money' },
   { key: 'economies', label: 'Economies' },
   { key: 'whatif', label: 'What if' },
@@ -46,6 +49,8 @@ const open = (url: string | null) => url && void WebBrowser.openBrowserAsync(url
 
 export default function World() {
   const world = useWorld();
+  const people = usePeople();
+  const money = useMoney();
   const { width, height: windowHeight } = useWindowDimensions();
   const desktop = width >= desktopBreakpoint;
   const { focus: slug, view: viewParam } = useLocalSearchParams<{ focus?: string; view?: string }>();
@@ -55,7 +60,8 @@ export default function World() {
   const lines = useMemo(() => revenueLines(world.data ?? []), [world.data]);
   const targets = useMemo(() => whatIfTargets(lines), [lines]);
   const [target, setTarget] = useState<string | null>(null);
-  const [drop, setDrop] = useState<number>(DROPS[1]);
+  const [drop, setDrop] = useState<number>(0.25);
+  const [econ, setEcon] = useState<EconomyMode>('fortune');
   const [mode, setMode] = useState<WhatIfMode>('place');
   const [firm, setFirm] = useState<string | null>(null);
   // Default shock: the biggest market outside the United States; default company: the largest recorded stakes.
@@ -66,13 +72,15 @@ export default function World() {
   let arcs: GlobeArc[] = [];
   let fills: GlobeFill[] = [];
   if (view === 'money') arcs = flowArcs(lines, focused);
-  if (view === 'economies') fills = economyFills(lines, world.countries ?? [], focused).fills;
+  if (view === 'economies') fills = econ === 'fortune' ? fortuneFills(empires, world.countries ?? [], focused) : economyFills(lines, world.countries ?? [], focused).fills;
   if (view === 'whatif' && mode === 'place') {
     arcs = flowArcs(lines, null, (l) => l.placeKey === shock, true);
     if (countryShape(shock)) fills = [{ iso2: shock, strength: 1, risk: true }];
   }
   if (view === 'whatif' && mode === 'price') arcs = flowArcs(lines, null, (l) => l.company.id === company, true);
   const shockCentre = view === 'whatif' ? (arcs[0]?.from ?? null) : null;
+  // What if and the fortune comparison are about the whole map, so picking a person doesn't fly the globe to them.
+  const wide = view === 'whatif' || (view === 'economies' && econ === 'fortune');
 
   const { sites, markers } = useMemo(() => {
     const s: GlobeSite[] = [];
@@ -88,6 +96,18 @@ export default function World() {
     }
     return { sites: s, markers: m };
   }, [world.data]);
+
+  // Today: each portrait carries its change since the previous value, and the biggest movers lead their bubbles.
+  const todayMarkers = useMemo(() => {
+    const by = new Map(moves(empires.map((e) => e.person)).map((mv) => [mv.person.id, mv.delta]));
+    return markers
+      .map((m) => {
+        const d = by.get(m.key);
+        return !d ? m : { ...m, change: { text: money.format(Math.abs(d)), dir: (Math.sign(d) as 1 | -1 | 0) } };
+      })
+      .sort((a, b) => Math.abs(by.get(b.key) ?? 0) - Math.abs(by.get(a.key) ?? 0));
+  }, [markers, empires, money]);
+  const shownMarkers = view === 'places' ? todayMarkers : markers;
 
   // A place picked from search: the camera flies there instead of to the owner's headquarters.
   const [spot, setSpot] = useState<{ lat: number; lng: number } | null>(null);
@@ -142,13 +162,21 @@ export default function World() {
     }, [planet]),
   );
   const details = useRef<ComponentRef<typeof View>>(null);
+  // Choosing someone from the panel below: bring the globe back into view so the flight to them is seen (web).
+  const top = useRef<ComponentRef<typeof View>>(null);
+  const show = (personId: string) => {
+    select(personId);
+    (top.current as unknown as HTMLElement | null)?.scrollIntoView?.({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
   const places = new Set(sites.map((s) => s.key.split(':').slice(1).join(':'))).size;
 
   return (
     <Screen>
-      <View>
+      <View ref={top}>
         <Heading>World.</Heading>
-        <Body secondary>Where the biggest fortunes reach: every ring is a real place their companies own or run.</Body>
+        <Body secondary>
+          {view === 'places' ? 'Who gained and lost today, pinned where their companies are based.' : 'Where the biggest fortunes reach: every ring is a real place their companies own or run.'}
+        </Body>
       </View>
       <PageSearch context="world" />
       {world.isPending || world.error ? (
@@ -171,24 +199,27 @@ export default function World() {
               </Pressable>
             ))}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.above} contentContainerStyle={styles.chips} accessibilityRole="tablist">
-            <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
-            {empires.map((e) => (
-              <Chip key={e.person.id} label={e.person.name} selected={focused?.person.id === e.person.id} onPress={() => select(e.person.id)} empire={e} />
-            ))}
-          </ScrollView>
+          {/* Today picks people from its lists and search; the other views keep the strip of names. */}
+          {view !== 'places' && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.above} contentContainerStyle={styles.chips} accessibilityRole="tablist">
+              <Chip label="Everyone" selected={!focused} onPress={() => select(null)} />
+              {empires.map((e) => (
+                <Chip key={e.person.id} label={e.person.name} selected={focused?.person.id === e.person.id} onPress={() => select(e.person.id)} empire={e} />
+              ))}
+            </ScrollView>
+          )}
           <View style={[styles.layout, desktop && styles.layoutWide]}>
             {planet ? (
-              <View style={[styles.planetArea, desktop && styles.globeCardWide]}>
+              <View style={[styles.planetArea, desktop && styles.planetWide]}>
                 <WorldGlobe
                   // Desktop: as tall as fits below the header, segments and chips (~360px), so the whole globe is in view.
                   height={desktop ? Math.max(360, Math.min(560, windowHeight - 360)) : Math.min(width - space.md * 2, 420)}
                   sites={view === 'places' ? sites : []}
-                  markers={markers}
+                  markers={shownMarkers}
                   arcs={arcs}
                   fills={fills}
-                  focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                  center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
+                  focus={wide ? null : (focused?.person.id ?? null)}
+                  center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                   onSelect={(id) => select(id)}
                   onOpen={(id) => {
                     const e = empires.find((x) => x.person.id === id);
@@ -208,11 +239,11 @@ export default function World() {
               <Globe
                 size={globeSize}
                 sites={view === 'places' ? sites : []}
-                markers={markers}
+                markers={shownMarkers}
                 arcs={arcs}
                 fills={fills}
-                focus={view === 'whatif' ? null : (focused?.person.id ?? null)}
-                center={shockCentre ?? (focused && spot) ?? focused?.hq ?? null}
+                focus={wide ? null : (focused?.person.id ?? null)}
+                center={wide ? shockCentre : ((focused && spot) ?? focused?.hq ?? null)}
                 onSelect={(id) => select(id)}
                 label={
                   focused
@@ -226,7 +257,9 @@ export default function World() {
                   : view === 'money'
                     ? 'Drag to turn. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
                     : view === 'economies'
-                      ? 'Drag to turn. Darker countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                      ? econ === 'fortune'
+                        ? 'Drag to turn. Shaded countries have a yearly GDP smaller than the fortune.'
+                        : 'Drag to turn. Darker countries: more of the tracked companies’ revenue compared with that country’s GDP.'
                       : 'Drag to turn. Hypothetical: the place in red and the revenue that flows from it.'}
               </Caption>
             </Surface>
@@ -235,7 +268,7 @@ export default function World() {
               {view === 'money' ? (
                 <MoneyPanel lines={lines} focus={focused} />
               ) : view === 'economies' ? (
-                <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} />
+                <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} mode={econ} onMode={setEcon} onSelect={show} />
               ) : view === 'whatif' ? (
                 <WhatIfPanel
                   lines={lines}
@@ -250,18 +283,20 @@ export default function World() {
                   onDrop={setDrop}
                 />
               ) : focused ? (
-                <EmpirePanel empire={focused} />
+                <EmpirePanel empire={focused} onClear={() => select(null)} />
               ) : (
-                <Overview empires={empires} places={places} onSelect={select} />
+                <Overview empires={empires} people={people.data ?? []} places={places} onSelect={show} />
               )}
               {planet && (
                 <Caption style={styles.planetNote}>
                   {view === 'places'
-                    ? 'Drag the globe to turn it; pinch or use + and − to zoom. Portraits join into one bubble when they crowd: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.'
+                    ? 'Drag the globe to turn it; pinch or use + and − to zoom. Each portrait shows the change since that person’s previous recorded value; when portraits crowd, the biggest mover leads the bubble: tap it to fan them out, and tap a portrait for the profile. Dots are real company places from Wikidata; green ones moved in the last 30 minutes.'
                     : view === 'money'
                       ? 'Drag the globe to turn it; pinch to zoom. Lines carry reported revenue from where it’s earned to headquarters; thicker means more.'
                       : view === 'economies'
-                        ? 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
+                        ? econ === 'fortune'
+                          ? 'Drag the globe to turn it; pinch to zoom. Lit countries have a yearly GDP smaller than the fortune.'
+                          : 'Drag the globe to turn it; pinch to zoom. Brighter countries: more of the tracked companies’ revenue compared with that country’s GDP.'
                         : 'Drag the globe to turn it; pinch to zoom. Hypothetical: the place in red and the revenue that flows from it.'}
                 </Caption>
               )}
@@ -293,68 +328,105 @@ function Chip({ label, selected, onPress, empire }: { label: string; selected: b
   );
 }
 
-/** Everyone: an empire leaderboard by reported revenue, then by places; medals for the top three. */
-function Overview({ empires, places, onSelect }: { empires: Empire[]; places: number; onSelect: (id: string) => void }) {
+/** Everyone: the day's movers (counts, biggest gains and drops), then the companies on the map ranked by revenue. */
+function Overview({ empires, people, places, onSelect }: { empires: Empire[]; people: Person[]; places: number; onSelect: (id: string) => void }) {
+  const money = useMoney();
   const countries = new Set(empires.flatMap((e) => e.companies.flatMap((c) => c.sites.map((s) => s.country).filter(Boolean)))).size;
-  const board = empires
-    .map((e) => ({
-      e,
-      revenue: e.companies.reduce((n, c) => n + c.regions.reduce((m, r) => m + r.revenue_usd, 0), 0),
-      places: e.companies.reduce((n, c) => n + c.sites.length, 0),
-      countries: new Set(e.companies.flatMap((c) => c.sites.map((s) => s.country).filter(Boolean))).size,
-    }))
-    .sort((a, b) => b.revenue - a.revenue || b.places - a.places);
+  const t = today(people);
+  const since = (t.gains[0] ?? t.drops[0])?.person.prev_as_of ?? null;
+  const onMap = new Set(empires.map((e) => e.person.id));
+  // On the globe: turn to them; otherwise (no company places recorded) open the profile.
+  const pick = (p: Person) => (onMap.has(p.id) ? onSelect(p.id) : router.push(`/person/${p.slug}`));
+    const board = companyBoard(empires.map((e) => ({ owner: e, companies: e.companies })));
   return (
-    <Surface style={styles.panelCard}>
-      <Heading level={2}>Empires.</Heading>
-      <Text style={[type.title, styles.figure]}>
-        {places} places in {countries} countries
-      </Text>
-      <Body secondary>Ranked by the yearly revenue their companies report, then by places. Choose one to follow it round the globe.</Body>
-      <View style={styles.list}>
-        {board.map(({ e, revenue, places: n, countries: k }, i) => (
-          <Pressable
-            key={e.person.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Number ${i + 1}, ${e.person.name}: ${revenue ? `${usd(revenue)} revenue, ` : ''}${n} places in ${k} countries. Follow`}
-            onPress={() => onSelect(e.person.id)}
-            style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
-            <View style={[styles.place, i < 3 && { backgroundColor: MEDAL[i] }]}>
-              <Text style={[type.number, { fontSize: 13, color: i < 3 ? '#FFFFFF' : color.text }]}>{i + 1}</Text>
-            </View>
-            <Portrait uri={e.person.portrait_url} name={e.person.name} size={36} />
-            <View style={styles.flex}>
-              <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
-                {e.person.name}
-              </Text>
-              <View style={styles.tags}>
-                {revenue > 0 && (
-                  <Tag size="sm" variant="soft" color="default">
-                    <Tag.Label>{usd(revenue)}/yr</Tag.Label>
-                  </Tag>
-                )}
-                <Tag size="sm" variant="soft" color="default">
-                  <Tag.Label>{n} {n === 1 ? 'place' : 'places'}</Tag.Label>
-                </Tag>
-                {k > 1 && (
-                  <Tag size="sm" variant="soft" color="default">
-                    <Tag.Label>{k} countries</Tag.Label>
-                  </Tag>
-                )}
+    <>
+      {t.up + t.down > 0 && (
+        <Surface style={styles.panelCard}>
+          <View style={styles.headRow}>
+            <Heading level={2}>Today.</Heading>
+            {since && <Caption>since {formatDate(since)}</Caption>}
+          </View>
+          <View style={styles.tally} accessible accessibilityLabel={`${t.up} up, ${t.down} down`}>
+            <Text style={[type.title, styles.figure, styles.tallyText, { color: color.gain }]}>▲ {t.up} up</Text>
+            <Text style={[type.title, styles.figure, styles.tallyText, { color: color.loss }]}>▼ {t.down} down</Text>
+          </View>
+          <View style={styles.list}>
+            {[...t.gains, ...t.drops].map((m, i) => (
+              <Pressable
+                key={m.person.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${m.person.name}, ${m.delta > 0 ? 'up' : 'down'} ${money.format(Math.abs(m.delta))}. ${onMap.has(m.person.id) ? 'Show on the globe' : 'Open profile'}`}
+                onPress={() => pick(m.person)}
+                style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
+                <Portrait uri={m.person.portrait_url} name={m.person.name} size={36} />
+                <Text style={[type.headline, styles.flex, { color: color.text }]} numberOfLines={2}>
+                  {m.person.name.replace(/ & family$/, '')}
+                </Text>
+                <Change delta={m.delta} base={m.base} size={13} />
+              </Pressable>
+            ))}
+          </View>
+        </Surface>
+      )}
+      <Surface style={styles.panelCard}>
+        <Heading level={2}>Companies on the map.</Heading>
+        <Text style={[type.title, styles.figure]}>
+          {places} places in {countries} countries
+        </Text>
+        <Body secondary>Ranked by the yearly revenue each company reports, counted once however many owners we track. Choose one to follow its owner round the globe.</Body>
+        <View style={styles.list}>
+          {board.map(({ company: c, owners, revenue, places: n }, i) => (
+            <Pressable
+              key={c.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Number ${i + 1}, ${c.name}: ${revenue ? `${usd(revenue)} revenue, ` : ''}${n} ${n === 1 ? 'place' : 'places'}. Owners: ${owners.map((o) => o.person.name).join(', ')}. Follow`}
+              onPress={() => onSelect(owners[0].person.id)}
+              style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
+              <View style={[styles.place, i < 3 && { backgroundColor: MEDAL[i] }]}>
+                <Text style={[type.number, { fontSize: 13, color: i < 3 ? '#FFFFFF' : color.text }]}>{i + 1}</Text>
               </View>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-    </Surface>
+              <View style={styles.flex}>
+                <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
+                  {c.name}
+                </Text>
+                <Caption numberOfLines={1}>{owners.map((o) => o.person.name.replace(/ & family$/, '')).join(', ')}</Caption>
+                <View style={styles.tags}>
+                  {revenue > 0 && (
+                    <Tag size="sm" variant="soft" color="default">
+                      <Tag.Label>{usd(revenue)}/yr</Tag.Label>
+                    </Tag>
+                  )}
+                  <Tag size="sm" variant="soft" color="default">
+                    <Tag.Label>
+                      {n} {n === 1 ? 'place' : 'places'}
+                    </Tag.Label>
+                  </Tag>
+                </View>
+              </View>
+              <View style={styles.owners}>
+                {owners.slice(0, 3).map((o, k) => (
+                  <View key={o.person.id} style={k > 0 && styles.ownerOverlap}>
+                    <Portrait uri={o.person.portrait_url} name={o.person.name} size={30} />
+                  </View>
+                ))}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </Surface>
+    </>
   );
 }
 
-function EmpirePanel({ empire }: { empire: Empire }) {
+function EmpirePanel({ empire, onClear }: { empire: Empire; onClear: () => void }) {
   const all = empire.companies.flatMap((c) => c.sites);
   const countries = new Set(all.map((s) => s.country).filter(Boolean)).size;
+  const move = moves([empire.person])[0];
   return (
     <Surface style={styles.panelCard}>
+      <Pressable accessibilityRole="button" onPress={onClear} hitSlop={8} style={styles.source}>
+        <Caption style={{ color: color.action }}>‹ Everyone</Caption>
+      </Pressable>
       <View style={styles.who}>
         <Portrait uri={empire.person.portrait_url} name={empire.person.name} size={56} rounded={16} />
         <View style={styles.flex}>
@@ -362,6 +434,7 @@ function EmpirePanel({ empire }: { empire: Empire }) {
           <Caption>
             {all.length} {all.length === 1 ? 'place' : 'places'} in {countries} {countries === 1 ? 'country' : 'countries'}
           </Caption>
+          {move && <Change delta={move.delta} base={move.base} size={14} />}
         </View>
       </View>
       <Link href={`/person/${empire.person.slug}`} style={styles.link}>
@@ -503,12 +576,13 @@ const styles = StyleSheet.create({
   details: { scrollMarginTop: 72 } as object,
   planetNote: { maxWidth: 520 },
   flex: { flex: 1, minWidth: 0 },
+  // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
   chips: { gap: space.sm, paddingVertical: 2 },
   // Controls above the globe's portraits, frosted where a portrait passes under them (web).
   above: { zIndex: 1 },
   // Four equal segments across the width, so they fit a 320px phone; capped on desktop.
   segments: { flexDirection: 'row', alignSelf: 'stretch', maxWidth: 520, padding: 3, borderRadius: radius.pill, backgroundColor: color.fill, zIndex: 1, ...({ backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop } as object) },
-  segment: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
+  segment: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 38, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
   chip: {
     minHeight: minTouch,
@@ -528,10 +602,12 @@ const styles = StyleSheet.create({
   globeCard: { padding: space.md, gap: space.md },
   // No card: the planet behind the page is the globe; the area is just where it sits and where gestures land.
   planetArea: { gap: space.sm },
+  // Desktop: the globe takes the larger column; it sized to its content before and sat in a narrow strip.
+  planetWide: { flex: 3, minWidth: 0 },
   globeCardWide: { padding: space.lg },
   globeNote: { textAlign: 'center', maxWidth: 420, alignSelf: 'center' },
   panel: { gap: space.lg },
-  panelWide: { flex: 1, minWidth: 0 },
+  panelWide: { flex: 2, minWidth: 0 },
   panelCard: { padding: space.lg, gap: space.md },
   figure: { color: color.text, fontVariant: ['tabular-nums'] },
   list: { marginHorizontal: -space.lg },
@@ -540,6 +616,11 @@ const styles = StyleSheet.create({
   pressedRow: { backgroundColor: color.fill },
   place: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  headRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
+  tally: { flexDirection: 'row', gap: space.lg, flexWrap: 'wrap' },
+  tallyText: { fontSize: 22, lineHeight: 28 },
+  owners: { flexDirection: 'row' },
+  ownerOverlap: { marginLeft: -10 },
   who: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   link: { ...type.headline, color: color.action, alignSelf: 'flex-start', paddingVertical: space.sm },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.hairline },

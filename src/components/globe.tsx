@@ -5,7 +5,7 @@
 import { geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, PanResponder, View } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Image as SvgImage, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { countryShape, land, type LatLng } from '@/lib/geo';
 import { portraitAt, portraitPx } from '@/lib/portrait';
@@ -15,7 +15,9 @@ import { color } from '@/theme';
 const graticule = geoGraticule10();
 
 export type GlobeSite = { key: string; lat: number; lng: number; kind: SiteKind; group: string; live: boolean };
-export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null };
+export type GlobeMarker = { key: string; lat: number; lng: number; uri: string | null; label: string; /** Net worth (USD); sizes portraits in an opened bubble. */ worth?: number | null;
+  /** Today view: change since the previous recorded value, already formatted ("$7.2B"), with its direction. */
+  change?: { text: string; dir: 1 | -1 | 0 } | null };
 /** A money flow: from where revenue is earned to the company's HQ. weight 0–1 sets the line width. */
 export type GlobeArc = { key: string; from: LatLng; to: LatLng; weight: number; group: string; risk?: boolean };
 /** A shaded country; strength 0–1. */
@@ -226,6 +228,8 @@ export function Globe({
     return xy ? [{ ...m, x: xy[0], y: xy[1], vis: vis! }] : [];
   });
   const at = new Map<string, number>();
+  // Change labels go in a layer above every portrait; a label that would overlap a bigger mover's is left out.
+  const tags: { key: string; x: number; y: number; w: number; text: string; tint: string }[] = [];
   const pins = placed.map((m) => {
     const cell = `${Math.round(m.x / 18)}:${Math.round(m.y / 18)}`;
     const n = at.get(cell) ?? 0;
@@ -235,9 +239,19 @@ export function Globe({
     const x = m.x + (n ? Math.cos(n * 2.4) * d * 0.8 : 0);
     const y = m.y - d * 0.75 + (n ? Math.sin(n * 2.4) * d * 0.8 : 0);
     const faded = !!focus && !on;
+    // Today: a gain/loss ring, and for the first portrait in its spot (the biggest mover; markers come sorted) a label
+    // with the direction arrow, so colour is never the only cue.
+    const ch = m.change && m.change.dir ? m.change : null;
+    const tint = ch ? (ch.dir > 0 ? color.gain : color.loss) : null;
+    if (ch && tint && !faded) {
+      const text = `${ch.dir > 0 ? '▲' : '▼'} ${ch.text}`;
+      const w = text.length * 6.4 + 12;
+      const ty = y + d / 2 - 4;
+      if (!tags.some((t) => Math.abs(t.x - x) < (t.w + w) / 2 + 2 && Math.abs(t.y - ty) < 18)) tags.push({ key: m.key, x, y: ty, w, text, tint });
+    }
     return (
       <G key={m.key} opacity={(faded ? 0.45 : 1) * m.vis} onPress={onSelect ? () => onSelect(m.key) : undefined}>
-        <Circle cx={x} cy={y} r={d / 2 + 2} fill={color.surface} stroke={on ? color.action : color.hairline} strokeWidth={on ? 2 : 1} />
+        <Circle cx={x} cy={y} r={d / 2 + 2} fill={color.surface} stroke={tint ?? (on ? color.action : color.hairline)} strokeWidth={tint ? 2.5 : on ? 2 : 1} />
         {m.uri ? (
           <>
             <Defs>
@@ -280,6 +294,14 @@ export function Globe({
         {flows}
         {rings}
         {pins}
+        {tags.map((t) => (
+          <G key={`tag-${t.key}`} pointerEvents="none">
+            <Rect x={t.x - t.w / 2} y={t.y} width={t.w} height={16} rx={8} fill={color.surface} stroke={t.tint} strokeWidth={1} />
+            <SvgText x={t.x} y={t.y + 12} fontSize={11} fontWeight="700" fill={t.tint} textAnchor="middle">
+              {t.text}
+            </SvgText>
+          </G>
+        ))}
       </Svg>
     </View>
   );
