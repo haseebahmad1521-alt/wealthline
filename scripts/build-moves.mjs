@@ -5,8 +5,9 @@
 // Run: node scripts/build-moves.mjs (reads the public Supabase config from .env.local).
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, weekKey, weeklyReturns } from '../supabase/functions/_shared/factors.ts';
+import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, weekKey } from '../supabase/functions/_shared/factors.ts';
 import { lastCompleteWeek, ledgerRows } from '../supabase/functions/_shared/ledger.ts';
+import { weekly } from './yahoo.mjs';
 
 const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
@@ -18,26 +19,17 @@ const env = Object.fromEntries(
 const key = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const sb = (path) => fetch(`${env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } }).then((r) => r.json());
 const reference = JSON.parse(readFileSync('src/data/sim-reference.json', 'utf8'));
-const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; Wealthline/1.0; +https://haseebahmad1521-alt.github.io/wealthline/)' };
-async function get(symbol) {
-  const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=10y&interval=1wk`, { headers: UA });
-  await new Promise((r) => setTimeout(r, 250));
-  if (!res.ok) return new Map();
-  const r = (await res.json())?.chart?.result?.[0];
-  const t = r?.timestamp ?? [];
-  const c = r?.indicators?.adjclose?.[0]?.adjclose ?? r?.indicators?.quote?.[0]?.close ?? [];
-  return weeklyReturns(t.map((ts, i) => ({ t: ts, c: c[i] })).filter((b) => b.c != null));
-}
+
 
 const listed = await sb('companies?select=id,ticker,quote_symbol&is_private=eq.false&ticker=not.is.null');
 const series = {};
-for (const [f, s] of Object.entries(FACTOR_SYMBOL)) series[f] = await get(s);
+for (const [f, s] of Object.entries(FACTOR_SYMBOL)) series[f] = await weekly(s);
 const funds = {};
-for (const [k, s] of Object.entries(SECTOR_FUND)) funds[k] = await get(s);
+for (const [k, s] of Object.entries(SECTOR_FUND)) funds[k] = await weekly(s);
 const companies = [];
 for (const c of listed) {
   const q = c.quote_symbol ?? c.ticker.replace('.', '-');
-  companies.push({ id: c.id, sector: reference.sectors[c.id]?.sector ?? null, returns: await get(FIT_SYMBOL[q] ?? q) });
+  companies.push({ id: c.id, sector: reference.sectors[c.id]?.sector ?? null, returns: await weekly(FIT_SYMBOL[q] ?? q) });
 }
 const week = lastCompleteWeek([...series.market.keys()], new Date(), weekKey);
 const round = (v) => Math.round(v * 1e6) / 1e6;

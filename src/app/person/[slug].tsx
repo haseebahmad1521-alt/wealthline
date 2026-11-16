@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensio
 
 import { EmpireCard } from '@/components/empire-card';
 import { NewsList } from '@/components/news';
+import { FortuneDrivers } from '@/components/drivers';
 import { WhyItMoved } from '@/components/why';
 import { ProfileHero } from '@/components/profile-hero';
 import { Body, Caption, Change, Heading, Icon, Provenance, Screen, StateView, Surface, icons, minTouch } from '@/components/ui';
@@ -198,6 +199,8 @@ export default function Profile() {
           </Surface>
         </>
       )}
+
+      {p && <FortuneDrivers personId={p.id} netWorth={p.net_worth_usd ?? null} />}
 
       {p && <WhyItMoved personId={p.id} />}
 

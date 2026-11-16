@@ -156,3 +156,37 @@ const styles = StyleSheet.create({
   signed: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   flex: { flex: 1, minWidth: 0 },
 });
+
+/** Watchlist: watched people whose companies had an unusual week (their own part beyond the 80% range). */
+export function UnusualWeeks({ personIds }: { personIds: string[] }) {
+  const world = useWorld();
+  const moves = useMoves();
+  const found = useMemo(() => {
+    if (!moves.data) return [];
+    const watched = new Set(personIds);
+    const byCompany = new Map(moves.data.rows.map((r) => [r.company_id, r]));
+    const out: { w: Why; name: string; person: Empire['person'] }[] = [];
+    for (const e of world.data ?? []) {
+      if (!watched.has(e.person.id)) continue;
+      for (const c of e.companies) {
+        const r = byCompany.get(c.id);
+        const w = r && explain(r, Z80);
+        if (w?.unusual) out.push({ w, name: c.name, person: e.person });
+      }
+    }
+    return out.sort((a, b) => Math.abs(b.w.own) - Math.abs(a.w.own)).slice(0, 5);
+  }, [moves.data, world.data, personIds]);
+  if (!moves.data || !found.length) return null;
+  return (
+    <View style={styles.section}>
+      <Heading level={2}>Unusual weeks.</Heading>
+      <Caption>Companies behind people you watch that moved more on their own than in four weeks out of five.</Caption>
+      <Glass style={styles.list}>
+        {found.map((x, i) => (
+          <Row key={`${x.person.id}:${x.w.companyId}`} w={x.w} name={x.name} person={x.person} i={i} />
+        ))}
+      </Glass>
+      <Note week={moves.data.week} from={moves.data.from} />
+    </View>
+  );
+}
