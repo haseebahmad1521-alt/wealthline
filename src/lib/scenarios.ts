@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Scenario, Shock } from '../../supabase/functions/_shared/scenario.ts';
 import reference from '@/data/sim-reference.json';
 import { effectiveFit, REFERENCE, type Links } from '@/lib/factor-data';
+import { GAMMA, parseMarkets } from '../../supabase/functions/_shared/polymarket.ts';
 import type { SimFit } from '@/lib/simulate';
 import { db } from '@/lib/supabase';
 import type { Empire } from '@/lib/world';
@@ -94,6 +95,25 @@ export function useMostAsked() {
       const since = new Date(Date.now() - 7 * 864e5).toISOString();
       const { data, error } = await db().from('world_scenarios').select('*').in('origin', ['prompt', 'versus']).gte('created_at', since).order('asks', { ascending: false }).order('created_at', { ascending: false }).limit(8);
       return error || !data ? ([] as (Scenario & { asks?: number })[]) : (data as (Row & { asks?: number })[]).map((r) => ({ ...fromRow(r), asks: r.asks }));
+    },
+  });
+}
+
+/**
+ * Live "Yes" probabilities for prediction markets (Polymarket's public data, straight from the browser), refreshed every
+ * few minutes. A market that has closed drops out; the briefing then shows the stored odds with their date.
+ */
+export function useLiveOdds(ids: string[]) {
+  const key = [...new Set(ids)].sort();
+  return useQuery({
+    queryKey: ['polymarket', key.join(',')],
+    enabled: key.length > 0,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+    queryFn: async () => {
+      const res = await fetch(`${GAMMA}/markets?${key.map((id) => `id=${encodeURIComponent(id)}`).join('&')}`);
+      if (!res.ok) return new Map<string, number>();
+      return new Map(parseMarkets(await res.json()).map((m) => [m.id, m.yes]));
     },
   });
 }

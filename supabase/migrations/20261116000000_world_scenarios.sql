@@ -84,6 +84,8 @@ create table public.world_scenarios (
   assumptions jsonb not null default '[]'::jsonb,
   sources jsonb not null default '[]'::jsonb,
   beats jsonb not null default '[]'::jsonb,
+  -- A prediction market asking whether this happens (Polymarket): its question, Yes probability when fetched, link.
+  odds jsonb,
   versus text[] check (versus is null or cardinality(versus) = 2),
   -- Set when the question can't be modelled (unrelated, or only touches things that aren't tracked).
   declined text,

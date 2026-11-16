@@ -78,6 +78,8 @@ export type Scenario = {
   versus?: [string, string] | null;
   /** Story lines shown as notifications, in addition to the ones made from the changes. */
   beats?: Beat[];
+  /** A prediction market asking whether this happens (polymarket.ts), when one matches. */
+  odds?: { market: string; question: string; yes: number; url: string; as_of: string } | null;
   title: string;
   summary: string;
   plausibility: Plausibility;

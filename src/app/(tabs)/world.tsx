@@ -11,7 +11,8 @@ import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, reven
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
-import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
+import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useLiveOdds, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
+import { briefing } from '@/lib/briefing';
 import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { suggestedMatches, versusScenario, versusScore, type Battle } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
@@ -22,7 +23,7 @@ import { MINE_KEY, myChange, readMine, type Holding } from '@/lib/mine';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
 import { getItem, setItem } from '@/lib/device-store';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
-import { DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
+import { BriefingPanel, DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { PageSearch } from '@/components/page-search';
 import { Body, Caption, Change, Heading, Portrait, Screen, StateView, Surface, minTouch } from '@/components/ui';
@@ -284,6 +285,15 @@ export default function World() {
       .map((c) => ({ id: c.id, name: c.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [empires]);
+
+  // Today's briefing: Grok's daily storylines (or the built-in examples until it's on), each with who gains and loses
+  // most at the end, and live prediction-market odds where a market matches.
+  const briefSource = useMemo(() => ((daily.data?.length ? daily.data : examples(empires)) as Scenario[]), [daily.data, empires]);
+  const briefItems = useMemo(
+    () => (view === 'whatif' && simEmpires.length ? briefing(briefSource, simEmpires, simCountries, eventData as EventData) : []),
+    [view, briefSource, simEmpires, simCountries],
+  );
+  const liveOdds = useLiveOdds(briefSource.map((s) => s.odds?.market).filter((x): x is string => !!x));
 
   // "…and then?": the story carries on for another year from where it ended; the film resumes there.
   const followUps = sim && sim.origin !== 'dials' && sim.months < 36 ? FOLLOW_UPS : undefined;
@@ -616,6 +626,16 @@ export default function World() {
                     score={game}
                     challengeId={challenge?.id ?? null}
                     mostAsked={mostAsked.data ?? []}
+                    brief={
+                      <BriefingPanel
+                        items={briefItems}
+                        sample={!daily.data?.length}
+                        live={liveOdds.data ?? new Map()}
+                        date={daily.data?.[0]?.run_date ?? null}
+                        money={money.format}
+                        onWatch={pick}
+                      />
+                    }
                     you={<MineEditor holdings={mine} companies={ownable} onChange={saveMine} money={money.format} />}
                     onMode={(m) => {
                       setPanel(m);
