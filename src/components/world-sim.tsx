@@ -14,7 +14,7 @@ import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
 import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, type SimEvent, type SimPerson } from '@/lib/simulate';
-import { BATTLES, lastName, type Battle, type Corner } from '@/lib/versus';
+import { lastName, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
 import type { BriefingItem } from '@/lib/briefing';
@@ -175,9 +175,9 @@ export function SimulatePanel({
             {scenario.origin === 'example'
               ? ' · built-in example'
               : scenario.origin === 'versus' && !scenario.sources.length && scenario.id.startsWith('versus:')
-                ? ' · your match, with the sizes stated in it'
+                ? ' · built-in match, with the sizes stated in it'
                 : ` · ${PLAUSIBLE[scenario.plausibility].toLowerCase()}, by Grok`}
-            . Changes are applied to recorded revenue, GDP and share counts.{scenario.assumptions.length ? ` ${scenario.assumptions.join(' ')}` : ''}
+            .{scenario.origin === 'versus' ? ` ${scenario.reason.replace(/\.?$/, '.')}` : ''} Changes are applied to recorded revenue, GDP and share counts.{scenario.assumptions.length ? ` ${scenario.assumptions.join(' ')}` : ''}
           </Caption>
           {scenario.sources.map((s) => (
             <Pressable key={s.url} accessibilityRole="link" onPress={() => open(s.url)} style={styles.source}>
@@ -192,23 +192,19 @@ export function SimulatePanel({
   );
 }
 
-/** Versus: pick two rivals (or a suggested match), the battle and who comes out ahead, then fight. */
+/** Versus: pick two rivals (or a suggested match) and fight; the battle and who comes out ahead are decided for you. */
 export function VersusPicker({
   people,
   suggested,
   onFight,
-  onGrok,
 }: {
   people: SimPerson[];
   suggested: [SimPerson, SimPerson][];
-  onFight: (a: string, b: string, battle: Battle, winner: 'a' | 'b') => string | null;
-  onGrok: (a: string, b: string) => Promise<string | null>;
+  onFight: (a: string, b: string) => Promise<string | null>;
 }) {
   const [a, setA] = useState<string | null>(suggested[0]?.[0].slug ?? null);
   const [b, setB] = useState<string | null>(suggested[0]?.[1].slug ?? null);
   const [slot, setSlot] = useState<'a' | 'b' | null>(null);
-  const [battle, setBattle] = useState<Battle>('market');
-  const [winner, setWinner] = useState<'a' | 'b'>('a');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pa = people.find((p) => p.slug === a) ?? null;
@@ -277,46 +273,22 @@ export function VersusPicker({
         </ScrollView>
       )}
       <View style={styles.choices}>
-        {BATTLES.map((x) => (
-          <Pressable key={x.key} accessibilityRole="button" accessibilityState={{ selected: battle === x.key }} onPress={() => setBattle(x.key)} style={[styles.chipBtn, battle === x.key && styles.pillOn]}>
-            <Text style={[type.headline, { fontSize: 14, color: battle === x.key ? color.action : color.text }]}>{x.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {ready && (
-        <View style={styles.choices}>
-          {(['a', 'b'] as const).map((w) => {
-            const p = w === 'a' ? pa : pb;
-            return (
-              <Pressable key={w} accessibilityRole="button" accessibilityState={{ selected: winner === w }} onPress={() => setWinner(w)} style={[styles.chipBtn, winner === w && styles.pillOn]}>
-                <Text style={[type.headline, { fontSize: 14, color: winner === w ? color.action : color.text }]}>{lastName(p!.name)} wins</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-      <View style={styles.choices}>
         <Pressable
           accessibilityRole="button"
-          disabled={!ready || busy}
-          onPress={() => setError(onFight(a!, b!, battle, winner))}
-          style={[styles.fight, (!ready || busy) && styles.dim]}>
-          <Text style={[type.headline, { color: color.onAction }]}>Fight</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
+          accessibilityLabel={ready ? `Fight: ${lastName(pa!.name)} against ${lastName(pb!.name)}` : 'Fight'}
           disabled={!ready || busy}
           onPress={async () => {
             setBusy(true);
             setError(null);
-            setError(await onGrok(a!, b!));
+            setError(await onFight(a!, b!));
             setBusy(false);
           }}
-          style={[styles.chipBtn, (!ready || busy) && styles.dim]}>
-          {busy ? <ActivityIndicator color={color.text} /> : <Text style={[type.headline, { fontSize: 14, color: color.text }]}>Let Grok write it</Text>}
+          style={[styles.fight, (!ready || busy) && styles.dim]}>
+          {busy ? <ActivityIndicator color={color.onAction} /> : <Text style={[type.headline, { color: color.onAction }]}>Fight</Text>}
         </Pressable>
       </View>
-      {busy && <Caption>Grok is looking at where their businesses really compete, about half a minute.</Caption>}
+      {!busy && <Caption>Who wins is decided for you: from Grok’s look at the news when it’s available, otherwise from recorded revenue and margins, and the match says which.</Caption>}
+      {busy && <Caption>Looking at where their businesses really compete. With Grok this takes about half a minute.</Caption>}
       {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
     </>
   );

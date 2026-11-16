@@ -7,7 +7,8 @@
 //   cron (x-cron-secret)   once a day: up to 5 scenarios from the news, ranked most to least plausible (the daily
 //                          briefing). Each can carry a prediction market's odds (Polymarket): Grok picks from the
 //                          most-traded open markets we fetched, and a pick is kept only if it's one of them.
-//   POST { versus: [a, b] } anyone: a rivalry between two tracked people (slugs), cached per pair like a question.
+//   POST { versus: [a, b] } anyone: the most likely rivalry between two tracked people (slugs): Grok searches current
+//                          context and decides who is likelier to come out ahead; cached per pair for the month.
 //   POST { prompt }        anyone: one scenario for the question, or a reason it can't be modelled. Answers are kept
 //                          by the normalised question, so a repeat costs nothing; new questions draw on their own
 //                          share of the monthly xAI ceiling and an hourly cap, so chat and the jobs keep their room.
@@ -235,7 +236,8 @@ Deno.serve(async (req) => {
       ? `Rivalry: ${versus[0]} versus ${versus[1]}`
       : typeof body?.prompt === 'string' ? body.prompt.replace(/\s+/g, ' ').trim() : '';
     if (prompt.length < 8 || prompt.length > MAX_PROMPT) return json({ error: `Ask in 8 to ${MAX_PROMPT} characters.` }, 400);
-    const pk = versus ? `versus:${versus[0]}|${versus[1]}` : promptKey(prompt);
+    // A match is cached per pair (either order) for the month: who's ahead changes with the news.
+    const pk = versus ? `versus:${[...versus].sort().join('|')}:${new Date().toISOString().slice(0, 7)}` : promptKey(prompt);
     const hit = await db.from('world_scenarios').select('*').eq('prompt_key', pk).maybeSingle();
     if (hit.data) {
       // Counted for "Most asked"; a lost update under load only undercounts.
@@ -243,7 +245,7 @@ Deno.serve(async (req) => {
       return json({ scenario: hit.data, cached: true });
     }
     if (!key) return json({ error: 'Simulations aren’t switched on yet.' }, 503);
-    const hour = await db.from('world_scenarios').select('id', { count: 'exact', head: true }).eq('origin', 'prompt').gte('created_at', new Date(Date.now() - 36e5).toISOString());
+    const hour = await db.from('world_scenarios').select('id', { count: 'exact', head: true }).in('origin', ['prompt', 'versus']).gte('created_at', new Date(Date.now() - 36e5).toISOString());
     if ((hour.count ?? 0) >= PROMPTS_PER_HOUR) return json({ error: 'Lots of questions right now. Try one of the suggestions, or ask again in a while.' }, 429);
     const settle = await reserve(db, PROMPT_ESTIMATE, PROMPT_SHARE);
     if (!settle) return json({ error: 'This month’s budget for new questions is used up. The suggestions still work.' }, 429);
@@ -254,7 +256,7 @@ Deno.serve(async (req) => {
         key,
         `${RULES}\n\n${text}`,
         versus
-          ? `Write one rivalry scenario between ${versus[0]} and ${versus[1]} (slugs above): a plausible business battle between their companies (a price war, a fight for a market, a race for talent or technology, a bid), based on where their businesses really compete. Changes should mostly move their own companies; one side should come out ahead. Use beats to tell the story month by month, naming whose move it is. Return exactly one scenario.`
+          ? `Write the most likely rivalry between ${versus[0]} and ${versus[1]} (slugs above). Search the news and X first: where their companies really compete now, their latest results, momentum and recent moves. Pick the battle that fits (a price war, a fight for a market, a race for talent or technology, a bid) and decide which side is more likely to come out ahead on that evidence; the changes should mostly move their own companies, with the likelier winner ahead at the end. In "reason", say in one sentence why that side is likelier, and cite what you found in "sources". Use beats to tell the story month by month, naming whose move it is. Return exactly one scenario.`
           : `Question: "${prompt}"\n\nReturn exactly one scenario that answers it, or none with a reason in "declined" if it has nothing to do with the economy, companies or fortunes, or would require claims about someone’s private life.`,
       );
     } catch (e) {

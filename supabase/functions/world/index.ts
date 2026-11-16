@@ -3,12 +3,14 @@
 //   ?job=facts   daily: company headquarters, facilities and sector (Wikidata), country GDP, population and region (World Bank).
 //   ?job=edgar   hourly: revenue by country/region and subsidiaries from new 10-K filings (edgar.ts).
 //   ?job=factors weekly: each listed company's measured sensitivities (_shared/factors.ts) from three years of weekly
-//                prices, and how the factors move together, for the World simulations.
+//                prices, and how the factors move together, for the World simulations. Also writes the residual
+//                ledger (_shared/ledger.ts): each company's expected and actual move for the week just ended.
 // Everything stored is copied from its source with a link back; each source reports to source_health.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { getJson, track } from '../_shared/refresh.ts';
 import { sectorFor } from '../_shared/scenario.ts';
-import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, shrink, weeklyReturns, type Bar, type Fit } from '../_shared/factors.ts';
+import { FACTOR_SYMBOL, FIT_SYMBOL, SECTOR_FUND, factorLinks, fitCompany, residualize, shrink, weekKey, weeklyReturns, type Bar, type Fit } from '../_shared/factors.ts';
+import { lastCompleteWeek, ledgerRows } from '../_shared/ledger.ts';
 import { cors, json } from '../_shared/util.ts';
 import { runEdgar } from './edgar.ts';
 
@@ -184,22 +186,44 @@ async function weeklyBars(symbol: string): Promise<Bar[]> {
  * (scripts/build-factors.mjs, which also backtests it): ten years of weekly prices, recent weeks weighted more
  * (half-life three years), shrunk toward sector peers. Crisis-only fits were tested and predicted worse, so they're out.
  */
-async function factors(db: SupabaseClient) {
+type FactorInputs = {
+  companies: { id: string; sector: string | null; symbol: string; returns: Map<string, number> }[];
+  series: { market: Map<string, number>; oil: Map<string, number>; china: Map<string, number>; usd: Map<string, number> };
+  funds: Record<string, Map<string, number>>;
+};
+
+/** Ten years of weekly returns for the factors, the sector funds and every listed company. */
+async function factorInputs(db: SupabaseClient): Promise<FactorInputs> {
   const { data: companies, error } = await db.from('companies').select('id, ticker, quote_symbol, sector').not('ticker', 'is', null).eq('is_private', false);
   if (error) throw new Error(error.message);
-  const series: Record<string, Map<string, number>> = {};
-  for (const [f, sym] of Object.entries(FACTOR_SYMBOL)) series[f] = weeklyReturns(await weeklyBars(sym));
-  const market = series.market;
-  if (market.size < 80) throw new Error('Not enough market history from Yahoo Finance.');
-  const own = { oil: residualize(series.oil, market), china: residualize(series.china, market), usd: residualize(series.usd, market) };
-  const sectorOwn: Record<string, Map<string, number>> = {};
-  for (const [sector, sym] of Object.entries(SECTOR_FUND)) sectorOwn[sector] = residualize(weeklyReturns(await weeklyBars(sym)), market);
-  const fitted: { id: string; sector: string | null; symbol: string; fit: Fit }[] = [];
+  const raw: Record<string, Map<string, number>> = {};
+  for (const [f, sym] of Object.entries(FACTOR_SYMBOL)) raw[f] = weeklyReturns(await weeklyBars(sym));
+  if (raw.market.size < 80) throw new Error('Not enough market history from Yahoo Finance.');
+  const funds: Record<string, Map<string, number>> = {};
+  for (const [sector, sym] of Object.entries(SECTOR_FUND)) funds[sector] = weeklyReturns(await weeklyBars(sym));
+  const out: FactorInputs['companies'] = [];
   for (const c of companies ?? []) {
     const quoted = (c.quote_symbol as string | null) ?? yahooSymbol(c.ticker as string);
     const symbol = FIT_SYMBOL[quoted] ?? quoted;
-    const fit = fitCompany(weeklyReturns(await weeklyBars(symbol)), { market, ...own, sector: c.sector ? (sectorOwn[c.sector as string] ?? null) : null }, { halfLife: 156 });
-    if (fit) fitted.push({ id: c.id as string, sector: (c.sector as string | null) ?? null, symbol, fit });
+    out.push({ id: c.id as string, sector: (c.sector as string | null) ?? null, symbol, returns: weeklyReturns(await weeklyBars(symbol)) });
+  }
+  return { companies: out, series: { market: raw.market, oil: raw.oil, china: raw.china, usd: raw.usd }, funds };
+}
+
+/**
+ * Weekly: re-measures every listed company's sensitivities and the factor links, the same method as the app's reference
+ * (scripts/build-factors.mjs, which also backtests it): ten years of weekly prices, recent weeks weighted more
+ * (half-life three years), shrunk toward sector peers. Crisis-only fits were tested and predicted worse, so they're out.
+ */
+async function factors(db: SupabaseClient, inputs: FactorInputs) {
+  const { market } = inputs.series;
+  const own = { oil: residualize(inputs.series.oil, market), china: residualize(inputs.series.china, market), usd: residualize(inputs.series.usd, market) };
+  const sectorOwn: Record<string, Map<string, number>> = {};
+  for (const [sector, fund] of Object.entries(inputs.funds)) sectorOwn[sector] = residualize(fund, market);
+  const fitted: { id: string; sector: string | null; symbol: string; fit: Fit }[] = [];
+  for (const c of inputs.companies) {
+    const fit = fitCompany(c.returns, { market, ...own, sector: c.sector ? (sectorOwn[c.sector] ?? null) : null }, { halfLife: 156 });
+    if (fit) fitted.push({ id: c.id, sector: c.sector, symbol: c.symbol, fit });
   }
   const shrunk = shrink(fitted);
   const rows = fitted.map((x) => {
@@ -214,6 +238,25 @@ async function factors(db: SupabaseClient) {
   const { error: e2 } = await db.from('factor_model').insert({ links: factorLinks(own, sectorOwn), window_from: weeks[0], window_to: weeks[weeks.length - 1], companies: rows.length });
   if (e2) throw new Error(e2.message);
   return rows.length;
+}
+
+/**
+ * The residual ledger (_shared/ledger.ts): the last complete week as it happened, plus any of the 52 weeks before it
+ * not yet recorded (the first run fills the year before the ledger began). Existing rows are never rewritten.
+ */
+async function recordLedger(db: SupabaseClient, inputs: FactorInputs) {
+  const live = lastCompleteWeek([...inputs.series.market.keys()], new Date(), weekKey);
+  if (!live) throw new Error('No complete week of prices yet.');
+  const targets = [...inputs.series.market.keys()].filter((w) => w < live).sort().slice(-51);
+  // The live week on its own, fitted through the week before it; earlier weeks in 13-week blocks.
+  const rows = [...ledgerRows(inputs.companies, inputs.series, inputs.funds, [live], live), ...ledgerRows(inputs.companies, inputs.series, inputs.funds, targets, live)];
+  let added = 0;
+  for (let i = 0; i < rows.length; i += 500) {
+    const { data, error } = await db.from('factor_residuals').upsert(rows.slice(i, i + 500), { onConflict: 'company_id,week', ignoreDuplicates: true }).select('week');
+    if (error) throw new Error(error.message);
+    added += data?.length ?? 0;
+  }
+  return added;
 }
 
 async function countries(db: SupabaseClient) {
@@ -255,7 +298,13 @@ Deno.serve(async (req) => {
     const done = await runEdgar(db).catch((e) => (e instanceof Error ? e.message : String(e)));
     return json({ edgar: done });
   }
-  if (job === 'factors') return json({ factors: await settle(() => track(db, 'Yahoo Finance history', () => factors(db))) });
+  if (job === 'factors') {
+    let inputs = null as FactorInputs | null; // set inside the tracked fetch
+    const fitted = await settle(() => track(db, 'Yahoo Finance history', async () => factors(db, (inputs = await factorInputs(db)))));
+    // The ledger uses the same prices; its failure doesn't undo the refit.
+    const ledger = inputs ? await settle(() => recordLedger(db, inputs!)) : 'no prices';
+    return json({ factors: fitted, ledger });
+  }
   if (job === 'facts') {
     return json({
       places: await settle(() => track(db, 'Wikidata', () => companyPlaces(db))),

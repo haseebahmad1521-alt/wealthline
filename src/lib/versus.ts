@@ -1,7 +1,10 @@
-// Versus mode: two of the tracked people in a rivalry, played on the globe. A built-in match is a scenario made from
-// the player's choices (the battle and who comes out ahead), so its sizes are stated assumptions, shown with it; Grok
-// can write a richer one through the backend. Either way the money comes from `simulate`: only the rivals' main
-// companies move, and fortunes move in dollars only through recorded stakes.
+// Versus mode: two of the tracked people in a rivalry, played on the globe. The player picks only the two rivals; the
+// battle and who comes out ahead are decided for them:
+//   - with Grok (the `scenarios` function, once deployed): current context from its own search, with sources;
+//   - without it, here, on recorded numbers by a stated rule per battle (callMatch), shown with the match. It says
+//     "too close to call" or names the missing number rather than guessing.
+// Either way the money comes from `simulate`: only the rivals' main companies move, and fortunes move in dollars only
+// through recorded stakes.
 import type { Beat, Scenario, Shock } from '../../supabase/functions/_shared/scenario.ts';
 import type { Frame, SimCompany, SimEmpire, SimPerson } from './simulate.ts';
 
@@ -52,12 +55,61 @@ export function battleground(first: SimCompany, second: SimCompany, home: (compa
   return shared[0]?.country ?? home(second.id) ?? home(first.id);
 }
 
+/** How a built-in match was decided: the battle, the likelier winner, and the rule in words. */
+export type Call = { battle: Battle; winner: 'a' | 'b'; why: string };
+
+/** Within this share of each other, recorded numbers can't separate two rivals. */
+const CLOSE = 0.1;
+const revenueOf = (c: SimCompany) => c.regions.reduce((n, r) => n + r.revenue_usd, 0);
+const revenueIn = (c: SimCompany, iso: string) => c.regions.filter((r) => r.country === iso).reduce((n, r) => n + r.revenue_usd, 0);
+
+/**
+ * Decides a built-in match on recorded numbers, by a stated rule:
+ *   - both main companies report revenue in the same country → a fight for that market, won by whoever already sells
+ *     more there;
+ *   - else the same sector → a price war, won by the fatter operating margin (it can cut prices longer);
+ *   - else a race for talent, won by the bigger operating profit (revenue × margin: more to pay with).
+ * Returns a reason instead when a needed number isn't recorded or the two are within a tenth of each other.
+ */
+export function callMatch(a: SimEmpire, b: SimEmpire, opts: { countryName: (iso2: string) => string }): Call | { error: string } {
+  const ca = mainCompany(a);
+  const cb = mainCompany(b);
+  const A = lastName(a.person.name);
+  const B = lastName(b.person.name);
+  if (!ca || !cb) return { error: `No company is recorded for ${!ca ? A : B}.` };
+  if (ca.id === cb.id) return { error: 'Those two share the same main company; pick someone else.' };
+  const close = (x: number, y: number) => Math.abs(x - y) < CLOSE * Math.max(Math.abs(x), Math.abs(y));
+  const pick = (x: number, y: number) => (x > y ? 'a' : 'b') as 'a' | 'b';
+  const name = (w: 'a' | 'b') => (w === 'a' ? ca.name : cb.name);
+  const where = battleground(ca, cb, () => null);
+  if (where && revenueIn(ca, where) > 0 && revenueIn(cb, where) > 0) {
+    const place = opts.countryName(where);
+    const x = revenueIn(ca, where);
+    const y = revenueIn(cb, where);
+    if (close(x, y)) return { error: `Too close to call: ${ca.name} and ${cb.name} sell about as much in ${place}.` };
+    const w = pick(x, y);
+    return { battle: 'market', winner: w, why: `Both sell in ${place}, and ${name(w)} already sells more there (recorded revenue).` };
+  }
+  const missing = [ca, cb].filter((c) => c.margin == null).map((c) => c.name);
+  if (missing.length) return { error: `Not enough recorded numbers to call it: no operating margin for ${missing.join(' or ')}.` };
+  if (ca.sector && ca.sector === cb.sector) {
+    if (close(ca.margin!, cb.margin!)) return { error: `Too close to call: ${ca.name} and ${cb.name} have about the same operating margin.` };
+    const w = pick(ca.margin!, cb.margin!);
+    return { battle: 'price', winner: w, why: `Same industry, so a price war: ${name(w)} keeps more of each sale (recorded operating margin), so it can cut prices longer.` };
+  }
+  const x = revenueOf(ca) * ca.margin!;
+  const y = revenueOf(cb) * cb.margin!;
+  if (!revenueOf(ca) || !revenueOf(cb)) return { error: `Not enough recorded numbers to call it: no revenue for ${!revenueOf(ca) ? ca.name : cb.name}.` };
+  if (close(x, y)) return { error: `Too close to call: ${ca.name} and ${cb.name} make about the same operating profit.` };
+  const w = pick(x, y);
+  return { battle: 'talent', winner: w, why: `Different industries, so a race for the best people: ${name(w)} makes more operating profit (recorded revenue × margin), so it can pay more.` };
+}
+
 /** A built-in match: the two main companies' share prices move by the battle's stated sizes, with story beats. */
 export function versusScenario(
   a: SimEmpire,
   b: SimEmpire,
-  battle: Battle,
-  winner: 'a' | 'b',
+  { battle, winner, why }: Call,
   opts: { home: (companyId: string) => string | null; countryName: (iso2: string) => string },
 ): Scenario | null {
   const ca = mainCompany(a);
@@ -108,13 +160,13 @@ export function versusScenario(
     assumptions = [`Both companies' shares dip by a twentieth on higher pay; then ${cw.name} rises by about a sixth and ${cl.name} slips.`];
   }
   return {
-    id: `versus:${a.person.slug}:${b.person.slug}:${battle}:${winner}`,
+    id: `versus:${a.person.slug}:${b.person.slug}:${battle}`,
     origin: 'versus',
     versus: [a.person.slug, b.person.slug],
     title: `${A} vs ${B}: ${BATTLES.find((x) => x.key === battle)!.label.toLowerCase()}.`,
     summary,
     plausibility: 'possible',
-    reason: `Your match: you picked the battle and that ${W} comes out ahead.`,
+    reason: `Called on recorded numbers only (Grok’s current context isn’t available): ${why}`,
     months: 12,
     shocks,
     beats,
