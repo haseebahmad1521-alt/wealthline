@@ -406,7 +406,11 @@ export function SimOverlay({
   onGuess,
   verdict,
   onShare,
+  followUps,
+  onContinue,
 }: {
+  followUps?: { key: string; label: string }[];
+  onContinue?: (key: string) => void;
   /** Shares the result; resolves to a short status ("Link copied"). */
   onShare?: () => Promise<string>;
   /** Guess before you play: the question (while `asking`), and how the answer went (on the end card). */
@@ -447,7 +451,19 @@ export function SimOverlay({
       {asking && guess && onGuess ? (
         <GuessCard guess={guess} title={title} onGuess={onGuess} />
       ) : card ? (
-        <EndCard frame={ending} months={months} start={start} title={title} money={money} versus={finalScore ?? null} verdict={verdict ?? null} onShare={onShare} onClose={() => setClosed(true)} />
+        <EndCard
+          frame={ending}
+          months={months}
+          start={start}
+          title={title}
+          money={money}
+          versus={finalScore ?? null}
+          verdict={verdict ?? null}
+          onShare={onShare}
+          followUps={followUps}
+          onContinue={onContinue}
+          onClose={() => setClosed(true)}
+        />
       ) : (
       <View pointerEvents="none" style={styles.toasts} accessibilityLiveRegion="polite">
         {score && <Scoreboard {...score} money={money} />}
@@ -497,7 +513,12 @@ function EndCard({
   verdict,
   onClose,
   onShare,
+  followUps,
+  onContinue,
 }: {
+  /** "…and then?": follow-ups that carry the story on for another year. */
+  followUps?: { key: string; label: string }[];
+  onContinue?: (key: string) => void;
   onShare?: () => Promise<string>;
   verdict: Verdict | null;
   frame: Frame;
@@ -577,6 +598,18 @@ function EndCard({
           })}
         </View>
       </View>
+      )}
+      {followUps && onContinue && followUps.length > 0 && (
+        <View style={styles.cardRow}>
+          <Text style={[type.caption, styles.rowLabel]}>…and then?</Text>
+          <View style={styles.chips}>
+            {followUps.map((f) => (
+              <Pressable key={f.key} accessibilityRole="button" accessibilityLabel={`And then: ${f.label}`} onPress={() => onContinue(f.key)} style={styles.then}>
+                <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{f.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       )}
       {!versus && hit.length > 0 && (
         <View style={styles.chips}>
@@ -703,6 +736,7 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
+  then: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: 'rgba(108,184,255,.18)' },
   share: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: color.action },
   guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
   guessOption: { width: '24%', minHeight: minTouch, alignItems: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
