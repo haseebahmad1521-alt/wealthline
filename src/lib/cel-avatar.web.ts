@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 
-import { celShade } from '@/lib/cel';
+import { pixelArt } from '@/lib/cel';
 import { portraitAt } from '@/lib/portrait';
 
 /**
- * Web: each AI avatar is cel-shaded and washed once, in idle time, and kept as an image (memory for this visit, Cache
- * Storage across visits), so no filter runs while the app draws (owner, Nov 2). 192 px covers a 96-pt avatar at 2×.
+ * Web: each AI avatar is washed and turned into pixel art once, in idle time, and kept as an image (memory for this
+ * visit, Cache Storage across visits), so no filter runs while the app draws. 192 px covers a 96-pt avatar at 2×.
  */
 const PX = 192;
-const CACHE = 'wl-cel-v1';
+const CACHE = 'wl-pixel-v1';
 const made = new Map<string, Promise<string | null>>();
 
 const idle = () =>
@@ -34,10 +34,7 @@ async function bake(uri: string): Promise<string | null> {
   // Cover, aligned to the top (as the live portraits are), so faces stay in frame.
   const s = Math.max(PX / img.naturalWidth, PX / img.naturalHeight);
   ctx.drawImage(img, (PX - img.naturalWidth * s) / 2, 0, img.naturalWidth * s, img.naturalHeight * s);
-  const px = ctx.getImageData(0, 0, PX, PX);
-  celShade(px.data, PX, PX);
-  ctx.putImageData(px, 0, 0);
-  // The orange→purple wash, baked in: colour at 50%, soft light at 30% (keeps the photo's luminance, so ink stays dark).
+  // The orange→purple wash first (colour at 50%, soft light at 30%), so the palette snaps the washed colours.
   const wash = ctx.createLinearGradient(0, 0, PX, PX);
   wash.addColorStop(0, '#FF9A4D');
   wash.addColorStop(0.55, '#C2569E');
@@ -49,6 +46,11 @@ async function bake(uri: string): Promise<string | null> {
   ctx.globalCompositeOperation = 'soft-light';
   ctx.globalAlpha = 0.3;
   ctx.fillRect(0, 0, PX, PX);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  const px = ctx.getImageData(0, 0, PX, PX);
+  pixelArt(px.data, PX, PX);
+  ctx.putImageData(px, 0, 0);
   const blob = await new Promise<Blob | null>((done) => canvas.toBlob(done, 'image/webp', 0.85));
   if (!blob) return null;
   store?.put(key, new Response(blob, { headers: { 'Content-Type': blob.type } })).catch(() => {});

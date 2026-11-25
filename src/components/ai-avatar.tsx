@@ -6,7 +6,7 @@ import { Icon, Portrait, icons } from '@/components/ui';
 import { useCelAvatar } from '@/lib/cel-avatar';
 
 /**
- * The portrait as the AI simulation wears it (owner, Nov 2): cel-shaded (posterized, inked edges), lightly washed
+ * The portrait as the AI simulation wears it (owner, Nov 2 and 25): palettized pixel art (slight inked edges, blue shadows), lightly washed
  * orange→purple, with a sparkle badge at the top right, so the chat and status lines never pass for the real person. The real, credited portrait stays
  * unfiltered in the hero. On web the look is baked once into a cached image (`useCelAvatar`); until it is ready, or if
  * the photo can't be read, the plain portrait shows under the wash.
