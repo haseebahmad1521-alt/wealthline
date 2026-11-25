@@ -8,6 +8,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
+import { AiAvatar } from '@/components/ai-avatar';
 import { metal } from '@/components/arena';
 import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
@@ -233,33 +234,61 @@ export function VersusPicker({
   suggested: [SimPerson, SimPerson][];
   onFight: (a: string, b: string) => Promise<string | null>;
 }) {
-  const [a, setA] = useState<string | null>(suggested[0]?.[0].slug ?? null);
-  const [b, setB] = useState<string | null>(suggested[0]?.[1].slug ?? null);
+  // Opens on two random people from the top 10 (people come sorted by fortune); tap a side to swap someone in.
+  const [[a, b], setPair] = useState<[string | null, string | null]>(() => {
+    const top = people.slice(0, 10);
+    if (top.length < 2) return [suggested[0]?.[0].slug ?? null, suggested[0]?.[1].slug ?? null];
+    const i = Math.floor(Math.random() * top.length);
+    const j = (i + 1 + Math.floor(Math.random() * (top.length - 1))) % top.length;
+    return [top[i].slug, top[j].slug];
+  });
+  const setA = (x: string) => setPair(([, y]) => [x, y]);
+  const setB = (y: string) => setPair(([x]) => [x, y]);
   const [slot, setSlot] = useState<'a' | 'b' | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pa = people.find((p) => p.slug === a) ?? null;
   const pb = people.find((p) => p.slug === b) ?? null;
   const ready = !!pa && !!pb && pa.slug !== pb.slug;
-  const corner = (p: SimPerson | null, which: 'a' | 'b') => (
+  const side = (p: SimPerson | null, which: 'a' | 'b') => (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={p ? `${p.name}, change` : `Pick the ${which === 'a' ? 'first' : 'second'} rival`}
       onPress={() => setSlot(slot === which ? null : which)}
-      style={[styles.corner, slot === which && styles.cornerOn]}>
-      {p ? <Portrait uri={p.portrait_url ?? null} name={p.name} size={52} /> : <View style={styles.empty}><Icon name={icons.plus} size={22} tint={color.textSecondary} /></View>}
-      <Text style={[type.headline, styles.cornerName]} numberOfLines={1}>
-        {p ? lastName(p.name) : 'Pick'}
-      </Text>
+      style={styles.half}>
+      {p ? <AiAvatar uri={p.portrait_url ?? null} name={p.name} size={72} /> : <View style={styles.empty}><Icon name={icons.plus} size={22} tint={color.textSecondary} /></View>}
+      <View style={[styles.nameBar, which === 'a' ? styles.redBar : styles.blueBar, slot === which && styles.pickedBar]}>
+        <Text style={styles.barName} numberOfLines={2}>
+          {p ? p.name : 'Pick'}
+        </Text>
+      </View>
+    </Pressable>
+  );
+  const fightButton = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={ready ? `Fight: ${lastName(pa!.name)} against ${lastName(pb!.name)}` : 'Fight'}
+      disabled={!ready || busy}
+      onPress={async () => {
+        setBusy(true);
+        setError(null);
+        setError(await onFight(a!, b!));
+        setBusy(false);
+      }}
+      style={[styles.fight, (!ready || busy) && styles.dim]}>
+      {busy ? <ActivityIndicator color={color.onAction} /> : <Text style={[type.headline, { color: color.onAction }]}>Fight!</Text>}
     </Pressable>
   );
   return (
     <>
-      <View style={styles.ring}>
-        {corner(pa, 'a')}
-        <Text style={[type.title, styles.vs]}>vs</Text>
-        {corner(pb, 'b')}
+      <View style={styles.banner}>
+        {side(pa, 'a')}
+        {side(pb, 'b')}
+        <View style={styles.vsDisc} pointerEvents="none">
+          <Text style={styles.vsText}>VS</Text>
+        </View>
       </View>
+      <View style={styles.fightRow}>{fightButton}</View>
       {slot && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
           {people.map((p) => (
@@ -303,21 +332,6 @@ export function VersusPicker({
           })}
         </ScrollView>
       )}
-      <View style={styles.choices}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={ready ? `Fight: ${lastName(pa!.name)} against ${lastName(pb!.name)}` : 'Fight'}
-          disabled={!ready || busy}
-          onPress={async () => {
-            setBusy(true);
-            setError(null);
-            setError(await onFight(a!, b!));
-            setBusy(false);
-          }}
-          style={[styles.fight, (!ready || busy) && styles.dim]}>
-          {busy ? <ActivityIndicator color={color.onAction} /> : <Text style={[type.headline, { color: color.onAction }]}>Fight</Text>}
-        </Pressable>
-      </View>
       {!busy && <Caption>Who wins is decided for you: from Grok’s look at the news when it’s available, otherwise from recorded revenue and margins, and the match says which.</Caption>}
       {busy && <Caption>Looking at where their businesses really compete. With Grok this takes about half a minute.</Caption>}
       {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
@@ -825,12 +839,19 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', alignSelf: 'flex-start', padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
   segment: { minHeight: 38, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
-  ring: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.md },
-  corner: { alignItems: 'center', gap: 4, padding: space.sm, borderRadius: radius.md, minWidth: 96 },
-  cornerOn: { backgroundColor: color.actionTint },
-  empty: { width: 52, height: 52, borderRadius: 26, borderWidth: 1.5, borderStyle: 'dashed', borderColor: color.textSecondary, alignItems: 'center', justifyContent: 'center' },
-  cornerName: { color: color.text, maxWidth: 110 },
-  vs: { color: color.textSecondary, fontSize: 20 },
+  // Fighting-game banner (owner, Nov 25): red and blue name bars at 95% of each half, a white VS disc over the seam.
+  banner: { flexDirection: 'row', alignItems: 'flex-end' },
+  half: { flex: 1, alignItems: 'center', gap: space.sm },
+  nameBar: { width: '95%', minHeight: 56, justifyContent: 'center', paddingVertical: space.sm, boxShadow: '0 10px 24px rgba(0,0,0,0.4)' } as object,
+  // The inner side is padded past the VS disc, so each name centres in the part of its bar that shows.
+  redBar: { backgroundColor: '#F04A4A', borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md, borderTopRightRadius: 6, borderBottomRightRadius: 6, paddingLeft: space.sm, paddingRight: 34 },
+  blueBar: { backgroundColor: '#4A72F5', borderTopRightRadius: radius.md, borderBottomRightRadius: radius.md, borderTopLeftRadius: 6, borderBottomLeftRadius: 6, paddingRight: space.sm, paddingLeft: 34 },
+  pickedBar: { borderWidth: 2, borderColor: '#FFFFFF' },
+  barName: { fontFamily: font.bold, fontStyle: 'italic', fontSize: 16, lineHeight: 20, color: '#FFFFFF', textAlign: 'center', textTransform: 'uppercase' },
+  vsDisc: { position: 'absolute', bottom: -8, left: '50%', marginLeft: -36, width: 72, height: 72, borderRadius: 36, backgroundColor: '#F4F5F8', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.45)' } as object,
+  vsText: { fontFamily: font.bold, fontStyle: 'italic', fontSize: 30, letterSpacing: -1, color: '#1B2440' },
+  fightRow: { alignItems: 'center', marginTop: space.md },
+  empty: { width: 72, height: 72, borderRadius: 36, borderWidth: 1.5, borderStyle: 'dashed', borderColor: color.textSecondary, alignItems: 'center', justifyContent: 'center' },
   vsSmall: { color: color.textSecondary, alignSelf: 'center' },
   pick: { alignItems: 'center', gap: 2, width: 58 },
   pickName: { maxWidth: 58, textAlign: 'center' },
