@@ -17,7 +17,7 @@ import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, ty
 import { lastName, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
-import { color, font, radius, space, type } from '@/theme';
+import { color, font, glass, radius, space, type } from '@/theme';
 
 // How the model did on real past shocks (scripts/build-factors.mjs): its typical miss against simply assuming every
 // stock moves with the market, and how often outcomes landed in its ranges.
@@ -257,7 +257,7 @@ export function VersusPicker({
       onPress={() => setSlot(slot === which ? null : which)}
       style={styles.half}>
       {p ? <AiAvatar uri={p.portrait_url ?? null} name={p.name} size={72} /> : <View style={styles.empty}><Icon name={icons.plus} size={22} tint={color.textSecondary} /></View>}
-      <View style={[styles.nameBar, which === 'a' ? styles.redBar : styles.blueBar, slot === which && styles.pickedBar]}>
+      <View style={[styles.nameBar, which === 'a' ? styles.barA : styles.barB, slot === which && styles.pickedBar]}>
         <Text style={styles.barName} numberOfLines={2}>
           {p ? p.name : 'Pick'}
         </Text>
@@ -839,15 +839,16 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', alignSelf: 'flex-start', padding: 3, borderRadius: radius.pill, backgroundColor: color.fill },
   segment: { minHeight: 38, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
   segmentOn: { backgroundColor: color.surface },
-  // Fighting-game banner (owner, Nov 25): red and blue name bars at 95% of each half, a white VS disc over the seam.
+  // Fighting-game banner (owner, Nov 25): a name bar at 95% of each half, a white VS disc over the seam.
+  // The bars are the app's dark glass, tinted only faintly with each side's tug colour (owner, Nov 25: less colourful).
   banner: { flexDirection: 'row', alignItems: 'flex-end' },
   half: { flex: 1, alignItems: 'center', gap: space.sm },
-  nameBar: { width: '95%', minHeight: 56, justifyContent: 'center', paddingVertical: space.sm, boxShadow: '0 10px 24px rgba(0,0,0,0.4)' } as object,
+  nameBar: { width: '95%', minHeight: 56, justifyContent: 'center', paddingVertical: space.sm, borderWidth: StyleSheet.hairlineWidth, backdropFilter: glass.backdrop, WebkitBackdropFilter: glass.backdrop, boxShadow: `${glass.highlight}, 0 10px 24px rgba(0,0,0,0.35)` } as object,
   // The inner side is padded past the VS disc, so each name centres in the part of its bar that shows.
-  redBar: { backgroundColor: '#F04A4A', borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md, borderTopRightRadius: 6, borderBottomRightRadius: 6, paddingLeft: space.sm, paddingRight: 34 },
-  blueBar: { backgroundColor: '#4A72F5', borderTopRightRadius: radius.md, borderBottomRightRadius: radius.md, borderTopLeftRadius: 6, borderBottomLeftRadius: 6, paddingRight: space.sm, paddingLeft: 34 },
-  pickedBar: { borderWidth: 2, borderColor: '#FFFFFF' },
-  barName: { fontFamily: font.bold, fontStyle: 'italic', fontSize: 16, lineHeight: 20, color: '#FFFFFF', textAlign: 'center', textTransform: 'uppercase' },
+  barA: { backgroundColor: 'rgba(108,184,255,0.12)', borderColor: 'rgba(108,184,255,0.35)', borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md, borderTopRightRadius: 6, borderBottomRightRadius: 6, paddingLeft: space.sm, paddingRight: 34 },
+  barB: { backgroundColor: 'rgba(255,184,107,0.12)', borderColor: 'rgba(255,184,107,0.35)', borderTopRightRadius: radius.md, borderBottomRightRadius: radius.md, borderTopLeftRadius: 6, borderBottomLeftRadius: 6, paddingRight: space.sm, paddingLeft: 34 },
+  pickedBar: { borderWidth: 1.5, borderColor: color.text },
+  barName: { ...type.headline, color: color.text, textAlign: 'center' },
   vsDisc: { position: 'absolute', bottom: -8, left: '50%', marginLeft: -36, width: 72, height: 72, borderRadius: 36, backgroundColor: '#F4F5F8', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.45)' } as object,
   vsText: { fontFamily: font.bold, fontStyle: 'italic', fontSize: 30, letterSpacing: -1, color: '#1B2440' },
   fightRow: { alignItems: 'center', marginTop: space.md },
