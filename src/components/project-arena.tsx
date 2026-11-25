@@ -4,7 +4,7 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { metal, Rise } from '@/components/arena';
+import { metal, ON_METAL, Rise } from '@/components/arena';
 import { Glass } from '@/components/glass';
 import { NewsList } from '@/components/news';
 import { Caption, Change, Heading, Portrait } from '@/components/ui';
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   // A metal frame: the gradient shows in the padding around the portrait.
   ring: { padding: 4 },
   pedestal: { alignSelf: 'stretch', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 26, lineHeight: 30, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
+  pedestalText: { ...type.title, color: ON_METAL, fontSize: 26, lineHeight: 30, textShadowColor: 'rgba(255,255,255,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   list: { paddingVertical: space.xs, borderRadius: radius.lg },
   row,
   rowSep: { ...row, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.hairline },

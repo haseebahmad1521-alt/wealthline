@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type Compo
 import { Chip as Tag } from 'heroui-native';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { metal } from '@/components/arena';
+import { metal, ON_METAL } from '@/components/arena';
 import { Globe, type GlobeArc, type GlobeFill, type GlobeMarker, type GlobePulse, type GlobeSite } from '@/components/globe';
 import { WorldGlobe } from '@/components/world-globe';
 import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, revenueLines, type EconomyMode } from '@/components/world-views';
@@ -767,7 +767,7 @@ function Overview({ empires, people, places, onSelect }: { empires: Empire[]; pe
               onPress={() => onSelect(owners[0].person.id)}
               style={({ pressed }) => [styles.row, i > 0 && styles.sep, pressed && styles.pressedRow]}>
               <View style={[styles.place, i < 3 && metal(i + 1)]}>
-                <Text style={[type.number, { fontSize: 13, color: i < 3 ? '#FFFFFF' : color.text }]}>{i + 1}</Text>
+                <Text style={[type.number, { fontSize: 13, color: i < 3 ? ON_METAL : color.text }]}>{i + 1}</Text>
               </View>
               <View style={styles.flex}>
                 <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>

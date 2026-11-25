@@ -62,7 +62,7 @@ export function FortuneDrivers({ personId, netWorth }: { personId: string; netWo
       </Glass>
       {places.length > 0 && (
         <Caption>
-          Where those companies earn: {places.map((p) => `${p.place} ${Math.round(p.share * 100)}%`).join(' · ')}.
+          Where those companies earn: {places.map((p) => `${p.place} ${Math.round(p.share * 100)}%`).join(', ')}.
         </Caption>
       )}
       <Caption>

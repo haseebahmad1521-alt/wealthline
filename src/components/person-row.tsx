@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import { Fragment, useDeferredValue } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions, type PressableStateCallbackType } from 'react-native';
 
-import { metal, RankMove } from '@/components/arena';
+import { metal, ON_METAL, RankMove } from '@/components/arena';
 import { Caption, Change, Icon, Portrait, Surface, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { useMoney } from '@/lib/currency';
@@ -46,7 +46,7 @@ export function PersonRow({
               style={[styles.badge, person.rank <= 3 && metal(person.rank)]}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants">
-              <Text style={styles.badgeText}>{person.rank}</Text>
+              <Text style={[styles.badgeText, person.rank <= 3 && { color: ON_METAL }]}>{person.rank}</Text>
             </View>
           )}
         </View>

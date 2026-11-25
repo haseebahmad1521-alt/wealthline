@@ -268,7 +268,7 @@ export const minTouch = Platform.OS === 'android' ? 48 : 44;
 const headingShadow = { textShadowColor: 'rgba(0,0,0,0.65)', textShadowRadius: 14, textShadowOffset: { width: 0, height: 1 } };
 // Body copy that can sit straight on the planet (captions under the globe, page intros): a fainter shadow keeps it
 // legible over the bright limb; on glass it's barely visible.
-const textShadow = { textShadowColor: 'rgba(0,0,0,0.55)', textShadowRadius: 8, textShadowOffset: { width: 0, height: 1 } };
+const textShadow = { textShadowColor: 'rgba(0,0,0,0.85)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 1 } };
 
 const styles = StyleSheet.create({
   // Transparent so the planet scene behind every screen shows through.

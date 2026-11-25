@@ -7,7 +7,8 @@ export const color = {
   bg: '#04060B', // deep space, behind the scene and wherever the scene isn't drawn
   surface: 'rgba(16,18,26,0.70)', // the glass tint floor; see `glass` below
   text: '#F5F5F7',
-  textSecondary: '#B1B1B8',
+  // Brighter than a typical secondary grey: much of it sits straight on the lit Earth, not on glass (owner, Nov 25).
+  textSecondary: '#D4D4DB',
   hairline: 'rgba(255,255,255,0.14)',
   fill: 'rgba(255,255,255,0.08)',
   action: '#6CB8FF',

@@ -19,10 +19,12 @@ import { color, radius, space, type } from '@/theme';
 
 // Medal tones for ranks 1–3 (game layer only; text on them stays dark or white at AA contrast).
 export const MEDAL = ['#C9971C', '#8A96A3', '#A8653A'] as const;
+/** Numbers on a medal: dark, because the bright band of the sheen makes white numbers unreadable (owner, Nov 25). */
+export const ON_METAL = '#16130D';
+const onMetalText = { color: ON_METAL, textShadowColor: 'rgba(255,255,255,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 };
 
 // Metallic sheen for the medals (owner, Nov 16): a brushed-metal gradient with a bright band across it, gold, silver and
-// bronze. MEDAL stays the flat fallback (and the colour where a gradient can't be drawn). The mid tones keep white
-// numbers readable.
+// bronze. MEDAL stays the flat fallback (and the colour where a gradient can't be drawn).
 const SHEEN = [
   'linear-gradient(135deg, #F6DE8A 0%, #C9971C 34%, #FFF3BF 50%, #B8860B 66%, #7E5A0C 100%)',
   'linear-gradient(135deg, #EEF2F6 0%, #8A96A3 34%, #FFFFFF 50%, #7D8894 66%, #4E5862 100%)',
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
   // A metal frame: the gradient shows in the padding around the portrait.
   ring: { padding: 4 },
   pedestal: { alignSelf: 'stretch', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  pedestalText: { ...type.title, color: '#FFFFFF', fontSize: 30, lineHeight: 34, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
+  pedestalText: { ...type.title, ...onMetalText, fontSize: 30, lineHeight: 34 },
   pair: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   // 150px basis: two cards side by side from ~330px, stacked on 320px phones.
   moverCell: { flexGrow: 1, flexBasis: 150, minWidth: 150 },
