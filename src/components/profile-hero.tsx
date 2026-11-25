@@ -4,7 +4,7 @@ import { useRef, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { ChatEntry } from '@/components/chat';
-import { Icon, Portrait, icons, minTouch } from '@/components/ui';
+import { Icon, Portrait, PortraitZoom, icons, minTouch } from '@/components/ui';
 import type { Person } from '@/lib/data';
 import { portraitAt } from '@/lib/portrait';
 import type { PersonStatus } from '@/lib/types';
@@ -50,7 +50,9 @@ export function ProfileHero({
 
       <View style={styles.row}>
         <View style={[styles.portrait, { width: size, height: size }]}>
-          <Portrait uri={person.portrait_url} name={person.name} size={size} rounded={desktop ? 40 : 22} />
+          <PortraitZoom uri={person.portrait_url} name={person.name}>
+            <Portrait uri={person.portrait_url} name={person.name} size={size} rounded={desktop ? 40 : 22} />
+          </PortraitZoom>
         </View>
         <View style={[styles.identity, styles.clearStar]}>
           <Text accessibilityRole="header" style={[styles.name, desktop && styles.nameDesktop]}>

@@ -5,6 +5,7 @@ import { HeaderHeightContext } from 'expo-router/react-navigation';
 import { useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -218,6 +219,26 @@ export function Portrait({ uri, name, size, rounded }: { uri: string | null; nam
   );
 }
 
+/** Wraps a portrait so a tap shows the whole picture in a plain modal; any tap closes it. */
+export function PortraitZoom({ uri, name, children }: { uri: string | null; name: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  if (!uri) return <>{children}</>;
+  return (
+    <>
+      <Pressable accessibilityRole="imagebutton" accessibilityLabel={`Show the full portrait of ${name}`} onPress={() => setOpen(true)}>
+        {children}
+      </Pressable>
+      {open && (
+        <Modal transparent visible animationType="fade" onRequestClose={() => setOpen(false)}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Close portrait" onPress={() => setOpen(false)} style={styles.zoom}>
+            <Image source={portraitAt(uri, 960)} style={styles.zoomImage} contentFit="contain" accessibilityLabel={`Portrait of ${name}`} />
+          </Pressable>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 /** Loading, error (with retry), and empty states share one quiet layout. */
 export function StateView({
   loading,
@@ -306,6 +327,8 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.75 },
   initials: { backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  zoom: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', padding: space.lg, justifyContent: 'center', alignItems: 'center' },
+  zoomImage: { width: '100%', height: '100%' },
   state: { alignItems: 'center', gap: space.md, paddingVertical: space.xxl, paddingHorizontal: space.lg },
   center: { textAlign: 'center', maxWidth: 420 },
 });

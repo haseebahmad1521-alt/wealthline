@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AiAvatar } from '@/components/ai-avatar';
 import { StatusBubble } from '@/components/status-bubble';
-import { Button, Icon, icons, minTouch } from '@/components/ui';
+import { Button, Icon, PortraitZoom, icons, minTouch } from '@/components/ui';
 import { useChat, useChatAccess, useStatusInterest, type ChatMessage } from '@/lib/chat';
 import { useAuth, type Person } from '@/lib/data';
 import { formatDate, formatTime } from '@/lib/format';
@@ -202,7 +202,9 @@ function Header({ person, onClose }: { person: Person; onClose: () => void }) {
       <Pressable accessibilityRole="button" accessibilityLabel="Close chat" onPress={onClose} hitSlop={4} style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}>
         <Icon name={icons.close} size={20} tint={color.text} />
       </Pressable>
-      <AiAvatar uri={person.portrait_url} name={person.name} size={40} />
+      <PortraitZoom uri={person.portrait_url} name={person.name}>
+        <AiAvatar uri={person.portrait_url} name={person.name} size={40} />
+      </PortraitZoom>
       <View style={styles.headerText}>
         <View style={styles.nameRow}>
           <Text accessibilityRole="header" style={[type.headline, { color: color.text, flexShrink: 1 }]} numberOfLines={1}>
@@ -456,7 +458,13 @@ function Theirs({ person, children }: { person: Person | null | undefined; child
   if (person === undefined) return <>{children}</>;
   return (
     <View style={styles.theirsRow}>
-      {person ? <AiAvatar uri={person.portrait_url} name={person.name} size={AVATAR} /> : <View style={{ width: AVATAR }} />}
+      {person ? (
+        <PortraitZoom uri={person.portrait_url} name={person.name}>
+          <AiAvatar uri={person.portrait_url} name={person.name} size={AVATAR} />
+        </PortraitZoom>
+      ) : (
+        <View style={{ width: AVATAR }} />
+      )}
       {children}
     </View>
   );
