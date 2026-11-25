@@ -14,6 +14,7 @@ const { values } = parseArgs({
 });
 const shellPort = Number(values.port);
 const expoPort = Number(values['expo-port']);
+const win = process.platform === 'win32';
 
 // First non-internal, non-link-local IPv4, preferring private ranges.
 function lanIp() {
@@ -59,8 +60,10 @@ if (await isOpen(ip, expoPort)) {
 } else {
   expo = spawn('npx', ['expo', 'start', '--web', '--host', 'lan', '--port', String(expoPort)], {
     stdio: ['ignore', 'inherit', 'inherit'],
-    // Own process group so the whole npx → expo tree is stopped with us.
-    detached: true,
+    // Own process group so the whole npx → expo tree is stopped with us. Windows has no process groups (a detached
+    // child opens its own console) and runs npx as npx.cmd, which needs a shell.
+    detached: !win,
+    shell: win,
     env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: ip },
   });
   expo.on('exit', (code) => {
@@ -70,7 +73,12 @@ if (await isOpen(ip, expoPort)) {
   });
 }
 const stop = () => {
-  if (expo) { try { process.kill(-expo.pid, 'SIGTERM'); } catch {} }
+  if (expo) {
+    try {
+      if (win) execFileSync('taskkill', ['/pid', String(expo.pid), '/T', '/F'], { stdio: 'ignore' });
+      else process.kill(-expo.pid, 'SIGTERM');
+    } catch {}
+  }
   process.exit(0);
 };
 process.on('SIGINT', stop);
