@@ -284,3 +284,42 @@ export const quadVertex = /* glsl */ `
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
+
+// A full-screen pass: the plane's corners are already in clip space.
+export const screenVertex = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
+
+// The last pass: classic 9-tap FXAA over a copy of the finished (tone mapped) frame.
+export const fxaaFragment = /* glsl */ `
+  uniform sampler2D map;
+  uniform vec2 texel;
+  varying vec2 vUv;
+
+  vec3 tap(vec2 uv) {
+    return texture2D(map, uv).rgb;
+  }
+
+  void main() {
+    const vec3 L = vec3(0.299, 0.587, 0.114);
+    vec3 m = tap(vUv);
+    float lM = dot(m, L);
+    float lNW = dot(tap(vUv + vec2(-1.0, 1.0) * texel), L);
+    float lNE = dot(tap(vUv + vec2(1.0, 1.0) * texel), L);
+    float lSW = dot(tap(vUv + vec2(-1.0, -1.0) * texel), L);
+    float lSE = dot(tap(vUv + vec2(1.0, -1.0) * texel), L);
+    float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+    float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+    vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+    float reduce = max((lNW + lNE + lSW + lSE) * (0.25 / 8.0), 1.0 / 128.0);
+    dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + reduce), -8.0, 8.0) * texel;
+    vec3 a = 0.5 * (tap(vUv + dir * (1.0 / 3.0 - 0.5)) + tap(vUv + dir * (2.0 / 3.0 - 0.5)));
+    vec3 b = a * 0.5 + 0.25 * (tap(vUv - dir * 0.5) + tap(vUv + dir * 0.5));
+    float lB = dot(b, L);
+    gl_FragColor = vec4(lB < lMin || lB > lMax ? a : b, 1.0);
+  }
+`;

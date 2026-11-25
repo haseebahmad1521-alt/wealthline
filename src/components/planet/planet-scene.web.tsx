@@ -13,7 +13,7 @@ import { greenwichSiderealDeg, latLngToUnit, subsolarPoint } from '@/lib/sun';
 import { TIERS, maxTier as maxTierFor, nextStep, startTier as startTierFor, type Tier } from '@/lib/texture-tier';
 import { color } from '@/theme';
 import { createRocket } from './rocket';
-import { atmosphereFragment, earthFragment, quadVertex, skyFragment, starFragment, starVertex, sunFragment, worldVertex } from './planet-shaders';
+import { atmosphereFragment, fxaaFragment, earthFragment, quadVertex, screenVertex, skyFragment, starFragment, starVertex, sunFragment, worldVertex } from './planet-shaders';
 
 const BASE = process.env.EXPO_PUBLIC_BASE_URL ?? '';
 const RAD = Math.PI / 180;
@@ -111,15 +111,17 @@ export function PlanetScene() {
   useEffect(() => {
     const el = host.current;
     if (!el) return;
+    const phone = Math.min(window.innerWidth, window.innerHeight) < 600;
+    // At most 90% of the screen's resolution: the scene is soft glow and per-pixel shading, so the drop doesn't show.
+    const fullRatio = Math.min(window.devicePixelRatio || 1, phone ? 1.5 : 2) * 0.9;
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      // No multisampling: an FXAA pass at the end smooths the few hard edges (the limb, the rocket) far more cheaply.
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     } catch {
       setState('failed');
       return;
     }
-    const phone = Math.min(window.innerWidth, window.innerHeight) < 600;
-    const fullRatio = Math.min(window.devicePixelRatio || 1, phone ? 1.5 : 2);
     renderer.setPixelRatio(fullRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -174,8 +176,8 @@ export function PlanetScene() {
     let fillsVersion = -1;
     // Level of detail: a light sphere normally, a finer one only when the globe is big on screen and a coarse limb
     // would show (the shading is per pixel, so the facet count only matters at the silhouette).
-    const sphereLo = new THREE.SphereGeometry(1, 64, 48);
-    const sphereHi = new THREE.SphereGeometry(1, 128, 96);
+    const sphereLo = new THREE.SphereGeometry(1, 48, 32);
+    const sphereHi = new THREE.SphereGeometry(1, 96, 64);
     const earth = new THREE.Mesh(
       sphereLo,
       new THREE.ShaderMaterial({ uniforms: earthUniforms, vertexShader: worldVertex, fragmentShader: earthFragment }),
@@ -235,7 +237,6 @@ export function PlanetScene() {
         depthWrite: false,
       }),
     );
-    stars.renderOrder = -0.5; // before the atmosphere's additive glow
     stars.frustumCulled = false; // its bounds would be the empty geometry until the catalogue lands
     const sky = new THREE.Mesh(
       new THREE.SphereGeometry(200, 32, 16), // per-pixel directions: the sky needs no more facets
@@ -250,7 +251,22 @@ export function PlanetScene() {
     sunQuad.scale.setScalar(70);
 
     atmosphere.scale.setScalar(1.055);
-    scene.add(sky, stars, earth, atmosphere, sunQuad);
+    scene.add(sky, earth, atmosphere, sunQuad);
+    // Stars draw after the FXAA pass (it would smear single-pixel stars into crosses), against the depth Earth and the
+    // rocket left behind; additive light lands the same in any order.
+    const starScene = new THREE.Scene().add(stars);
+    // Anti-aliasing: the finished frame is copied and drawn back once through FXAA. Copying the screen (rather than
+    // rendering into a target) keeps tone mapping per draw, exactly as it looks without it.
+    const postScene = new THREE.Scene();
+    renderer.autoClear = false; // cleared by hand: the passes after the scene keep its depth
+    const fxaaUniforms = { map: { value: null as THREE.FramebufferTexture | null }, texel: { value: new THREE.Vector2() } };
+    const fxaa = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({ uniforms: fxaaUniforms, vertexShader: screenVertex, fragmentShader: fxaaFragment, depthTest: false, depthWrite: false }),
+    );
+    fxaa.frustumCulled = false;
+    postScene.add(fxaa);
+
     // Projects' rocket hangs in camera space, so the camera joins the scene graph.
     const rocket = createRocket();
     camera.add(rocket.group);
@@ -394,10 +410,20 @@ export function PlanetScene() {
       'background:radial-gradient(circle,rgba(255,214,170,.55) 0%,rgba(255,184,124,.22) 20%,rgba(255,160,100,.08) 42%,rgba(255,150,90,0) 68%)';
     el.appendChild(glow);
 
+    const tmpSize = new THREE.Vector2();
     const resize = () => {
       const w = el.clientWidth || window.innerWidth;
       const h = el.clientHeight || window.innerHeight;
       renderer.setSize(w, h, false);
+      const full = renderer.getDrawingBufferSize(tmpSize);
+      const copy = fxaaUniforms.map.value;
+      if (!copy || copy.image.width !== full.x || copy.image.height !== full.y) {
+        copy?.dispose();
+        const next = new THREE.FramebufferTexture(full.x, full.y);
+        next.minFilter = next.magFilter = THREE.LinearFilter; // FXAA samples between pixels
+        fxaaUniforms.map.value = next;
+      }
+      fxaaUniforms.texel.value.set(1 / full.x, 1 / full.y);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       viewport.w = w;
@@ -639,13 +665,23 @@ export function PlanetScene() {
       raf = 0;
       if (disposed) return;
       // Clamped: a negative or huge gap (rAF timestamps can trail performance.now(); tabs sleep) must not blow up the easing.
-      const dt = Math.min(Math.max((now - lastT) / 1000, 0), 0.1);
+      // At most 60 frames a second: on 90–144 Hz screens extra frames are skipped (a little early counts, as vsync jitters).
+      const since = now - lastT;
+      if (!reduce && since < 1000 / 60 - 2) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      const dt = Math.min(Math.max(since / 1000, 0), 0.1);
       lastT = now;
       if (!reduce) adapt(now);
       setFocus(sceneState.focus);
       try {
         place(now, dt);
+        renderer.clear();
         renderer.render(scene, camera);
+        renderer.copyFramebufferToTexture(fxaaUniforms.map.value!);
+        renderer.render(postScene, camera);
+        renderer.render(starScene, camera);
       } finally {
         // Keep going even if one frame throws. Hidden tabs pause animation frames by themselves, so no visibility check
         // (one stopped the loop for good when a page loaded in the background).
@@ -675,14 +711,14 @@ export function PlanetScene() {
       (earth.geometry === sphereHi ? sphereLo : sphereHi).dispose();
       // Tiers not currently on the globe (the one in use is freed with the materials below).
       loaded.forEach((t, i) => i !== tier && (t?.day.dispose(), t?.night.dispose()));
-      scene.traverse((o) => {
+      [scene, postScene].forEach((root) => root.traverse((o) => {
         if (o instanceof THREE.Mesh) {
           o.geometry.dispose();
           const m = o.material as THREE.ShaderMaterial;
           Object.values(m.uniforms ?? {}).forEach((u) => (u.value as THREE.Texture | null)?.dispose?.());
           m.dispose();
         }
-      });
+      }));
       renderer.dispose();
       canvas.remove();
     };
