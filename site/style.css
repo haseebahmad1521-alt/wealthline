@@ -1,0 +1,59 @@
+/* Wealthline project site: same night-side look as the app and the coming-soon page. */
+:root { --bg: #04060B; --text: #F5F5F7; --muted: #B1B1B8; --action: #6CB8FF; --hairline: rgba(255,255,255,0.14); --glass: rgba(16,18,26,.6); }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100svh; display: flex; flex-direction: column; overflow-x: hidden;
+  background: var(--bg); color: var(--text);
+  font: 17px/1.55 Inter, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--action); }
+a:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; border-radius: 4px; }
+
+/* A few fixed stars and Earth's limb rising from the bottom. */
+.stars { position: fixed; inset: 0; pointer-events: none; opacity: .7;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 78% 12%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 34% 42%, #cfe3ff, transparent), radial-gradient(1px 1px at 88% 38%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 24%, #fff, transparent), radial-gradient(1px 1px at 22% 66%, #dfe9ff, transparent),
+    radial-gradient(1.5px 1.5px at 66% 58%, #fff, transparent), radial-gradient(1px 1px at 6% 44%, #fff, transparent),
+    radial-gradient(1px 1px at 46% 8%, #fff, transparent), radial-gradient(1px 1px at 94% 64%, #cfe3ff, transparent); }
+.planet { position: fixed; left: 50%; bottom: -160vmax; width: 180vmax; height: 180vmax; transform: translateX(-50%);
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 0%, #0d2a52 0%, #071427 22%, #04060B 48%);
+  box-shadow: 0 0 0 1px rgba(140,200,255,.35), 0 -8px 40px rgba(108,184,255,.45), 0 -40px 160px rgba(64,140,255,.35); }
+
+header, main, footer { position: relative; width: 100%; max-width: 1120px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+header { display: flex; align-items: center; gap: 10px; padding-top: 20px; padding-bottom: 8px; }
+header a { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 600; min-height: 44px; }
+.icon { width: 32px; height: 32px; border-radius: 8px; flex: none; }
+main { flex: 1; padding-top: 48px; padding-bottom: 64px; }
+
+/* Landing */
+.hero { text-align: center; padding: 32px 0 48px; }
+.hero .icon { width: 76px; height: 76px; border-radius: 18px; box-shadow: 0 12px 40px rgba(0,113,227,.45); }
+h1 { margin: 20px auto 0; max-width: 16ch; font-size: clamp(40px, 8vw, 76px); line-height: 1.04; font-weight: 700; letter-spacing: -0.045em;
+  background: linear-gradient(180deg, #fff 30%, #b9d7ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { margin: 20px auto 0; max-width: 36ch; font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); }
+.status { display: inline-block; margin-top: 28px; padding: 10px 18px; border-radius: 999px; font-size: 15px;
+  background: var(--glass); border: 1px solid var(--hairline); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.features { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.features li { padding: 22px; border-radius: 24px; background: var(--glass); border: 1px solid var(--hairline);
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
+.features h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: -0.02em; }
+.features p { margin: 0; color: var(--muted); font-size: 15px; }
+.note { margin: 40px auto 0; max-width: 60ch; text-align: center; color: var(--muted); font-size: 15px; }
+
+/* Policy pages: one readable column on a glass sheet. */
+.doc { max-width: 720px; margin: 0 auto; padding: 32px 24px; border-radius: 28px; background: rgba(10,12,18,.82); border: 1px solid var(--hairline); }
+.doc h1 { margin: 0; max-width: none; font-size: clamp(34px, 6vw, 48px); }
+.doc .updated { margin: 8px 0 24px; color: var(--muted); font-size: 15px; }
+.doc h2 { margin: 32px 0 8px; font-size: 21px; letter-spacing: -0.02em; }
+.doc p, .doc li { color: #E2E2E8; }
+.doc ul { padding-left: 1.2em; }
+.doc li + li { margin-top: 6px; }
+
+footer { padding-top: 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); text-align: center; font-size: 14px; color: var(--muted); }
+footer a { color: var(--muted); text-decoration: none; display: inline-block; padding: 12px 8px; }
+footer a:hover, footer a:focus-visible { color: var(--text); text-decoration: underline; }
+
+@media (max-width: 480px) { .doc { padding: 24px 16px; border-radius: 20px; } main { padding-top: 24px; } }
