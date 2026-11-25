@@ -6,10 +6,9 @@ import * as WebBrowser from 'expo-web-browser';
 import { Slider } from 'heroui-native';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 
 import { metal } from '@/components/arena';
-import donationData from '@/data/donations.json';
 import { REFERENCE } from '@/lib/factor-data';
 import { Body, Caption, Icon, Portrait, icons, minTouch } from '@/components/ui';
 import type { Scenario } from '@/lib/scenarios';
@@ -17,8 +16,6 @@ import { hasRange, NOTE_LIFE, rangeText, simPct, type Frame, type PersonMove, ty
 import { lastName, type Corner } from '@/lib/versus';
 import { DIALS, dialEffects, dialSummary, type DialValues } from '@/lib/dials';
 import type { Guess, Score } from '@/lib/guess';
-import type { BriefingItem } from '@/lib/briefing';
-import type { Holding } from '@/lib/mine';
 import { color, font, radius, space, type } from '@/theme';
 
 // How the model did on real past shocks (scripts/build-factors.mjs): its typical miss against simply assuming every
@@ -35,10 +32,6 @@ const ACCURACY = (() => {
   return `Measured from ten years of prices. Tested on ${b.events.length} real shocks (${b.events.map((e) => e.event.split(':')[0]).join(', ')}): a typical miss of ${Math.round(b.overall.improved * 100)} points per stock, against ${Math.round(b.overall.naive * 100)} for assuming every stock follows the market; ${ranges} Private companies use their listed peers.`;
 })();
 
-// Federal political giving on record (FEC), by person id: scripts/build-donations.mjs. At-least figures.
-type Giving = { total: number; from: string | null; top: { committee: string; amount: number }[]; url: string };
-const GIVING = (donationData as { people: Record<string, Giving> }).people;
-const titleCase = (s: string) => s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\bPac\b/g, 'PAC');
 
 const PLAUSIBLE: Record<Scenario['plausibility'], string> = { likely: 'Likely', possible: 'Possible', unlikely: 'Unlikely' };
 const open = (url: string) => void WebBrowser.openBrowserAsync(url);
@@ -49,6 +42,25 @@ export function simDate(start: string | null, month: number): string {
   const d = start ? new Date(`${start}T12:00:00Z`) : new Date();
   d.setUTCMonth(d.getUTCMonth() + month);
   return d.toLocaleDateString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
+/** The film's play button, seeker and month; on the globe, and in the composer after a typed question. */
+export type Playback = { tick: number; length: number; month: number; start: string | null; playing: boolean; onPlay: () => void; onScrub: (tick: number) => void };
+
+function Seeker({ tick, length, month, start, onScrub }: Omit<Playback, 'playing' | 'onPlay'>) {
+  return (
+    <>
+      <View style={styles.flex}>
+        <Slider value={Math.min(tick, length)} minValue={0} maxValue={Math.max(length, 1)} step={1} aria-label="Time in the simulation" onChange={(v) => onScrub(Array.isArray(v) ? v[0] : v)}>
+          <Slider.Track>
+            <Slider.Fill />
+            <Slider.Thumb aria-label={`Time in the simulation: ${month === 0 ? 'today' : simDate(start, month)}`} />
+          </Slider.Track>
+        </Slider>
+      </View>
+      <Text style={[type.caption, styles.month]}>{month === 0 ? 'Today' : simDate(start, month)}</Text>
+    </>
+  );
 }
 
 export function SimulatePanel({
@@ -62,78 +74,97 @@ export function SimulatePanel({
   dials,
   score,
   challengeId,
-  you,
   mostAsked = [],
-  brief,
+  playback,
 }: {
-  /** Today's briefing, shown at the top of the Scenarios tab. */
-  brief?: ReactNode;
   /** Questions and matches people asked most this week. */
   mostAsked?: (Scenario & { asks?: number })[];
-  /** The "You" editor (what the player owns), shown under the tabs. */
-  you: ReactNode;
   score: Score;
   challengeId: string | null;
   scenarios: Scenario[];
   scenario: Scenario | null;
   onPick: (s: Scenario) => void;
-  onAsk: (prompt: string) => Promise<string | null>;
+  /** Resolves to an error, or the id of the question's scenario once it's picked. */
+  onAsk: (prompt: string) => Promise<{ error: string } | { id: string }>;
   mode: 'scenarios' | 'versus' | 'dials';
   onMode: (m: 'scenarios' | 'versus' | 'dials') => void;
   /** The versus picker and the dials, shown in their tabs. */
   versus: ReactNode;
   dials: ReactNode;
+  /** The film's clock, for the seeker that opens beside the composer once a question is sent. */
+  playback: Playback;
 }) {
   const [prompt, setPrompt] = useState('');
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The question last sent, and whether its answer is the film on the globe: then the composer narrows and the seeker
+  // opens beside it. Typing in the composer again closes the seeker.
+  const [sent, setSent] = useState<{ q: string; id: string } | null>(null);
+  const [editing, setEditing] = useState(false);
   const ask = async () => {
     const q = prompt.trim();
     if (q.length < 8 || asking) return;
     setAsking(true);
     setError(null);
-    setError(await onAsk(q));
+    const r = await onAsk(q);
     setAsking(false);
+    if ('error' in r) return setError(r.error);
+    setSent({ q, id: r.id });
+    setEditing(false);
   };
-  const off = asking || prompt.trim().length < 8;
+  const seeking = !!sent && !editing && !asking && prompt.trim() === sent.q && scenario?.id === sent.id;
+  const off = !seeking && (asking || prompt.trim().length < 8);
+  const done = playback.tick >= playback.length;
 
   return (
     <>
       <View accessibilityRole="tablist" style={styles.segments}>
-        {(['scenarios', 'versus', 'dials'] as const).map((m) => (
+        {(['versus', 'scenarios', 'dials'] as const).map((m) => (
           <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => onMode(m)} style={[styles.segment, mode === m && styles.segmentOn]}>
             <Text style={[type.headline, { color: mode === m ? color.text : color.textSecondary }]}>{m === 'scenarios' ? 'Scenarios' : m === 'versus' ? 'Versus' : 'Dials'}</Text>
           </Pressable>
         ))}
       </View>
-      {you}
       {mode === 'dials' ? dials : mode === 'versus' ? versus : (
       <>
-      {brief}
+      <View style={styles.composeRow}>
+        <Animated.View layout={LinearTransition.duration(260).reduceMotion(ReduceMotion.System)} style={[styles.inputRow, seeking && styles.inputNarrow]}>
+          <TextInput
+            accessibilityLabel="Ask a what-if question"
+            placeholder="What if…"
+            placeholderTextColor={color.textSecondary}
+            value={prompt}
+            onChangeText={setPrompt}
+            onFocus={() => setEditing(true)}
+            onBlur={() => setEditing(false)}
+            maxLength={200}
+            returnKeyType="go"
+            onSubmitEditing={ask}
+            editable={!asking}
+            style={styles.input}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={seeking ? (playback.playing ? 'Pause' : done ? 'Play again' : 'Play') : 'Simulate'}
+            disabled={off}
+            onPress={seeking ? playback.onPlay : ask}
+            style={[styles.ask, off && styles.dim]}>
+            {asking ? <ActivityIndicator color={color.onAction} /> : <Icon name={seeking && playback.playing ? icons.pause : seeking && done ? icons.replay : icons.play} size={18} tint={color.onAction} />}
+          </Pressable>
+        </Animated.View>
+        {seeking && (
+          <Animated.View entering={FadeIn.duration(260).reduceMotion(ReduceMotion.System)} style={styles.seekRow}>
+            <Seeker {...playback} />
+          </Animated.View>
+        )}
+      </View>
+      {asking && <Caption>Grok is working out what this touches, about half a minute.</Caption>}
+      {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
       {score.played > 0 && (
         <Caption>
           ★ {score.points} points · streak {score.streak} · {score.right} of {score.played} called right
         </Caption>
       )}
-      <View style={styles.inputRow}>
-        <TextInput
-          accessibilityLabel="Ask a what-if question"
-          placeholder="What if…"
-          placeholderTextColor={color.textSecondary}
-          value={prompt}
-          onChangeText={setPrompt}
-          maxLength={200}
-          returnKeyType="go"
-          onSubmitEditing={ask}
-          editable={!asking}
-          style={styles.input}
-        />
-        <Pressable accessibilityRole="button" accessibilityLabel="Simulate" disabled={off} onPress={ask} style={[styles.ask, off && styles.dim]}>
-          {asking ? <ActivityIndicator color={color.onAction} /> : <Icon name={icons.send} size={18} tint={color.onAction} />}
-        </Pressable>
-      </View>
-      {asking && <Caption>Grok is working out what this touches, about half a minute.</Caption>}
-      {error && <Caption style={{ color: color.loss }}>{error}</Caption>}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills} accessibilityRole="tablist">
         {scenarios.filter((s) => s.origin !== 'versus' && !mostAsked.some((m) => m.id === s.id)).map((s) => {
@@ -528,15 +559,7 @@ export function SimOverlay({
         <Pressable accessibilityRole="button" accessibilityLabel={playing ? 'Pause' : done ? 'Play again' : 'Play'} onPress={onPlay} style={styles.play}>
           <Icon name={playing ? icons.pause : done ? icons.replay : icons.play} size={20} tint={color.onAction} />
         </Pressable>
-        <View style={styles.flex}>
-          <Slider value={Math.min(tick, length)} minValue={0} maxValue={Math.max(length, 1)} step={1} aria-label="Time in the simulation" onChange={(v) => onScrub(Array.isArray(v) ? v[0] : v)}>
-            <Slider.Track>
-              <Slider.Fill />
-              <Slider.Thumb aria-label={`Time in the simulation: ${month === 0 ? 'today' : simDate(start, month)}`} />
-            </Slider.Track>
-          </Slider>
-        </View>
-        <Text style={[type.caption, styles.month]}>{month === 0 ? 'Today' : simDate(start, month)}</Text>
+        <Seeker tick={tick} length={length} month={month} start={start} onScrub={onScrub} />
       </View>
     </View>
   );
@@ -693,157 +716,6 @@ function EndCard({
   );
 }
 
-/**
- * Today's briefing: each storyline with its odds (a prediction market's, live, when one matches; else Grok's judgement),
- * the fortunes it would lift and hit most, and a button to watch it play out.
- */
-export function BriefingPanel({
-  items,
-  sample,
-  live,
-  date,
-  money,
-  onWatch,
-  nameOf,
-}: {
-  /** A tracked person's name from their slug (for statements). */
-  nameOf: (slug: string) => string;
-  items: BriefingItem[];
-  /** True while the daily briefing isn't on yet: the built-in examples stand in. */
-  sample: boolean;
-  live: Map<string, number>;
-  date: string | null;
-  money: (usd: number) => string;
-  onWatch: (s: Scenario) => void;
-}) {
-  const [all, setAll] = useState(false);
-  if (!items.length) return null;
-  const shown = all ? items : items.slice(0, 3);
-  const person = (p: PersonMove, up: boolean) => (
-    <View key={p.person.id} style={styles.briefPerson} accessible accessibilityLabel={`${p.person.name}, ${up ? 'up' : 'down'} about ${p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct ?? 0)}`}>
-      <Portrait uri={p.person.portrait_url ?? null} name={p.person.name} size={26} />
-      <View style={styles.flex}>
-        <Text style={[type.caption, { color: color.text }]} numberOfLines={1}>
-          {lastName(p.person.name)}
-        </Text>
-        <Text style={[type.caption, { color: up ? color.gain : color.loss, fontVariant: ['tabular-nums'] }]} numberOfLines={1}>
-          {up ? '▲' : '▼'} ≈{p.delta != null ? money(Math.abs(p.delta)) : simPct(p.pct ?? 0)}
-        </Text>
-      </View>
-    </View>
-  );
-  return (
-    <View style={styles.brief}>
-      <View style={styles.briefHead}>
-        <Text style={[type.title, { color: color.text, fontSize: 20 }]}>Today’s briefing.</Text>
-        <Caption>{sample ? 'Sample' : date ? new Date(`${date}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : ''}</Caption>
-      </View>
-      {sample && <Caption>The daily briefing starts once Grok is switched on; until then these examples show how it works.</Caption>}
-      {shown.map(({ scenario: s, winners, losers, ties }) => {
-        const yes = s.odds ? (live.get(s.odds.market) ?? s.odds.yes) : null;
-        const fresh = s.odds ? live.has(s.odds.market) : false;
-        return (
-          <View key={s.id} style={styles.briefItem}>
-            <Text style={[type.headline, { color: color.text }]} numberOfLines={2}>
-              {s.title.replace(/\.$/, '')}
-            </Text>
-            {s.odds && yes != null ? (
-              <Pressable accessibilityRole="link" accessibilityLabel={`Prediction market: ${Math.round(yes * 100)} percent yes. ${s.odds.question}`} onPress={() => open(s.odds!.url)} style={styles.odds}>
-                <View style={styles.oddsTrack}>
-                  <View style={[styles.oddsFill, { width: `${Math.max(2, Math.round(yes * 100))}%` }]} />
-                </View>
-                <Caption style={{ color: color.text }} numberOfLines={1}>
-                  {Math.round(yes * 100)}% on Polymarket{fresh ? '' : ` (${new Date(s.odds.as_of).toLocaleDateString('en', { day: 'numeric', month: 'short' })})`} · {s.odds.question}
-                </Caption>
-              </Pressable>
-            ) : (
-              <Caption>{s.origin === 'example' ? 'Built-in example' : `${PLAUSIBLE[s.plausibility]}, by Grok’s judgement; no prediction market asks this`}</Caption>
-            )}
-            {(winners.length > 0 || losers.length > 0) && (
-              <View style={styles.briefPeople}>
-                {winners.map((p) => person(p, true))}
-                {losers.map((p) => person(p, false))}
-              </View>
-            )}
-            {ties && ties.length > 0 && (
-              <View style={styles.ties}>
-                <Text style={[type.caption, styles.rowLabel]}>Documented ties</Text>
-                {ties.map((t) => (
-                  <Pressable
-                    key={t.companyId}
-                    accessibilityRole="link"
-                    accessibilityLabel={`${t.company}: ${money(t.defense)} in US defence contracts since October 2023. Linked to ${t.owners.map((o) => o.name).join(', ')}. Opens USAspending.`}
-                    onPress={() => open(t.url)}
-                    style={styles.tie}>
-                    <Caption style={[styles.flex, { color: color.text }]} numberOfLines={2}>
-                      <Text style={{ fontWeight: '600' }}>{t.company}</Text> · {money(t.defense)} in US defence contracts since Oct 2023 ·{' '}
-                      {t.owners.map((o) => o.name.replace(/ & family$/, '')).join(', ')}
-                    </Caption>
-                    <Icon name={icons.link} size={12} tint={color.action} />
-                  </Pressable>
-                ))}
-                <Caption style={styles.basis}>From the public record (USAspending.gov). A tie shows a documented connection, not a claim that anyone is driving events.</Caption>
-              </View>
-            )}
-            {(() => {
-              const givers = [...winners, ...losers].filter((p, i, all) => GIVING[p.person.id] && GIVING[p.person.id].total >= 10_000 && all.findIndex((x) => x.person.id === p.person.id) === i);
-              if (!givers.length) return null;
-              return (
-                <View style={styles.ties}>
-                  <Text style={[type.caption, styles.rowLabel]}>On the record</Text>
-                  {givers.map((p) => {
-                    const g = GIVING[p.person.id];
-                    const who = p.person.name.replace(/ & family$/, '');
-                    const since = g.from ? g.from.slice(0, 4) : '2019';
-                    return (
-                      <Pressable key={p.person.id} accessibilityRole="link" accessibilityLabel={`${who}: at least ${money(g.total)} to federal campaigns and political committees since ${since}, largest ${titleCase(g.top[0]?.committee ?? '')}. Opens the FEC records.`} onPress={() => open(g.url)} style={styles.tie}>
-                        <Caption style={[styles.flex, { color: color.text }]} numberOfLines={2}>
-                          <Text style={{ fontWeight: '600' }}>{who}</Text> · at least {money(g.total)} to federal campaigns and committees since {since}
-                          {g.top[0] ? ` · largest: ${titleCase(g.top[0].committee)}` : ''}
-                        </Caption>
-                        <Icon name={icons.link} size={12} tint={color.action} />
-                      </Pressable>
-                    );
-                  })}
-                  <Caption style={styles.basis}>FEC individual contributions, matched strictly by name and employer, so some gifts may be missing. A donation is a public record, not a claim of influence.</Caption>
-                </View>
-              );
-            })()}
-            {s.statements && s.statements.length > 0 && (
-              <View style={styles.ties}>
-                <Text style={[type.caption, styles.rowLabel]}>In their words</Text>
-                {s.statements.map((q) => {
-                  const who = nameOf(q.person).replace(/ & family$/, '');
-                  const when = q.said ? new Date(`${q.said}T12:00:00Z`).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
-                  return (
-                    <Pressable key={`${q.person}:${q.url}`} accessibilityRole="link" accessibilityLabel={`${who}${when ? `, ${when}` : ''}: ${q.quote}. Opens ${q.label}.`} onPress={() => open(q.url)} style={styles.tie}>
-                      <Caption style={[styles.flex, { color: color.text }]} numberOfLines={4}>
-                        “{q.quote}” <Text style={{ fontWeight: '600' }}>{who}</Text>
-                        {when ? `, ${when}` : ''} · {q.label}
-                      </Caption>
-                      <Icon name={icons.link} size={12} tint={color.action} />
-                    </Pressable>
-                  );
-                })}
-                <Caption style={styles.basis}>Each quote was found by Grok’s search and checked word for word against its page.</Caption>
-              </View>
-            )}
-            <Pressable accessibilityRole="button" accessibilityLabel={`Watch: ${s.title}`} onPress={() => onWatch(s)} style={styles.watch}>
-              <Icon name={icons.play} size={14} tint={color.onAction} />
-              <Text style={[type.caption, { color: color.onAction, fontWeight: '600' }]}>Watch</Text>
-            </Pressable>
-          </View>
-        );
-      })}
-      {items.length > 3 && (
-        <Pressable accessibilityRole="button" onPress={() => setAll(!all)} style={styles.source}>
-          <Caption style={{ color: color.action }}>{all ? 'Show fewer' : `Show all ${items.length}`}</Caption>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
 /** What a simulation does to what the player owns. */
 function YouLine({ mine, money }: { mine: { delta: number; pct: number }; money: (usd: number) => string }) {
   const up = mine.delta >= 0;
@@ -857,92 +729,6 @@ function YouLine({ mine, money }: { mine: { delta: number; pct: number }; money:
           ≈{money(Math.abs(mine.delta))} ({Math.round(Math.abs(mine.pct) * 1000) / 10}%)
         </Text>
       </View>
-    </View>
-  );
-}
-
-/** "You": what the player owns in tracked companies, on this device only. Collapsed to one line until opened. */
-export function MineEditor({ holdings, companies, onChange, money }: { holdings: Holding[]; companies: { id: string; name: string }[]; onChange: (h: Holding[]) => void; money: (usd: number) => string }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
-  const [amount, setAmount] = useState('');
-  const name = (id: string) => companies.find((c) => c.id === id)?.name ?? 'A company';
-  const total = holdings.reduce((n, h) => n + h.usd, 0);
-  const q = query.trim().toLowerCase();
-  const matches = q ? companies.filter((c) => c.name.toLowerCase().includes(q) && !holdings.some((h) => h.company === c.id)).slice(0, 6) : [];
-  const usd = Number(amount.replace(/[^0-9.]/g, ''));
-  const add = () => {
-    if (!picked || !(usd > 0)) return;
-    onChange([...holdings.filter((h) => h.company !== picked.id), { company: picked.id, usd: Math.round(usd) }]);
-    setPicked(null);
-    setQuery('');
-    setAmount('');
-  };
-  return (
-    <View style={styles.mine}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.mineHead}>
-        <Text style={[type.headline, styles.flex, { color: color.text }]} numberOfLines={1}>
-          {holdings.length ? `You: ${money(total)} in ${holdings.length} ${holdings.length === 1 ? 'company' : 'companies'}` : 'Add what you own, to see what it does to you'}
-        </Text>
-        <Icon name={open ? icons.close : icons.plus} size={16} tint={color.textSecondary} />
-      </Pressable>
-      {open && (
-        <>
-          {holdings.map((h) => (
-            <View key={h.company} style={styles.mineRow}>
-              <Text style={[type.body, styles.flex, { color: color.text }]} numberOfLines={1}>
-                {name(h.company)}
-              </Text>
-              <Text style={[type.number, { color: color.text, fontSize: 15 }]}>{money(h.usd)}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${name(h.company)}`} onPress={() => onChange(holdings.filter((x) => x.company !== h.company))} hitSlop={8} style={styles.close}>
-                <Icon name={icons.close} size={14} tint={color.textSecondary} />
-              </Pressable>
-            </View>
-          ))}
-          {picked ? (
-            <View style={styles.inputRow}>
-              <Text style={[type.headline, { color: color.text }]} numberOfLines={1}>
-                {picked.name}
-              </Text>
-              <TextInput
-                accessibilityLabel={`Amount in ${picked.name}, in dollars`}
-                placeholder="$ amount"
-                placeholderTextColor={color.textSecondary}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                onSubmitEditing={add}
-                style={styles.input}
-              />
-              <Pressable accessibilityRole="button" accessibilityLabel="Add" disabled={!(usd > 0)} onPress={add} style={[styles.ask, !(usd > 0) && styles.dim]}>
-                <Icon name={icons.check} size={18} tint={color.onAction} />
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.inputRow}>
-              <TextInput
-                accessibilityLabel="Find a company you own"
-                placeholder="A company you own: Tesla, Nvidia…"
-                placeholderTextColor={color.textSecondary}
-                value={query}
-                onChangeText={setQuery}
-                style={styles.input}
-              />
-            </View>
-          )}
-          {matches.length > 0 && !picked && (
-            <View style={styles.chips}>
-              {matches.map((c) => (
-                <Pressable key={c.id} accessibilityRole="button" onPress={() => setPicked(c)} style={styles.then}>
-                  <Text style={[type.caption, { color: color.text, fontWeight: '600' }]}>{c.name}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-          <Caption>Kept on this device only, never sent anywhere. Each holding moves with its company in the simulation.</Caption>
-        </>
-      )}
     </View>
   );
 }
@@ -1062,24 +848,10 @@ const styles = StyleSheet.create({
   fighter: { flex: 1, alignItems: 'center', gap: 3 },
   crownRing: { borderRadius: 40, padding: 3 },
   dial: { gap: 2 },
-  brief: { gap: space.sm },
-  ties: { gap: 4, paddingTop: 4, alignSelf: 'stretch', minWidth: 0, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,.12)' },
-  tie: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 32, minWidth: 0 },
-  briefHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  briefItem: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.05)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,.1)' },
-  briefPeople: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
-  briefPerson: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 6 },
-  odds: { gap: 3 },
-  oddsTrack: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.12)', overflow: 'hidden' },
-  oddsFill: { height: 6, borderRadius: 3, backgroundColor: color.action },
-  watch: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: 4, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: color.action },
   range: { ...type.caption, fontSize: 10, lineHeight: 13, color: color.textSecondary, textAlign: 'center', fontVariant: ['tabular-nums'] },
   basis: { fontSize: 10, lineHeight: 13 },
   summary: { gap: 6, padding: 12, borderRadius: radius.md, backgroundColor: 'rgba(108,184,255,.10)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(108,184,255,.35)' },
   you: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, padding: 10, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,.06)' },
-  mine: { gap: 6 },
-  mineHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: minTouch },
-  mineRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 36 },
   then: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: 'rgba(108,184,255,.18)' },
   share: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: color.action },
   guessGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 8 },
@@ -1090,9 +862,12 @@ const styles = StyleSheet.create({
   dialLabel: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6 },
   movers: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   mover: { width: '31%', alignItems: 'center', gap: 2 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },
+  inputRow: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.xs, borderRadius: radius.pill, backgroundColor: color.fill, paddingLeft: space.md, paddingRight: 4, minHeight: minTouch + 4 },
   // minWidth 0: web inputs otherwise keep an intrinsic width and push the button out.
   input: { flex: 1, minWidth: 0, minHeight: minTouch, fontFamily: font.regular, fontSize: 16, color: color.text },
+  composeRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  inputNarrow: { flexGrow: 0, flexBasis: '48%' },
+  seekRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   ask: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.action, alignItems: 'center', justifyContent: 'center' },
   dim: { opacity: 0.4 },
   pills: { gap: space.sm },

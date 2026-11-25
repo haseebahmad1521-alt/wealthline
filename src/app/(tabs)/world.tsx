@@ -11,21 +11,17 @@ import { EconomiesPanel, MoneyPanel, economyFills, flowArcs, fortuneFills, reven
 import { useMoney } from '@/lib/currency';
 import { usePeople, type Person } from '@/lib/data';
 import { countryCentre } from '@/lib/geo';
-import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useLiveOdds, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
-import { briefing } from '@/lib/briefing';
-import { tiesFor, type ContractTie } from '@/lib/ties';
-import tiesData from '@/data/ties.json';
+import { askScenario, askVersus, examples, fetchScenario, useDailyScenarios, useMostAsked, useSimData, type Scenario } from '@/lib/scenarios';
 import { readSimParams, shareSim, simParams, simUrl } from '@/lib/share';
 import { callMatch, suggestedMatches, versusScenario, versusScore } from '@/lib/versus';
 import { dialScenario, type DialValues } from '@/lib/dials';
 import { chain, FOLLOW_UPS } from '@/lib/chain';
 import { expandAnalogs, pastEvents, replayScenario, type EventData } from '@/lib/analogs';
 import eventData from '@/data/events.json';
-import { MINE_KEY, myChange, readMine, type Holding } from '@/lib/mine';
 import { dailyChallenge, EMPTY_SCORE, makeGuess, scored, type Score } from '@/lib/guess';
 import { getItem, setItem } from '@/lib/device-store';
 import { lineCountries, NOTE_LIFE, schedule, simEvents, simPct, simulate, TICKS_PER_MONTH, type SimCountry, type SimEmpire, type SimSubject } from '@/lib/simulate';
-import { BriefingPanel, DialsPanel, MineEditor, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
+import { DialsPanel, SimOverlay, SimulatePanel, VersusPicker } from '@/components/world-sim';
 import { companyBoard, moves, today } from '@/lib/today';
 import { REFERENCE } from '@/lib/factor-data';
 import { toSimCountries, toSimEmpires } from '@/lib/sim-inputs';
@@ -86,7 +82,7 @@ export default function World() {
   const daily = useDailyScenarios();
   const mostAsked = useMostAsked();
   const [asked, setAsked] = useState<Scenario[]>([]);
-  const [panel, setPanel] = useState<'scenarios' | 'versus' | 'dials'>('scenarios');
+  const [panel, setPanel] = useState<'scenarios' | 'versus' | 'dials'>('versus');
   const [dials, setDials] = useState<DialValues>({});
   const dialSim = useMemo(() => dialScenario(dials), [dials]);
   const scenarios = useMemo(() => [...asked, ...(daily.data ?? []), ...examples(empires), ...(mostAsked.data ?? []).filter((m) => !asked.some((a) => a.id === m.id))], [asked, daily.data, empires, mostAsked.data]);
@@ -269,40 +265,6 @@ export default function World() {
     for (const c of all.sort((a, b) => revenue(b) - revenue(a))) (out[c.sector!] ??= []).push(c.name);
     return out;
   }, [simEmpires]);
-  // "You": what the player owns, on this device only; each holding moves with its company.
-  const [mine, setMine] = useState<Holding[]>([]);
-  useEffect(() => {
-    void getItem(MINE_KEY).then((v) => setMine(readMine(v)));
-  }, []);
-  const saveMine = (h: Holding[]) => {
-    setMine(h);
-    void setItem(MINE_KEY, JSON.stringify(h));
-  };
-  const mineEnd = myChange(frames[frames.length - 1] ?? null, mine);
-  const ownable = useMemo(() => {
-    const seen = new Set<string>();
-    return empires
-      .flatMap((e) => e.companies)
-      .filter((c) => c.ticker && !c.is_private && !seen.has(c.id) && seen.add(c.id))
-      .map((c) => ({ id: c.id, name: c.name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [empires]);
-
-  // Today's briefing: Grok's daily storylines (or the built-in examples until it's on), each with who gains and loses
-  // most at the end, and live prediction-market odds where a market matches.
-  const briefSource = useMemo(() => ((daily.data?.length ? daily.data : examples(empires)) as Scenario[]), [daily.data, empires]);
-  const briefItems = useMemo(() => {
-    if (view !== 'whatif' || !simEmpires.length) return [];
-    // Each company's tracked people, for the documented ties.
-    const owners = new Map<string, { id: string; name: string }[]>();
-    for (const e of empires) for (const c of e.companies) owners.set(c.id, [...(owners.get(c.id) ?? []), { id: e.person.id, name: e.person.name }]);
-    const contracts = (tiesData as { companies: Record<string, ContractTie> }).companies;
-    return briefing(briefSource, simEmpires, simCountries, eventData as EventData, 2, RANGE_Z).map((item) => ({
-      ...item,
-      ties: tiesFor(expandAnalogs(item.scenario, null), contracts, (id) => owners.get(id) ?? []),
-    }));
-  }, [view, briefSource, simEmpires, simCountries, empires]);
-  const liveOdds = useLiveOdds(briefSource.map((s) => s.odds?.market).filter((x): x is string => !!x));
 
   // "Last time this happened": the past events behind the scenario's analogs, each replayed on today's fortunes.
   const replays = useMemo(() => (picked ? pastEvents(picked, eventData as EventData) : []), [picked]);
@@ -335,10 +297,10 @@ export default function World() {
   };
   const ask = async (prompt: string) => {
     const r = await askScenario(prompt);
-    if ('error' in r) return r.error;
+    if ('error' in r) return r;
     setAsked((a) => [r.scenario, ...a.filter((x) => x.id !== r.scenario.id)]);
     pick(r.scenario);
-    return null;
+    return { id: r.scenario.id };
   };
 
   let arcs: GlobeArc[] = [];
@@ -589,7 +551,7 @@ export default function World() {
                       : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                   }
                 />
-                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
+                {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} />}
                 </View>
                 {/* A handle instead of a block of text under the globe (owner, Nov 2, 2026): there's more below. */}
                 <MoreHandle target={details} />
@@ -612,7 +574,7 @@ export default function World() {
                     : `Globe of ${places} company places for ${empires.length} people. Details follow.`
                 }
               />
-              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} mine={mineEnd} />}
+              {simOn && sim && <SimOverlay notes={film.notes} tick={tick} length={film.length} month={month} start={sim.run_date ?? null} playing={playing} onPlay={playPause} onScrub={scrub} ending={frames[frames.length - 1] ?? null} months={sim.months} title={sim.title} money={money.format} score={score} finalScore={finalScore} quiet={sim.origin === 'dials' && !playing} guess={guess} asking={asking} onGuess={onGuess} verdict={verdict} onShare={onShare} followUps={followUps} onContinue={continueWith} replays={replays} onReplay={replay} />}
               <Caption style={styles.globeNote}>
                 {view === 'places'
                   ? 'Drag to turn. Places from Wikidata; brighter, quicker rings mean the company’s share price moved in the last 30 minutes.'
@@ -633,37 +595,22 @@ export default function World() {
                 <EconomiesPanel lines={lines} countries={world.countries ?? []} empires={empires} focus={focused} mode={econ} onMode={setEcon} onSelect={show} />
               ) : view === 'whatif' ? (
                 <Surface style={styles.simCard}>
-                  <View style={styles.headRow}>
-                    <Heading level={2}>What if.</Heading>
-                    <Caption>Hypothetical</Caption>
-                  </View>
                   <SimulatePanel
                     scenarios={scenarios}
                     scenario={sim}
                     onPick={pick}
                     onAsk={ask}
+                    playback={{ tick, length: film.length, month, start: sim?.run_date ?? null, playing, onPlay: playPause, onScrub: scrub }}
                     mode={panel}
                     score={game}
                     challengeId={challenge?.id ?? null}
                     mostAsked={mostAsked.data ?? []}
-                    brief={
-                      <BriefingPanel
-                        nameOf={(slug) => empires.find((e) => e.person.slug === slug)?.person.name ?? slug}
-                        items={briefItems}
-                        sample={!daily.data?.length}
-                        live={liveOdds.data ?? new Map()}
-                        date={daily.data?.[0]?.run_date ?? null}
-                        money={money.format}
-                        onWatch={pick}
-                      />
-                    }
-                    you={<MineEditor holdings={mine} companies={ownable} onChange={saveMine} money={money.format} />}
                     onMode={(m) => {
                       setPanel(m);
                       if (m === 'dials') turnDials(dials);
                     }}
                     versus={<VersusPicker people={fighters} suggested={matchups} onFight={fight} />}
-                    dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} names={sectorNames} mine={mineEnd} />}
+                    dials={<DialsPanel values={dials} onChange={turnDials} result={frames[frames.length - 1] ?? null} money={money.format} names={sectorNames} />}
                   />
                 </Surface>
               ) : focused ? (
